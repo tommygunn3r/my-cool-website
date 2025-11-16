@@ -31,17 +31,21 @@
             text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
             z-index: 10;
         }
+        
+        /* <<< --- CSS FOR TITLE UPDATED --- >>> */
         #title {
             position: absolute;
             top: 20px;
-            right: 20px;
+            left: 50%; /* Changed from right: 20px */
+            transform: translateX(-50%); /* Added to center */
             color: white;
             font-size: 36px;
-            font-weight: bold;
             text-shadow: 3px 3px 6px rgba(0,0,0,0.7);
             z-index: 10;
             font-family: 'Arial Black', Impact, sans-serif;
         }
+        /* <<< --- END OF CSS UPDATE --- >>> */
+
         #gameOver {
             position: absolute;
             top: 50%;
@@ -145,7 +149,6 @@
             transform: scale(1.05);
         }
 
-        /* <<< --- NEW MOBILE CONTROLS CSS --- >>> */
         #mobile-controls {
             position: absolute;
             bottom: 20px;
@@ -198,13 +201,11 @@
             align-self: center;
         }
 
-        /* Media query to show controls on touch/small screens */
         @media (max-width: 800px), (hover: none) and (pointer: coarse) {
             #mobile-controls {
                 display: flex;
             }
         }
-        /* <<< --- END OF MOBILE CSS --- >>> */
 
     </style>
 </head>
@@ -259,6 +260,7 @@
             <button id="jump-btn">⬆️</button>
         </div>
     </div>
+
     <script>
         const canvas = document.getElementById('game');
         const ctx = canvas.getContext('2d');
@@ -362,7 +364,7 @@
         });
         window.addEventListener('keyup', e => keys[e.code] = false); // Use e.code
         
-        // <<< --- NEW MOBILE CONTROL LOGIC --- >>>
+        // MOBILE CONTROL LOGIC
         const leftBtn = document.getElementById('left-btn');
         const rightBtn = document.getElementById('right-btn');
         const downBtn = document.getElementById('down-btn');
@@ -379,7 +381,6 @@
         }
 
         // Event Listeners for Mobile Controls
-        // We use e.preventDefault() to stop screen scrolling or double-tap zooming
         const controls = [
             { el: leftBtn, key: 'KeyA' },
             { el: rightBtn, key: 'KeyD' },
@@ -403,7 +404,6 @@
                 control.el.addEventListener('contextmenu', (e) => e.preventDefault()); // Prevent long-press menu
             }
         });
-        // <<< --- END OF MOBILE CONTROL LOGIC --- >>>
 
 
         // This object will hold the ACTIVE, MUTABLE level data
@@ -846,9 +846,13 @@
             if (player.x < gameState.camera) {
                 player.x = gameState.camera;
             }
-            if (player.y > canvas.height && !player.dying) {
+            
+            // <<< --- UPDATED DEATH FLOOR LOGIC --- >>>
+            // Set a fixed "kill floor" far below the ground (e.g., 700)
+            if (player.y > 700 && !player.dying) { 
                 playerDeath();
             }
+            // <<< --- END OF UPDATE --- >>>
 
 
             // Update UI
