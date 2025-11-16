@@ -4,8 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Arcade Game Launcher</title>
-    <!-- Load Tailwind CSS via CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Load Tailwind CSS via CDN --><script src="https://cdn.tailwindcss.com"></script>
     <style>
         /* --- 1. Background and Base Styling --- */
         body {
@@ -54,17 +53,35 @@
             transition: opacity 0.4s ease, transform 0.4s ease; /* Smooth size/position changes */
         }
 
-        .arcade-image {
+        /* NEW: Container for the image to control sizing and alignment for object-fit: contain */
+        .arcade-image-container {
             width: 100%;
-            height: 600px;
-            object-fit: contain;
+            height: 600px; /* Same height as the original .arcade-image */
+            display: flex; /* Use flexbox to center image vertically */
+            align-items: center; /* Center image vertically */
+            justify-content: center; /* Center image horizontally */
+            overflow: hidden; /* Clip any potential overflow if image aspect ratio is off */
+            /* Border and shadow are now on the image itself */
+        }
+
+        .arcade-image {
+            max-width: 100%; /* Ensure image doesn't overflow its container */
+            max-height: 100%; /* Ensure image doesn't overflow its container */
+            object-fit: contain; /* Ensures the whole image is visible */
             cursor: pointer;
+            /* Border and shadow are now applied directly to the image */
             box-shadow: 0 0 40px rgba(0, 255, 255, 0.5); /* Neon glow effect */
         }
         
         /* Ensure the link wraps the image */
         .arcade-item a {
             display: block;
+            width: 100%; /* Make the link fill the item */
+            height: 100%; /* Make the link fill the item */
+            display: flex; /* Use flex to align content within the link */
+            flex-direction: column; /* Stack image and text */
+            align-items: center; /* Center content horizontally */
+            justify-content: center; /* Center content vertically if needed */
         }
 
         /* Mobile Adjustments */
@@ -78,9 +95,10 @@
                 height: 400px;
                 margin: -200px 0 0 -125px; 
             }
-            .arcade-image {
-                height: 350px;
+            .arcade-image-container { /* Adjust container height for mobile */
+                height: 350px; 
             }
+            /* Arcade image already has max-width/height 100% */
         }
 
         /* Full page height for main content */
@@ -117,77 +135,77 @@
 </head>
 <body class="min-h-screen flex flex-col antialiased">
 
-    <!-- Main 3D Carousel Container -->
-    <main id="main-carousel" class="full-page-main flex-grow flex items-center justify-center p-4 overflow-hidden">
+    <!-- Main 3D Carousel Container --><main id="main-carousel" class="full-page-main flex-grow flex items-center justify-center p-4 overflow-hidden">
         <div class="scene w-full h-full">
             <div id="carousel" class="carousel">
                 
-                <!-- --- SQUARIO --- -->
-                <div class="arcade-item game-launcher" data-url="games/squario.html">
+                <!-- --- SQUARIO --- --><div class="arcade-item game-launcher" data-url="games/squario.html">
                     <a href="#" onclick="return false;" title="Play Squario">
-                        <img src="previews/arcade-squario.png" alt="Squario Arcade Machine" class="arcade-image rounded-xl border-4 border-blue-500/80">
+                        <div class="arcade-image-container">
+                            <img src="previews/arcade-squario.png" alt="Squario Arcade Machine" class="arcade-image rounded-xl border-4 border-blue-500/80">
+                        </div>
+                        <p class="mt-4 text-xl font-bold text-green-400 text-center">SQUARIO</p>
                     </a>
-                    <p class="mt-4 text-xl font-bold text-green-400 text-center">SQUARIO</p>
                 </div>
 
-                <!-- --- ASCII DOOM --- -->
-                <div class="arcade-item game-launcher" data-url="games/ascii-doom.html">
+                <!-- --- ASCII DOOM --- --><div class="arcade-item game-launcher" data-url="games/ascii-doom.html">
                     <a href="#" onclick="return false;" title="Play ASCII DOOM">
-                        <img src="previews/arcade-doom.png" alt="ASCII DOOM Arcade Machine" class="arcade-image rounded-xl border-4 border-red-600/80">
+                        <div class="arcade-image-container">
+                            <img src="previews/arcade-doom.png" alt="ASCII DOOM Arcade Machine" class="arcade-image rounded-xl border-4 border-red-600/80">
+                        </div>
+                        <p class="mt-4 text-xl font-bold text-red-400 text-center">ASCII DOOM</p>
                     </a>
-                    <p class="mt-4 text-xl font-bold text-red-400 text-center">ASCII DOOM</p>
                 </div>
 
-                <!-- --- SPACE SHOOTER --- -->
-                <div class="arcade-item game-launcher" data-url="games/shooter.html">
+                <!-- --- SPACE SHOOTER --- --><div class="arcade-item game-launcher" data-url="games/shooter.html">
                     <a href="#" onclick="return false;" title="Play Space Shooter">
-                        <img src="previews/arcade-shooter.png" alt="Space Shooter Arcade Machine" class="arcade-image rounded-xl border-4 border-indigo-600/80">
+                        <div class="arcade-image-container">
+                            <img src="previews/arcade-shooter.png" alt="Space Shooter Arcade Machine" class="arcade-image rounded-xl border-4 border-indigo-600/80">
+                        </div>
+                        <p class="mt-4 text-xl font-bold text-indigo-400 text-center">SPACE SHOOTER</p>
                     </a>
-                    <p class="mt-4 text-xl font-bold text-indigo-400 text-center">SPACE SHOOTER</p>
                 </div>
 
-                <!-- --- WORD RUSH --- -->
-                <div class="arcade-item game-launcher" data-url="games/wordrush.html">
+                <!-- --- WORD RUSH --- --><div class="arcade-item game-launcher" data-url="games/wordrush.html">
                     <a href="#" onclick="return false;" title="Play Word Rush">
-                        <!-- UPDATED FILE NAME HERE -->
-                        <img src="previews/arcade-wordrush.png" alt="Word Rush Arcade Machine" class="arcade-image rounded-xl border-4 border-yellow-500/80">
+                        <div class="arcade-image-container">
+                            <img src="previews/arcade-wordrush.png" alt="Word Rush Arcade Machine" class="arcade-image rounded-xl border-4 border-yellow-500/80">
+                        </div>
+                        <p class="mt-4 text-xl font-bold text-yellow-400 text-center">WORD RUSH</p>
                     </a>
-                    <p class="mt-4 text-xl font-bold text-yellow-400 text-center">WORD RUSH</p>
                 </div>
 
-                <!-- --- WORD SLIDER --- -->
-                <div class="arcade-item game-launcher" data-url="games/word_slider.html">
+                <!-- --- WORD SLIDER --- --><div class="arcade-item game-launcher" data-url="games/word_slider.html">
                     <a href="#" onclick="return false;" title="Play Word Slider">
-                        <img src="previews/arcade-slider.png" alt="Word Slider Arcade Machine" class="arcade-image rounded-xl border-4 border-pink-500/80">
+                        <div class="arcade-image-container">
+                            <img src="previews/arcade-slider.png" alt="Word Slider Arcade Machine" class="arcade-image rounded-xl border-4 border-pink-500/80">
+                        </div>
+                        <p class="mt-4 text-xl font-bold text-pink-400 text-center">WORD SLIDER</p>
                     </a>
-                    <p class="mt-4 text-xl font-bold text-pink-400 text-center">WORD SLIDER</p>
                 </div>
 
-                <!-- --- THE WATER GAME --- -->
-                <div class="arcade-item game-launcher" data-url="games/water.html">
+                <!-- --- THE WATER GAME --- --><div class="arcade-item game-launcher" data-url="games/water.html">
                     <a href="#" onclick="return false;" title="Play The Water Game">
-                        <img src="previews/arcade-water.png" alt="The Water Game Arcade Machine" class="arcade-image rounded-xl border-4 border-cyan-500/80">
+                        <div class="arcade-image-container">
+                            <img src="previews/arcade-water.png" alt="The Water Game Arcade Machine" class="arcade-image rounded-xl border-4 border-cyan-500/80">
+                        </div>
+                        <p class="mt-4 text-xl font-bold text-cyan-400 text-center">THE WATER GAME</p>
                     </a>
-                    <p class="mt-4 text-xl font-bold text-cyan-400 text-center">THE WATER GAME</p>
                 </div>
 
             </div>
         </div>
     </main>
 
-    <!-- Game Overlay (Full Screen Iframe) -->
-    <div id="game-overlay" class="hidden fixed inset-0 bg-black z-40">
-        <!-- Close Button -->
-        <button id="close-game" class="close-btn absolute">
+    <!-- Game Overlay (Full Screen Iframe) --><div id="game-overlay" class="hidden fixed inset-0 bg-black z-40">
+        <!-- Close Button --><button id="close-game" class="close-btn absolute">
             Close Game / Back to Arcade
         </button>
 
-        <!-- Iframe to Load the Game -->
-        <iframe id="game-iframe" class="w-full h-full border-0"></iframe>
+        <!-- Iframe to Load the Game --><iframe id="game-iframe" class="w-full h-full border-0"></iframe>
     </div>
 
-    <!-- JavaScript for 3D Carousel Rotation, Wheel, and Touch Input -->
-    <script>
+    <!-- JavaScript for 3D Carousel Rotation, Wheel, and Touch Input --><script>
         document.addEventListener('DOMContentLoaded', () => {
             const carousel = document.getElementById('carousel');
             const items = document.querySelectorAll('.arcade-item');
