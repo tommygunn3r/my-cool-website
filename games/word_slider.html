@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Word Slider Puzzle</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            text-align: center;
+            max-width: 90vw;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2em;
+        }
+
+        .info {
+            color: #666;
+            margin-bottom: 20px;
+            font-size: 0.9em;
+            line-height: 1.5;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin: 20px 0;
+            font-size: 1.1em;
+            color: #555;
+            flex-wrap: wrap;
+        }
+
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .stat-label {
+            font-size: 0.8em;
+            color: #888;
+        }
+
+        .stat-value {
+            font-weight: bold;
+            font-size: 1.3em;
+            color: #667eea;
+        }
+
+        .puzzle-grid {
+            display: inline-grid;
+            gap: 8px;
+            margin: 20px 0;
+            padding: 20px;
+            background: #f5f5f5;
+            border-radius: 10px;
+        }
+
+        .tile {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 10px;
+            font-size: 2em;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .tile:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+        }
+
+        .tile:active {
+            transform: translateY(0);
+        }
+
+        .tile.empty {
+            background: #ddd;
+            cursor: default;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .tile.empty:hover {
+            transform: none;
+        }
+
+        .tile.found {
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+            animation: pulse 0.5s ease;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 12px 24px;
+            font-size: 1em;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .new-game-btn {
+            background: #667eea;
+            color: white;
+        }
+
+        .new-game-btn:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+        }
+
+        .message {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 8px;
+            font-weight: bold;
+            display: none;
+        }
+
+        .message.show {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .message.success {
+            background: #48bb78;
+            color: white;
+            font-size: 1.2em;
+        }
+
+        .message.error {
+            background: #f56565;
+            color: white;
+        }
+
+        .message.level-up {
+            background: #f6ad55;
+            color: white;
+            font-size: 1.3em;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .words-found {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f7fafc;
+            border-radius: 8px;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+
+        .words-found h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+
+        .word-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+        }
+
+        .found-word {
+            background: #667eea;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 5px;
+            font-size: 0.9em;
+        }
+
+        .file-input-section {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f7fafc;
+            border-radius: 8px;
+            border: 2px dashed #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Word Slider Puzzle</h1>
+        <p class="info">Slide letters to form valid words!<br>
+        Words are auto-detected and scored. Grid grows as you level up!</p>
+        
+        <div class="file-input-section" id="fileSection">
+            <div id="loadingMessage" class="message show" 
+                 style="display: block; background:#667eea; color:white;">
+                Attempting to load **CSW19.txt** dictionary...
+            </div>
+        </div>
+
+        <div class="stats">
+            <div class="stat-item">
+                <span class="stat-label">Score</span>
+                <span class="stat-value" id="score">0</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Level</span>
+                <span class="stat-value" id="level">1</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Grid Size</span>
+                <span class="stat-value" id="gridSize">5x5</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-label">Words Found</span>
+                <span class="stat-value" id="wordCount">0</span>
+            </div>
+        </div>
+        
+        <div class="puzzle-grid" id="puzzleGrid"></div>
+
+        <div class="buttons">
+            <button class="new-game-btn" onclick="newGame()">New Game</button>
+        </div>
+
+        <div class="message" id="message"></div>
+
+        <div class="words-found">
+            <h3>Recent Words:</h3>
+            <div class="word-list" id="wordList"></div>
+        </div>
+    </div>
+
+    <script>
+        let dictionary = new Set();
+        let grid = [];
+        let emptyPos = { row: 0, col: 0 };
+        let score = 0;
+        let level = 1;
+        let gridSize = 5;
+        let wordsFound = [];
+        let tileSize = 70;
+        let availableLetters = [];
+        let dictionaryLoaded = false;
+
+        // Weighted letter distribution based on Scrabble frequencies
+        const letterWeights = {
+            'E': 12, 'A': 9, 'I': 9, 'O': 8, 'N': 6, 'R': 6, 'T': 6, 'L': 4, 'S': 4, 'U': 4,
+            'D': 4, 'G': 3, 'B': 2, 'C': 2, 'M': 2, 'P': 2, 'F': 2, 'H': 2, 'V': 2, 'W': 2,
+            'Y': 2, 'K': 1, 'J': 1, 'X': 1, 'Q': 1, 'Z': 1
+        };
+
+        // Load dictionary automatically on page load
+        async function loadDictionary() {
+            try {
+                // The fetch request to the server
+                const response = await fetch('CSW19.txt');
+                if (!response.ok) {
+                    // This handles 404 (Not Found) or 403 (Forbidden) errors
+                    throw new Error(`Server status: ${response.status} (${response.statusText})`);
+                }
+                const text = await response.text();
+                const words = text.split(/\r?\n/).map(w => w.trim().toUpperCase()).filter(w => w.length >= 3);
+                dictionary = new Set(words);
+                dictionaryLoaded = true;
+                
+                // Success updates
+                const loadingMessageElement = document.getElementById('loadingMessage');
+                loadingMessageElement.style.display = 'none';
+                loadingMessageElement.classList.remove('show');
+
+                showMessage(`Dictionary loaded: ${dictionary.size.toLocaleString()} words! Starting game...`, 'success');
+                initGame();
+            } catch (error) {
+                // Error updates
+                const loadingMessageElement = document.getElementById('loadingMessage');
+                loadingMessageElement.textContent = `Error: Could not load CSW19.txt. Check Console (F12) for details.`;
+                loadingMessageElement.style.background = '#f56565';
+                loadingMessageElement.style.color = 'white';
+                console.error('Dictionary loading failed:', error.message);
+                
+                // Show manual upload instruction on failure
+                const fileSection = document.getElementById('fileSection');
+                fileSection.innerHTML += `
+                    <label class="file-label" style="color:white; margin-top: 10px;">
+                        As a backup, please upload CSW19.txt manually:
+                    </label>
+                    <input type="file" id="dictionaryFile" class="file-input" accept=".txt">
+                `;
+                document.getElementById('dictionaryFile').addEventListener('change', handleManualUpload);
+            }
+        }
+
+        function handleManualUpload(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const text = event.target.result;
+                    const words = text.split(/\r?\n/).map(w => w.trim().toUpperCase()).filter(w => w.length >= 3);
+                    dictionary = new Set(words);
+                    dictionaryLoaded = true;
+                    document.getElementById('loadingMessage').style.display = 'none';
+                    showMessage(`Dictionary loaded: ${dictionary.size.toLocaleString()} words!`, 'success');
+                    initGame();
+                };
+                reader.readAsText(file);
+            }
+        }
+        
+        function createLetterPool() {
+            const pool = [];
+            for (const [letter, weight] of Object.entries(letterWeights)) {
+                for (let i = 0; i < weight; i++) {
+                    pool.push(letter);
+                }
+            }
+            return pool;
+        }
+
+        function getRandomLetter() {
+            if (availableLetters.length === 0) {
+                availableLetters = createLetterPool();
+            }
+            const index = Math.floor(Math.random() * availableLetters.length);
+            const letter = availableLetters[index];
+            availableLetters.splice(index, 1);
+            return letter;
+        }
+
+        function initGame() {
+            if (!dictionaryLoaded) {
+                // This shouldn't be reached if loadDictionary is successful
+                return;
+            }
+            grid = [];
+            availableLetters = createLetterPool();
+            const totalTiles = gridSize * gridSize;
+            
+            for (let i = 0; i < gridSize; i++) {
+                grid[i] = [];
+                for (let j = 0; j < gridSize; j++) {
+                    const index = i * gridSize + j;
+                    grid[i][j] = index < totalTiles - 1 ? getRandomLetter() : '';
+                }
+            }
+            
+            emptyPos = { row: gridSize - 1, col: gridSize - 1 };
+            
+            updateTileSize();
+            renderGrid();
+        }
+
+        function updateTileSize() {
+            if (gridSize <= 5) tileSize = 70;
+            else if (gridSize <= 6) tileSize = 60;
+            else if (gridSize <= 7) tileSize = 50;
+            else tileSize = 45;
+            // Set grid styles dynamically based on size
+            document.getElementById('puzzleGrid').style.gridTemplateColumns = `repeat(${gridSize}, ${tileSize}px)`;
+        }
+
+        function moveTile(row, col) {
+            const rowDiff = Math.abs(row - emptyPos.row);
+            const colDiff = Math.abs(col - emptyPos.col);
+            
+            if ((rowDiff === 1 && colDiff === 0) || (rowDiff === 0 && colDiff === 1)) {
+                grid[emptyPos.row][emptyPos.col] = grid[row][col];
+                grid[row][col] = '';
+                emptyPos = { row, col };
+                
+                checkForWords();
+                renderGrid();
+                return true;
+            }
+            return false;
+        }
+
+        function checkForWords() {
+            if (!dictionaryLoaded) return;
+
+            // Check all rows
+            for (let i = 0; i < gridSize; i++) {
+                const rowStr = grid[i].join('');
+                // If a word is found, it replaces the tiles and rerenders, so we stop checking other words
+                if (checkStringForWords(rowStr, i, 'row')) return;
+            }
+
+            // Check all columns
+            for (let j = 0; j < gridSize; j++) {
+                let colStr = '';
+                for (let i = 0; i < gridSize; i++) {
+                    colStr += grid[i][j];
+                }
+                if (checkStringForWords(colStr, j, 'col')) return;
+            }
+        }
+
+        function checkStringForWords(str, index, type) {
+            // Check all substrings of length 3 or more
+            for (let start = 0; start < str.length; start++) {
+                for (let end = start + 3; end <= str.length; end++) {
+                    const substring = str.substring(start, end);
+                    // Skip if contains empty tile or is not a valid word format
+                    if (substring.includes('')) continue;
+                    
+                    if (dictionary.has(substring)) {
+                        foundWord(substring, index, start, end - 1, type);
+                        return true; // Word found
+                    }
+                }
+            }
+            return false; // No word found
+        }
+
+        function foundWord(word, lineIndex, startPos, endPos, type) {
+            const points = calculatePoints(word);
+            score += points;
+            wordsFound.push(word);
+            
+            document.getElementById('score').textContent = score;
+            document.getElementById('wordCount').textContent = wordsFound.length;
+            
+            // Add to recent words list (keep last 10)
+            const wordListElement = document.getElementById('wordList');
+            const wordSpan = document.createElement('span');
+            wordSpan.className = 'found-word';
+            wordSpan.textContent = `${word} (+${points})`;
+            wordListElement.insertBefore(wordSpan, wordListElement.firstChild);
+            
+            // Keep only last 10 words
+            while (wordListElement.children.length > 10) {
+                wordListElement.removeChild(wordListElement.lastChild);
+            }
+            
+            showMessage(`⭐ ${word} found! +${points} points`, 'success');
+
+            // Highlight the word tiles briefly
+            highlightWord(lineIndex, startPos, endPos, type);
+
+            // Replace the word tiles with new letters after a delay
+            setTimeout(() => {
+                replaceWordTiles(lineIndex, startPos, endPos, type);
+                checkLevelUp();
+            }, 1000);
+        }
+
+        function highlightWord(lineIndex, startPos, endPos, type) {
+            const gridElement = document.getElementById('puzzleGrid');
+            const tiles = gridElement.children;
+            
+            for (let pos = startPos; pos <= endPos; pos++) {
+                let tileIndex;
+                if (type === 'row') {
+                    tileIndex = lineIndex * gridSize + pos;
+                } else {
+                    tileIndex = pos * gridSize + lineIndex;
+                }
+                if (tiles[tileIndex]) {
+                    tiles[tileIndex].classList.add('found');
+                }
+            }
+        }
+
+        function replaceWordTiles(lineIndex, startPos, endPos, type) {
+            for (let pos = startPos; pos <= endPos; pos++) {
+                const newLetter = getRandomLetter();
+                if (type === 'row') {
+                    grid[lineIndex][pos] = newLetter;
+                } else {
+                    grid[pos][lineIndex] = newLetter;
+                }
+            }
+            renderGrid();
+        }
+
+        function renderGrid() {
+            const gridElement = document.getElementById('puzzleGrid');
+            gridElement.innerHTML = '';
+            
+            for (let i = 0; i < gridSize; i++) {
+                for (let j = 0; j < gridSize; j++) {
+                    const tile = document.createElement('button');
+                    tile.className = grid[i][j] === '' ? 'tile empty' : 'tile';
+                    tile.textContent = grid[i][j];
+                    tile.style.width = `${tileSize}px`;
+                    tile.style.height = `${tileSize}px`;
+                    tile.style.fontSize = `${tileSize * 0.4}px`;
+                    tile.onclick = () => {
+                        moveTile(i, j);
+                    };
+                    gridElement.appendChild(tile);
+                }
+            }
+        }
+
+        function calculatePoints(word) {
+            return word.length * word.length;
+        }
+
+        function checkLevelUp() {
+            const newLevel = Math.floor(score / 100) + 1;
+            if (newLevel > level) {
+                level = newLevel;
+                const oldSize = gridSize;
+                gridSize = Math.min(4 + level, 10);
+                
+                document.getElementById('level').textContent = level;
+                document.getElementById('gridSize').textContent = `${gridSize}x${gridSize}`;
+                
+                if (gridSize > oldSize) {
+                    showMessage(`🚀 LEVEL UP! Grid now ${gridSize}x${gridSize}! 🚀`, 'level-up');
+                    setTimeout(() => {
+                        initGame();
+                    }, 2000);
+                } else {
+                    showMessage(`⭐ Level ${level}! Keep going! ⭐`, 'level-up');
+                }
+            }
+        }
+
+        function showMessage(text, type) {
+            const messageElement = document.getElementById('message');
+            messageElement.textContent = text;
+            messageElement.className = `message ${type} show`;
+            
+            setTimeout(() => {
+                messageElement.classList.remove('show');
+            }, 2500);
+        }
+
+        function newGame() {
+            if (!dictionaryLoaded) {
+                 showMessage('Please wait for the dictionary to load, or upload it manually if the load failed.', 'error');
+                 return;
+            }
+            if (score > 0 && !confirm('Start a new game? Your current progress will be lost.')) {
+                return;
+            }
+            
+            score = 0;
+            level = 1;
+            gridSize = 5;
+            wordsFound = [];
+            
+            document.getElementById('score').textContent = score;
+            document.getElementById('level').textContent = level;
+            document.getElementById('gridSize').textContent = `${gridSize}x${gridSize}`;
+            document.getElementById('wordCount').textContent = 0;
+            document.getElementById('wordList').innerHTML = '';
+            
+            initGame();
+            showMessage('New game started!', 'success');
+        }
+
+        // Start the automatic dictionary loading process
+        loadDictionary();
+    </script>
+</body>
+</html>

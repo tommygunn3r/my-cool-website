@@ -1,0 +1,31 @@
+/* --- Glow Effect CSS --- */
+
+/* Define the animation for the pulsing glow */
+@keyframes pulse-glow {
+    0% { filter: drop-shadow(0 0 5px rgba(0, 255, 255, 0.4)); }
+    50% { filter: drop-shadow(0 0 12px rgba(0, 255, 255, 0.8)); }
+    100% { filter: drop-shadow(0 0 5px rgba(0, 255, 255, 0.4)); }
+}
+
+/* This class is toggled by JavaScript when the user hovers */
+.arcade-glow .preview-container img {
+    /* The animation applies only to the image inside the preview screen */
+    animation: pulse-glow 1.5s infinite alternate; 
+}
+
+/* Optional: Add a light CRT screen scanline look to the image */
+.arcade-glow .preview-container img::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: repeating-linear-gradient(
+        transparent,
+        rgba(0, 0, 0, 0.2) 1px,
+        transparent 2px
+    );
+    opacity: 0.5;
+    pointer-events: none; /* Allows clicks to pass through */
+}

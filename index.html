@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arcade Game Launcher</title>
+    <!-- Load Tailwind CSS via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* --- 1. Background and Base Styling --- */
+        body {
+            background-color: #0d0a14;
+            /* Starry night effect using radial gradients */
+            background-image: radial-gradient(circle at center, #1b0f32 0%, #0d0a14 100%);
+            overflow: hidden; /* Prevent body scroll on main page */
+            color: white;
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            user-select: none; /* Prevent accidental text selection during swiping/scrolling */
+        }
+
+        /* --- 2. 3D Scene Setup --- */
+        .scene {
+            /* Establish perspective for 3D effect */
+            perspective: 1000px; 
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .carousel {
+            /* Position and rotation container */
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d; /* Key for 3D children */
+            transition: transform 0.8s ease-out; /* Smooth rotation animation */
+        }
+
+        /* --- 3. Arcade Item Positioning and Sizing --- */
+        .arcade-item {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            /* Desktop/Default Size and Offset */
+            width: 400px;
+            height: 650px;
+            margin: -325px 0 0 -200px; 
+            
+            /* Initial transformation for placement in the circle */
+            backface-visibility: hidden;
+            transition: opacity 0.4s ease, transform 0.4s ease; /* Smooth size/position changes */
+        }
+
+        .arcade-image {
+            width: 100%;
+            height: 600px;
+            object-fit: contain;
+            cursor: pointer;
+            box-shadow: 0 0 40px rgba(0, 255, 255, 0.5); /* Neon glow effect */
+        }
+        
+        /* Ensure the link wraps the image */
+        .arcade-item a {
+            display: block;
+        }
+
+        /* Mobile Adjustments */
+        @media (max-width: 640px) {
+            .scene {
+                perspective: 600px; /* Tighter perspective for narrow screen */
+            }
+            .arcade-item {
+                /* Smaller size and adjusted offset for mobile */
+                width: 250px;
+                height: 400px;
+                margin: -200px 0 0 -125px; 
+            }
+            .arcade-image {
+                height: 350px;
+            }
+        }
+
+        /* Full page height for main content */
+        .full-page-main {
+            min-height: 100vh;
+        }
+
+        /* Style for the game overlay's close button */
+        .close-btn {
+            z-index: 1050; /* Above the iframe */
+            top: 1rem;
+            right: 1rem;
+            padding: 0.5rem 1rem;
+            background-color: #e74c3c;
+            color: white;
+            border-radius: 9999px;
+            font-weight: bold;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);
+            transition: background-color 0.2s;
+            /* Mobile adjustment */
+            font-size: 0.8rem;
+        }
+        .close-btn:hover {
+            background-color: #c0392b;
+        }
+        @media (max-width: 640px) {
+            .close-btn {
+                top: 0.5rem;
+                right: 0.5rem;
+                padding: 0.4rem 0.8rem;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased">
+
+    <!-- Main 3D Carousel Container -->
+    <main id="main-carousel" class="full-page-main flex-grow flex items-center justify-center p-4 overflow-hidden">
+        <div class="scene w-full h-full">
+            <div id="carousel" class="carousel">
+                
+                <!-- --- SQUARIO --- -->
+                <div class="arcade-item game-launcher" data-url="games/squario.html">
+                    <a href="#" onclick="return false;" title="Play Squario">
+                        <img src="previews/arcade-squario.png" alt="Squario Arcade Machine" class="arcade-image rounded-xl border-4 border-blue-500/80">
+                    </a>
+                    <p class="mt-4 text-xl font-bold text-green-400 text-center">SQUARIO</p>
+                </div>
+
+                <!-- --- ASCII DOOM --- -->
+                <div class="arcade-item game-launcher" data-url="games/ascii-doom.html">
+                    <a href="#" onclick="return false;" title="Play ASCII DOOM">
+                        <img src="previews/arcade-doom.png" alt="ASCII DOOM Arcade Machine" class="arcade-image rounded-xl border-4 border-red-600/80">
+                    </a>
+                    <p class="mt-4 text-xl font-bold text-red-400 text-center">ASCII DOOM</p>
+                </div>
+
+                <!-- --- SPACE SHOOTER --- -->
+                <div class="arcade-item game-launcher" data-url="games/shooter.html">
+                    <a href="#" onclick="return false;" title="Play Space Shooter">
+                        <img src="previews/arcade-shooter.png" alt="Space Shooter Arcade Machine" class="arcade-image rounded-xl border-4 border-indigo-600/80">
+                    </a>
+                    <p class="mt-4 text-xl font-bold text-indigo-400 text-center">SPACE SHOOTER</p>
+                </div>
+
+                <!-- --- WORD RUSH --- -->
+                <div class="arcade-item game-launcher" data-url="games/wordrush.html">
+                    <a href="#" onclick="return false;" title="Play Word Rush">
+                        <!-- UPDATED FILE NAME HERE -->
+                        <img src="previews/arcade-wordrush.png" alt="Word Rush Arcade Machine" class="arcade-image rounded-xl border-4 border-yellow-500/80">
+                    </a>
+                    <p class="mt-4 text-xl font-bold text-yellow-400 text-center">WORD RUSH</p>
+                </div>
+
+                <!-- --- WORD SLIDER --- -->
+                <div class="arcade-item game-launcher" data-url="games/word_slider.html">
+                    <a href="#" onclick="return false;" title="Play Word Slider">
+                        <img src="previews/arcade-slider.png" alt="Word Slider Arcade Machine" class="arcade-image rounded-xl border-4 border-pink-500/80">
+                    </a>
+                    <p class="mt-4 text-xl font-bold text-pink-400 text-center">WORD SLIDER</p>
+                </div>
+
+                <!-- --- THE WATER GAME --- -->
+                <div class="arcade-item game-launcher" data-url="games/water.html">
+                    <a href="#" onclick="return false;" title="Play The Water Game">
+                        <img src="previews/arcade-water.png" alt="The Water Game Arcade Machine" class="arcade-image rounded-xl border-4 border-cyan-500/80">
+                    </a>
+                    <p class="mt-4 text-xl font-bold text-cyan-400 text-center">THE WATER GAME</p>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <!-- Game Overlay (Full Screen Iframe) -->
+    <div id="game-overlay" class="hidden fixed inset-0 bg-black z-40">
+        <!-- Close Button -->
+        <button id="close-game" class="close-btn absolute">
+            Close Game / Back to Arcade
+        </button>
+
+        <!-- Iframe to Load the Game -->
+        <iframe id="game-iframe" class="w-full h-full border-0"></iframe>
+    </div>
+
+    <!-- JavaScript for 3D Carousel Rotation, Wheel, and Touch Input -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const carousel = document.getElementById('carousel');
+            const items = document.querySelectorAll('.arcade-item');
+            const gameLaunchers = document.querySelectorAll('.game-launcher');
+            const gameOverlay = document.getElementById('game-overlay');
+            const gameIframe = document.getElementById('game-iframe');
+            const closeGameButton = document.getElementById('close-game');
+            const mainCarousel = document.getElementById('main-carousel');
+            
+            const numItems = items.length;
+            const angleIncrement = 360 / numItems;
+            let currentAngle = 0;
+
+            // --- 1. Determine Dynamic Radius based on screen size ---
+            function getRadius() {
+                // Use a smaller radius on mobile to keep items visible and contained
+                return window.innerWidth <= 640 ? 250 : 400; 
+            }
+
+            // --- 2. Position Items in 3D Space (The Circle Setup) ---
+            function positionItems() {
+                const radius = getRadius();
+                items.forEach((item, index) => {
+                    const angle = index * angleIncrement;
+                    item.style.transform = `
+                        rotateY(${angle}deg) 
+                        translateZ(${radius}px)
+                    `;
+                });
+            }
+
+            // --- 3. Handle Rotation (The Scroll Wheel & Swipe Logic) ---
+            function rotateCarousel(direction) {
+                if (direction === 'left' || direction === 'up') {
+                    currentAngle += angleIncrement; // Rotate clockwise
+                } else if (direction === 'right' || direction === 'down') {
+                    currentAngle -= angleIncrement; // Rotate counter-clockwise
+                }
+                
+                carousel.style.transform = `rotateY(${currentAngle}deg)`;
+            }
+
+            // --- 4. Event Listener for Mouse Wheel ---
+            window.addEventListener('wheel', (e) => {
+                // Only allow rotation if the game overlay is NOT visible
+                if (gameOverlay.classList.contains('hidden')) {
+                    e.preventDefault(); 
+                    if (Math.abs(e.deltaY) > 10) { 
+                        if (!carousel.isRotating) {
+                             carousel.isRotating = true;
+                             if (e.deltaY > 0) {
+                                 rotateCarousel('up');
+                             } else {
+                                 rotateCarousel('down');
+                             }
+                             // Reset the flag after the transition duration
+                             setTimeout(() => {
+                                 carousel.isRotating = false;
+                             }, 800); 
+                        }
+                    }
+                }
+            }, { passive: false });
+
+            // --- 5. Touch/Swipe Handling for Mobile ---
+            let touchStartX = 0;
+            const swipeThreshold = 50; // Minimum distance for a swipe
+
+            mainCarousel.addEventListener('touchstart', (e) => {
+                if (e.touches.length === 1 && gameOverlay.classList.contains('hidden')) {
+                    touchStartX = e.touches[0].clientX;
+                }
+            }, { passive: true });
+
+            mainCarousel.addEventListener('touchend', (e) => {
+                if (e.changedTouches.length === 1 && gameOverlay.classList.contains('hidden')) {
+                    const touchEndX = e.changedTouches[0].clientX;
+                    const swipeDistance = touchEndX - touchStartX;
+
+                    if (Math.abs(swipeDistance) > swipeThreshold) {
+                        if (swipeDistance > 0) {
+                            // Swipe Right: Rotate left (previous game)
+                            rotateCarousel('left'); 
+                        } else {
+                            // Swipe Left: Rotate right (next game)
+                            rotateCarousel('right'); 
+                        }
+                    }
+                }
+            });
+
+
+            // --- 6. Game Launcher Click Handler ---
+            gameLaunchers.forEach(launcher => {
+                launcher.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const gameUrl = launcher.dataset.url;
+                    
+                    if (gameUrl) {
+                        gameIframe.src = gameUrl;
+                        gameOverlay.classList.remove('hidden');
+                        document.body.style.overflow = 'hidden'; // Lock background scroll
+                    }
+                });
+            });
+
+            // --- 7. Close Game Handler ---
+            closeGameButton.addEventListener('click', () => {
+                gameOverlay.classList.add('hidden');
+                gameIframe.src = 'about:blank'; // Clear the iframe content
+                document.body.style.overflow = 'auto'; // Restore body scroll
+            });
+
+            // --- 8. Handle Resize for Responsiveness ---
+            let resizeTimer;
+            window.addEventListener('resize', () => {
+                clearTimeout(resizeTimer);
+                resizeTimer = setTimeout(positionItems, 100);
+            });
+
+
+            // Initialize the carousel positions
+            positionItems();
+        });
+    </script> 
+</body>
+</html>
