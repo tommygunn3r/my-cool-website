@@ -31,21 +31,18 @@
             text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
             z-index: 10;
         }
-        
-        /* <<< --- CSS FOR TITLE UPDATED --- >>> */
         #title {
             position: absolute;
             top: 20px;
-            left: 50%; /* Changed from right: 20px */
-            transform: translateX(-50%); /* Added to center */
+            left: 50%; /* Center horizontally */
+            transform: translateX(-50%);
             color: white;
             font-size: 36px;
+            font-weight: bold;
             text-shadow: 3px 3px 6px rgba(0,0,0,0.7);
             z-index: 10;
             font-family: 'Arial Black', Impact, sans-serif;
         }
-        /* <<< --- END OF CSS UPDATE --- >>> */
-
         #gameOver {
             position: absolute;
             top: 50%;
@@ -327,10 +324,12 @@
             // Reset score and lives for a new game
             gameState.score = 0;
             gameState.lives = 3;
+            lastTime = 0; // Reset time delta
             loadLevel(0); // Load level 1
         }
 
-        // Player
+        // Player - UPDATED FOR DELTA TIME
+        // Speed is now pixels per second
         const player = {
             x: 100,
             y: 400,
@@ -342,27 +341,28 @@
             powerHeight: 40,
             vx: 0,
             vy: 0,
-            speed: 5,
-            runSpeed: 8,
-            jumpPower: 15,
+            speed: 300,       // Was 5 per frame -> 300 per sec
+            runSpeed: 480,    // Was 8 per frame -> 480 per sec
+            jumpPower: 900,   // Adjusted for physics feel
+            gravity: 2500,    // New gravity constant per sec^2
             onGround: false,
             facingRight: true,
             dying: false,
-            coyoteTime: 6, 
+            coyoteTime: 0.1,  // Seconds
             coyoteTimeCounter: 0,
             jumpKeyHeld: false, 
             jumpCount: 0,
             invincible: false,      
-            invincibleTimer: 0      
+            invincibleTimer: 0 // Seconds     
         };
 
         // Controls
         const keys = {};
         window.addEventListener('keydown', e => {
-            keys[e.code] = true; // Use e.code instead of e.key
+            keys[e.code] = true; 
             if (e.code === 'Space' || e.code === 'ArrowUp') e.preventDefault();
         });
-        window.addEventListener('keyup', e => keys[e.code] = false); // Use e.code
+        window.addEventListener('keyup', e => keys[e.code] = false);
         
         // MOBILE CONTROL LOGIC
         const leftBtn = document.getElementById('left-btn');
@@ -380,7 +380,6 @@
             keys[keyCode] = false;
         }
 
-        // Event Listeners for Mobile Controls
         const controls = [
             { el: leftBtn, key: 'KeyA' },
             { el: rightBtn, key: 'KeyD' },
@@ -401,7 +400,7 @@
                     virtualKeyUp(control.key);
                 }, { passive: false });
                 
-                control.el.addEventListener('contextmenu', (e) => e.preventDefault()); // Prevent long-press menu
+                control.el.addEventListener('contextmenu', (e) => e.preventDefault()); 
             }
         });
 
@@ -416,20 +415,17 @@
                 return;
             }
 
-            // 1. Deep copy the level data from the template
             const template = levelTemplates[levelIndex];
             liveLevelData.main = JSON.parse(JSON.stringify(template.main));
             liveLevelData.bonus = JSON.parse(JSON.stringify(template.bonus));
             
-            // 2. Reset game state for the new level
             gameState.currentLevelIndex = levelIndex;
             gameState.currentRoom = 'main';
             gameState.camera = 0;
-            gameState.time = 300; // Reset time
-            gameState.powerUp = false; // Start small
+            gameState.time = 300; 
+            gameState.powerUp = false; 
             gameState.gameRunning = true;
 
-            // 3. Reset player
             player.x = 100;
             player.y = 400;
             player.vx = 0;
@@ -443,7 +439,6 @@
             player.invincible = false;
             player.invincibleTimer = 0;
             
-            // 4. Handle UI and Music
             document.getElementById('gameOver').style.display = 'none';
             document.getElementById('startScreen').style.display = 'none';
             document.getElementById('level').textContent = levelIndex + 1;
@@ -454,7 +449,6 @@
             
             startMusic();
             
-            // 5. Reset timer
             if (timerInterval) clearInterval(timerInterval);
             timerInterval = setInterval(() => {
                 if (gameState.gameRunning) {
@@ -467,22 +461,19 @@
             }, 1000);
         }
 
-        // Gets the "live" room data
         function getCurrentRoom() {
             return liveLevelData[gameState.currentRoom];
         }
 
         function drawPlayer() {
-            // ADDED BLINKING LOGIC
-            if (player.invincible && Math.floor(player.invincibleTimer / 6) % 2 !== 0) {
-                // Don't draw player this frame (blinking)
+            // Blink faster (every 0.1s)
+            if (player.invincible && Math.floor(player.invincibleTimer * 10) % 2 !== 0) {
                 return;
             }
 
             ctx.fillStyle = gameState.powerUp ? '#FFD700' : '#FF0000';
             ctx.fillRect(player.x - gameState.camera, player.y, player.width, player.height);
             
-            // Eyes
             ctx.fillStyle = '#FFFFFF';
             const eyeOffset = player.facingRight ? 8 : -8;
             ctx.fillRect(player.x - gameState.camera + 10 + eyeOffset, player.y + 10, 6, 6);
@@ -492,27 +483,26 @@
             const room = getCurrentRoom();
             
             if (gameState.currentRoom === 'main') {
-                ctx.fillStyle = '#8B4513'; // Brown for main level
+                ctx.fillStyle = '#8B4513';
             } else {
-                ctx.fillStyle = '#787878'; // Gray stone for bonus level
+                ctx.fillStyle = '#787878';
             }
             room.platforms.forEach(p => {
                 ctx.fillRect(p.x - gameState.camera, p.y, p.width, p.height);
             });
 
-            // ? Blocks
             room.blocks.forEach(b => {
                 if (b.hit) {
                     ctx.fillStyle = '#A0A0A0';
                     ctx.fillRect(b.x - gameState.camera, b.y, b.width, b.height);
                 } else if (b.type === 'powerup') {
-                    ctx.fillStyle = '#FF8C00'; // Orange for powerup
+                    ctx.fillStyle = '#FF8C00';
                     ctx.fillRect(b.x - gameState.camera, b.y, b.width, b.height);
                     ctx.fillStyle = '#FFF';
                     ctx.font = '30px Arial';
                     ctx.fillText('P', b.x - gameState.camera + 10, b.y + 32);
-                } else { // Coin
-                    ctx.fillStyle = '#FFD700'; // Yellow for coin
+                } else { 
+                    ctx.fillStyle = '#FFD700';
                     ctx.fillRect(b.x - gameState.camera, b.y, b.width, b.height);
                     ctx.fillStyle = '#FFF';
                     ctx.font = '30px Arial';
@@ -520,7 +510,6 @@
                 }
             });
 
-            // Pipes
             ctx.fillStyle = '#00AA00';
             room.pipes.forEach(p => {
                 ctx.fillRect(p.x - gameState.camera, p.y, p.width, p.height);
@@ -528,22 +517,18 @@
                 ctx.fillRect(p.x - gameState.camera, p.y, p.width, 10);
             });
 
-            // Enemies
             room.enemies.forEach(e => {
                 ctx.fillStyle = '#228B22';
                 ctx.fillRect(e.x - gameState.camera, e.y, e.width, e.height);
-                // Shell pattern
                 ctx.fillStyle = '#FFD700';
                 ctx.fillRect(e.x - gameState.camera + 5, e.y + 5, e.width - 10, e.height - 10);
             });
 
-            // Gaps (show void)
             ctx.fillStyle = '#000000';
             room.gaps.forEach(g => {
                 ctx.fillRect(g.x - gameState.camera, 550, g.width, 50);
             });
 
-            // Stairs
             ctx.fillStyle = '#CD853F';
             room.stairs.forEach(s => {
                 for (let i = 0; i < s.steps; i++) {
@@ -558,7 +543,6 @@
                 }
             });
 
-            // Flagpole
             if (room.flagpole) {
                 ctx.fillStyle = '#444444';
                 ctx.fillRect(room.flagpole.x - gameState.camera, room.flagpole.y, 10, room.flagpole.height);
@@ -567,34 +551,35 @@
             }
         }
 
-        function update() {
-            if (!gameState.gameRunning || !liveLevelData.main) return; // Don't run if level isn't loaded
+        // UPDATED UPDATE FUNCTION with Delta Time (dt)
+        function update(dt) {
+            if (!gameState.gameRunning || !liveLevelData.main) return; 
 
             const room = getCurrentRoom();
 
             // Handle death animation
             if (player.dying) {
-                player.vy += 0.8;
-                player.y += player.vy;
+                // Use physics for death animation too, roughly
+                player.vy += player.gravity * dt;
+                player.y += player.vy * dt;
                 
-                // Check if player fell off screen
-                if (player.y > canvas.height + 100) {
+                // Check if player fell well below screen
+                if (player.y > canvas.height + 500) {
                     player.dying = false;
                     gameState.lives--;
                     
                     if (gameState.lives <= 0) {
                         endGame(false);
                     } else {
-                        // Respawn
-                        loadLevel(gameState.currentLevelIndex); // <<< RELOAD CURRENT LEVEL
+                        loadLevel(gameState.currentLevelIndex);
                     }
                 }
-                return; // Don't process other updates during death
+                return; 
             }
 
-            // ADDED INVINCIBILITY TIMER
+            // Invincibility Timer (seconds)
             if (player.invincible) {
-                player.invincibleTimer--;
+                player.invincibleTimer -= dt;
                 if (player.invincibleTimer <= 0) {
                     player.invincible = false;
                 }
@@ -609,65 +594,65 @@
                 player.height = player.baseHeight;
             }
 
-            // PLAYER MOVEMENT UPDATED WITH RUN (using e.code)
-            // Check for either left or right shift key
+            // PLAYER MOVEMENT
             const isRunning = keys['ShiftLeft'] || keys['ShiftRight'];
             const currentSpeed = isRunning ? player.runSpeed : player.speed;
             
-            if (keys['ArrowLeft'] || keys['KeyA']) { // Use e.code
+            if (keys['ArrowLeft'] || keys['KeyA']) {
                 player.vx = -currentSpeed;
                 player.facingRight = false;
-            } else if (keys['ArrowRight'] || keys['KeyD']) { // Use e.code
+            } else if (keys['ArrowRight'] || keys['KeyD']) { 
                 player.vx = currentSpeed;
                 player.facingRight = true;
             } else {
                 player.vx = 0;
             }
 
-            // --- COYOTE TIME LOGIC ---
+            // --- COYOTE TIME LOGIC (seconds) ---
             if (player.onGround) {
                 player.coyoteTimeCounter = player.coyoteTime;
             } else {
-                player.coyoteTimeCounter--;
+                player.coyoteTimeCounter -= dt;
             }
 
-            // Jump (using e.code)
+            // Jump
             const jumpKeyActive = (keys['Space'] || keys['ArrowUp'] || keys['KeyW']);
 
-            if (jumpKeyActive && !player.jumpKeyHeld) { // Key was just pressed
+            if (jumpKeyActive && !player.jumpKeyHeld) { 
                 player.jumpKeyHeld = true;
                 
-                if (player.onGround || player.coyoteTimeCounter > 0) { // First Jump
+                if (player.onGround || player.coyoteTimeCounter > 0) { 
                     player.vy = -player.jumpPower;
                     player.onGround = false;
                     player.coyoteTimeCounter = 0;
                     playSound('jump');
                     player.jumpCount = 1;
-                } else if (gameState.powerUp && player.jumpCount < 2) { // Double Jump
-                    player.vy = -player.jumpPower; // Full power jump
+                } else if (gameState.powerUp && player.jumpCount < 2) { 
+                    player.vy = -player.jumpPower; 
                     playSound('jump');
                     player.jumpCount = 2;
                 }
             }
-            if (!jumpKeyActive) { // Key was released
+            if (!jumpKeyActive) { 
                 player.jumpKeyHeld = false;
             }
 
-
-            // Gravity
-            player.vy += 0.8;
-            player.y += player.vy;
-            player.x += player.vx;
+            // Gravity and Position Integration
+            player.vy += player.gravity * dt;
+            player.y += player.vy * dt;
+            player.x += player.vx * dt;
 
             // Collision with platforms
             player.onGround = false;
             room.platforms.forEach(p => {
                 if (player.x + player.width > p.x && player.x < p.x + p.width) {
-                    if (player.y + player.height > p.y && player.y + player.height < p.y + 20 && player.vy > 0) {
+                    // Check if we are falling onto the platform
+                    // Tolerance is adjusted for high speed falling
+                    if (player.y + player.height > p.y && player.y + player.height < p.y + 40 && player.vy > 0) {
                         player.y = p.y - player.height;
                         player.vy = 0;
                         player.onGround = true;
-                        player.jumpCount = 0; // RESET JUMP COUNT
+                        player.jumpCount = 0;
                     }
                 }
             });
@@ -675,11 +660,11 @@
             // Collision with blocks (stand on top)
             room.blocks.forEach(b => {
                 if (player.x + player.width > b.x && player.x < b.x + b.width) {
-                    if (player.y + player.height > b.y && player.y + player.height < b.y + 20 && player.vy > 0) {
+                    if (player.y + player.height > b.y && player.y + player.height < b.y + 40 && player.vy > 0) {
                         player.y = b.y - player.height;
                         player.vy = 0;
                         player.onGround = true;
-                        player.jumpCount = 0; // RESET JUMP COUNT
+                        player.jumpCount = 0;
                     }
                 }
             });
@@ -687,11 +672,11 @@
             // Collision with pipes (stand on top)
             room.pipes.forEach(p => {
                 if (player.x + player.width > p.x && player.x < p.x + p.width) {
-                    if (player.y + player.height > p.y && player.y + player.height < p.y + 20 && player.vy > 0) {
+                    if (player.y + player.height > p.y && player.y + player.height < p.y + 40 && player.vy > 0) {
                         player.y = p.y - player.height;
                         player.vy = 0;
                         player.onGround = true;
-                        player.jumpCount = 0; // RESET JUMP COUNT
+                        player.jumpCount = 0;
                     }
                 }
             });
@@ -705,11 +690,11 @@
                     const stepY = 550 - (i + 1) * stepHeight;
                     
                     if (player.x + player.width > stepX && player.x < stepX + stepWidth) {
-                        if (player.y + player.height > stepY && player.y + player.height < stepY + 20 && player.vy > 0) {
+                        if (player.y + player.height > stepY && player.y + player.height < stepY + 40 && player.vy > 0) {
                             player.y = stepY - player.height;
                             player.vy = 0;
                             player.onGround = true;
-                            player.jumpCount = 0; // RESET JUMP COUNT
+                            player.jumpCount = 0; 
                         }
                     }
                 }
@@ -718,6 +703,7 @@
             // Block collision (bottom)
             room.blocks.forEach(b => {
                 if (!b.hit && player.x + player.width > b.x && player.x < b.x + b.width) {
+                    // Check upwards collision
                     if (player.y < b.y + b.height && player.y > b.y && player.vy < 0) {
                         player.vy = 0;
                         player.y = b.y + b.height;
@@ -727,34 +713,31 @@
                         if (b.type === 'powerup') {
                             gameState.powerUp = true;
                             playSound('powerup');
-                        } else { // 'coin' or undefined
+                        } else { 
                             playSound('coin');
                         }
                     }
                 }
             });
 
-            // UPDATED PIPE ENTRY LOGIC (using e.code)
+            // PIPE ENTRY LOGIC
             room.pipes.forEach(p => {
                 if (player.x + player.width > p.x && player.x < p.x + p.width &&
                     player.y + player.height >= p.y && player.y + player.height <= p.y + 10) {
-                    if (keys['ArrowDown'] || keys['KeyS']) { // Use e.code
+                    if (keys['ArrowDown'] || keys['KeyS']) { 
                         playSound('pipe');
                         
                         if (p.dest === 'bonus') {
-                            // Going TO the bonus room
-                            gameState.returnX = p.exitX; // Store the exit X
-                            gameState.returnY = p.exitY; // Store the exit Y
+                            gameState.returnX = p.exitX;
+                            gameState.returnY = p.exitY;
                             gameState.currentRoom = 'bonus';
-                            player.x = 100; // Start position in bonus room
+                            player.x = 100; 
                             player.y = 400;
                             gameState.camera = 0;
                         } else if (p.dest === 'main') {
-                            // Returning FROM the bonus room
                             gameState.currentRoom = 'main';
-                            player.x = gameState.returnX; // Use stored X
-                            player.y = gameState.returnY; // Use stored Y
-                            // Adjust camera to be centered on the player
+                            player.x = gameState.returnX; 
+                            player.y = gameState.returnY; 
                             gameState.camera = Math.max(0, player.x - 400); 
                         }
                     }
@@ -763,9 +746,11 @@
 
             // Enemy AI and collision
             room.enemies.forEach(e => {
-                e.x += e.vx;
+                // Move enemy using dt. Note: e.vx in level data is small (2).
+                // We multiply by 60 to get pixels/sec approx for compatibility.
+                e.x += (e.vx * 60) * dt;
                 
-                // Check collision with pipes (turn around)
+                // Turn around at pipes
                 let hitPipe = false;
                 room.pipes.forEach(p => {
                     if (e.x + e.width > p.x && e.x < p.x + p.width &&
@@ -776,10 +761,10 @@
                 
                 if (hitPipe) {
                     e.vx *= -1;
-                    e.x += e.vx * 2; // Move away from pipe
+                    e.x += (e.vx * 60) * dt * 2; // Bump away
                 }
                 
-                // Enemy turns around at edges
+                // Turn around at edges
                 let onPlatform = false;
                 room.platforms.forEach(p => {
                     if (e.x + e.width > p.x && e.x < p.x + p.width &&
@@ -792,28 +777,26 @@
                     e.vx *= -1;
                 }
 
-                // Player collision with enemy
+                // Player collision
                 if (player.x + player.width > e.x && player.x < e.x + e.width &&
                     player.y + player.height > e.y && player.y < e.y + e.height) {
                     
-                    if (player.vy > 0 && player.y + player.height - e.y < 20) {
+                    if (player.vy > 0 && player.y + player.height - e.y < 40) {
                         // Jump on enemy
                         playSound('stomp');
-                        e.x = -1000; // Remove enemy
-                        player.vy = -10;
+                        e.x = -1000; 
+                        player.vy = -400; // Bounce up
                         gameState.score += 200;
-                    } else if (!player.invincible) { // Only take damage if not invincible
+                    } else if (!player.invincible) { 
                         if (!gameState.powerUp) {
-                            // Hit by enemy - death animation
                             playerDeath();
                         } else {
-                            // Have power-up, just lose it
                             playSound('hit');
                             gameState.powerUp = false;
                             player.width = player.baseWidth;
                             player.height = player.baseHeight;
-                            player.invincible = true; // Grant invincibility
-                            player.invincibleTimer = 90; // For 1.5 seconds (90 frames)
+                            player.invincible = true; 
+                            player.invincibleTimer = 1.5; // 1.5 Seconds
                         }
                     }
                 }
@@ -831,79 +814,69 @@
                 if (player.x + player.width > room.flagpole.x && player.x < room.flagpole.x + 50 &&
                     player.y < room.flagpole.y + room.flagpole.height) {
                     playSound('flagpole');
-                    winLevel(); // Go to next level or win game
+                    winLevel(); 
                 }
             }
 
-            
-            // Camera follow player (no backtracking)
+            // Camera & Bounds
             let targetCameraX = player.x - 400;
             if (targetCameraX > gameState.camera) {
                 gameState.camera = targetCameraX;
             }
 
-            // Keep player in bounds (lock to left edge of camera)
             if (player.x < gameState.camera) {
                 player.x = gameState.camera;
             }
             
-            // <<< --- UPDATED DEATH FLOOR LOGIC --- >>>
-            // Set a fixed "kill floor" far below the ground (e.g., 700)
+            // Fixed Death Floor
             if (player.y > 700 && !player.dying) { 
                 playerDeath();
             }
-            // <<< --- END OF UPDATE --- >>>
-
 
             // Update UI
             document.getElementById('score').textContent = gameState.score;
             document.getElementById('lives').textContent = gameState.lives;
-            document.getElementById('time').textContent = gameState.time;
+            document.getElementById('time').textContent = Math.ceil(gameState.time);
             document.getElementById('highScore').textContent = gameState.highScore; 
         }
 
-        // NEW FUNCTION TO HANDLE WINNING A LEVEL
         function winLevel() {
             gameState.gameRunning = false;
             stopMusic();
-            
-            // Add time bonus
-            let timeBonus = gameState.time * 10;
+            let timeBonus = Math.ceil(gameState.time) * 10;
             gameState.score += timeBonus;
             
             let nextLevelIndex = gameState.currentLevelIndex + 1;
 
             if (nextLevelIndex < levelTemplates.length) {
-                // Go to next level after a short delay
                 setTimeout(() => {
                     loadLevel(nextLevelIndex);
-                }, 2000); // 2-second delay
+                }, 2000); 
             } else {
-                // You beat the last level!
-                endGame(true); // Trigger "Game Complete"
+                endGame(true); 
             }
         }
 
         function playerDeath() {
-            // Check if already dying to prevent multiple triggers
             if (player.dying) return; 
             
-            gameState.gameRunning = false;
+            gameState.gameRunning = false; // Pause regular updates
             player.dying = true;
-            player.vy = -15; // Launch upward
+            player.vy = -900; // Launch upward (physics speed)
             playSound('death');
             stopMusic();
             
-            // Resume game loop to show death animation
+            // Enable a mini-loop just for the death animation if you wanted,
+            // but currently we just let the main loop handle 'dying' state
             setTimeout(() => {
                 gameState.gameRunning = true;
-            }, 100);
+            }, 50);
         }
 
         function endGame(won) {
             gameState.gameRunning = false;
             stopMusic();
-            if (timerInterval) clearInterval(timerInterval); // STOP THE TIMER
+            if (timerInterval) clearInterval(timerInterval); 
             
             const endDiv = document.getElementById('gameOver');
             const endMessage = document.getElementById('endMessage');
@@ -916,75 +889,70 @@
                 endMessage.textContent = 'Game Over!';
             }
             
-            // CHECK AND SET HIGH SCORE
             finalScoreEl.textContent = `Final Score: ${gameState.score}`;
             
             if (gameState.score > gameState.highScore) {
                 gameState.highScore = gameState.score;
                 localStorage.setItem('squarioHighScore', gameState.highScore);
                 highScoreEl.textContent = `New High Score: ${gameState.highScore}!`;
-                highScoreEl.style.color = '#FFD700'; // Make it stand out
+                highScoreEl.style.color = '#FFD700'; 
             } else {
                 highScoreEl.textContent = `High Score: ${gameState.highScore}`;
-                highScoreEl.style.color = 'white'; // Reset color
+                highScoreEl.style.color = 'white'; 
             }
             
             endDiv.style.display = 'block';
         }
 
-        // This function is now for the "Play Again" button after a GAME OVER
         function restartGame() {
             gameState.score = 0;
             gameState.lives = 3;
+            lastTime = 0; // Important reset
             loadLevel(0);
         }
 
         function drawParallaxBackground() {
-            const groundY = 550; // Base ground level from platforms
+            const groundY = 550; 
             
-            // Back layer of hills (moves slowest)
-            ctx.fillStyle = '#0a6c03'; // Dark, distant green
+            ctx.fillStyle = '#0a6c03'; 
             const backHillWidth = 600;
             const backScroll = (gameState.camera * 0.3) % backHillWidth;
 
             for (let i = -1; i < (canvas.width / backHillWidth) + 2; i++) {
                 ctx.beginPath();
-                // Draw rounded hills using arc
                 ctx.arc(i * backHillWidth - backScroll + (backHillWidth / 2), groundY, backHillWidth / 2, Math.PI, 0);
                 ctx.fill();
             }
 
-            // Front layer of hills (moves faster)
-            ctx.fillStyle = '#1a9c04'; // Brighter, closer green
+            ctx.fillStyle = '#1a9c04'; 
             const frontHillWidth = 450;
             const frontScroll = (gameState.camera * 0.5) % frontHillWidth;
             
             for (let i = -1; i < (canvas.width / frontHillWidth) + 2; i++) {
                 ctx.beginPath();
-                // Draw rounded hills using arc, slightly lower to create overlap
                 ctx.arc(i * frontHillWidth - frontScroll + (frontHillWidth / 2), groundY + 20, frontHillWidth / 2, Math.PI, 0); 
                 ctx.fill();
             }
         }
 
+        let lastTime = 0;
 
-        // <<< --- GAMELOOP UPDATED FOR BACKGROUNDS --- >>>
-        function gameLoop() {
+        function gameLoop(timestamp) {
+            // Calculate dt in seconds
+            if (!lastTime) lastTime = timestamp;
+            const dt = (timestamp - lastTime) / 1000;
+            lastTime = timestamp;
+
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
             if (liveLevelData.main && gameState.currentRoom === 'main') {
-                // --- Main Level Background (Sky, Hills, Clouds) ---
-                
-                // Sky
                 ctx.fillStyle = '#5c94fc';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
                 
-                // Hills
                 drawParallaxBackground();
                 
-                // Clouds (made slower to be behind hills)
                 ctx.fillStyle = 'rgba(255, 255, 250, 0.8)';
-                const cloudScroll = (gameState.camera * 0.2) % 1000; // Slowest scroll speed
+                const cloudScroll = (gameState.camera * 0.2) % 1000; 
                 for (let i = 0; i < 5; i++) {
                     const cloudX = (i * 300 - cloudScroll);
                     ctx.beginPath();
@@ -995,41 +963,33 @@
                 }
 
             } else if (liveLevelData.bonus && gameState.currentRoom === 'bonus') {
-                // --- Bonus Level Background (Underground) ---
-                
-                // Solid dark brown background
                 ctx.fillStyle = '#6b4423';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-                // Simple parallax rock pattern (darker brown)
                 ctx.fillStyle = '#4a2f18';
                 const rockScroll = (gameState.camera * 0.2) % 200;
                 for(let i = 0; i < (canvas.width / 100) + 2; i++) {
                     const rockX = (i * 200) - rockScroll;
-                    ctx.fillRect(rockX, 150, 80, 80); // Rock 1
-                    ctx.fillRect(rockX + 90, 350, 60, 60); // Rock 2
-                    ctx.fillRect(rockX + 30, 500, 70, 70); // Rock 3
+                    ctx.fillRect(rockX, 150, 80, 80); 
+                    ctx.fillRect(rockX + 90, 350, 60, 60); 
+                    ctx.fillRect(rockX + 30, 500, 70, 70); 
                 }
             } else {
-                // Fallback for when no level is loaded (e.g., start screen)
                 ctx.fillStyle = '#5c94fc';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
             }
-
             
-            // Only draw/update if a level is loaded
             if (liveLevelData.main) {
                 drawRoom();
                 drawPlayer();
-                update();
+                update(dt); // Pass dt to update
             }
             
             requestAnimationFrame(gameLoop);
         }
 
-        // Don't start the game loop until the assets are theoretically loaded
-        // We just call it directly for this simple game
-        gameLoop();
+        gameLoop(0);
     </script>
 </body>
 </html>
+
