@@ -34,7 +34,7 @@
         #title {
             position: absolute;
             top: 20px;
-            left: 50%; /* Center horizontally */
+            left: 50%;
             transform: translateX(-50%);
             color: white;
             font-size: 36px;
@@ -324,12 +324,11 @@
             // Reset score and lives for a new game
             gameState.score = 0;
             gameState.lives = 3;
-            lastTime = 0; // Reset time delta
-            loadLevel(0); // Load level 1
+            lastTime = 0; 
+            loadLevel(0); 
         }
 
-        // Player - UPDATED FOR DELTA TIME
-        // Speed is now pixels per second
+        // Player
         const player = {
             x: 100,
             y: 400,
@@ -341,19 +340,20 @@
             powerHeight: 40,
             vx: 0,
             vy: 0,
-            speed: 300,       // Was 5 per frame -> 300 per sec
-            runSpeed: 480,    // Was 8 per frame -> 480 per sec
-            jumpPower: 900,   // Adjusted for physics feel
-            gravity: 2500,    // New gravity constant per sec^2
+            speed: 300,       
+            runSpeed: 480,    
+            jumpPower: 900,   
+            gravity: 2500,    
             onGround: false,
             facingRight: true,
             dying: false,
-            coyoteTime: 0.1,  // Seconds
+            coyoteTime: 0.1,  
             coyoteTimeCounter: 0,
             jumpKeyHeld: false, 
             jumpCount: 0,
             invincible: false,      
-            invincibleTimer: 0 // Seconds     
+            invincibleTimer: 0,
+            pipeCooldown: 0 // <<< ADDED PIPE COOLDOWN
         };
 
         // Controls
@@ -438,6 +438,7 @@
             player.jumpCount = 0;
             player.invincible = false;
             player.invincibleTimer = 0;
+            player.pipeCooldown = 0; // <<< RESET COOLDOWN
             
             document.getElementById('gameOver').style.display = 'none';
             document.getElementById('startScreen').style.display = 'none';
@@ -466,7 +467,6 @@
         }
 
         function drawPlayer() {
-            // Blink faster (every 0.1s)
             if (player.invincible && Math.floor(player.invincibleTimer * 10) % 2 !== 0) {
                 return;
             }
@@ -551,7 +551,6 @@
             }
         }
 
-        // UPDATED UPDATE FUNCTION with Delta Time (dt)
         function update(dt) {
             if (!gameState.gameRunning || !liveLevelData.main) return; 
 
@@ -559,11 +558,9 @@
 
             // Handle death animation
             if (player.dying) {
-                // Use physics for death animation too, roughly
                 player.vy += player.gravity * dt;
                 player.y += player.vy * dt;
                 
-                // Check if player fell well below screen
                 if (player.y > canvas.height + 500) {
                     player.dying = false;
                     gameState.lives--;
@@ -577,12 +574,17 @@
                 return; 
             }
 
-            // Invincibility Timer (seconds)
+            // Timers
             if (player.invincible) {
                 player.invincibleTimer -= dt;
                 if (player.invincibleTimer <= 0) {
                     player.invincible = false;
                 }
+            }
+
+            // <<< --- PIPE COOLDOWN UPDATE --- >>>
+            if (player.pipeCooldown > 0) {
+                player.pipeCooldown -= dt;
             }
             
             // Power up size change
@@ -646,8 +648,6 @@
             player.onGround = false;
             room.platforms.forEach(p => {
                 if (player.x + player.width > p.x && player.x < p.x + p.width) {
-                    // Check if we are falling onto the platform
-                    // Tolerance is adjusted for high speed falling
                     if (player.y + player.height > p.y && player.y + player.height < p.y + 40 && player.vy > 0) {
                         player.y = p.y - player.height;
                         player.vy = 0;
@@ -720,12 +720,15 @@
                 }
             });
 
-            // PIPE ENTRY LOGIC
+            // <<< --- UPDATED PIPE ENTRY LOGIC WITH COOLDOWN --- >>>
             room.pipes.forEach(p => {
                 if (player.x + player.width > p.x && player.x < p.x + p.width &&
                     player.y + player.height >= p.y && player.y + player.height <= p.y + 10) {
-                    if (keys['ArrowDown'] || keys['KeyS']) { 
+                    
+                    // Check cooldown before allowing entry
+                    if ((keys['ArrowDown'] || keys['KeyS']) && player.pipeCooldown <= 0) { 
                         playSound('pipe');
+                        player.pipeCooldown = 1.0; // Set 1 second cooldown
                         
                         if (p.dest === 'bonus') {
                             gameState.returnX = p.exitX;
@@ -743,14 +746,12 @@
                     }
                 }
             });
+            // <<< --- END PIPE LOGIC --- >>>
 
             // Enemy AI and collision
             room.enemies.forEach(e => {
-                // Move enemy using dt. Note: e.vx in level data is small (2).
-                // We multiply by 60 to get pixels/sec approx for compatibility.
                 e.x += (e.vx * 60) * dt;
                 
-                // Turn around at pipes
                 let hitPipe = false;
                 room.pipes.forEach(p => {
                     if (e.x + e.width > p.x && e.x < p.x + p.width &&
@@ -761,10 +762,9 @@
                 
                 if (hitPipe) {
                     e.vx *= -1;
-                    e.x += (e.vx * 60) * dt * 2; // Bump away
+                    e.x += (e.vx * 60) * dt * 2; 
                 }
                 
-                // Turn around at edges
                 let onPlatform = false;
                 room.platforms.forEach(p => {
                     if (e.x + e.width > p.x && e.x < p.x + p.width &&
@@ -777,15 +777,13 @@
                     e.vx *= -1;
                 }
 
-                // Player collision
                 if (player.x + player.width > e.x && player.x < e.x + e.width &&
                     player.y + player.height > e.y && player.y < e.y + e.height) {
                     
                     if (player.vy > 0 && player.y + player.height - e.y < 40) {
-                        // Jump on enemy
                         playSound('stomp');
                         e.x = -1000; 
-                        player.vy = -400; // Bounce up
+                        player.vy = -400; 
                         gameState.score += 200;
                     } else if (!player.invincible) { 
                         if (!gameState.powerUp) {
@@ -796,7 +794,7 @@
                             player.width = player.baseWidth;
                             player.height = player.baseHeight;
                             player.invincible = true; 
-                            player.invincibleTimer = 1.5; // 1.5 Seconds
+                            player.invincibleTimer = 1.5; 
                         }
                     }
                 }
@@ -828,7 +826,6 @@
                 player.x = gameState.camera;
             }
             
-            // Fixed Death Floor
             if (player.y > 700 && !player.dying) { 
                 playerDeath();
             }
@@ -866,8 +863,6 @@
             playSound('death');
             stopMusic();
             
-            // Enable a mini-loop just for the death animation if you wanted,
-            // but currently we just let the main loop handle 'dying' state
             setTimeout(() => {
                 gameState.gameRunning = true;
             }, 50);
@@ -992,4 +987,5 @@
     </script>
 </body>
 </html>
+
 
