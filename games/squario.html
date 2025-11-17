@@ -155,19 +155,19 @@
             justify-content: space-between;
             align-items: flex-end;
             z-index: 50;
-            -webkit-user-select: none; /* Disable text selection */
+            -webkit-user-select: none; 
             user-select: none;
-            pointer-events: none; /* Container doesn't block clicks */
+            pointer-events: none; 
         }
 
         #dpad {
             display: flex;
-            pointer-events: auto; /* Buttons are clickable */
+            pointer-events: auto; 
         }
 
         #action-buttons {
             display: flex;
-            pointer-events: auto; /* Buttons are clickable */
+            pointer-events: auto; 
         }
 
         #mobile-controls button {
@@ -179,13 +179,13 @@
             margin: 0 10px;
             font-size: 36px;
             color: white;
-            -webkit-tap-highlight-color: transparent; /* Disable blue tap glow */
+            -webkit-tap-highlight-color: transparent; 
         }
 
         #dpad #down-btn {
-            width: 60px; /* Make down button a bit smaller */
+            width: 60px; 
             height: 60px;
-            align-self: center; /* Center it vertically with L/R */
+            align-self: center; 
         }
 
         #action-buttons button {
@@ -306,6 +306,7 @@
         // Game state
         let gameState = {
             camera: 0,
+            cameraY: 0, 
             score: 0,
             highScore: 0,
             lives: 3,
@@ -321,7 +322,6 @@
 
         function startGame() {
             document.getElementById('startScreen').style.display = 'none';
-            // Reset score and lives for a new game
             gameState.score = 0;
             gameState.lives = 3;
             lastTime = 0; 
@@ -353,7 +353,7 @@
             jumpCount: 0,
             invincible: false,      
             invincibleTimer: 0,
-            pipeCooldown: 0 // <<< ADDED PIPE COOLDOWN
+            pipeLock: false // <<< CHANGED TO LOCK INSTEAD OF COOLDOWN
         };
 
         // Controls
@@ -422,6 +422,7 @@
             gameState.currentLevelIndex = levelIndex;
             gameState.currentRoom = 'main';
             gameState.camera = 0;
+            gameState.cameraY = 0; 
             gameState.time = 300; 
             gameState.powerUp = false; 
             gameState.gameRunning = true;
@@ -438,7 +439,7 @@
             player.jumpCount = 0;
             player.invincible = false;
             player.invincibleTimer = 0;
-            player.pipeCooldown = 0; // <<< RESET COOLDOWN
+            player.pipeLock = false; // <<< RESET LOCK
             
             document.getElementById('gameOver').style.display = 'none';
             document.getElementById('startScreen').style.display = 'none';
@@ -472,11 +473,11 @@
             }
 
             ctx.fillStyle = gameState.powerUp ? '#FFD700' : '#FF0000';
-            ctx.fillRect(player.x - gameState.camera, player.y, player.width, player.height);
+            ctx.fillRect(player.x - gameState.camera, player.y - gameState.cameraY, player.width, player.height); 
             
             ctx.fillStyle = '#FFFFFF';
             const eyeOffset = player.facingRight ? 8 : -8;
-            ctx.fillRect(player.x - gameState.camera + 10 + eyeOffset, player.y + 10, 6, 6);
+            ctx.fillRect(player.x - gameState.camera + 10 + eyeOffset, player.y - gameState.cameraY + 10, 6, 6); 
         }
 
         function drawRoom() {
@@ -488,45 +489,45 @@
                 ctx.fillStyle = '#787878';
             }
             room.platforms.forEach(p => {
-                ctx.fillRect(p.x - gameState.camera, p.y, p.width, p.height);
+                ctx.fillRect(p.x - gameState.camera, p.y - gameState.cameraY, p.width, p.height); 
             });
 
             room.blocks.forEach(b => {
                 if (b.hit) {
                     ctx.fillStyle = '#A0A0A0';
-                    ctx.fillRect(b.x - gameState.camera, b.y, b.width, b.height);
+                    ctx.fillRect(b.x - gameState.camera, b.y - gameState.cameraY, b.width, b.height); 
                 } else if (b.type === 'powerup') {
                     ctx.fillStyle = '#FF8C00';
-                    ctx.fillRect(b.x - gameState.camera, b.y, b.width, b.height);
+                    ctx.fillRect(b.x - gameState.camera, b.y - gameState.cameraY, b.width, b.height); 
                     ctx.fillStyle = '#FFF';
                     ctx.font = '30px Arial';
-                    ctx.fillText('P', b.x - gameState.camera + 10, b.y + 32);
+                    ctx.fillText('P', b.x - gameState.camera + 10, b.y - gameState.cameraY + 32); 
                 } else { 
                     ctx.fillStyle = '#FFD700';
-                    ctx.fillRect(b.x - gameState.camera, b.y, b.width, b.height);
+                    ctx.fillRect(b.x - gameState.camera, b.y - gameState.cameraY, b.width, b.height); 
                     ctx.fillStyle = '#FFF';
                     ctx.font = '30px Arial';
-                    ctx.fillText('?', b.x - gameState.camera + 10, b.y + 32);
+                    ctx.fillText('?', b.x - gameState.camera + 10, b.y - gameState.cameraY + 32); 
                 }
             });
 
             ctx.fillStyle = '#00AA00';
             room.pipes.forEach(p => {
-                ctx.fillRect(p.x - gameState.camera, p.y, p.width, p.height);
+                ctx.fillRect(p.x - gameState.camera, p.y - gameState.cameraY, p.width, p.height); 
                 ctx.fillStyle = '#006600';
-                ctx.fillRect(p.x - gameState.camera, p.y, p.width, 10);
+                ctx.fillRect(p.x - gameState.camera, p.y - gameState.cameraY, p.width, 10); 
             });
 
             room.enemies.forEach(e => {
                 ctx.fillStyle = '#228B22';
-                ctx.fillRect(e.x - gameState.camera, e.y, e.width, e.height);
+                ctx.fillRect(e.x - gameState.camera, e.y - gameState.cameraY, e.width, e.height); 
                 ctx.fillStyle = '#FFD700';
-                ctx.fillRect(e.x - gameState.camera + 5, e.y + 5, e.width - 10, e.height - 10);
+                ctx.fillRect(e.x - gameState.camera + 5, e.y - gameState.cameraY + 5, e.width - 10, e.height - 10); 
             });
 
             ctx.fillStyle = '#000000';
             room.gaps.forEach(g => {
-                ctx.fillRect(g.x - gameState.camera, 550, g.width, 50);
+                ctx.fillRect(g.x - gameState.camera, 550 - gameState.cameraY, g.width, 50); 
             });
 
             ctx.fillStyle = '#CD853F';
@@ -536,7 +537,7 @@
                     const stepWidth = 40;
                     ctx.fillRect(
                         s.x + (i * stepWidth) - gameState.camera,
-                        550 - (i + 1) * stepHeight,
+                        (550 - (i + 1) * stepHeight) - gameState.cameraY, 
                         stepWidth,
                         (i + 1) * stepHeight
                     );
@@ -545,14 +546,17 @@
 
             if (room.flagpole) {
                 ctx.fillStyle = '#444444';
-                ctx.fillRect(room.flagpole.x - gameState.camera, room.flagpole.y, 10, room.flagpole.height);
+                ctx.fillRect(room.flagpole.x - gameState.camera, room.flagpole.y - gameState.cameraY, 10, room.flagpole.height); 
                 ctx.fillStyle = '#FF0000';
-                ctx.fillRect(room.flagpole.x - gameState.camera + 10, room.flagpole.y, 40, 30);
+                ctx.fillRect(room.flagpole.x - gameState.camera + 10, room.flagpole.y - gameState.cameraY, 40, 30); 
             }
         }
 
+        // UPDATED UPDATE FUNCTION
         function update(dt) {
             if (!gameState.gameRunning || !liveLevelData.main) return; 
+            
+            dt = Math.min(dt, 0.05); 
 
             const room = getCurrentRoom();
 
@@ -561,7 +565,7 @@
                 player.vy += player.gravity * dt;
                 player.y += player.vy * dt;
                 
-                if (player.y > canvas.height + 500) {
+                if (player.y > canvas.height + 500 + gameState.cameraY) { 
                     player.dying = false;
                     gameState.lives--;
                     
@@ -580,11 +584,6 @@
                 if (player.invincibleTimer <= 0) {
                     player.invincible = false;
                 }
-            }
-
-            // <<< --- PIPE COOLDOWN UPDATE --- >>>
-            if (player.pipeCooldown > 0) {
-                player.pipeCooldown -= dt;
             }
             
             // Power up size change
@@ -610,7 +609,7 @@
                 player.vx = 0;
             }
 
-            // --- COYOTE TIME LOGIC (seconds) ---
+            // --- COYOTE TIME LOGIC ---
             if (player.onGround) {
                 player.coyoteTimeCounter = player.coyoteTime;
             } else {
@@ -657,7 +656,7 @@
                 }
             });
 
-            // Collision with blocks (stand on top)
+            // Collision with blocks 
             room.blocks.forEach(b => {
                 if (player.x + player.width > b.x && player.x < b.x + b.width) {
                     if (player.y + player.height > b.y && player.y + player.height < b.y + 40 && player.vy > 0) {
@@ -669,7 +668,7 @@
                 }
             });
 
-            // Collision with pipes (stand on top)
+            // Collision with pipes 
             room.pipes.forEach(p => {
                 if (player.x + player.width > p.x && player.x < p.x + p.width) {
                     if (player.y + player.height > p.y && player.y + player.height < p.y + 40 && player.vy > 0) {
@@ -703,7 +702,6 @@
             // Block collision (bottom)
             room.blocks.forEach(b => {
                 if (!b.hit && player.x + player.width > b.x && player.x < b.x + b.width) {
-                    // Check upwards collision
                     if (player.y < b.y + b.height && player.y > b.y && player.vy < 0) {
                         player.vy = 0;
                         player.y = b.y + b.height;
@@ -720,15 +718,22 @@
                 }
             });
 
-            // <<< --- UPDATED PIPE ENTRY LOGIC WITH COOLDOWN --- >>>
+            // <<< --- PIPE LOGIC REPLACED WITH INPUT LOCKING --- >>>
+            const downKeyActive = keys['ArrowDown'] || keys['KeyS'];
+            
+            // 1. Unlock pipe if down key is released
+            if (!downKeyActive) {
+                player.pipeLock = false;
+            }
+
             room.pipes.forEach(p => {
                 if (player.x + player.width > p.x && player.x < p.x + p.width &&
                     player.y + player.height >= p.y && player.y + player.height <= p.y + 10) {
                     
-                    // Check cooldown before allowing entry
-                    if ((keys['ArrowDown'] || keys['KeyS']) && player.pipeCooldown <= 0) { 
+                    // 2. Check if key is pressed AND pipe is NOT locked
+                    if (downKeyActive && !player.pipeLock) { 
                         playSound('pipe');
-                        player.pipeCooldown = 1.0; // Set 1 second cooldown
+                        player.pipeLock = true; // Lock entry until release
                         
                         if (p.dest === 'bonus') {
                             gameState.returnX = p.exitX;
@@ -737,18 +742,20 @@
                             player.x = 100; 
                             player.y = 400;
                             gameState.camera = 0;
+                            gameState.cameraY = 0;
                         } else if (p.dest === 'main') {
                             gameState.currentRoom = 'main';
                             player.x = gameState.returnX; 
                             player.y = gameState.returnY; 
                             gameState.camera = Math.max(0, player.x - 400); 
+                            gameState.cameraY = 0;
                         }
                     }
                 }
             });
             // <<< --- END PIPE LOGIC --- >>>
 
-            // Enemy AI and collision
+            // Enemy AI
             room.enemies.forEach(e => {
                 e.x += (e.vx * 60) * dt;
                 
@@ -807,7 +814,7 @@
                 }
             });
 
-            // Flagpole collision
+            // Flagpole
             if (room.flagpole) {
                 if (player.x + player.width > room.flagpole.x && player.x < room.flagpole.x + 50 &&
                     player.y < room.flagpole.y + room.flagpole.height) {
@@ -857,9 +864,9 @@
         function playerDeath() {
             if (player.dying) return; 
             
-            gameState.gameRunning = false; // Pause regular updates
+            gameState.gameRunning = false; 
             player.dying = true;
-            player.vy = -900; // Launch upward (physics speed)
+            player.vy = -900; 
             playSound('death');
             stopMusic();
             
@@ -902,7 +909,7 @@
         function restartGame() {
             gameState.score = 0;
             gameState.lives = 3;
-            lastTime = 0; // Important reset
+            lastTime = 0; 
             loadLevel(0);
         }
 
@@ -915,7 +922,7 @@
 
             for (let i = -1; i < (canvas.width / backHillWidth) + 2; i++) {
                 ctx.beginPath();
-                ctx.arc(i * backHillWidth - backScroll + (backHillWidth / 2), groundY, backHillWidth / 2, Math.PI, 0);
+                ctx.arc(i * backHillWidth - backScroll + (backHillWidth / 2), groundY - gameState.cameraY, backHillWidth / 2, Math.PI, 0); 
                 ctx.fill();
             }
 
@@ -925,7 +932,7 @@
             
             for (let i = -1; i < (canvas.width / frontHillWidth) + 2; i++) {
                 ctx.beginPath();
-                ctx.arc(i * frontHillWidth - frontScroll + (frontHillWidth / 2), groundY + 20, frontHillWidth / 2, Math.PI, 0); 
+                ctx.arc(i * frontHillWidth - frontScroll + (frontHillWidth / 2), (groundY + 20) - gameState.cameraY, frontHillWidth / 2, Math.PI, 0); 
                 ctx.fill();
             }
         }
@@ -933,7 +940,6 @@
         let lastTime = 0;
 
         function gameLoop(timestamp) {
-            // Calculate dt in seconds
             if (!lastTime) lastTime = timestamp;
             const dt = (timestamp - lastTime) / 1000;
             lastTime = timestamp;
@@ -951,9 +957,9 @@
                 for (let i = 0; i < 5; i++) {
                     const cloudX = (i * 300 - cloudScroll);
                     ctx.beginPath();
-                    ctx.arc(cloudX, 100 + i * 40, 30, 0, Math.PI * 2);
-                    ctx.arc(cloudX + 25, 100 + i * 40, 35, 0, Math.PI * 2);
-                    ctx.arc(cloudX + 50, 100 + i * 40, 30, 0, Math.PI * 2);
+                    ctx.arc(cloudX, 100 + i * 40 - gameState.cameraY * 0.5, 30, 0, Math.PI * 2); 
+                    ctx.arc(cloudX + 25, 100 + i * 40 - gameState.cameraY * 0.5, 35, 0, Math.PI * 2);
+                    ctx.arc(cloudX + 50, 100 + i * 40 - gameState.cameraY * 0.5, 30, 0, Math.PI * 2);
                     ctx.fill();
                 }
 
@@ -965,9 +971,9 @@
                 const rockScroll = (gameState.camera * 0.2) % 200;
                 for(let i = 0; i < (canvas.width / 100) + 2; i++) {
                     const rockX = (i * 200) - rockScroll;
-                    ctx.fillRect(rockX, 150, 80, 80); 
-                    ctx.fillRect(rockX + 90, 350, 60, 60); 
-                    ctx.fillRect(rockX + 30, 500, 70, 70); 
+                    ctx.fillRect(rockX, 150 - gameState.cameraY * 0.5, 80, 80); 
+                    ctx.fillRect(rockX + 90, 350 - gameState.cameraY * 0.5, 60, 60); 
+                    ctx.fillRect(rockX + 30, 500 - gameState.cameraY * 0.5, 70, 70); 
                 }
             } else {
                 ctx.fillStyle = '#5c94fc';
@@ -977,7 +983,7 @@
             if (liveLevelData.main) {
                 drawRoom();
                 drawPlayer();
-                update(dt); // Pass dt to update
+                update(dt); 
             }
             
             requestAnimationFrame(gameLoop);
@@ -987,5 +993,3 @@
     </script>
 </body>
 </html>
-
-
