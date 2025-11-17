@@ -114,8 +114,9 @@
         }
 
         .tile.found {
-            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%) !important;
             animation: pulse 0.5s ease;
+            z-index: 10;
         }
 
         @keyframes pulse {
@@ -293,10 +294,8 @@
         // Load dictionary automatically on page load
         async function loadDictionary() {
             try {
-                // The fetch request to the server
                 const response = await fetch('CSW19.txt');
                 if (!response.ok) {
-                    // This handles 404 (Not Found) or 403 (Forbidden) errors
                     throw new Error(`Server status: ${response.status} (${response.statusText})`);
                 }
                 const text = await response.text();
@@ -304,7 +303,6 @@
                 dictionary = new Set(words);
                 dictionaryLoaded = true;
                 
-                // Success updates
                 const loadingMessageElement = document.getElementById('loadingMessage');
                 loadingMessageElement.style.display = 'none';
                 loadingMessageElement.classList.remove('show');
@@ -312,14 +310,12 @@
                 showMessage(`Dictionary loaded: ${dictionary.size.toLocaleString()} words! Starting game...`, 'success');
                 initGame();
             } catch (error) {
-                // Error updates
                 const loadingMessageElement = document.getElementById('loadingMessage');
                 loadingMessageElement.textContent = `Error: Could not load CSW19.txt. Check Console (F12) for details.`;
                 loadingMessageElement.style.background = '#f56565';
                 loadingMessageElement.style.color = 'white';
                 console.error('Dictionary loading failed:', error.message);
                 
-                // Show manual upload instruction on failure
                 const fileSection = document.getElementById('fileSection');
                 fileSection.innerHTML += `
                     <label class="file-label" style="color:white; margin-top: 10px;">
@@ -370,7 +366,6 @@
 
         function initGame() {
             if (!dictionaryLoaded) {
-                // This shouldn't be reached if loadDictionary is successful
                 return;
             }
             grid = [];
@@ -396,7 +391,6 @@
             else if (gridSize <= 6) tileSize = 60;
             else if (gridSize <= 7) tileSize = 50;
             else tileSize = 45;
-            // Set grid styles dynamically based on size
             document.getElementById('puzzleGrid').style.gridTemplateColumns = `repeat(${gridSize}, ${tileSize}px)`;
         }
 
@@ -405,24 +399,28 @@
             const colDiff = Math.abs(col - emptyPos.col);
             
             if ((rowDiff === 1 && colDiff === 0) || (rowDiff === 0 && colDiff === 1)) {
+                // 1. Update Grid Data
                 grid[emptyPos.row][emptyPos.col] = grid[row][col];
                 grid[row][col] = '';
                 emptyPos = { row, col };
                 
-                checkForWords();
+                // 2. CRITICAL FIX: Render the grid FIRST so the DOM matches the new state
                 renderGrid();
+                
+                // 3. THEN check for words. If found, highlightWord() will find the correct DOM elements.
+                checkForWords();
+                
                 return true;
             }
             return false;
         }
 
-        // --- FIXED FUNCTION ---
         function checkForWords() {
             if (!dictionaryLoaded) return;
 
             // Check all rows
             for (let i = 0; i < gridSize; i++) {
-                // Fix: Use a space ' ' for the empty tile instead of removing it
+                // Fix: Use a space ' ' for the empty tile to prevent words forming across gaps
                 const rowStr = grid[i].map(c => c === '' ? ' ' : c).join('');
                 if (checkStringForWords(rowStr, i, 'row')) return;
             }
@@ -431,14 +429,12 @@
             for (let j = 0; j < gridSize; j++) {
                 let colStr = '';
                 for (let i = 0; i < gridSize; i++) {
-                    // Fix: Add space if empty
                     colStr += (grid[i][j] === '' ? ' ' : grid[i][j]);
                 }
                 if (checkStringForWords(colStr, j, 'col')) return;
             }
         }
 
-        // --- FIXED FUNCTION ---
         function checkStringForWords(str, index, type) {
             // Check all substrings of length 3 or more
             for (let start = 0; start < str.length; start++) {
@@ -465,24 +461,20 @@
             document.getElementById('score').textContent = score;
             document.getElementById('wordCount').textContent = wordsFound.length;
             
-            // Add to recent words list (keep last 10)
             const wordListElement = document.getElementById('wordList');
             const wordSpan = document.createElement('span');
             wordSpan.className = 'found-word';
             wordSpan.textContent = `${word} (+${points})`;
             wordListElement.insertBefore(wordSpan, wordListElement.firstChild);
             
-            // Keep only last 10 words
             while (wordListElement.children.length > 10) {
                 wordListElement.removeChild(wordListElement.lastChild);
             }
             
             showMessage(`⭐ ${word} found! +${points} points`, 'success');
 
-            // Highlight the word tiles briefly
             highlightWord(lineIndex, startPos, endPos, type);
 
-            // Replace the word tiles with new letters after a delay
             setTimeout(() => {
                 replaceWordTiles(lineIndex, startPos, endPos, type);
                 checkLevelUp();
@@ -500,6 +492,8 @@
                 } else {
                     tileIndex = pos * gridSize + lineIndex;
                 }
+                
+                // Safety check and apply class
                 if (tiles[tileIndex]) {
                     tiles[tileIndex].classList.add('found');
                 }
@@ -597,7 +591,6 @@
             showMessage('New game started!', 'success');
         }
 
-        // Start the automatic dictionary loading process
         loadDictionary();
     </script>
 </body>
