@@ -416,13 +416,14 @@
             return false;
         }
 
+        // --- FIXED FUNCTION ---
         function checkForWords() {
             if (!dictionaryLoaded) return;
 
             // Check all rows
             for (let i = 0; i < gridSize; i++) {
-                const rowStr = grid[i].join('');
-                // If a word is found, it replaces the tiles and rerenders, so we stop checking other words
+                // Fix: Use a space ' ' for the empty tile instead of removing it
+                const rowStr = grid[i].map(c => c === '' ? ' ' : c).join('');
                 if (checkStringForWords(rowStr, i, 'row')) return;
             }
 
@@ -430,19 +431,22 @@
             for (let j = 0; j < gridSize; j++) {
                 let colStr = '';
                 for (let i = 0; i < gridSize; i++) {
-                    colStr += grid[i][j];
+                    // Fix: Add space if empty
+                    colStr += (grid[i][j] === '' ? ' ' : grid[i][j]);
                 }
                 if (checkStringForWords(colStr, j, 'col')) return;
             }
         }
 
+        // --- FIXED FUNCTION ---
         function checkStringForWords(str, index, type) {
             // Check all substrings of length 3 or more
             for (let start = 0; start < str.length; start++) {
                 for (let end = start + 3; end <= str.length; end++) {
                     const substring = str.substring(start, end);
-                    // Skip if contains empty tile or is not a valid word format
-                    if (substring.includes('')) continue;
+                    
+                    // Fix: Skip if contains empty tile (represented by space)
+                    if (substring.includes(' ')) continue;
                     
                     if (dictionary.has(substring)) {
                         foundWord(substring, index, start, end - 1, type);
