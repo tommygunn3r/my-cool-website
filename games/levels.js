@@ -330,7 +330,7 @@ const level5MainTemplate = {
 };
 const level5BonusTemplate = JSON.parse(JSON.stringify(level1BonusTemplate));
 
-// --- LEVEL 6 DATA (Moving Platforms) ---
+// --- LEVEL 6 DATA (Moving Platforms - FIXED HEIGHTS) ---
 const level6MainTemplate = {
     platforms: [
         {x: 0, y: 550, width: 500, height: 50},
@@ -338,20 +338,20 @@ const level6MainTemplate = {
         {x: 2000, y: 550, width: 500, height: 50},
         {x: 3000, y: 550, width: 500, height: 50},
         {x: 4000, y: 550, width: 800, height: 50},
-        // Moving Platforms
-        {x: 600, y: 400, width: 100, height: 20, type: 'moving', vx: 100, vy: 0, minX: 500, maxX: 900, minY: 400, maxY: 400}, // Move Horizontal
-        {x: 1600, y: 300, width: 100, height: 20, type: 'moving', vx: 0, vy: 100, minX: 1600, maxX: 1600, minY: 200, maxY: 500}, // Move Vertical
-        {x: 2600, y: 400, width: 100, height: 20, type: 'moving', vx: 150, vy: 0, minX: 2500, maxX: 2900, minY: 400, maxY: 400}, // Fast Horiz
-        {x: 3600, y: 200, width: 100, height: 20, type: 'moving', vx: 0, vy: 150, minX: 3600, maxX: 3600, minY: 200, maxY: 500}, // Fast Vert
+        // Moving Platforms (Lowered to 450 for accessibility)
+        {x: 600, y: 450, width: 100, height: 20, type: 'moving', vx: 100, vy: 0, minX: 500, maxX: 900, minY: 450, maxY: 450}, // Move Horizontal
+        {x: 1600, y: 350, width: 100, height: 20, type: 'moving', vx: 0, vy: 100, minX: 1600, maxX: 1600, minY: 300, maxY: 500}, // Move Vertical
+        {x: 2600, y: 450, width: 100, height: 20, type: 'moving', vx: 150, vy: 0, minX: 2500, maxX: 2900, minY: 450, maxY: 450}, // Fast Horiz
+        {x: 3600, y: 300, width: 100, height: 20, type: 'moving', vx: 0, vy: 150, minX: 3600, maxX: 3600, minY: 250, maxY: 500}, // Fast Vert
         // Static helpers
-        {x: 1500, y: 200, width: 50, height: 20}, 
-        {x: 2500, y: 200, width: 50, height: 20}
+        {x: 1500, y: 250, width: 50, height: 20}, 
+        {x: 2500, y: 250, width: 50, height: 20}
     ],
     blocks: [
-        {x: 200, y: 300, width: 40, height: 40, hit: false, type: 'powerup'},
-        {x: 1200, y: 300, width: 40, height: 40, hit: false, type: 'coin'},
-        {x: 2200, y: 300, width: 40, height: 40, hit: false, type: 'powerup'},
-        {x: 3200, y: 300, width: 40, height: 40, hit: false, type: 'coin'}
+        {x: 200, y: 350, width: 40, height: 40, hit: false, type: 'powerup'}, // Lowered to 350
+        {x: 1200, y: 350, width: 40, height: 40, hit: false, type: 'coin'},
+        {x: 2200, y: 350, width: 40, height: 40, hit: false, type: 'powerup'},
+        {x: 3200, y: 350, width: 40, height: 40, hit: false, type: 'coin'}
     ],
     pipes: [],
     enemies: [
@@ -377,21 +377,21 @@ const level7MainTemplate = {
         // Starting Safe Zone
         {x: 0, y: 550, width: 600, height: 50},
         
-        // 1. Horizontal Mover over Pit with Bullets
+        // 1. Horizontal Mover over Pit with Bullets (Lowered)
         {x: 700, y: 450, width: 120, height: 20, type: 'moving', vx: 120, vy: 0, minX: 650, maxX: 1200, minY: 450, maxY: 450},
         
         // Middle Safety Island
         {x: 1300, y: 550, width: 400, height: 50},
 
-        // 2. Vertical Movers Climb
-        {x: 1800, y: 450, width: 100, height: 20, type: 'moving', vx: 0, vy: 100, minX: 1800, maxX: 1800, minY: 200, maxY: 500},
-        {x: 2000, y: 250, width: 100, height: 20, type: 'moving', vx: 0, vy: -100, minX: 2000, maxX: 2000, minY: 200, maxY: 500},
+        // 2. Vertical Movers Climb (Lowered range)
+        {x: 1800, y: 450, width: 100, height: 20, type: 'moving', vx: 0, vy: 100, minX: 1800, maxX: 1800, minY: 250, maxY: 500},
+        {x: 2000, y: 300, width: 100, height: 20, type: 'moving', vx: 0, vy: -100, minX: 2000, maxX: 2000, minY: 250, maxY: 500},
 
         // High Safety Platform
-        {x: 2200, y: 200, width: 300, height: 20},
+        {x: 2200, y: 250, width: 300, height: 20},
 
         // 3. The Drop (Moving platform going down)
-        {x: 2700, y: 200, width: 100, height: 20, type: 'moving', vx: 0, vy: 150, minX: 2700, maxX: 2700, minY: 200, maxY: 500},
+        {x: 2700, y: 250, width: 100, height: 20, type: 'moving', vx: 0, vy: 150, minX: 2700, maxX: 2700, minY: 250, maxY: 500},
 
         // Lower Safety Island
         {x: 2900, y: 550, width: 600, height: 50},
@@ -406,7 +406,7 @@ const level7MainTemplate = {
     blocks: [
         {x: 300, y: 350, width: 40, height: 40, hit: false, type: 'powerup'},
         {x: 1400, y: 350, width: 40, height: 40, hit: false, type: 'coin'},
-        {x: 2300, y: 100, width: 40, height: 40, hit: false, type: 'powerup'},
+        {x: 2300, y: 150, width: 40, height: 40, hit: false, type: 'powerup'},
         {x: 3100, y: 350, width: 40, height: 40, hit: false, type: 'coin'}
     ],
     pipes: [],
