@@ -322,6 +322,7 @@
 
         function startGame() {
             document.getElementById('startScreen').style.display = 'none';
+            // Reset score and lives for a new game
             gameState.score = 0;
             gameState.lives = 3;
             lastTime = 0; 
@@ -353,7 +354,7 @@
             jumpCount: 0,
             invincible: false,      
             invincibleTimer: 0,
-            pipeLock: false // <<< CHANGED TO LOCK INSTEAD OF COOLDOWN
+            pipeLock: false 
         };
 
         // Controls
@@ -439,7 +440,7 @@
             player.jumpCount = 0;
             player.invincible = false;
             player.invincibleTimer = 0;
-            player.pipeLock = false; // <<< RESET LOCK
+            player.pipeLock = false; 
             
             document.getElementById('gameOver').style.display = 'none';
             document.getElementById('startScreen').style.display = 'none';
@@ -488,7 +489,13 @@
             } else {
                 ctx.fillStyle = '#787878';
             }
+            
+            // <<< --- UPDATE: Draw Moving Platforms with distinct color --- >>>
             room.platforms.forEach(p => {
+                if(p.type === 'moving') ctx.fillStyle = '#6082B6'; // Metallic Blue
+                else if(gameState.currentRoom === 'main') ctx.fillStyle = '#8B4513';
+                else ctx.fillStyle = '#787878';
+
                 ctx.fillRect(p.x - gameState.camera, p.y - gameState.cameraY, p.width, p.height); 
             });
 
@@ -519,10 +526,21 @@
             });
 
             room.enemies.forEach(e => {
-                ctx.fillStyle = '#228B22';
-                ctx.fillRect(e.x - gameState.camera, e.y - gameState.cameraY, e.width, e.height); 
-                ctx.fillStyle = '#FFD700';
-                ctx.fillRect(e.x - gameState.camera + 5, e.y - gameState.cameraY + 5, e.width - 10, e.height - 10); 
+                // <<< --- UPDATE: Draw Bullets --- >>>
+                if(e.type === 'bullet') {
+                    ctx.fillStyle = '#333'; // Dark Grey for bullets
+                    ctx.beginPath();
+                    ctx.arc(e.x - gameState.camera + e.width/2, e.y - gameState.cameraY + e.height/2, e.width/2, 0, Math.PI*2);
+                    ctx.fill();
+                    // Eye
+                    ctx.fillStyle = 'white';
+                    ctx.fillRect(e.x - gameState.camera + 4, e.y - gameState.cameraY + 4, 6, 6);
+                } else {
+                    ctx.fillStyle = '#228B22';
+                    ctx.fillRect(e.x - gameState.camera, e.y - gameState.cameraY, e.width, e.height); 
+                    ctx.fillStyle = '#FFD700';
+                    ctx.fillRect(e.x - gameState.camera + 5, e.y - gameState.cameraY + 5, e.width - 10, e.height - 10); 
+                }
             });
 
             ctx.fillStyle = '#000000';
@@ -585,6 +603,10 @@
                     player.invincible = false;
                 }
             }
+
+            if (player.pipeCooldown > 0) {
+                player.pipeCooldown -= dt;
+            }
             
             // Power up size change
             if (gameState.powerUp) {
@@ -643,6 +665,20 @@
             player.y += player.vy * dt;
             player.x += player.vx * dt;
 
+            // <<< --- UPDATE: MOVING PLATFORM LOGIC --- >>>
+            room.platforms.forEach(p => {
+                if (p.type === 'moving') {
+                    // Update platform position
+                    p.x += p.vx * dt;
+                    p.y += p.vy * dt;
+
+                    // Bounce off boundaries
+                    if (p.x < p.minX || p.x > p.maxX) p.vx *= -1;
+                    if (p.y < p.minY || p.y > p.maxY) p.vy *= -1;
+                }
+            });
+            // <<< --- END MOVING PLATFORM --- >>>
+
             // Collision with platforms
             player.onGround = false;
             room.platforms.forEach(p => {
@@ -652,6 +688,12 @@
                         player.vy = 0;
                         player.onGround = true;
                         player.jumpCount = 0;
+
+                        // <<< --- UPDATE: Carry Player on Moving Platform --- >>>
+                        if (p.type === 'moving') {
+                            player.x += p.vx * dt;
+                            player.y += p.vy * dt;
+                        }
                     }
                 }
             });
@@ -718,10 +760,8 @@
                 }
             });
 
-            // <<< --- PIPE LOGIC REPLACED WITH INPUT LOCKING --- >>>
+            // PIPE ENTRY LOGIC
             const downKeyActive = keys['ArrowDown'] || keys['KeyS'];
-            
-            // 1. Unlock pipe if down key is released
             if (!downKeyActive) {
                 player.pipeLock = false;
             }
@@ -730,10 +770,9 @@
                 if (player.x + player.width > p.x && player.x < p.x + p.width &&
                     player.y + player.height >= p.y && player.y + player.height <= p.y + 10) {
                     
-                    // 2. Check if key is pressed AND pipe is NOT locked
                     if (downKeyActive && !player.pipeLock) { 
                         playSound('pipe');
-                        player.pipeLock = true; // Lock entry until release
+                        player.pipeLock = true; 
                         
                         if (p.dest === 'bonus') {
                             gameState.returnX = p.exitX;
@@ -753,41 +792,50 @@
                     }
                 }
             });
-            // <<< --- END PIPE LOGIC --- >>>
 
-            // Enemy AI
+            // Enemy AI and collision
             room.enemies.forEach(e => {
-                e.x += (e.vx * 60) * dt;
-                
-                let hitPipe = false;
-                room.pipes.forEach(p => {
-                    if (e.x + e.width > p.x && e.x < p.x + p.width &&
-                        e.y + e.height > p.y && e.y < p.y + p.height) {
-                        hitPipe = true;
+                // <<< --- UPDATE: BULLET LOGIC --- >>>
+                if (e.type === 'bullet') {
+                    e.x += (e.vx * 60) * dt; // Move straight
+                } else {
+                    // Normal Turtle Logic
+                    e.x += (e.vx * 60) * dt;
+                    
+                    // Turn around at pipes
+                    let hitPipe = false;
+                    room.pipes.forEach(p => {
+                        if (e.x + e.width > p.x && e.x < p.x + p.width &&
+                            e.y + e.height > p.y && e.y < p.y + p.height) {
+                            hitPipe = true;
+                        }
+                    });
+                    
+                    if (hitPipe) {
+                        e.vx *= -1;
+                        e.x += (e.vx * 60) * dt * 2; 
                     }
-                });
-                
-                if (hitPipe) {
-                    e.vx *= -1;
-                    e.x += (e.vx * 60) * dt * 2; 
-                }
-                
-                let onPlatform = false;
-                room.platforms.forEach(p => {
-                    if (e.x + e.width > p.x && e.x < p.x + p.width &&
-                        e.y + e.height >= p.y && e.y + e.height <= p.y + 20) {
-                        onPlatform = true;
+                    
+                    // Turn around at edges
+                    let onPlatform = false;
+                    room.platforms.forEach(p => {
+                        if (e.x + e.width > p.x && e.x < p.x + p.width &&
+                            e.y + e.height >= p.y && e.y + e.height <= p.y + 20) {
+                            onPlatform = true;
+                        }
+                    });
+                    
+                    if (!onPlatform || e.x < 0 || e.x > 5000) {
+                        e.vx *= -1;
                     }
-                });
-                
-                if (!onPlatform || e.x < 0 || e.x > 5000) {
-                    e.vx *= -1;
                 }
 
+                // Player collision
                 if (player.x + player.width > e.x && player.x < e.x + e.width &&
                     player.y + player.height > e.y && player.y < e.y + e.height) {
                     
-                    if (player.vy > 0 && player.y + player.height - e.y < 40) {
+                    if (player.vy > 0 && player.y + player.height - e.y < 40 && e.type !== 'bullet') {
+                        // Jump on enemy (BUT NOT BULLETS)
                         playSound('stomp');
                         e.x = -1000; 
                         player.vy = -400; 
@@ -833,6 +881,14 @@
                 player.x = gameState.camera;
             }
             
+            // Vertical Camera
+            if (canvas.height < 600) {
+                let targetCamY = player.y - (canvas.height / 2);
+                gameState.cameraY = Math.max(0, targetCamY);
+            } else {
+                gameState.cameraY = 0;
+            }
+
             if (player.y > 700 && !player.dying) { 
                 playerDeath();
             }
