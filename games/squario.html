@@ -490,7 +490,7 @@
                 ctx.fillStyle = '#787878';
             }
             
-            // <<< --- UPDATE: Draw Moving Platforms with distinct color --- >>>
+            // Draw Platforms (including Moving Ones)
             room.platforms.forEach(p => {
                 if(p.type === 'moving') ctx.fillStyle = '#6082B6'; // Metallic Blue
                 else if(gameState.currentRoom === 'main') ctx.fillStyle = '#8B4513';
@@ -526,13 +526,11 @@
             });
 
             room.enemies.forEach(e => {
-                // <<< --- UPDATE: Draw Bullets --- >>>
                 if(e.type === 'bullet') {
                     ctx.fillStyle = '#333'; // Dark Grey for bullets
                     ctx.beginPath();
                     ctx.arc(e.x - gameState.camera + e.width/2, e.y - gameState.cameraY + e.height/2, e.width/2, 0, Math.PI*2);
                     ctx.fill();
-                    // Eye
                     ctx.fillStyle = 'white';
                     ctx.fillRect(e.x - gameState.camera + 4, e.y - gameState.cameraY + 4, 6, 6);
                 } else {
@@ -570,7 +568,6 @@
             }
         }
 
-        // UPDATED UPDATE FUNCTION
         function update(dt) {
             if (!gameState.gameRunning || !liveLevelData.main) return; 
             
@@ -665,7 +662,7 @@
             player.y += player.vy * dt;
             player.x += player.vx * dt;
 
-            // <<< --- UPDATE: MOVING PLATFORM LOGIC --- >>>
+            // MOVING PLATFORM LOGIC
             room.platforms.forEach(p => {
                 if (p.type === 'moving') {
                     // Update platform position
@@ -677,7 +674,6 @@
                     if (p.y < p.minY || p.y > p.maxY) p.vy *= -1;
                 }
             });
-            // <<< --- END MOVING PLATFORM --- >>>
 
             // Collision with platforms
             player.onGround = false;
@@ -689,7 +685,7 @@
                         player.onGround = true;
                         player.jumpCount = 0;
 
-                        // <<< --- UPDATE: Carry Player on Moving Platform --- >>>
+                        // CARRY PLAYER ON MOVING PLATFORM
                         if (p.type === 'moving') {
                             player.x += p.vx * dt;
                             player.y += p.vy * dt;
@@ -760,8 +756,10 @@
                 }
             });
 
-            // PIPE ENTRY LOGIC
+            // PIPE ENTRY LOGIC WITH INPUT LOCKING
             const downKeyActive = keys['ArrowDown'] || keys['KeyS'];
+            
+            // Unlock only if key is released
             if (!downKeyActive) {
                 player.pipeLock = false;
             }
@@ -793,16 +791,13 @@
                 }
             });
 
-            // Enemy AI and collision
+            // Enemy AI
             room.enemies.forEach(e => {
-                // <<< --- UPDATE: BULLET LOGIC --- >>>
                 if (e.type === 'bullet') {
-                    e.x += (e.vx * 60) * dt; // Move straight
+                    e.x += (e.vx * 60) * dt;
                 } else {
-                    // Normal Turtle Logic
                     e.x += (e.vx * 60) * dt;
                     
-                    // Turn around at pipes
                     let hitPipe = false;
                     room.pipes.forEach(p => {
                         if (e.x + e.width > p.x && e.x < p.x + p.width &&
@@ -816,7 +811,6 @@
                         e.x += (e.vx * 60) * dt * 2; 
                     }
                     
-                    // Turn around at edges
                     let onPlatform = false;
                     room.platforms.forEach(p => {
                         if (e.x + e.width > p.x && e.x < p.x + p.width &&
@@ -830,12 +824,10 @@
                     }
                 }
 
-                // Player collision
                 if (player.x + player.width > e.x && player.x < e.x + e.width &&
                     player.y + player.height > e.y && player.y < e.y + e.height) {
                     
                     if (player.vy > 0 && player.y + player.height - e.y < 40 && e.type !== 'bullet') {
-                        // Jump on enemy (BUT NOT BULLETS)
                         playSound('stomp');
                         e.x = -1000; 
                         player.vy = -400; 
@@ -881,7 +873,6 @@
                 player.x = gameState.camera;
             }
             
-            // Vertical Camera
             if (canvas.height < 600) {
                 let targetCamY = player.y - (canvas.height / 2);
                 gameState.cameraY = Math.max(0, targetCamY);
