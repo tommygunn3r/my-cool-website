@@ -44,10 +44,10 @@
             position: absolute;
             top: 50%;
             left: 50%;
-            /* Desktop/Default Size and Offset */
-            width: 400px;
+            /* FIX: Reduced Width to 350px for clearance */
+            width: 350px;
             height: 650px;
-            margin: -325px 0 0 -200px; 
+            margin: -325px 0 0 -175px; /* Half of new width: -175px */
             
             /* Initial transformation for placement in the circle */
             backface-visibility: hidden;
@@ -62,7 +62,6 @@
             align-items: center; /* Center image vertically */
             justify-content: center; /* Center image horizontally */
             overflow: hidden; /* Clip any potential overflow if image aspect ratio is off */
-            /* Border and shadow are now on the image itself */
         }
 
         .arcade-image {
@@ -99,7 +98,6 @@
             .arcade-image-container { /* Adjust container height for mobile */
                 height: 350px; 
             }
-            /* Arcade image already has max-width/height 100% */
         }
 
         /* Full page height for main content */
@@ -254,8 +252,8 @@
 
             // --- 1. Determine Dynamic Radius based on screen size ---
             function getRadius() {
-                // *** FIX: Increased Radius to 800px to guarantee no clipping on desktop ***
-                const desktopRadius = 800; 
+                // FIX: Set desktop radius to 600px, which works well with 350px width.
+                const desktopRadius = 600; 
                 // Smaller Radius for mobile
                 const mobileRadius = 320; 
 
