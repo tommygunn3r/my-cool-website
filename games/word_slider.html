@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Word Slider Puzzle</title>
+    <title>Word Slider: Laser Line Edition</title>
     <style>
         * {
             margin: 0;
@@ -17,23 +17,27 @@
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #1a2a6c 0%, #b21f1f 50%, #fdbb2d 100%);
             padding: 20px;
+            color: white;
         }
 
         .container {
-            background: white;
+            background: rgba(255, 255, 255, 0.95);
             padding: 30px;
             border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
             text-align: center;
             max-width: 90vw;
+            color: #333;
         }
 
         h1 {
-            color: #333;
+            color: #b21f1f;
             margin-bottom: 10px;
             font-size: 2em;
+            text-transform: uppercase;
+            letter-spacing: 2px;
         }
 
         .info {
@@ -41,6 +45,11 @@
             margin-bottom: 20px;
             font-size: 0.9em;
             line-height: 1.5;
+        }
+
+        .highlight-text {
+            color: #d69e2e;
+            font-weight: bold;
         }
 
         .stats {
@@ -67,7 +76,7 @@
         .stat-value {
             font-weight: bold;
             font-size: 1.3em;
-            color: #667eea;
+            color: #b21f1f;
         }
 
         .puzzle-grid {
@@ -75,53 +84,70 @@
             gap: 8px;
             margin: 20px 0;
             padding: 20px;
-            background: #f5f5f5;
+            background: #2d3748;
             border-radius: 10px;
+            position: relative;
+        }
+
+        /* Visual indicator for the Laser Line */
+        .puzzle-grid::before {
+            content: 'LASER ZONE';
+            position: absolute;
+            left: -25px;
+            top: 50%;
+            transform: translateY(-50%) rotate(-90deg);
+            color: #fdbb2d;
+            font-size: 0.8em;
+            font-weight: bold;
+            letter-spacing: 2px;
+            pointer-events: none;
         }
 
         .tile {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%);
             border: none;
-            border-radius: 10px;
+            border-radius: 8px;
             font-size: 2em;
             font-weight: bold;
-            color: white;
+            color: #e2e8f0;
             cursor: pointer;
             transition: all 0.3s ease;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
             display: flex;
             align-items: center;
             justify-content: center;
         }
 
-        .tile:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 12px rgba(0,0,0,0.2);
+        /* The specific style for tiles in the Laser Row */
+        .tile.laser-active {
+            background: linear-gradient(135deg, #ecc94b 0%, #d69e2e 100%);
+            color: #744210;
+            border: 2px solid #ffeb3b;
+            box-shadow: 0 0 15px rgba(236, 201, 75, 0.4);
         }
 
-        .tile:active {
-            transform: translateY(0);
+        .tile:hover {
+            transform: translateY(-2px);
         }
 
         .tile.empty {
-            background: #ddd;
+            background: #1a202c;
             cursor: default;
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        .tile.empty:hover {
-            transform: none;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
+            border: none;
         }
 
         .tile.found {
             background: linear-gradient(135deg, #48bb78 0%, #38a169 100%) !important;
+            color: white !important;
             animation: pulse 0.5s ease;
             z-index: 10;
+            box-shadow: 0 0 20px #48bb78;
         }
 
         @keyframes pulse {
             0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.1); }
+            50% { transform: scale(1.15); }
         }
 
         .buttons {
@@ -143,12 +169,12 @@
         }
 
         .new-game-btn {
-            background: #667eea;
+            background: #b21f1f;
             color: white;
         }
 
         .new-game-btn:hover {
-            background: #5568d3;
+            background: #801717;
             transform: translateY(-2px);
         }
 
@@ -177,9 +203,10 @@
         }
 
         .message.level-up {
-            background: #f6ad55;
-            color: white;
+            background: #fdbb2d;
+            color: #744210;
             font-size: 1.3em;
+            border: 2px solid #b7791f;
         }
 
         @keyframes fadeIn {
@@ -197,7 +224,7 @@
         }
 
         .words-found h3 {
-            color: #667eea;
+            color: #2d3748;
             margin-bottom: 10px;
             font-size: 1.1em;
         }
@@ -210,8 +237,8 @@
         }
 
         .found-word {
-            background: #667eea;
-            color: white;
+            background: #2d3748;
+            color: #fdbb2d;
             padding: 5px 12px;
             border-radius: 5px;
             font-size: 0.9em;
@@ -220,22 +247,22 @@
         .file-input-section {
             margin: 20px 0;
             padding: 15px;
-            background: #f7fafc;
+            background: #edf2f7;
             border-radius: 8px;
-            border: 2px dashed #667eea;
+            border: 2px dashed #cbd5e0;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Word Slider Puzzle</h1>
-        <p class="info">Slide letters to form valid words!<br>
-        Words are auto-detected and scored. Grid grows as you level up!</p>
+        <h1>Laser Line Slider</h1>
+        <p class="info">Move letters into the <span class="highlight-text">GOLD ROW</span> to form words!<br>
+        Words are ONLY detected in the center "Laser Zone".</p>
         
         <div class="file-input-section" id="fileSection">
             <div id="loadingMessage" class="message show" 
-                 style="display: block; background:#667eea; color:white;">
-                Attempting to load **CSW19.txt** dictionary...
+                 style="display: block; background:#2d3748; color:white;">
+                Loading **CSW19.txt** dictionary...
             </div>
         </div>
 
@@ -267,7 +294,7 @@
         <div class="message" id="message"></div>
 
         <div class="words-found">
-            <h3>Recent Words:</h3>
+            <h3>Extracted Words:</h3>
             <div class="word-list" id="wordList"></div>
         </div>
     </div>
@@ -278,7 +305,8 @@
         let emptyPos = { row: 0, col: 0 };
         let score = 0;
         let level = 1;
-        let gridSize = 5;
+        let gridSize = 5; // Starts at 5x5
+        let targetRow = 2; // The middle row index (for 5x5 it's 2)
         let wordsFound = [];
         let tileSize = 70;
         let availableLetters = [];
@@ -293,33 +321,23 @@
         async function loadDictionary() {
             try {
                 const response = await fetch('CSW19.txt');
-                if (!response.ok) {
-                    throw new Error(`Server status: ${response.status} (${response.statusText})`);
-                }
+                if (!response.ok) throw new Error(`Status: ${response.status}`);
                 const text = await response.text();
                 const words = text.split(/\r?\n/).map(w => w.trim().toUpperCase()).filter(w => w.length >= 3);
                 dictionary = new Set(words);
                 dictionaryLoaded = true;
                 
-                const loadingMessageElement = document.getElementById('loadingMessage');
-                loadingMessageElement.style.display = 'none';
-                loadingMessageElement.classList.remove('show');
-
-                showMessage(`Dictionary loaded: ${dictionary.size.toLocaleString()} words! Starting game...`, 'success');
+                document.getElementById('loadingMessage').style.display = 'none';
+                showMessage(`System Ready! Move tiles to the Gold Row!`, 'success');
                 initGame();
             } catch (error) {
-                const loadingMessageElement = document.getElementById('loadingMessage');
-                loadingMessageElement.textContent = `Error: Could not load CSW19.txt. Check Console (F12) for details.`;
-                loadingMessageElement.style.background = '#f56565';
-                loadingMessageElement.style.color = 'white';
-                console.error('Dictionary loading failed:', error.message);
+                const msg = document.getElementById('loadingMessage');
+                msg.textContent = `Error loading CSW19.txt. Please upload manually below.`;
+                msg.style.background = '#f56565';
+                console.error(error);
                 
-                const fileSection = document.getElementById('fileSection');
-                fileSection.innerHTML += `
-                    <label class="file-label" style="color:white; margin-top: 10px;">
-                        As a backup, please upload CSW19.txt manually:
-                    </label>
-                    <input type="file" id="dictionaryFile" class="file-input" accept=".txt">
+                document.getElementById('fileSection').innerHTML += `
+                    <input type="file" id="dictionaryFile" accept=".txt" style="margin-top:10px;">
                 `;
                 document.getElementById('dictionaryFile').addEventListener('change', handleManualUpload);
             }
@@ -335,7 +353,7 @@
                     dictionary = new Set(words);
                     dictionaryLoaded = true;
                     document.getElementById('loadingMessage').style.display = 'none';
-                    showMessage(`Dictionary loaded: ${dictionary.size.toLocaleString()} words!`, 'success');
+                    showMessage(`Dictionary Loaded!`, 'success');
                     initGame();
                 };
                 reader.readAsText(file);
@@ -353,9 +371,7 @@
         }
 
         function getRandomLetter() {
-            if (availableLetters.length === 0) {
-                availableLetters = createLetterPool();
-            }
+            if (availableLetters.length === 0) availableLetters = createLetterPool();
             const index = Math.floor(Math.random() * availableLetters.length);
             const letter = availableLetters[index];
             availableLetters.splice(index, 1);
@@ -363,9 +379,11 @@
         }
 
         function initGame() {
-            if (!dictionaryLoaded) {
-                return;
-            }
+            if (!dictionaryLoaded) return;
+            
+            // Recalculate target row based on current grid size
+            targetRow = Math.floor(gridSize / 2);
+            
             grid = [];
             availableLetters = createLetterPool();
             const totalTiles = gridSize * gridSize;
@@ -378,6 +396,7 @@
                 }
             }
             
+            // Place empty tile in bottom right
             emptyPos = { row: gridSize - 1, col: gridSize - 1 };
             
             updateTileSize();
@@ -386,8 +405,7 @@
 
         function updateTileSize() {
             if (gridSize <= 5) tileSize = 70;
-            else if (gridSize <= 6) tileSize = 60;
-            else if (gridSize <= 7) tileSize = 50;
+            else if (gridSize <= 7) tileSize = 55;
             else tileSize = 45;
             document.getElementById('puzzleGrid').style.gridTemplateColumns = `repeat(${gridSize}, ${tileSize}px)`;
         }
@@ -402,60 +420,33 @@
                 emptyPos = { row, col };
                 
                 renderGrid(); 
-                
-                // PASS coordinates to only check specific row/column
-                checkForWords(emptyPos.row, emptyPos.col); 
-                
+                checkForWordsInLaserRow(); // Only check the laser row!
                 return true;
             }
             return false;
         }
 
-        // Modified to accept specific coordinates
-        function checkForWords(checkRow = null, checkCol = null) {
+        // --- MODIFIED: ONLY CHECKS THE TARGET ROW ---
+        function checkForWordsInLaserRow() {
             if (!dictionaryLoaded) return;
 
-            // If specific row provided, check ONLY that row
-            if (checkRow !== null) {
-                const rowStr = grid[checkRow].map(c => c === '' ? ' ' : c).join('');
-                if (checkStringForWords(rowStr, checkRow, 'row')) return;
-            } else {
-                // Otherwise check all (fallback)
-                for (let i = 0; i < gridSize; i++) {
-                    const rowStr = grid[i].map(c => c === '' ? ' ' : c).join('');
-                    if (checkStringForWords(rowStr, i, 'row')) return;
-                }
-            }
-
-            // If specific col provided, check ONLY that col
-            if (checkCol !== null) {
-                let colStr = '';
-                for (let i = 0; i < gridSize; i++) {
-                    colStr += (grid[i][checkCol] === '' ? ' ' : grid[i][checkCol]);
-                }
-                if (checkStringForWords(colStr, checkCol, 'col')) return;
-            } else {
-                // Otherwise check all (fallback)
-                for (let j = 0; j < gridSize; j++) {
-                    let colStr = '';
-                    for (let i = 0; i < gridSize; i++) {
-                        colStr += (grid[i][j] === '' ? ' ' : grid[i][j]);
-                    }
-                    if (checkStringForWords(colStr, j, 'col')) return;
-                }
-            }
+            // Construct string for ONLY the target row
+            // Using space for empty tile to prevent bridging words
+            const rowStr = grid[targetRow].map(c => c === '' ? ' ' : c).join('');
+            
+            // Check this specific row
+            checkStringForWords(rowStr, targetRow);
         }
 
-        function checkStringForWords(str, index, type) {
+        function checkStringForWords(str, rowIndex) {
             for (let start = 0; start < str.length; start++) {
                 for (let end = start + 3; end <= str.length; end++) {
                     const substring = str.substring(start, end);
                     
-                    // Skip if contains empty tile (represented by space)
                     if (substring.includes(' ')) continue;
                     
                     if (dictionary.has(substring)) {
-                        foundWord(substring, index, start, end - 1, type);
+                        foundWord(substring, rowIndex, start, end - 1);
                         return true;
                     }
                 }
@@ -463,7 +454,7 @@
             return false;
         }
 
-        function foundWord(word, lineIndex, startPos, endPos, type) {
+        function foundWord(word, rowIndex, startPos, endPos) {
             const points = calculatePoints(word);
             score += points;
             wordsFound.push(word);
@@ -471,52 +462,35 @@
             document.getElementById('score').textContent = score;
             document.getElementById('wordCount').textContent = wordsFound.length;
             
-            const wordListElement = document.getElementById('wordList');
-            const wordSpan = document.createElement('span');
-            wordSpan.className = 'found-word';
-            wordSpan.textContent = `${word} (+${points})`;
-            wordListElement.insertBefore(wordSpan, wordListElement.firstChild);
+            const wordList = document.getElementById('wordList');
+            const span = document.createElement('span');
+            span.className = 'found-word';
+            span.textContent = `${word} (${points})`;
+            wordList.insertBefore(span, wordList.firstChild);
             
-            while (wordListElement.children.length > 10) {
-                wordListElement.removeChild(wordListElement.lastChild);
-            }
+            if (wordList.children.length > 10) wordList.removeChild(wordList.lastChild);
             
-            showMessage(`⭐ ${word} found! +${points} points`, 'success');
+            showMessage(`⚡ LASER ACTIVATED: ${word}! +${points} ⚡`, 'success');
 
-            highlightWord(lineIndex, startPos, endPos, type);
+            highlightWord(rowIndex, startPos, endPos);
 
             setTimeout(() => {
-                replaceWordTiles(lineIndex, startPos, endPos, type);
+                replaceWordTiles(rowIndex, startPos, endPos);
                 checkLevelUp();
             }, 1000);
         }
 
-        function highlightWord(lineIndex, startPos, endPos, type) {
-            const gridElement = document.getElementById('puzzleGrid');
-            const tiles = gridElement.children;
-            
+        function highlightWord(rowIndex, startPos, endPos) {
+            const tiles = document.getElementById('puzzleGrid').children;
             for (let pos = startPos; pos <= endPos; pos++) {
-                let tileIndex;
-                if (type === 'row') {
-                    tileIndex = lineIndex * gridSize + pos;
-                } else {
-                    tileIndex = pos * gridSize + lineIndex;
-                }
-                
-                if (tiles[tileIndex]) {
-                    tiles[tileIndex].classList.add('found');
-                }
+                const tileIndex = rowIndex * gridSize + pos;
+                if (tiles[tileIndex]) tiles[tileIndex].classList.add('found');
             }
         }
 
-        function replaceWordTiles(lineIndex, startPos, endPos, type) {
+        function replaceWordTiles(rowIndex, startPos, endPos) {
             for (let pos = startPos; pos <= endPos; pos++) {
-                const newLetter = getRandomLetter();
-                if (type === 'row') {
-                    grid[lineIndex][pos] = newLetter;
-                } else {
-                    grid[pos][lineIndex] = newLetter;
-                }
+                grid[rowIndex][pos] = getRandomLetter();
             }
             renderGrid();
         }
@@ -528,62 +502,63 @@
             for (let i = 0; i < gridSize; i++) {
                 for (let j = 0; j < gridSize; j++) {
                     const tile = document.createElement('button');
-                    tile.className = grid[i][j] === '' ? 'tile empty' : 'tile';
+                    let className = 'tile';
+                    
+                    if (grid[i][j] === '') className += ' empty';
+                    // Highlight the target row specially
+                    if (i === targetRow && grid[i][j] !== '') className += ' laser-active';
+                    
+                    tile.className = className;
                     tile.textContent = grid[i][j];
                     tile.style.width = `${tileSize}px`;
                     tile.style.height = `${tileSize}px`;
                     tile.style.fontSize = `${tileSize * 0.4}px`;
-                    tile.onclick = () => {
-                        moveTile(i, j);
-                    };
+                    
+                    tile.onclick = () => moveTile(i, j);
                     gridElement.appendChild(tile);
                 }
             }
         }
 
         function calculatePoints(word) {
-            return word.length * word.length;
+            // Bonus points for laser line difficulty
+            return (word.length * word.length) + 10;
         }
 
         function checkLevelUp() {
-            const newLevel = Math.floor(score / 100) + 1;
+            // Level up every 150 points
+            const newLevel = Math.floor(score / 150) + 1;
+            
             if (newLevel > level) {
                 level = newLevel;
                 const oldSize = gridSize;
-                gridSize = Math.min(4 + level, 10);
+                
+                // Increase grid by 2 to keep odd symmetry (5 -> 7 -> 9)
+                // Cap at 9x9 because larger is tedious
+                gridSize = Math.min(5 + (level - 1) * 2, 9);
                 
                 document.getElementById('level').textContent = level;
                 document.getElementById('gridSize').textContent = `${gridSize}x${gridSize}`;
                 
                 if (gridSize > oldSize) {
-                    showMessage(`🚀 LEVEL UP! Grid now ${gridSize}x${gridSize}! 🚀`, 'level-up');
-                    setTimeout(() => {
-                        initGame();
-                    }, 2000);
+                    showMessage(`🚀 GRID EXPANSION! New Zone Detected! 🚀`, 'level-up');
+                    setTimeout(() => initGame(), 2000);
                 } else {
-                    showMessage(`⭐ Level ${level}! Keep going! ⭐`, 'level-up');
+                    showMessage(`⭐ Level ${level}! Speed Up! ⭐`, 'level-up');
                 }
             }
         }
 
         function showMessage(text, type) {
-            const messageElement = document.getElementById('message');
-            messageElement.textContent = text;
-            messageElement.className = `message ${type} show`;
-            
-            setTimeout(() => {
-                messageElement.classList.remove('show');
-            }, 2500);
+            const msg = document.getElementById('message');
+            msg.textContent = text;
+            msg.className = `message ${type} show`;
+            setTimeout(() => msg.classList.remove('show'), 2500);
         }
 
         function newGame() {
-            if (!dictionaryLoaded) {
-                 showMessage('Please wait for the dictionary to load, or upload it manually if the load failed.', 'error');
-                 return;
-            }
-            if (score > 0 && !confirm('Start a new game? Your current progress will be lost.')) {
-                return;
-            }
+            if (!dictionaryLoaded) return;
+            if (score > 0 && !confirm('Abandon current session?')) return;
             
             score = 0;
             level = 1;
@@ -597,7 +572,7 @@
             document.getElementById('wordList').innerHTML = '';
             
             initGame();
-            showMessage('New game started!', 'success');
+            showMessage('Laser Systems Online...', 'success');
         }
 
         loadDictionary();
