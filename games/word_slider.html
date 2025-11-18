@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Word Slider: Laser Line Edition</title>
+    <title>Word Slider: Waterfall Edition</title>
     <style>
         * {
             margin: 0;
@@ -87,15 +87,17 @@
             background: #2d3748;
             border-radius: 10px;
             position: relative;
+            /* Add padding at bottom to visually separate the laser row slightly */
+            padding-bottom: 25px;
         }
 
-        /* Visual indicator for the Laser Line */
-        .puzzle-grid::before {
+        /* Visual indicator for the Laser Line at the BOTTOM */
+        .puzzle-grid::after {
             content: 'LASER ZONE';
             position: absolute;
-            left: -25px;
-            top: 50%;
-            transform: translateY(-50%) rotate(-90deg);
+            bottom: 5px;
+            left: 50%;
+            transform: translateX(-50%);
             color: #fdbb2d;
             font-size: 0.8em;
             font-weight: bold;
@@ -111,14 +113,14 @@
             font-weight: bold;
             color: #e2e8f0;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.2s ease; /* Faster transition for gravity feel */
             box-shadow: 0 4px 6px rgba(0,0,0,0.3);
             display: flex;
             align-items: center;
             justify-content: center;
         }
 
-        /* The specific style for tiles in the Laser Row */
+        /* The specific style for tiles in the Laser Row (Bottom) */
         .tile.laser-active {
             background: linear-gradient(135deg, #ecc94b 0%, #d69e2e 100%);
             color: #744210;
@@ -137,17 +139,21 @@
             border: none;
         }
 
+        /* Animation for new tiles appearing at top */
+        @keyframes dropIn {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        .tile.new-spawn {
+            animation: dropIn 0.4s ease;
+        }
+
         .tile.found {
             background: linear-gradient(135deg, #48bb78 0%, #38a169 100%) !important;
             color: white !important;
-            animation: pulse 0.5s ease;
-            z-index: 10;
-            box-shadow: 0 0 20px #48bb78;
-        }
-
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.15); }
+            transform: scale(0.9); /* Shrink slightly before vanishing */
+            transition: transform 0.2s;
         }
 
         .buttons {
@@ -195,11 +201,6 @@
             background: #48bb78;
             color: white;
             font-size: 1.2em;
-        }
-
-        .message.error {
-            background: #f56565;
-            color: white;
         }
 
         .message.level-up {
@@ -255,9 +256,9 @@
 </head>
 <body>
     <div class="container">
-        <h1>Laser Line Slider</h1>
-        <p class="info">Move letters into the <span class="highlight-text">GOLD ROW</span> to form words!<br>
-        Words are ONLY detected in the center "Laser Zone".</p>
+        <h1>Waterfall Slider</h1>
+        <p class="info">Drop letters into the <span class="highlight-text">BOTTOM ROW</span>.<br>
+        New letters spawn at the top!</p>
         
         <div class="file-input-section" id="fileSection">
             <div id="loadingMessage" class="message show" 
@@ -305,8 +306,8 @@
         let emptyPos = { row: 0, col: 0 };
         let score = 0;
         let level = 1;
-        let gridSize = 5; // Starts at 5x5
-        let targetRow = 2; // The middle row index (for 5x5 it's 2)
+        let gridSize = 5; 
+        let targetRow = 4; // Will be gridSize - 1
         let wordsFound = [];
         let tileSize = 70;
         let availableLetters = [];
@@ -328,7 +329,7 @@
                 dictionaryLoaded = true;
                 
                 document.getElementById('loadingMessage').style.display = 'none';
-                showMessage(`System Ready! Move tiles to the Gold Row!`, 'success');
+                showMessage(`System Ready! Drop tiles to the bottom!`, 'success');
                 initGame();
             } catch (error) {
                 const msg = document.getElementById('loadingMessage');
@@ -381,8 +382,8 @@
         function initGame() {
             if (!dictionaryLoaded) return;
             
-            // Recalculate target row based on current grid size
-            targetRow = Math.floor(gridSize / 2);
+            // Target is always the bottom row
+            targetRow = gridSize - 1;
             
             grid = [];
             availableLetters = createLetterPool();
@@ -396,9 +397,11 @@
                 }
             }
             
-            // Place empty tile in bottom right
-            emptyPos = { row: gridSize - 1, col: gridSize - 1 };
-            
+            // Place empty tile in a random spot in the UPPER rows to encourage movement down
+            emptyPos = { row: 0, col: Math.floor(Math.random() * gridSize) };
+            grid[gridSize-1][gridSize-1] = getRandomLetter(); // Ensure bottom right isn't empty by default
+            grid[emptyPos.row][emptyPos.col] = '';
+
             updateTileSize();
             renderGrid();
         }
@@ -420,18 +423,16 @@
                 emptyPos = { row, col };
                 
                 renderGrid(); 
-                checkForWordsInLaserRow(); // Only check the laser row!
+                checkForWordsInLaserRow(); 
                 return true;
             }
             return false;
         }
 
-        // --- MODIFIED: ONLY CHECKS THE TARGET ROW ---
         function checkForWordsInLaserRow() {
             if (!dictionaryLoaded) return;
 
-            // Construct string for ONLY the target row
-            // Using space for empty tile to prevent bridging words
+            // Construct string for ONLY the target (bottom) row
             const rowStr = grid[targetRow].map(c => c === '' ? ' ' : c).join('');
             
             // Check this specific row
@@ -470,14 +471,14 @@
             
             if (wordList.children.length > 10) wordList.removeChild(wordList.lastChild);
             
-            showMessage(`⚡ LASER ACTIVATED: ${word}! +${points} ⚡`, 'success');
+            showMessage(`⚡ MATCH: ${word}! +${points} ⚡`, 'success');
 
             highlightWord(rowIndex, startPos, endPos);
 
             setTimeout(() => {
-                replaceWordTiles(rowIndex, startPos, endPos);
+                applyGravity(startPos, endPos);
                 checkLevelUp();
-            }, 1000);
+            }, 800); // Slightly faster clear time
         }
 
         function highlightWord(rowIndex, startPos, endPos) {
@@ -488,14 +489,38 @@
             }
         }
 
-        function replaceWordTiles(rowIndex, startPos, endPos) {
-            for (let pos = startPos; pos <= endPos; pos++) {
-                grid[rowIndex][pos] = getRandomLetter();
+        // --- NEW FUNCTION: GRAVITY LOGIC ---
+        function applyGravity(startCol, endCol) {
+            // For every column that was part of the word
+            for (let col = startCol; col <= endCol; col++) {
+                
+                // Shift everything above the targetRow DOWN by 1
+                // Loop from bottom-1 up to 0
+                for (let row = targetRow; row > 0; row--) {
+                    grid[row][col] = grid[row - 1][col];
+                }
+                
+                // Spawn new letter at the top
+                grid[0][col] = getRandomLetter();
+
+                // CRITICAL: If the empty tile was in this column, we must update its position tracker!
+                if (emptyPos.col === col) {
+                    // If empty tile was above the cleared line, it falls down
+                    if (emptyPos.row < targetRow) {
+                        emptyPos.row++;
+                    } 
+                    // Note: The empty tile cannot be IN the cleared line because words can't contain spaces.
+                }
             }
-            renderGrid();
+            
+            renderGrid(true); // Pass true to indicate gravity update (for animations if needed)
+            
+            // Check again! Maybe the gravity formed a new word immediately?
+            // Small delay to let visual settle
+            setTimeout(() => checkForWordsInLaserRow(), 300);
         }
 
-        function renderGrid() {
+        function renderGrid(isGravityUpdate = false) {
             const gridElement = document.getElementById('puzzleGrid');
             gridElement.innerHTML = '';
             
@@ -505,9 +530,11 @@
                     let className = 'tile';
                     
                     if (grid[i][j] === '') className += ' empty';
-                    // Highlight the target row specially
                     if (i === targetRow && grid[i][j] !== '') className += ' laser-active';
                     
+                    // If this is the top row and we just did gravity, animate entrance
+                    if (isGravityUpdate && i === 0) className += ' new-spawn';
+
                     tile.className = className;
                     tile.textContent = grid[i][j];
                     tile.style.width = `${tileSize}px`;
@@ -521,30 +548,27 @@
         }
 
         function calculatePoints(word) {
-            // Bonus points for laser line difficulty
             return (word.length * word.length) + 10;
         }
 
         function checkLevelUp() {
-            // Level up every 150 points
-            const newLevel = Math.floor(score / 150) + 1;
+            const newLevel = Math.floor(score / 200) + 1; // Higher threshold
             
             if (newLevel > level) {
                 level = newLevel;
                 const oldSize = gridSize;
                 
-                // Increase grid by 2 to keep odd symmetry (5 -> 7 -> 9)
-                // Cap at 9x9 because larger is tedious
-                gridSize = Math.min(5 + (level - 1) * 2, 9);
+                // Increase grid by 1 (since we don't need symmetry for center row anymore)
+                gridSize = Math.min(5 + (level - 1), 9);
                 
                 document.getElementById('level').textContent = level;
                 document.getElementById('gridSize').textContent = `${gridSize}x${gridSize}`;
                 
                 if (gridSize > oldSize) {
-                    showMessage(`🚀 GRID EXPANSION! New Zone Detected! 🚀`, 'level-up');
+                    showMessage(`🚀 GRID EXPANDED! 🚀`, 'level-up');
                     setTimeout(() => initGame(), 2000);
                 } else {
-                    showMessage(`⭐ Level ${level}! Speed Up! ⭐`, 'level-up');
+                    showMessage(`⭐ Level ${level}! ⭐`, 'level-up');
                 }
             }
         }
@@ -572,7 +596,7 @@
             document.getElementById('wordList').innerHTML = '';
             
             initGame();
-            showMessage('Laser Systems Online...', 'success');
+            showMessage('Gravity Systems Online...', 'success');
         }
 
         loadDictionary();
