@@ -284,14 +284,12 @@
         let availableLetters = [];
         let dictionaryLoaded = false;
 
-        // Weighted letter distribution based on Scrabble frequencies
         const letterWeights = {
             'E': 12, 'A': 9, 'I': 9, 'O': 8, 'N': 6, 'R': 6, 'T': 6, 'L': 4, 'S': 4, 'U': 4,
             'D': 4, 'G': 3, 'B': 2, 'C': 2, 'M': 2, 'P': 2, 'F': 2, 'H': 2, 'V': 2, 'W': 2,
             'Y': 2, 'K': 1, 'J': 1, 'X': 1, 'Q': 1, 'Z': 1
         };
 
-        // Load dictionary automatically on page load
         async function loadDictionary() {
             try {
                 const response = await fetch('CSW19.txt');
@@ -399,58 +397,70 @@
             const colDiff = Math.abs(col - emptyPos.col);
             
             if ((rowDiff === 1 && colDiff === 0) || (rowDiff === 0 && colDiff === 1)) {
-                // 1. Update Grid Data
                 grid[emptyPos.row][emptyPos.col] = grid[row][col];
                 grid[row][col] = '';
                 emptyPos = { row, col };
                 
-                // 2. CRITICAL FIX: Render the grid FIRST so the DOM matches the new state
-                renderGrid();
+                renderGrid(); 
                 
-                // 3. THEN check for words. If found, highlightWord() will find the correct DOM elements.
-                checkForWords();
+                // PASS coordinates to only check specific row/column
+                checkForWords(emptyPos.row, emptyPos.col); 
                 
                 return true;
             }
             return false;
         }
 
-        function checkForWords() {
+        // Modified to accept specific coordinates
+        function checkForWords(checkRow = null, checkCol = null) {
             if (!dictionaryLoaded) return;
 
-            // Check all rows
-            for (let i = 0; i < gridSize; i++) {
-                // Fix: Use a space ' ' for the empty tile to prevent words forming across gaps
-                const rowStr = grid[i].map(c => c === '' ? ' ' : c).join('');
-                if (checkStringForWords(rowStr, i, 'row')) return;
+            // If specific row provided, check ONLY that row
+            if (checkRow !== null) {
+                const rowStr = grid[checkRow].map(c => c === '' ? ' ' : c).join('');
+                if (checkStringForWords(rowStr, checkRow, 'row')) return;
+            } else {
+                // Otherwise check all (fallback)
+                for (let i = 0; i < gridSize; i++) {
+                    const rowStr = grid[i].map(c => c === '' ? ' ' : c).join('');
+                    if (checkStringForWords(rowStr, i, 'row')) return;
+                }
             }
 
-            // Check all columns
-            for (let j = 0; j < gridSize; j++) {
+            // If specific col provided, check ONLY that col
+            if (checkCol !== null) {
                 let colStr = '';
                 for (let i = 0; i < gridSize; i++) {
-                    colStr += (grid[i][j] === '' ? ' ' : grid[i][j]);
+                    colStr += (grid[i][checkCol] === '' ? ' ' : grid[i][checkCol]);
                 }
-                if (checkStringForWords(colStr, j, 'col')) return;
+                if (checkStringForWords(colStr, checkCol, 'col')) return;
+            } else {
+                // Otherwise check all (fallback)
+                for (let j = 0; j < gridSize; j++) {
+                    let colStr = '';
+                    for (let i = 0; i < gridSize; i++) {
+                        colStr += (grid[i][j] === '' ? ' ' : grid[i][j]);
+                    }
+                    if (checkStringForWords(colStr, j, 'col')) return;
+                }
             }
         }
 
         function checkStringForWords(str, index, type) {
-            // Check all substrings of length 3 or more
             for (let start = 0; start < str.length; start++) {
                 for (let end = start + 3; end <= str.length; end++) {
                     const substring = str.substring(start, end);
                     
-                    // Fix: Skip if contains empty tile (represented by space)
+                    // Skip if contains empty tile (represented by space)
                     if (substring.includes(' ')) continue;
                     
                     if (dictionary.has(substring)) {
                         foundWord(substring, index, start, end - 1, type);
-                        return true; // Word found
+                        return true;
                     }
                 }
             }
-            return false; // No word found
+            return false;
         }
 
         function foundWord(word, lineIndex, startPos, endPos, type) {
@@ -493,7 +503,6 @@
                     tileIndex = pos * gridSize + lineIndex;
                 }
                 
-                // Safety check and apply class
                 if (tiles[tileIndex]) {
                     tiles[tileIndex].classList.add('found');
                 }
