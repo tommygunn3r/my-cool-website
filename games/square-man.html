@@ -160,6 +160,7 @@
 
     <script>
         // --- Game Setup Constants ---
+        let lastTimestamp = null; // for time-based movement (60 FPS baseline)
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         const scoreDisplay = document.getElementById('scoreDisplay');
@@ -311,13 +312,13 @@
                 ctx.fillRect(x + size * 0.25 - eyeSize / 2, y - size * 0.25 - eyeSize / 2, eyeSize, eyeSize);
             }
 
-            move(map) {
+            move(map, delta = 1) {
                 // 1. Handle buffered direction change (turning)
                 this.handleTurns(map);
 
                 let nextRow = this.row;
                 let nextCol = this.col;
-                const speed = this.speed;
+                const speed = this.speed * delta; // time-based speed (tiles per 60FPS-second)
 
                 // Determine the current integer tile for robust wall checking
                 const currentTileR = Math.round(this.row);
@@ -466,13 +467,14 @@
                 this.speed = 0.12; // Player moves slightly faster
             }
 
-            update(map, ghosts) {
-                if (this.move(map)) {
+            update(map, ghosts, delta) {
+                if (this.move(map, delta)) {
                     this.checkCollisions(map, ghosts);
                 }
 
                 if (this.isPoweredUp) {
-                    this.powerUpTimer--;
+                    // 300 ~= 5 seconds at 60 FPS; delta is "60fps frames"
+                    this.powerUpTimer -= delta;
                     this.sizeRatio = this.baseSizeRatio * 1.2; // Get bigger
                     if (this.powerUpTimer <= 0) {
                         this.isPoweredUp = false;
@@ -518,12 +520,12 @@
                 this.isLeavingHome = true;
             }
 
-            update(map, player) {
+            update(map, player, delta) {
                 // Get the AI's intended next direction first
                 this.nextDirection = this.determineNextAction(map, player);
 
                 // Perform the move
-                this.move(map);
+                this.move(map, delta);
 
                 // Check collision with player
                 this.checkPlayerCollision(player);
@@ -745,6 +747,7 @@
                 this.isPaused = false;
                 this.hideMessage();
                 startBGM();
+                lastTimestamp = null; // reset timing at (re)start
                 requestAnimationFrame(this.gameLoop.bind(this));
             }
 
@@ -806,11 +809,11 @@
                 this.showMessage(`YOU WIN! Score: ${this.score}`, true, 'bg-green-900');
             }
 
-            update() {
+            update(delta) {
                 if (this.isPaused || !this.isRunning) return;
 
-                this.player.update(this.map, this.ghosts);
-                this.ghosts.forEach(g => g.update(this.map, this.player));
+                this.player.update(this.map, this.ghosts, delta);
+                this.ghosts.forEach(g => g.update(this.map, this.player, delta));
 
                 this.updateDisplay();
 
@@ -855,8 +858,12 @@
                 this.ghosts.forEach(g => g.draw());
             }
 
-            gameLoop() {
-                this.update();
+            gameLoop(timestamp) {
+                if (lastTimestamp === null) lastTimestamp = timestamp;
+                const delta = (timestamp - lastTimestamp) / 16.67; // 1.0 ~= one 60 FPS frame
+                lastTimestamp = timestamp;
+
+                this.update(delta);
                 this.draw();
                 if (this.isRunning) {
                     requestAnimationFrame(this.gameLoop.bind(this));
