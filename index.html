@@ -44,10 +44,10 @@
             position: absolute;
             top: 50%;
             left: 50%;
-            /* FIX: Reduced Width to 350px for clearance */
-            width: 350px;
+            /* FIX: Reduced Width to 320px for greater clearance */
+            width: 320px;
             height: 650px;
-            margin: -325px 0 0 -175px; /* Half of new width: -175px */
+            margin: -325px 0 0 -160px; /* Half of new width: -160px */
             
             /* Initial transformation for placement in the circle */
             backface-visibility: hidden;
@@ -252,8 +252,8 @@
 
             // --- 1. Determine Dynamic Radius based on screen size ---
             function getRadius() {
-                // FIX: Set desktop radius to 600px, which works well with 350px width.
-                const desktopRadius = 600; 
+                // FIX: Set desktop radius to 550px, which works well with 320px width.
+                const desktopRadius = 550; 
                 // Smaller Radius for mobile
                 const mobileRadius = 320; 
 
