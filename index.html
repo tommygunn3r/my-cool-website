@@ -141,7 +141,7 @@
         <div class="scene w-full h-full">
             <div id="carousel" class="carousel">
                 
-                <!-- NEW GAME: SQUARTRIS -->
+                <!-- Squartris -->
                 <div class="arcade-item game-launcher" data-url="games/squartris.html">
                     <a href="#" onclick="return false;" title="Play Squartris">
                         <div class="arcade-image-container">
@@ -151,7 +151,7 @@
                     </a>
                 </div>
 
-                <!-- NEW GAME: SQUARE-MAN -->
+                <!-- Square-Man -->
                 <div class="arcade-item game-launcher" data-url="games/square-man.html">
                     <a href="#" onclick="return false;" title="Play Square-Man">
                         <div class="arcade-image-container">
@@ -161,7 +161,7 @@
                     </a>
                 </div>
 
-                <!-- EXISTING GAME: SQUARIO -->
+                <!-- Squario -->
                 <div class="arcade-item game-launcher" data-url="games/squario.html">
                     <a href="#" onclick="return false;" title="Play Squario">
                         <div class="arcade-image-container">
@@ -171,7 +171,7 @@
                     </a>
                 </div>
 
-                <!-- EXISTING GAME: ASCII DOOM -->
+                <!-- ASCII DOOM -->
                 <div class="arcade-item game-launcher" data-url="games/ascii-doom.html">
                     <a href="#" onclick="return false;" title="Play ASCII DOOM">
                         <div class="arcade-image-container">
@@ -181,7 +181,7 @@
                     </a>
                 </div>
 
-                <!-- EXISTING GAME: SPACE SHOOTER -->
+                <!-- Space Shooter -->
                 <div class="arcade-item game-launcher" data-url="games/shooter.html">
                     <a href="#" onclick="return false;" title="Play Space Shooter">
                         <div class="arcade-image-container">
@@ -191,7 +191,7 @@
                     </a>
                 </div>
 
-                <!-- EXISTING GAME: WORD RUSH -->
+                <!-- Word Rush (Updated filename: arcade-wordrush.png) -->
                 <div class="arcade-item game-launcher" data-url="games/wordrush.html">
                     <a href="#" onclick="return false;" title="Play Word Rush">
                         <div class="arcade-image-container">
@@ -201,7 +201,7 @@
                     </a>
                 </div>
 
-                <!-- EXISTING GAME: WORD SLIDER -->
+                <!-- Word Slider -->
                 <div class="arcade-item game-launcher" data-url="games/word_slider.html">
                     <a href="#" onclick="return false;" title="Play Word Slider">
                         <div class="arcade-image-container">
@@ -211,7 +211,7 @@
                     </a>
                 </div>
 
-                <!-- EXISTING GAME: THE WATER GAME -->
+                <!-- The Water Game -->
                 <div class="arcade-item game-launcher" data-url="games/water.html">
                     <a href="#" onclick="return false;" title="Play The Water Game">
                         <div class="arcade-image-container">
@@ -254,8 +254,12 @@
 
             // --- 1. Determine Dynamic Radius based on screen size ---
             function getRadius() {
-                // Use a smaller radius on mobile to keep items visible and contained
-                return window.innerWidth <= 640 ? 250 : 400; 
+                // Large Radius for desktop to prevent clipping
+                const desktopRadius = 500; 
+                // Smaller Radius for mobile
+                const mobileRadius = 320; 
+
+                return window.innerWidth <= 640 ? mobileRadius : desktopRadius; 
             }
 
             // --- 2. Position Items in 3D Space (The Circle Setup) ---
