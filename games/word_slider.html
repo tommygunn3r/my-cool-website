@@ -29,8 +29,73 @@
             box-shadow: 0 20px 60px rgba(0,0,0,0.5);
             text-align: center;
             max-width: 90vw;
-            color: #333;
+            position: relative;
         }
+
+        /* --- MUSIC PLAYER STYLES --- */
+        .music-player {
+            position: absolute;
+            top: -60px;
+            right: 0;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(10px);
+            padding: 10px 20px;
+            border-radius: 30px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            color: white;
+            border: 1px solid rgba(255,255,255,0.2);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .music-btn {
+            background: none;
+            border: none;
+            color: white;
+            cursor: pointer;
+            font-size: 1.2em;
+            opacity: 0.8;
+            transition: all 0.2s;
+            padding: 5px;
+        }
+
+        .music-btn:hover {
+            opacity: 1;
+            transform: scale(1.1);
+        }
+
+        .track-info {
+            font-size: 0.8em;
+            font-weight: bold;
+            min-width: 80px;
+            text-align: center;
+        }
+
+        /* Equalizer Animation */
+        .equalizer {
+            display: flex;
+            gap: 2px;
+            height: 15px;
+            align-items: flex-end;
+        }
+        
+        .bar {
+            width: 3px;
+            background: #fdbb2d;
+            animation: equalize 0.8s infinite ease-in-out alternate;
+        }
+        
+        .bar:nth-child(2) { animation-delay: 0.2s; }
+        .bar:nth-child(3) { animation-delay: 0.4s; }
+        
+        .paused .bar { animation-play-state: paused; height: 3px !important; }
+
+        @keyframes equalize {
+            0% { height: 3px; }
+            100% { height: 15px; }
+        }
+        /* ------------------------- */
 
         h1 {
             color: #b21f1f;
@@ -87,11 +152,9 @@
             background: #2d3748;
             border-radius: 10px;
             position: relative;
-            /* Add padding at bottom to visually separate the laser row slightly */
             padding-bottom: 25px;
         }
 
-        /* Visual indicator for the Laser Line at the BOTTOM */
         .puzzle-grid::after {
             content: 'LASER ZONE';
             position: absolute;
@@ -113,14 +176,13 @@
             font-weight: bold;
             color: #e2e8f0;
             cursor: pointer;
-            transition: all 0.2s ease; /* Faster transition for gravity feel */
+            transition: all 0.2s ease;
             box-shadow: 0 4px 6px rgba(0,0,0,0.3);
             display: flex;
             align-items: center;
             justify-content: center;
         }
 
-        /* The specific style for tiles in the Laser Row (Bottom) */
         .tile.laser-active {
             background: linear-gradient(135deg, #ecc94b 0%, #d69e2e 100%);
             color: #744210;
@@ -128,9 +190,7 @@
             box-shadow: 0 0 15px rgba(236, 201, 75, 0.4);
         }
 
-        .tile:hover {
-            transform: translateY(-2px);
-        }
+        .tile:hover { transform: translateY(-2px); }
 
         .tile.empty {
             background: #1a202c;
@@ -139,20 +199,17 @@
             border: none;
         }
 
-        /* Animation for new tiles appearing at top */
         @keyframes dropIn {
             from { transform: translateY(-50px); opacity: 0; }
             to { transform: translateY(0); opacity: 1; }
         }
         
-        .tile.new-spawn {
-            animation: dropIn 0.4s ease;
-        }
+        .tile.new-spawn { animation: dropIn 0.4s ease; }
 
         .tile.found {
             background: linear-gradient(135deg, #48bb78 0%, #38a169 100%) !important;
             color: white !important;
-            transform: scale(0.9); /* Shrink slightly before vanishing */
+            transform: scale(0.9);
             transition: transform 0.2s;
         }
 
@@ -256,6 +313,18 @@
 </head>
 <body>
     <div class="container">
+        <div class="music-player" id="musicPlayer">
+            <div class="equalizer paused" id="equalizer">
+                <div class="bar"></div>
+                <div class="bar"></div>
+                <div class="bar"></div>
+            </div>
+            <span class="track-info" id="trackInfo">Ready</span>
+            <button class="music-btn" onclick="toggleMusic()" title="Play/Pause">⏯</button>
+            <button class="music-btn" onclick="nextTrack()" title="Next Track">⏭</button>
+            <button class="music-btn" onclick="toggleMute()" title="Mute/Unmute">🔊</button>
+        </div>
+
         <h1>Waterfall Slider</h1>
         <p class="info">Drop letters into the <span class="highlight-text">BOTTOM ROW</span>.<br>
         New letters spawn at the top!</p>
@@ -301,13 +370,87 @@
     </div>
 
     <script>
+        // --- AUDIO SYSTEM (MUSIC & SFX) ---
+        const playlist = ['music/track1.mp3', 'music/track2.mp3', 'music/track3.mp3'];
+        const sfxPush = new Audio('sounds/push.mp3');
+        const sfxClear = new Audio('sounds/clear.mp3');
+        
+        // Lower volume for SFX so they don't blast the user
+        sfxPush.volume = 0.4;
+        sfxClear.volume = 0.6;
+
+        let currentTrackIndex = 0;
+        let audio = new Audio();
+        let isPlaying = false;
+        let isMuted = false;
+
+        // Initialize audio
+        audio.src = playlist[0];
+        audio.loop = false;
+
+        audio.addEventListener('ended', () => {
+            nextTrack();
+        });
+
+        function playSound(type) {
+            if (isMuted) return;
+            // Clone to allow overlapping sounds (fast clicking)
+            try {
+                if (type === 'push') {
+                    const sound = sfxPush.cloneNode();
+                    sound.volume = 0.4;
+                    sound.play().catch(() => {}); // Ignore auto-play errors
+                } else if (type === 'clear') {
+                    sfxClear.currentTime = 0;
+                    sfxClear.play().catch(() => {});
+                }
+            } catch (e) {
+                console.log("Audio play failed (user interaction needed)");
+            }
+        }
+
+        function toggleMusic() {
+            if (isPlaying) {
+                audio.pause();
+                document.getElementById('equalizer').classList.add('paused');
+            } else {
+                audio.play().catch(e => console.log("Interaction needed first"));
+                document.getElementById('equalizer').classList.remove('paused');
+            }
+            isPlaying = !isPlaying;
+            updateTrackDisplay();
+        }
+
+        function nextTrack() {
+            currentTrackIndex = (currentTrackIndex + 1) % playlist.length;
+            audio.src = playlist[currentTrackIndex];
+            if (isPlaying) {
+                audio.play();
+                document.getElementById('equalizer').classList.remove('paused');
+            }
+            updateTrackDisplay();
+        }
+
+        function toggleMute() {
+            isMuted = !isMuted;
+            audio.muted = isMuted;
+            const btn = document.querySelectorAll('.music-btn')[2];
+            btn.textContent = isMuted ? '🔇' : '🔊';
+        }
+
+        function updateTrackDisplay() {
+            const display = document.getElementById('trackInfo');
+            display.textContent = `Track ${currentTrackIndex + 1}`;
+        }
+        // ---------------------
+
         let dictionary = new Set();
         let grid = [];
         let emptyPos = { row: 0, col: 0 };
         let score = 0;
         let level = 1;
         let gridSize = 5; 
-        let targetRow = 4; // Will be gridSize - 1
+        let targetRow = 4;
         let wordsFound = [];
         let tileSize = 70;
         let availableLetters = [];
@@ -382,7 +525,6 @@
         function initGame() {
             if (!dictionaryLoaded) return;
             
-            // Target is always the bottom row
             targetRow = gridSize - 1;
             
             grid = [];
@@ -397,9 +539,8 @@
                 }
             }
             
-            // Place empty tile in a random spot in the UPPER rows to encourage movement down
             emptyPos = { row: 0, col: Math.floor(Math.random() * gridSize) };
-            grid[gridSize-1][gridSize-1] = getRandomLetter(); // Ensure bottom right isn't empty by default
+            grid[gridSize-1][gridSize-1] = getRandomLetter(); 
             grid[emptyPos.row][emptyPos.col] = '';
 
             updateTileSize();
@@ -414,6 +555,11 @@
         }
 
         function moveTile(row, col) {
+            // Attempt auto-start music
+            if (!isPlaying && audio.currentTime === 0) {
+                toggleMusic(); 
+            }
+
             const rowDiff = Math.abs(row - emptyPos.row);
             const colDiff = Math.abs(col - emptyPos.col);
             
@@ -421,6 +567,9 @@
                 grid[emptyPos.row][emptyPos.col] = grid[row][col];
                 grid[row][col] = '';
                 emptyPos = { row, col };
+                
+                // Play Push Sound
+                playSound('push');
                 
                 renderGrid(); 
                 checkForWordsInLaserRow(); 
@@ -431,11 +580,7 @@
 
         function checkForWordsInLaserRow() {
             if (!dictionaryLoaded) return;
-
-            // Construct string for ONLY the target (bottom) row
             const rowStr = grid[targetRow].map(c => c === '' ? ' ' : c).join('');
-            
-            // Check this specific row
             checkStringForWords(rowStr, targetRow);
         }
 
@@ -443,7 +588,6 @@
             for (let start = 0; start < str.length; start++) {
                 for (let end = start + 3; end <= str.length; end++) {
                     const substring = str.substring(start, end);
-                    
                     if (substring.includes(' ')) continue;
                     
                     if (dictionary.has(substring)) {
@@ -456,6 +600,9 @@
         }
 
         function foundWord(word, rowIndex, startPos, endPos) {
+            // Play Clear Sound
+            playSound('clear');
+
             const points = calculatePoints(word);
             score += points;
             wordsFound.push(word);
@@ -478,7 +625,7 @@
             setTimeout(() => {
                 applyGravity(startPos, endPos);
                 checkLevelUp();
-            }, 800); // Slightly faster clear time
+            }, 800);
         }
 
         function highlightWord(rowIndex, startPos, endPos) {
@@ -489,34 +636,17 @@
             }
         }
 
-        // --- NEW FUNCTION: GRAVITY LOGIC ---
         function applyGravity(startCol, endCol) {
-            // For every column that was part of the word
             for (let col = startCol; col <= endCol; col++) {
-                
-                // Shift everything above the targetRow DOWN by 1
-                // Loop from bottom-1 up to 0
                 for (let row = targetRow; row > 0; row--) {
                     grid[row][col] = grid[row - 1][col];
                 }
-                
-                // Spawn new letter at the top
                 grid[0][col] = getRandomLetter();
-
-                // CRITICAL: If the empty tile was in this column, we must update its position tracker!
                 if (emptyPos.col === col) {
-                    // If empty tile was above the cleared line, it falls down
-                    if (emptyPos.row < targetRow) {
-                        emptyPos.row++;
-                    } 
-                    // Note: The empty tile cannot be IN the cleared line because words can't contain spaces.
+                    if (emptyPos.row < targetRow) emptyPos.row++;
                 }
             }
-            
-            renderGrid(true); // Pass true to indicate gravity update (for animations if needed)
-            
-            // Check again! Maybe the gravity formed a new word immediately?
-            // Small delay to let visual settle
+            renderGrid(true);
             setTimeout(() => checkForWordsInLaserRow(), 300);
         }
 
@@ -531,8 +661,6 @@
                     
                     if (grid[i][j] === '') className += ' empty';
                     if (i === targetRow && grid[i][j] !== '') className += ' laser-active';
-                    
-                    // If this is the top row and we just did gravity, animate entrance
                     if (isGravityUpdate && i === 0) className += ' new-spawn';
 
                     tile.className = className;
@@ -552,13 +680,10 @@
         }
 
         function checkLevelUp() {
-            const newLevel = Math.floor(score / 200) + 1; // Higher threshold
-            
+            const newLevel = Math.floor(score / 200) + 1;
             if (newLevel > level) {
                 level = newLevel;
                 const oldSize = gridSize;
-                
-                // Increase grid by 1 (since we don't need symmetry for center row anymore)
                 gridSize = Math.min(5 + (level - 1), 9);
                 
                 document.getElementById('level').textContent = level;
@@ -597,6 +722,8 @@
             
             initGame();
             showMessage('Gravity Systems Online...', 'success');
+            
+            if(!isPlaying) toggleMusic();
         }
 
         loadDictionary();
