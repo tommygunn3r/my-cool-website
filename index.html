@@ -153,15 +153,15 @@
 
     <script>
         const games = [
-            { name: 'ascii-doom', file: 'ascii-doom.html' },
-            { name: 'shooter', file: 'shooter.html' },
-            { name: 'square-man', file: 'square-man.html' },
-            { name: 'squario', file: 'squario.html' },
-            { name: 'squartris', file: 'squartris.html' },
-            { name: 'water', file: 'water.html' },
-            { name: 'word_slider', file: 'word_slider.html' },
-            { name: 'wordrush', file: 'wordrush.html' },
-            { name: 'square-bird', file: 'square-bird.html' }
+            { id: 'ascii_doom', name: 'ascii-doom', file: 'ascii-doom.html' },
+            { id: 'shooter', name: 'shooter', file: 'shooter.html' },
+            { id: 'square_man', name: 'square-man', file: 'square-man.html' },
+            { id: 'squario', name: 'squario', file: 'squario.html' },
+            { id: 'squartris', name: 'squartris', file: 'squartris.html' },
+            { id: 'water', name: 'water', file: 'water.html' },
+            { id: 'word_slider', name: 'word_slider', file: 'word_slider.html' },
+            { id: 'wordrush', name: 'wordrush', file: 'wordrush.html' },
+            { id: 'square_bird', name: 'square-bird', file: 'square-bird.html' }
         ];
 
         // Get play counts from memory
@@ -193,8 +193,8 @@
 
         function getSortedGames() {
             return games.sort((a, b) => {
-                const countA = playCounts[a.name] || 0;
-                const countB = playCounts[b.name] || 0;
+                const countA = playCounts[a.id] || 0;
+                const countB = playCounts[b.id] || 0;
                 return countB - countA;
             });
         }
@@ -216,7 +216,7 @@
                 
                 tile.appendChild(img);
                 tile.onclick = () => {
-                    incrementPlayCount(game.name);
+                    incrementPlayCount(game.id);
                     loadGame(game.file);
                 };
                 
