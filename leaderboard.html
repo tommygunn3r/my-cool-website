@@ -274,31 +274,28 @@
 
                 const orderField = mode === 'scores' ? 'score' : 'timePlayed';
 
-                if (gameId === 'all') {
-                    q = query(scoresRef, orderBy(orderField, 'desc'), limit(50));
-                } else {
-                    q = query(
-                        scoresRef,
-                        where('gameName', '==', gameId),
-                        orderBy(orderField, 'desc'),
-                        limit(20)
-                    );
-                }
+                // Always get all scores, then filter client-side if needed
+                q = query(scoresRef, orderBy(orderField, 'desc'), limit(200));
 
                 const querySnapshot = await getDocs(q);
                 const results = [];
                 
                 querySnapshot.forEach((doc) => {
                     const data = doc.data();
-                    results.push({
-                        playerName: data.playerName,
-                        score: data.score || 0,
-                        timePlayed: data.timePlayed || 0,
-                        gameName: data.gameName
-                    });
+                    
+                    // Filter by game if not 'all'
+                    if (gameId === 'all' || data.gameName === gameId) {
+                        results.push({
+                            playerName: data.playerName,
+                            score: data.score || 0,
+                            timePlayed: data.timePlayed || 0,
+                            gameName: data.gameName
+                        });
+                    }
                 });
 
-                return results;
+                // Limit results after filtering
+                return results.slice(0, gameId === 'all' ? 50 : 20);
             } catch (error) {
                 console.error('Error loading scores:', error);
                 return [];
