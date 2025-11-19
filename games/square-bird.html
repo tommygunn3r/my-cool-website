@@ -141,7 +141,13 @@
         </div>
     </div>
 
-    <script>
+
+    <script type="module">
+        import GameScoreManager from '../game-score-manager.js';
+        
+        // Initialize score manager for Square Bird
+        const scoreManager = new GameScoreManager('square_bird', true);
+        
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         canvas.width = 400;
@@ -243,6 +249,10 @@
             bird.velocity = 0;
             pipes = [];
             bullets = [];
+            
+            // Start tracking time
+            scoreManager.startSession();
+            
             gameLoop = setInterval(update, 1000/60);
         }
 
@@ -405,7 +415,13 @@
             clearInterval(gameLoop);
             playHitSound();
             
+            // Submit score to leaderboard
+            scoreManager.submitGameResult(score);
+            
             let finalScoreText = 'Final Score: ' + score;
+            const playTime = scoreManager.getElapsedTimeFormatted();
+            finalScoreText += ' | Time: ' + playTime;
+            
             if (score === highScore && score > 0) {
                 finalScoreText += ' 🏆 NEW RECORD!';
             }
