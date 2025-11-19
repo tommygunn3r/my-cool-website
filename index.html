@@ -3,369 +3,176 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Arcade Game Launcher</title>
-    
-<script src="https://cdn.tailwindcss.com"></script>
+    <title>Gunner's Games Arcade</title>
     <style>
-        /* --- 1. Background and Base Styling --- */
-        body {
-            background-color: #0d0a14;
-            /* Starry night effect using radial gradients */
-            background-image: radial-gradient(circle at center, #1b0f32 0%, #0d0a14 100%);
-            overflow: hidden; /* Prevent body scroll on main page */
-            color: white;
-            font-family: 'Inter', sans-serif;
+        * {
             margin: 0;
-            user-select: none; /* Prevent accidental text selection during swiping/scrolling */
+            padding: 0;
+            box-sizing: border-box;
         }
 
-        /* --- 2. 3D Scene Setup --- */
-        .scene {
-            /* Establish perspective for 3D effect */
-            perspective: 1000px; 
+        body {
+            background: #000;
+            font-family: Arial, sans-serif;
+            overflow-x: hidden;
+        }
+
+        .arcade-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
             width: 100%;
-            height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .carousel {
-            /* Position and rotation container */
-            width: 100%;
-            height: 100%;
-            position: relative;
-            transform-style: preserve-3d; /* Key for 3D children */
-            transition: transform 0.8s ease-out; /* Smooth rotation animation */
-        }
-
-        /* --- 3. Arcade Item Positioning and Sizing --- */
-        .arcade-item {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            /* FIX: Reduced Width to 320px for greater clearance */
-            width: 320px;
-            height: 650px;
-            margin: -325px 0 0 -160px; /* Half of new width: -160px */
-            
-            /* Initial transformation for placement in the circle */
-            backface-visibility: hidden;
-            transition: opacity 0.4s ease, transform 0.4s ease; /* Smooth size/position changes */
-        }
-
-        /* NEW: Container for the image to control sizing and alignment for object-fit: contain */
-        .arcade-image-container {
-            width: 100%;
-            height: 600px; /* Same height as the original .arcade-image */
-            display: flex; /* Use flexbox to center image vertically */
-            align-items: center; /* Center image vertically */
-            justify-content: center; /* Center image horizontally */
-            overflow: hidden; /* Clip any potential overflow if image aspect ratio is off */
-        }
-
-        .arcade-image {
-            max-width: 100%; /* Ensure image doesn't overflow its container */
-            max-height: 100%; /* Ensure image doesn't overflow its container */
-            object-fit: contain; /* Ensures the whole image is visible */
-            cursor: pointer;
-            /* Border and shadow are now applied directly to the image */
-            box-shadow: 0 0 40px rgba(0, 255, 255, 0.5); /* Neon glow effect */
-        }
-        
-        /* Ensure the link wraps the image */
-        .arcade-item a {
-            display: block;
-            width: 100%; /* Make the link fill the item */
-            height: 100%; /* Make the link fill the item */
-            display: flex; /* Use flex to align content within the link */
-            flex-direction: column; /* Stack image and text */
-            align-items: center; /* Center content horizontally */
-            justify-content: center; /* Center content vertically if needed */
-        }
-
-        /* Mobile Adjustments */
-        @media (max-width: 640px) {
-            .scene {
-                perspective: 600px; /* Tighter perspective for narrow screen */
-            }
-            .arcade-item {
-                /* Smaller size and adjusted offset for mobile */
-                width: 250px;
-                height: 400px;
-                margin: -200px 0 0 -125px; 
-            }
-            .arcade-image-container { /* Adjust container height for mobile */
-                height: 350px; 
-            }
-        }
-
-        /* Full page height for main content */
-        .full-page-main {
             min-height: 100vh;
         }
 
-        /* Style for the game overlay's close button */
-        .close-btn {
-            z-index: 1050; /* Above the iframe */
-            top: 1rem;
-            right: 1rem;
-            padding: 0.5rem 1rem;
-            background-color: #e74c3c;
-            color: white;
-            border-radius: 9999px;
+        @media (min-width: 1400px) {
+            .arcade-grid {
+                grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            }
+        }
+
+        .game-tile {
+            position: relative;
+            aspect-ratio: 1;
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .game-tile:hover {
+            transform: scale(1.05);
+            z-index: 10;
+        }
+
+        .game-tile img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .coming-soon {
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2em;
+            color: #666;
             font-weight: bold;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);
-            transition: background-color 0.2s;
-            /* Mobile adjustment */
-            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 3px;
         }
-        .close-btn:hover {
-            background-color: #c0392b;
+
+        @media (max-width: 768px) {
+            .arcade-grid {
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            }
+            .coming-soon {
+                font-size: 1.2em;
+                letter-spacing: 2px;
+            }
         }
-        @media (max-width: 640px) {
-            .close-btn {
-                top: 0.5rem;
-                right: 0.5rem;
-                padding: 0.4rem 0.8rem;
+
+        @media (max-width: 480px) {
+            .arcade-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .coming-soon {
+                font-size: 1em;
+                letter-spacing: 1px;
             }
         }
     </style>
 </head>
-<body class="min-h-screen flex flex-col antialiased">
+<body>
+    <div class="arcade-grid" id="arcadeGrid"></div>
 
-    
-<main id="main-carousel" class="full-page-main flex-grow flex items-center justify-center p-4 overflow-hidden">
-        <div class="scene w-full h-full">
-            <div id="carousel" class="carousel">
+    <script>
+        const games = [
+            { name: 'ascii-doom', file: 'ascii-doom.html' },
+            { name: 'shooter', file: 'shooter.html' },
+            { name: 'square-man', file: 'square-man.html' },
+            { name: 'squario', file: 'squario.html' },
+            { name: 'squartris', file: 'squartris.html' },
+            { name: 'water', file: 'water.html' },
+            { name: 'word_slider', file: 'word_slider.html' },
+            { name: 'wordrush', file: 'wordrush.html' },
+            { name: 'square-bird', file: 'square-bird.html' }
+        ];
+
+        // Get play counts from memory
+        let playCounts = {};
+
+        async function loadPlayCounts() {
+            try {
+                const result = await window.storage.get('game-play-counts');
+                if (result && result.value) {
+                    playCounts = JSON.parse(result.value);
+                }
+            } catch (error) {
+                // First time or error, start fresh
+                playCounts = {};
+            }
+        }
+
+        async function savePlayCounts() {
+            try {
+                await window.storage.set('game-play-counts', JSON.stringify(playCounts));
+            } catch (error) {
+                console.error('Failed to save play counts:', error);
+            }
+        }
+
+        function incrementPlayCount(gameName) {
+            playCounts[gameName] = (playCounts[gameName] || 0) + 1;
+            savePlayCounts();
+        }
+
+        function getSortedGames() {
+            return games.sort((a, b) => {
+                const countA = playCounts[a.name] || 0;
+                const countB = playCounts[b.name] || 0;
+                return countB - countA;
+            });
+        }
+
+        function renderArcade() {
+            const grid = document.getElementById('arcadeGrid');
+            grid.innerHTML = '';
+
+            const sortedGames = getSortedGames();
+
+            sortedGames.forEach(game => {
+                const tile = document.createElement('div');
+                tile.className = 'game-tile';
                 
-                <!-- Squartris -->
-                <div class="arcade-item game-launcher" data-url="games/squartris.html">
-                    <a href="#" onclick="return false;" title="Play Squartris">
-                        <div class="arcade-image-container">
-                            <img src="previews/arcade-squartris.png" alt="Squartris Arcade Machine" class="arcade-image rounded-xl border-4 border-purple-500/80">
-                        </div>
-                        <p class="mt-4 text-xl font-bold text-purple-400 text-center">SQUARTRIS</p>
-                    </a>
-                </div>
-
-                <!-- Square-Man -->
-                <div class="arcade-item game-launcher" data-url="games/square-man.html">
-                    <a href="#" onclick="return false;" title="Play Square-Man">
-                        <div class="arcade-image-container">
-                            <img src="previews/arcade-squareman.png" alt="Square-Man Arcade Machine" class="arcade-image rounded-xl border-4 border-pink-500/80">
-                        </div>
-                        <p class="mt-4 text-xl font-bold text-pink-400 text-center">SQUARE-MAN</p>
-                    </a>
-                </div>
-
-                <!-- Squario -->
-                <div class="arcade-item game-launcher" data-url="games/squario.html">
-                    <a href="#" onclick="return false;" title="Play Squario">
-                        <div class="arcade-image-container">
-                            <img src="previews/arcade-squario.png" alt="Squario Arcade Machine" class="arcade-image rounded-xl border-4 border-blue-500/80">
-                        </div>
-                        <p class="mt-4 text-xl font-bold text-green-400 text-center">SQUARIO</p>
-                    </a>
-                </div>
-
-                <!-- ASCII DOOM -->
-                <div class="arcade-item game-launcher" data-url="games/ascii-doom.html">
-                    <a href="#" onclick="return false;" title="Play ASCII DOOM">
-                        <div class="arcade-image-container">
-                            <img src="previews/arcade-doom.png" alt="ASCII DOOM Arcade Machine" class="arcade-image rounded-xl border-4 border-red-600/80">
-                        </div>
-                        <p class="mt-4 text-xl font-bold text-red-400 text-center">ASCII DOOM</p>
-                    </a>
-                </div>
-
-                <!-- Space Shooter -->
-                <div class="arcade-item game-launcher" data-url="games/shooter.html">
-                    <a href="#" onclick="return false;" title="Play Space Shooter">
-                        <div class="arcade-image-container">
-                            <img src="previews/arcade-shooter.png" alt="Space Shooter Arcade Machine" class="arcade-image rounded-xl border-4 border-indigo-600/80">
-                        </div>
-                        <p class="mt-4 text-xl font-bold text-indigo-400 text-center">SPACE SHOOTER</p>
-                    </a>
-                </div>
-
-                <!-- Word Rush (Updated filename: arcade-wordrush.png) -->
-                <div class="arcade-item game-launcher" data-url="games/wordrush.html">
-                    <a href="#" onclick="return false;" title="Play Word Rush">
-                        <div class="arcade-image-container">
-                            <img src="previews/arcade-wordrush.png" alt="Word Rush Arcade Machine" class="arcade-image rounded-xl border-4 border-yellow-500/80">
-                        </div>
-                        <p class="mt-4 text-xl font-bold text-yellow-400 text-center">WORD RUSH</p>
-                    </a>
-                </div>
-
-                <!-- Word Slider -->
-                <div class="arcade-item game-launcher" data-url="games/word_slider.html">
-                    <a href="#" onclick="return false;" title="Play Word Slider">
-                        <div class="arcade-image-container">
-                            <img src="previews/arcade-slider.png" alt="Word Slider Arcade Machine" class="arcade-image rounded-xl border-4 border-pink-500/80">
-                        </div>
-                        <p class="mt-4 text-xl font-bold text-pink-400 text-center">WORD SLIDER</p>
-                    </a>
-                </div>
-
-                <!-- The Water Game -->
-                <div class="arcade-item game-launcher" data-url="games/water.html">
-                    <a href="#" onclick="return false;" title="Play The Water Game">
-                        <div class="arcade-image-container">
-                            <img src="previews/arcade-water.png" alt="The Water Game Arcade Machine" class="arcade-image rounded-xl border-4 border-cyan-500/80">
-                        </div>
-                        <p class="mt-4 text-xl font-bold text-cyan-400 text-center">THE WATER GAME</p>
-                    </a>
-                </div>
-
-            </div>
-        </div>
-    </main>
-
-    
-<div id="game-overlay" class="hidden fixed inset-0 bg-black z-40">
-        
-<button id="close-game" class="close-btn absolute">
-            Close Game / Back to Arcade
-        </button>
-
-        
-<iframe id="game-iframe" class="w-full h-full border-0"></iframe>
-    </div>
-
-    
-<script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const carousel = document.getElementById('carousel');
-            const items = document.querySelectorAll('.arcade-item');
-            const gameLaunchers = document.querySelectorAll('.game-launcher');
-            const gameOverlay = document.getElementById('game-overlay');
-            const gameIframe = document.getElementById('game-iframe');
-            const closeGameButton = document.getElementById('close-game');
-            const mainCarousel = document.getElementById('main-carousel');
-            
-            const numItems = items.length;
-            // Angle is now 45 degrees (360 / 8)
-            const angleIncrement = 360 / numItems; 
-            let currentAngle = 0;
-
-            // --- 1. Determine Dynamic Radius based on screen size ---
-            function getRadius() {
-                // FIX: Set desktop radius to 550px, which works well with 320px width.
-                const desktopRadius = 550; 
-                // Smaller Radius for mobile
-                const mobileRadius = 320; 
-
-                return window.innerWidth <= 640 ? mobileRadius : desktopRadius; 
-            }
-
-            // --- 2. Position Items in 3D Space (The Circle Setup) ---
-            function positionItems() {
-                const radius = getRadius();
-                items.forEach((item, index) => {
-                    const angle = index * angleIncrement;
-                    item.style.transform = `
-                        rotateY(${angle}deg) 
-                        translateZ(${radius}px)
-                    `;
-                });
-            }
-
-            // --- 3. Handle Rotation (The Scroll Wheel & Swipe Logic) ---
-            function rotateCarousel(direction) {
-                if (direction === 'left' || direction === 'up') {
-                    currentAngle += angleIncrement; // Rotate clockwise
-                } else if (direction === 'right' || direction === 'down') {
-                    currentAngle -= angleIncrement; // Rotate counter-clockwise
-                }
+                const img = document.createElement('img');
+                img.src = `/previews/arcade-${game.name}.png`;
+                img.alt = game.name;
+                img.loading = 'lazy';
                 
-                carousel.style.transform = `rotateY(${currentAngle}deg)`;
-            }
-
-            // --- 4. Event Listener for Mouse Wheel ---
-            window.addEventListener('wheel', (e) => {
-                // Only allow rotation if the game overlay is NOT visible
-                if (gameOverlay.classList.contains('hidden')) {
-                    e.preventDefault(); 
-                    if (Math.abs(e.deltaY) > 10) { 
-                        if (!carousel.isRotating) {
-                             carousel.isRotating = true;
-                             if (e.deltaY > 0) {
-                                 rotateCarousel('up');
-                             } else {
-                                 rotateCarousel('down');
-                             }
-                             // Reset the flag after the transition duration
-                             setTimeout(() => {
-                                 carousel.isRotating = false;
-                             }, 800); 
-                        }
-                    }
-                }
-            }, { passive: false });
-
-            // --- 5. Touch/Swipe Handling for Mobile ---
-            let touchStartX = 0;
-            const swipeThreshold = 50; // Minimum distance for a swipe
-
-            mainCarousel.addEventListener('touchstart', (e) => {
-                if (e.touches.length === 1 && gameOverlay.classList.contains('hidden')) {
-                    touchStartX = e.touches[0].clientX;
-                }
-            }, { passive: true });
-
-            mainCarousel.addEventListener('touchend', (e) => {
-                if (e.changedTouches.length === 1 && gameOverlay.classList.contains('hidden')) {
-                    const touchEndX = e.changedTouches[0].clientX;
-                    const swipeDistance = touchEndX - touchStartX;
-
-                    if (Math.abs(swipeDistance) > swipeThreshold) {
-                        if (swipeDistance > 0) {
-                            // Swipe Right: Rotate left (previous game)
-                            rotateCarousel('left'); 
-                        } else {
-                            // Swipe Left: Rotate right (next game)
-                            rotateCarousel('right'); 
-                        }
-                    }
-                }
+                tile.appendChild(img);
+                tile.onclick = () => {
+                    incrementPlayCount(game.name);
+                    window.location.href = `/games/${game.file}`;
+                };
+                
+                grid.appendChild(tile);
             });
 
+            // Add coming soon tile
+            const comingSoon = document.createElement('div');
+            comingSoon.className = 'game-tile coming-soon';
+            comingSoon.textContent = 'Coming Soon';
+            grid.appendChild(comingSoon);
+        }
 
-            // --- 6. Game Launcher Click Handler ---
-            gameLaunchers.forEach(launcher => {
-                launcher.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    const gameUrl = launcher.dataset.url;
-                    
-                    if (gameUrl) {
-                        gameIframe.src = gameUrl;
-                        gameOverlay.classList.remove('hidden');
-                        document.body.style.overflow = 'hidden'; // Lock background scroll
-                    }
-                });
-            });
+        // Initialize
+        async function init() {
+            await loadPlayCounts();
+            renderArcade();
+        }
 
-            // --- 7. Close Game Handler ---
-            closeGameButton.addEventListener('click', () => {
-                gameOverlay.classList.add('hidden');
-                gameIframe.src = 'about:blank'; // Clear the iframe content
-                document.body.style.overflow = 'auto'; // Restore body scroll
-            });
-
-            // --- 8. Handle Resize for Responsiveness ---
-            let resizeTimer;
-            window.addEventListener('resize', () => {
-                clearTimeout(resizeTimer);
-                resizeTimer = setTimeout(positionItems, 100);
-            });
-
-
-            // Initialize the carousel positions
-            positionItems();
-        });
-    </script> 
+        init();
+    </script>
 </body>
 </html>
-
