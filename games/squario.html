@@ -258,7 +258,12 @@
         </div>
     </div>
 
-    <script>
+    <script type="module">
+        import GameScoreManager from '../game-score-manager.js';
+        
+        // Initialize score manager for Squario
+        const scoreManager = new GameScoreManager('squario', true);
+        
         const canvas = document.getElementById('game');
         const ctx = canvas.getContext('2d');
         let timerInterval = null;
@@ -326,8 +331,15 @@
             gameState.score = 0;
             gameState.lives = 3;
             lastTime = 0; 
+            
+            // Start tracking time
+            scoreManager.startSession();
+            
             loadLevel(0); 
         }
+        
+        // Make globally accessible
+        window.startGame = startGame;
 
         // Player
         const player = {
@@ -927,6 +939,9 @@
             stopMusic();
             if (timerInterval) clearInterval(timerInterval); 
             
+            // Submit score to leaderboard
+            scoreManager.submitGameResult(gameState.score);
+            
             const endDiv = document.getElementById('gameOver');
             const endMessage = document.getElementById('endMessage');
             const finalScoreEl = document.getElementById('finalScore');
@@ -938,7 +953,8 @@
                 endMessage.textContent = 'Game Over!';
             }
             
-            finalScoreEl.textContent = `Final Score: ${gameState.score}`;
+            const playTime = scoreManager.getElapsedTimeFormatted();
+            finalScoreEl.textContent = `Final Score: ${gameState.score} | Time: ${playTime}`;
             
             if (gameState.score > gameState.highScore) {
                 gameState.highScore = gameState.score;
@@ -959,6 +975,9 @@
             lastTime = 0; 
             loadLevel(0);
         }
+        
+        // Make globally accessible
+        window.restartGame = restartGame;
 
         function drawParallaxBackground() {
             const groundY = 550; 
