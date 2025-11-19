@@ -164,23 +164,23 @@
             { id: 'square_bird', name: 'square-bird', file: 'square-bird.html' }
         ];
 
-        // Get play counts from memory
+        // Get play counts from localStorage
         let playCounts = {};
 
-        async function loadPlayCounts() {
+        function loadPlayCounts() {
             try {
-                const result = await window.storage.get('game-play-counts');
-                if (result && result.value) {
-                    playCounts = JSON.parse(result.value);
+                const stored = localStorage.getItem('game-play-counts');
+                if (stored) {
+                    playCounts = JSON.parse(stored);
                 }
             } catch (error) {
                 playCounts = {};
             }
         }
 
-        async function savePlayCounts() {
+        function savePlayCounts() {
             try {
-                await window.storage.set('game-play-counts', JSON.stringify(playCounts));
+                localStorage.setItem('game-play-counts', JSON.stringify(playCounts));
             } catch (error) {
                 console.error('Failed to save play counts:', error);
             }
@@ -188,6 +188,20 @@
 
         function incrementPlayCount(gameName) {
             playCounts[gameName] = (playCounts[gameName] || 0) + 1;
+            console.log('Play counts:', playCounts); // Debug
+            savePlayCounts();
+        }
+
+        function getSortedGames() {
+            // Create a copy to sort
+            const sortedGames = [...games].sort((a, b) => {
+                const countA = playCounts[a.id] || 0;
+                const countB = playCounts[b.id] || 0;
+                console.log(`${a.id}: ${countA}, ${b.id}: ${countB}`); // Debug
+                return countB - countA;
+            });
+            return sortedGames;
+        }ounts[gameName] = (playCounts[gameName] || 0) + 1;
             savePlayCounts();
         }
 
@@ -252,13 +266,16 @@
             gameContainer.classList.remove('active');
             backButton.classList.remove('active');
             arcadeGrid.style.display = 'grid';
+            
+            // Re-render the grid with updated play counts
+            renderArcade();
         }
 
         document.getElementById('backButton').onclick = backToArcade;
 
         // Initialize
-        async function init() {
-            await loadPlayCounts();
+        function init() {
+            loadPlayCounts();
             renderArcade();
         }
 
