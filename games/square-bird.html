@@ -255,11 +255,17 @@
             
             gameLoop = setInterval(update, 1000/60);
         }
+        
+        // Make functions globally accessible
+        window.startGame = startGame;
 
         function restartGame() {
             document.getElementById('gameOverScreen').style.display = 'none';
             startGame();
         }
+        
+        // Make functions globally accessible
+        window.restartGame = restartGame;
 
         function update() {
             if (!gameActive) return;
