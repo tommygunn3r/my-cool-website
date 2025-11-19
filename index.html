@@ -164,7 +164,6 @@
             { id: 'square_bird', name: 'square-bird', file: 'square-bird.html' }
         ];
 
-        // Get play counts from localStorage
         let playCounts = {};
 
         function loadPlayCounts() {
@@ -186,31 +185,19 @@
             }
         }
 
-        function incrementPlayCount(gameName) {
-            playCounts[gameName] = (playCounts[gameName] || 0) + 1;
-            console.log('Play counts:', playCounts); // Debug
+        function incrementPlayCount(gameId) {
+            playCounts[gameId] = (playCounts[gameId] || 0) + 1;
+            console.log('Play counts:', playCounts);
             savePlayCounts();
         }
 
         function getSortedGames() {
-            // Create a copy to sort
             const sortedGames = [...games].sort((a, b) => {
                 const countA = playCounts[a.id] || 0;
                 const countB = playCounts[b.id] || 0;
-                console.log(`${a.id}: ${countA}, ${b.id}: ${countB}`); // Debug
                 return countB - countA;
             });
             return sortedGames;
-        }ounts[gameName] = (playCounts[gameName] || 0) + 1;
-            savePlayCounts();
-        }
-
-        function getSortedGames() {
-            return games.sort((a, b) => {
-                const countA = playCounts[a.id] || 0;
-                const countB = playCounts[b.id] || 0;
-                return countB - countA;
-            });
         }
 
         function renderArcade() {
@@ -267,13 +254,11 @@
             backButton.classList.remove('active');
             arcadeGrid.style.display = 'grid';
             
-            // Re-render the grid with updated play counts
             renderArcade();
         }
 
         document.getElementById('backButton').onclick = backToArcade;
 
-        // Initialize
         function init() {
             loadPlayCounts();
             renderArcade();
