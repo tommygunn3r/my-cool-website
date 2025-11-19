@@ -202,7 +202,12 @@
         </div>
     </div>
 
-    <script>
+    <script type="module">
+        import GameScoreManager from '../game-score-manager.js';
+        
+        // Initialize score manager for Space Shooter
+        const scoreManager = new GameScoreManager('shooter', true);
+        
         // --- CONFIGURATION ---
         const SOUND_PATHS = {
             shoot: './sounds/laser_pew.wav', 
@@ -692,6 +697,9 @@
             debris = [];
             explosions = []; 
             gameRunning = true;
+            
+            // Start tracking time
+            scoreManager.startSession();
 
             // FIX: Create the Audio object and start playback ONLY HERE, 
             // inside the function tied to the user's click event.
@@ -713,6 +721,9 @@
         function endGame() {
             gameRunning = false;
             
+            // Submit score to leaderboard
+            scoreManager.submitGameResult(score);
+            
             // --- STOP ENGINE AND PLAY GAME OVER SOUND ---
             if (engineSound) {
                 engineSound.pause();
@@ -720,8 +731,9 @@
             }
             playSound(SOUND_PATHS.gameOver);
 
+            const playTime = scoreManager.getElapsedTimeFormatted();
             document.getElementById('endModal').style.display = 'flex';
-            document.getElementById('finalScore').textContent = score;
+            document.getElementById('finalScore').textContent = score + ' | Time: ' + playTime;
         }
 
         // Initial settings for canvas text
