@@ -2,13 +2,24 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Gunner's Games">
+    
+    <link rel="manifest" href="/manifest.json">
+    
     <title>Gunner's Games Arcade</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            /* Prevent text selection to feel more like an app */
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
         }
 
         body {
@@ -16,6 +27,9 @@
             font-family: Arial, sans-serif;
             overflow-x: hidden;
             overflow-y: auto;
+            /* iOS Safe Area handling */
+            padding-top: env(safe-area-inset-top);
+            padding-bottom: env(safe-area-inset-bottom);
         }
 
         .arcade-grid {
@@ -24,6 +38,7 @@
             width: 100%;
             min-height: calc(100vh - 75px);
             margin-top: 70px;
+            padding-bottom: 20px;
         }
 
         @media (min-width: 1400px) {
@@ -38,6 +53,7 @@
             overflow: hidden;
             cursor: pointer;
             transition: transform 0.2s ease;
+            -webkit-tap-highlight-color: transparent; /* Removes blue tap box on mobile */
         }
 
         .game-tile:hover {
@@ -57,11 +73,9 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 2em;
+            font-size: 1.5em;
             color: #666;
-            font-weight: bold;
             text-transform: uppercase;
-            letter-spacing: 3px;
         }
 
         @media (max-width: 768px) {
@@ -72,7 +86,6 @@
             }
             .coming-soon {
                 font-size: 1.2em;
-                letter-spacing: 2px;
             }
         }
 
@@ -82,7 +95,6 @@
             }
             .coming-soon {
                 font-size: 1em;
-                letter-spacing: 1px;
             }
         }
 
@@ -96,6 +108,7 @@
             height: 100%;
             z-index: 1000;
             background: #000;
+            padding-top: env(safe-area-inset-top); /* Handle notch */
         }
 
         .game-container.active {
@@ -124,15 +137,11 @@
             cursor: pointer;
             transition: all 0.3s ease;
             display: none;
+            -webkit-tap-highlight-color: transparent;
         }
 
         .back-button.active {
             display: block;
-        }
-
-        .back-button:hover {
-            background: rgba(255, 165, 0, 0.9);
-            transform: scale(1.05);
         }
 
         /* Player info and leaderboard button */
@@ -145,6 +154,8 @@
             display: flex;
             gap: 15px;
             align-items: center;
+            width: 90%; /* Ensure it fits on mobile */
+            justify-content: center;
         }
 
         .player-info {
@@ -157,6 +168,7 @@
             display: flex;
             align-items: center;
             gap: 10px;
+            white-space: nowrap;
         }
 
         .player-name {
@@ -172,11 +184,6 @@
             border-radius: 3px;
             cursor: pointer;
             font-size: 12px;
-            transition: all 0.2s ease;
-        }
-
-        .change-name-btn:hover {
-            background: rgba(255, 255, 255, 0.3);
         }
 
         .leaderboard-btn {
@@ -188,15 +195,10 @@
             text-decoration: none;
             font-weight: bold;
             font-size: 16px;
-            transition: all 0.3s ease;
             display: flex;
             align-items: center;
             gap: 5px;
-        }
-
-        .leaderboard-btn:hover {
-            background: rgba(255, 165, 0, 0.9);
-            transform: scale(1.05);
+            white-space: nowrap;
         }
 
         @media (max-width: 768px) {
@@ -204,11 +206,14 @@
                 flex-direction: column;
                 align-items: center;
                 top: 10px;
+                gap: 10px;
             }
 
             .player-info, .leaderboard-btn {
                 font-size: 14px;
                 padding: 8px 15px;
+                width: 100%;
+                justify-content: center;
             }
 
             .back-button {
@@ -219,7 +224,6 @@
             }
         }
 
-        /* Hide top bar when game is active */
         .top-bar.hidden {
             display: none;
         }
@@ -232,13 +236,13 @@
             <button class="change-name-btn" onclick="changePlayerName()">Change</button>
         </div>
         <a href="/leaderboard.html" class="leaderboard-btn">
-            🏆 Leaderboards
+            🏆 Leaders
         </a>
     </div>
 
     <div class="arcade-grid" id="arcadeGrid"></div>
     
-    <button class="back-button" id="backButton">← Back to Arcade</button>
+    <button class="back-button" id="backButton">← Exit</button>
     
     <div class="game-container" id="gameContainer">
         <iframe class="game-frame" id="gameFrame"></iframe>
@@ -260,7 +264,6 @@
 
         let playCounts = {};
 
-        // Player name functions
         function getPlayerName() {
             let name = localStorage.getItem('gunners-player-name');
             if (!name) {
@@ -291,7 +294,6 @@
             }
         }
 
-        // Existing play count functions
         function loadPlayCounts() {
             try {
                 const stored = localStorage.getItem('game-play-counts');
@@ -304,38 +306,30 @@
         }
 
         function savePlayCounts() {
-            try {
-                localStorage.setItem('game-play-counts', JSON.stringify(playCounts));
-            } catch (error) {
-                console.error('Failed to save play counts:', error);
-            }
+            localStorage.setItem('game-play-counts', JSON.stringify(playCounts));
         }
 
         function incrementPlayCount(gameId) {
             playCounts[gameId] = (playCounts[gameId] || 0) + 1;
-            console.log('Play counts:', playCounts);
             savePlayCounts();
         }
 
         function getSortedGames() {
-            const sortedGames = [...games].sort((a, b) => {
+            return [...games].sort((a, b) => {
                 const countA = playCounts[a.id] || 0;
                 const countB = playCounts[b.id] || 0;
                 return countB - countA;
             });
-            return sortedGames;
         }
 
         function renderArcade() {
             const grid = document.getElementById('arcadeGrid');
             grid.innerHTML = '';
-
             const sortedGames = getSortedGames();
 
             sortedGames.forEach(game => {
                 const tile = document.createElement('div');
                 tile.className = 'game-tile';
-                
                 const img = document.createElement('img');
                 img.src = `/previews/arcade-${game.name}.png`;
                 img.alt = game.name;
@@ -346,15 +340,31 @@
                     incrementPlayCount(game.id);
                     loadGame(game.file);
                 };
-                
                 grid.appendChild(tile);
             });
 
-            // Add coming soon tile
             const comingSoon = document.createElement('div');
             comingSoon.className = 'game-tile coming-soon';
             comingSoon.textContent = 'Coming Soon';
             grid.appendChild(comingSoon);
+        }
+
+        // --- Full Screen Logic ---
+        function openFullscreen() {
+            const elem = document.documentElement;
+            if (elem.requestFullscreen) {
+                elem.requestFullscreen().catch(e => console.log(e));
+            } else if (elem.webkitRequestFullscreen) { 
+                elem.webkitRequestFullscreen();
+            }
+        }
+
+        function closeFullscreen() {
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            } else if (document.webkitExitFullscreen) { 
+                document.webkitExitFullscreen();
+            }
         }
 
         function loadGame(gameFile) {
@@ -363,6 +373,8 @@
             const backButton = document.getElementById('backButton');
             const arcadeGrid = document.getElementById('arcadeGrid');
             const topBar = document.getElementById('topBar');
+
+            openFullscreen();
 
             gameFrame.src = `/games/${gameFile}`;
             gameContainer.classList.add('active');
@@ -377,6 +389,10 @@
             const backButton = document.getElementById('backButton');
             const arcadeGrid = document.getElementById('arcadeGrid');
             const topBar = document.getElementById('topBar');
+
+            // Optional: Keep fullscreen if they want to stay immersed, 
+            // currently set to exit when returning to menu.
+            // closeFullscreen(); 
 
             gameFrame.src = '';
             gameContainer.classList.remove('active');
