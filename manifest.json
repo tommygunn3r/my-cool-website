@@ -1,0 +1,21 @@
+{
+    "name": "Gunner's Games",
+    "short_name": "GunnerGames",
+    "start_url": "/index.html",
+    "display": "standalone",
+    "background_color": "#000000",
+    "theme_color": "#000000",
+    "orientation": "any",
+    "icons": [
+        {
+            "src": "/previews/arcade-squario.png",
+            "sizes": "192x192",
+            "type": "image/png"
+        },
+        {
+            "src": "/previews/arcade-squario.png",
+            "sizes": "512x512",
+            "type": "image/png"
+        }
+    ]
+}
