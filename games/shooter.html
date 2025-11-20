@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Retro Space Salvage</title>
+    <title>Space Shooter</title>
     <style>
         /* Retro Green Screen Styling */
         :root {
@@ -174,22 +174,19 @@
 
     <canvas id="gameCanvas" width="800" height="600"></canvas>
     
-    <!-- MOBILE CONTROLS (Now only Thrust and Fire) -->
     <div id="controls">
         <div class="control-btn" data-key="KeyW" data-virtual-key="ArrowUp">THRUST</div>
         <div class="control-btn fire" data-key="Space">FIRE</div>
     </div>
-    <!-- END MOBILE CONTROLS -->
-    
     <button id="motionPermissionButton" onclick="requestMotionPermission()">Enable Tilt Control</button>
 
 
     <div id="startModal" class="modal">
         <div class="modal-content">
-            <h2>RETRO SPACE SALVAGE</h2>
+            <h2>SPACE SHOOTER</h2>
             <p><strong>Desktop:</strong> WASD/Arrows to move, Spacebar to shoot.</p>
             <p><strong>Mobile:</strong> **Tilt device** to turn, **THRUST** button to move, **FIRE** button to shoot.</p>
-            <p>Collect **Debris** for permanent ship upgrades!</p>
+            <p>Destroy large ships to break them down!</p>
             <button onclick="startGame()">START GAME</button>
         </div>
     </div>
@@ -311,28 +308,65 @@
             };
         }
 
-        function createEnemy() {
-            const edge = Math.floor(Math.random() * 4); 
+        // Modified Create Enemy to support Sizes (Tiers)
+        // tier 3 = Large, tier 2 = Medium, tier 1 = Small
+        function createEnemy(spawnX = null, spawnY = null, tier = 3) {
             let x, y;
-            if (edge === 0) { x = Math.random() * GAME_WIDTH; y = 0; }
-            else if (edge === 1) { x = GAME_WIDTH; y = Math.random() * GAME_HEIGHT; }
-            else if (edge === 2) { x = Math.random() * GAME_WIDTH; y = GAME_HEIGHT; }
-            else { x = 0; y = Math.random() * GAME_HEIGHT; }
+            
+            // If spawn coordinates provided (breakup logic), use them
+            if (spawnX !== null && spawnY !== null) {
+                x = spawnX;
+                y = spawnY;
+            } else {
+                // Spawn on edge
+                const edge = Math.floor(Math.random() * 4); 
+                if (edge === 0) { x = Math.random() * GAME_WIDTH; y = 0; }
+                else if (edge === 1) { x = GAME_WIDTH; y = Math.random() * GAME_HEIGHT; }
+                else if (edge === 2) { x = Math.random() * GAME_WIDTH; y = GAME_HEIGHT; }
+                else { x = 0; y = Math.random() * GAME_HEIGHT; }
+            }
 
-            const angleToPlayer = Math.atan2(ship.y - y, ship.x - x);
-            const speed = 1 + Math.random(); 
+            // Calculate stats based on Tier
+            let radius, speed, hp, scoreValue;
+
+            if (tier === 3) {
+                radius = 35;
+                speed = 0.8 + Math.random() * 0.5; // Slow
+                hp = 4;
+                scoreValue = 100;
+            } else if (tier === 2) {
+                radius = 20;
+                speed = 1.5 + Math.random(); // Medium
+                hp = 2;
+                scoreValue = 50;
+            } else {
+                radius = 10;
+                speed = 2.5 + Math.random() * 1.5; // Fast
+                hp = 1;
+                scoreValue = 25;
+            }
+
+            // Calculate Velocity
+            let angle;
+            if (spawnX !== null) {
+                // Scatter effect for broken ships
+                angle = Math.random() * Math.PI * 2;
+            } else {
+                // Move towards player
+                angle = Math.atan2(ship.y - y, ship.x - x);
+            }
             
             const shapes = ['square', 'triangle', 'diamond'];
             const shape = shapes[Math.floor(Math.random() * shapes.length)];
-            
-            const radius = 15 + Math.random() * 10;
 
             return {
                 x, y,
-                velX: Math.cos(angleToPlayer) * speed,
-                velY: Math.sin(angleToPlayer) * speed,
+                velX: Math.cos(angle) * speed,
+                velY: Math.sin(angle) * speed,
                 radius: radius, 
-                hp: 3,
+                hp: hp,
+                tier: tier, // Store the tier
+                scoreValue: scoreValue,
                 shape: shape, 
             };
         }
@@ -498,6 +532,8 @@
 
             // 4. COLLISIONS (Bullet vs. Enemy)
             let newDebris = [];
+            let newEnemies = []; // Temp array for children enemies
+
             bullets = bullets.filter(b => {
                 let hit = false;
                 enemies = enemies.filter(e => {
@@ -506,12 +542,22 @@
                         e.hp--;
                         hit = true;
                         if (e.hp <= 0) {
-                            score += 100;
-                            createExplosion(e.x, e.y); 
-                            if (Math.random() < 0.2) { 
+                            // Enemy Destroyed
+                            score += e.scoreValue;
+                            createExplosion(e.x, e.y, e.tier * 5); // Bigger boom for bigger ship
+                            
+                            // SPAWN CHILDREN LOGIC
+                            if (e.tier > 1) {
+                                // Spawn 2 smaller enemies
+                                newEnemies.push(createEnemy(e.x, e.y, e.tier - 1));
+                                newEnemies.push(createEnemy(e.x, e.y, e.tier - 1));
+                            }
+
+                            // Chance for drop (Only from Tier 2 or 3 to prevent farming tiny ones)
+                            if (Math.random() < 0.2 && e.tier > 1) { 
                                 newDebris.push(createDebris(e.x, e.y));
                             }
-                            return false; 
+                            return false; // Remove from enemies array
                         }
                         return true; 
                     }
@@ -519,7 +565,9 @@
                 });
                 return !hit; 
             });
+            
             debris.push(...newDebris);
+            enemies.push(...newEnemies); // Add the children to the main array
 
             // 5. COLLISIONS (Player vs. Enemy) - Take Damage
             enemies = enemies.filter(e => {
@@ -530,7 +578,7 @@
                     if (ship.hullHP <= 0) {
                         endGame();
                     }
-                    return false; 
+                    return false; // Enemy is destroyed on impact
                 }
                 return true;
             });
@@ -557,8 +605,9 @@
             });
 
             // 7. ENEMY SPAWN (Simple Wave Logic)
-            if (enemies.length < 3 + Math.floor(score / 500)) {
-                enemies.push(createEnemy());
+            // Reduced spawn rate slightly because breaking enemies creates more clutter
+            if (enemies.length < 2 + Math.floor(score / 1000)) {
+                enemies.push(createEnemy()); // Spawns a default tier 3
             }
 
             // 8. UPDATE SCOREBOARD
@@ -635,8 +684,11 @@
             
             ctx.restore();
             
-            // HP Indicator
-            ctx.fillText(`HP:${e.hp}`, e.x - 15, e.y - e.radius - 5);
+            // HP Indicator (Only for large ships to reduce clutter)
+            if (e.tier > 1) {
+                ctx.font = '12px Courier New';
+                ctx.fillText(`HP:${e.hp}`, e.x - 15, e.y - e.radius - 5);
+            }
         }
 
         function draw() {
