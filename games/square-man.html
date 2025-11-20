@@ -329,17 +329,20 @@
                 const currentTileR = Math.round(this.row);
                 const currentTileC = Math.round(this.col);
 
+                // FIX: Use base size ratio for collision detection, not powered-up size
+                const collisionSize = this.baseSizeRatio;
+
                 // --- Movement & Collision Prediction ---
                 
                 if (this.currentDirection === 'up') {
                     nextRow -= speed; 
                     nextCol = currentTileC; // Stay aligned on column axis 
                     
-                    const tileAhead = Math.floor(nextRow - this.sizeRatio / 2); // Check the tile the entity's edge is moving into
+                    const tileAhead = Math.floor(nextRow - collisionSize / 2); // Check the tile the entity's edge is moving into
                     // Check for wall one tile ahead
                     if (map[tileAhead] && map[tileAhead][currentTileC] === 1) {
                         // Clamp so the entity's TOP EDGE stops at the wall boundary
-                        const clampValue = tileAhead + 1 - this.sizeRatio / 2 ; // Add small epsilon
+                        const clampValue = tileAhead + 1 - collisionSize / 2 ; // Add small epsilon
                         if (nextRow <= clampValue) {
                             nextRow = clampValue;
                             this.currentDirection = 'none';
@@ -349,10 +352,10 @@
                     nextRow += speed; 
                     nextCol = currentTileC; // Stay aligned on column axis
 
-                    const tileAhead = Math.ceil(nextRow + this.sizeRatio / 2); // Check the tile the entity's edge is moving into
+                    const tileAhead = Math.ceil(nextRow + collisionSize / 2); // Check the tile the entity's edge is moving into
                     if (map[tileAhead] && map[tileAhead][currentTileC] === 1) {
                          // Clamp so the entity's BOTTOM EDGE stops at the wall boundary
-                        const clampValue = tileAhead - 1 + this.sizeRatio / 2 ; // Subtract small epsilon
+                        const clampValue = tileAhead - 1 + collisionSize / 2 ; // Subtract small epsilon
                         if (nextRow >= clampValue) {
                             nextRow = clampValue;
                             this.currentDirection = 'none';
@@ -362,10 +365,10 @@
                     nextCol -= speed;
                     nextRow = currentTileR; // Stay aligned on row axis
 
-                    const tileAhead = Math.floor(nextCol - this.sizeRatio / 2); // Check the tile the entity's edge is moving into
+                    const tileAhead = Math.floor(nextCol - collisionSize / 2); // Check the tile the entity's edge is moving into
                     if (map[currentTileR] && map[currentTileR][tileAhead] === 1) {
                          // Clamp so the entity's LEFT EDGE stops at the wall boundary
-                        const clampValue = tileAhead + 1 - this.sizeRatio / 2 ; // Add small epsilon
+                        const clampValue = tileAhead + 1 - collisionSize / 2 ; // Add small epsilon
                         if (nextCol <= clampValue) {
                             nextCol = clampValue;
                             this.currentDirection = 'none';
@@ -375,10 +378,10 @@
                     nextCol += speed;
                     nextRow = currentTileR; // Stay aligned on row axis
 
-                    const tileAhead = Math.ceil(nextCol + this.sizeRatio / 2); // Check the tile the entity's edge is moving into
+                    const tileAhead = Math.ceil(nextCol + collisionSize / 2); // Check the tile the entity's edge is moving into
                     if (map[currentTileR] && map[currentTileR][tileAhead] === 1) {
                          // Clamp so the entity's RIGHT EDGE stops at the wall boundary
-                        const clampValue = tileAhead - 1 + this.sizeRatio / 2 ; // Subtract small epsilon
+                        const clampValue = tileAhead - 1 + collisionSize / 2 ; // Subtract small epsilon
                         if (nextCol >= clampValue) {
                             nextCol = clampValue;
                             this.currentDirection = 'none';
