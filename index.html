@@ -114,15 +114,14 @@
             top: 20px;
             right: 20px;
             z-index: 1001;
-            background: rgba(0, 0, 0, 0.8);
-            color: #fff;
-            border: 2px solid #fff;
+            background: rgba(255, 215, 0, 0.9);
+            color: #333;
+            border: 2px solid #FFD700;
+            border-radius: 5px;
             padding: 12px 24px;
             font-size: 16px;
             font-weight: bold;
             cursor: pointer;
-            text-transform: uppercase;
-            letter-spacing: 1px;
             transition: all 0.3s ease;
             display: none;
         }
@@ -132,7 +131,7 @@
         }
 
         .back-button:hover {
-            background: rgba(255, 255, 255, 0.2);
+            background: rgba(255, 165, 0, 0.9);
             transform: scale(1.05);
         }
 
@@ -239,7 +238,7 @@
 
     <div class="arcade-grid" id="arcadeGrid"></div>
     
-    <button class="back-button" id="backButton">Back to Arcade</button>
+    <button class="back-button" id="backButton">← Back to Arcade</button>
     
     <div class="game-container" id="gameContainer">
         <iframe class="game-frame" id="gameFrame"></iframe>
