@@ -158,7 +158,12 @@
         </div>
     </div>
 
-    <script>
+    <script type="module">
+        import GameScoreManager from '../game-score-manager.js';
+        
+        // Initialize score manager for Square Man
+        const scoreManager = new GameScoreManager('square_man', true);
+        
         // --- Game Setup Constants ---
         let lastTimestamp = null; // for time-based movement (60 FPS baseline)
         const canvas = document.getElementById('gameCanvas');
@@ -746,6 +751,10 @@
                 this.isRunning = true;
                 this.isPaused = false;
                 this.hideMessage();
+                
+                // Start tracking time
+                scoreManager.startSession();
+                
                 startBGM();
                 lastTimestamp = null; // reset timing at (re)start
                 requestAnimationFrame(this.gameLoop.bind(this));
@@ -799,14 +808,24 @@
                 this.isRunning = false;
                 this.isPaused = true;
                 stopBGM();
-                this.showMessage(`GAME OVER! Final Score: ${this.score}`, true, 'bg-red-900');
+                
+                // Submit score to leaderboard
+                scoreManager.submitGameResult(this.score);
+                
+                const playTime = scoreManager.getElapsedTimeFormatted();
+                this.showMessage(`GAME OVER! Final Score: ${this.score} | Time: ${playTime}`, true, 'bg-red-900');
             }
 
             winGame() {
                 this.isRunning = false;
                 this.isPaused = true;
                 stopBGM();
-                this.showMessage(`YOU WIN! Score: ${this.score}`, true, 'bg-green-900');
+                
+                // Submit score to leaderboard
+                scoreManager.submitGameResult(this.score);
+                
+                const playTime = scoreManager.getElapsedTimeFormatted();
+                this.showMessage(`YOU WIN! Score: ${this.score} | Time: ${playTime}`, true, 'bg-green-900');
             }
 
             update(delta) {
