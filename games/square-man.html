@@ -524,6 +524,8 @@
             constructor(row, col, color) {
                 super(row, col, color);
                 this.originalColor = color;
+                this.startRow = row; // Store original starting position
+                this.startCol = col;
                 this.speed = 0.08; // Ghosts move slightly slower than player
                 this.isLeavingHome = true;
             }
@@ -663,10 +665,11 @@
             }
 
             respawn() {
-                // Snap to center of ghost home
-                this.row = HOME_POS.row;
-                this.col = HOME_POS.col;
+                // Return to original starting position
+                this.row = this.startRow;
+                this.col = this.startCol;
                 this.currentDirection = 'none';
+                this.nextDirection = 'none';
                 this.isLeavingHome = true;
                 this.color = this.originalColor;
             }
@@ -678,6 +681,7 @@
             constructor() {
                 this.score = 0;
                 this.lives = 3;
+                this.level = 1;
                 this.isRunning = false;
                 this.isPaused = true;
                 this.dotsRemaining = 0;
@@ -696,6 +700,7 @@
             initialize() {
                 this.score = 0;
                 this.lives = 3;
+                this.level = 1;
                 this.dotsRemaining = 0;
                 this.map = this.deepCopyMap(MAP);
 
@@ -824,11 +829,52 @@
                 this.isPaused = true;
                 stopBGM();
                 
-                // Submit score to leaderboard
-                scoreManager.submitGameResult(this.score);
+                this.level++;
+                const levelBonus = 1000 * this.level;
+                this.score += levelBonus;
                 
-                const playTime = scoreManager.getElapsedTimeFormatted();
-                this.showMessage(`YOU WIN! Score: ${this.score} | Time: ${playTime}`, true, 'bg-green-900');
+                this.showMessage(`LEVEL ${this.level - 1} COMPLETE! Bonus: ${levelBonus}`, false);
+                
+                setTimeout(() => {
+                    this.nextLevel();
+                }, 3000);
+            }
+            
+            nextLevel() {
+                // Reset map but keep score and lives
+                this.map = this.deepCopyMap(MAP);
+                this.dotsRemaining = 0;
+                
+                // Count dots
+                for (let r = 0; r < GRID_ROWS; r++) {
+                    for (let c = 0; c < GRID_COLS; c++) {
+                        if (this.map[r][c] === 0 || this.map[r][c] === 3) {
+                            this.dotsRemaining++;
+                        }
+                    }
+                }
+                
+                // Reset player position
+                this.player.row = 16.0;
+                this.player.col = 10.0;
+                this.player.currentDirection = 'none';
+                this.player.nextDirection = 'none';
+                this.player.isPoweredUp = false;
+                this.player.powerUpTimer = 0;
+                this.player.sizeRatio = this.player.baseSizeRatio;
+                
+                // Reset all ghosts to starting positions
+                this.ghosts.forEach(g => g.respawn());
+                
+                this.updateDisplay();
+                this.showMessage(`LEVEL ${this.level} - GET READY!`, false);
+                
+                setTimeout(() => {
+                    this.isPaused = false;
+                    this.isRunning = true;
+                    this.hideMessage();
+                    startBGM();
+                }, 2000);
             }
 
             update(delta) {
