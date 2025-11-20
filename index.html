@@ -7,7 +7,6 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Gunner's Games">
-    
     <link rel="manifest" href="/manifest.json">
     
     <title>Gunner's Games Arcade</title>
@@ -16,7 +15,6 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            /* Prevent text selection to feel more like an app */
             -webkit-touch-callout: none;
             -webkit-user-select: none;
             user-select: none;
@@ -27,7 +25,6 @@
             font-family: Arial, sans-serif;
             overflow-x: hidden;
             overflow-y: auto;
-            /* iOS Safe Area handling */
             padding-top: env(safe-area-inset-top);
             padding-bottom: env(safe-area-inset-bottom);
         }
@@ -53,7 +50,7 @@
             overflow: hidden;
             cursor: pointer;
             transition: transform 0.2s ease;
-            -webkit-tap-highlight-color: transparent; /* Removes blue tap box on mobile */
+            -webkit-tap-highlight-color: transparent;
         }
 
         .game-tile:hover {
@@ -108,7 +105,7 @@
             height: 100%;
             z-index: 1000;
             background: #000;
-            padding-top: env(safe-area-inset-top); /* Handle notch */
+            padding-top: env(safe-area-inset-top);
         }
 
         .game-container.active {
@@ -121,12 +118,19 @@
             border: none;
         }
 
-        /* Back button */
-        .back-button {
+        /* Button Group for Game View */
+        .game-controls {
             position: fixed;
             top: 20px;
             right: 20px;
             z-index: 1001;
+            display: flex;
+            gap: 10px;
+            pointer-events: none; /* Let clicks pass through container */
+        }
+
+        .control-btn {
+            pointer-events: auto; /* Re-enable clicks on buttons */
             background: rgba(255, 215, 0, 0.9);
             color: #333;
             border: 2px solid #FFD700;
@@ -136,15 +140,31 @@
             font-weight: bold;
             cursor: pointer;
             transition: all 0.3s ease;
-            display: none;
+            display: none; /* Hidden by default */
             -webkit-tap-highlight-color: transparent;
+            white-space: nowrap;
         }
 
-        .back-button.active {
+        .control-btn.active {
             display: block;
         }
 
-        /* Player info and leaderboard button */
+        .control-btn:hover {
+            background: rgba(255, 165, 0, 0.9);
+            transform: scale(1.05);
+        }
+
+        /* Secondary style for fullscreen button */
+        .fs-btn {
+            background: rgba(0, 0, 0, 0.6);
+            color: #FFD700;
+            border: 2px solid #FFD700;
+        }
+        .fs-btn:hover {
+            background: rgba(0, 0, 0, 0.9);
+        }
+
+        /* Top Bar (Player Info) */
         .top-bar {
             position: fixed;
             top: 20px;
@@ -154,7 +174,7 @@
             display: flex;
             gap: 15px;
             align-items: center;
-            width: 90%; /* Ensure it fits on mobile */
+            width: 90%;
             justify-content: center;
         }
 
@@ -216,9 +236,12 @@
                 justify-content: center;
             }
 
-            .back-button {
+            .game-controls {
                 top: 10px;
                 right: 10px;
+            }
+            
+            .control-btn {
                 padding: 8px 16px;
                 font-size: 14px;
             }
@@ -242,7 +265,10 @@
 
     <div class="arcade-grid" id="arcadeGrid"></div>
     
-    <button class="back-button" id="backButton">← Exit</button>
+    <div class="game-controls">
+        <button class="control-btn fs-btn" id="fsButton" onclick="toggleFullscreen()">⛶ Full Screen</button>
+        <button class="control-btn" id="backButton">← Exit</button>
+    </div>
     
     <div class="game-container" id="gameContainer">
         <iframe class="game-frame" id="gameFrame"></iframe>
@@ -264,26 +290,26 @@
 
         let playCounts = {};
 
+        // --- Detection for Mobile ---
+        function isMobile() {
+            return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        }
+
         function getPlayerName() {
             let name = localStorage.getItem('gunners-player-name');
-            if (!name) {
-                name = promptForName();
-            }
+            if (!name) { name = promptForName(); }
             return name;
         }
 
         function promptForName() {
             let name = prompt('Welcome to Gunner\'s Games! Enter your player name:');
-            if (!name || name.trim() === '') {
-                name = 'Guest';
-            }
+            if (!name || name.trim() === '') { name = 'Guest'; }
             localStorage.setItem('gunners-player-name', name);
             return name;
         }
 
         function displayPlayerName() {
-            const playerName = getPlayerName();
-            document.getElementById('playerName').textContent = playerName;
+            document.getElementById('playerName').textContent = getPlayerName();
         }
 
         function changePlayerName() {
@@ -297,12 +323,8 @@
         function loadPlayCounts() {
             try {
                 const stored = localStorage.getItem('game-play-counts');
-                if (stored) {
-                    playCounts = JSON.parse(stored);
-                }
-            } catch (error) {
-                playCounts = {};
-            }
+                if (stored) playCounts = JSON.parse(stored);
+            } catch (error) { playCounts = {}; }
         }
 
         function savePlayCounts() {
@@ -315,11 +337,7 @@
         }
 
         function getSortedGames() {
-            return [...games].sort((a, b) => {
-                const countA = playCounts[a.id] || 0;
-                const countB = playCounts[b.id] || 0;
-                return countB - countA;
-            });
+            return [...games].sort((a, b) => (playCounts[b.id] || 0) - (playCounts[a.id] || 0));
         }
 
         function renderArcade() {
@@ -350,6 +368,14 @@
         }
 
         // --- Full Screen Logic ---
+        function toggleFullscreen() {
+            if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+                openFullscreen();
+            } else {
+                closeFullscreen();
+            }
+        }
+
         function openFullscreen() {
             const elem = document.documentElement;
             if (elem.requestFullscreen) {
@@ -371,10 +397,18 @@
             const gameContainer = document.getElementById('gameContainer');
             const gameFrame = document.getElementById('gameFrame');
             const backButton = document.getElementById('backButton');
+            const fsButton = document.getElementById('fsButton');
             const arcadeGrid = document.getElementById('arcadeGrid');
             const topBar = document.getElementById('topBar');
 
-            openFullscreen();
+            // MOBILE: Auto Fullscreen
+            if (isMobile()) {
+                openFullscreen();
+            } 
+            // DESKTOP: Show manual Fullscreen button
+            else {
+                fsButton.classList.add('active');
+            }
 
             gameFrame.src = `/games/${gameFile}`;
             gameContainer.classList.add('active');
@@ -387,16 +421,17 @@
             const gameContainer = document.getElementById('gameContainer');
             const gameFrame = document.getElementById('gameFrame');
             const backButton = document.getElementById('backButton');
+            const fsButton = document.getElementById('fsButton');
             const arcadeGrid = document.getElementById('arcadeGrid');
             const topBar = document.getElementById('topBar');
 
-            // Optional: Keep fullscreen if they want to stay immersed, 
-            // currently set to exit when returning to menu.
-            // closeFullscreen(); 
+            // Exit fullscreen when closing game
+            closeFullscreen();
 
             gameFrame.src = '';
             gameContainer.classList.remove('active');
             backButton.classList.remove('active');
+            fsButton.classList.remove('active'); // Hide fs button
             arcadeGrid.style.display = 'grid';
             topBar.classList.remove('hidden');
             
