@@ -223,7 +223,7 @@
             
             <p style="margin-top: 20px;"><strong>Tips:</strong></p>
             <p>• Hit ❓ blocks from below for power-ups!</p>
-            <p>• Jump on 🐢 enemies to defeat them</p>
+            <p>• Collect 50 Coins for an Extra Life!</p> <p>• Jump on 🐢 enemies to defeat them</p>
             <p>• Watch out for gaps in the ground!</p>
             <p>• Enter green pipes for bonus rooms</p>
             <p>• Golden power-up makes you invincible!</p>
@@ -233,7 +233,7 @@
     <div id="title">SQUARIO</div>
     <div id="ui">
         <div>Score: <span id="score">0</span></div>
-        <div>Lives: <span id="lives">3</span></div>
+        <div>Coins: <span id="coins">0</span></div> <div>Lives: <span id="lives">3</span></div>
         <div>Time: <span id="time">300</span></div>
         <div>Level: <span id="level">1</span></div>
         <div>High Score: <span id="highScore">0</span></div>
@@ -260,15 +260,12 @@
 
     <script type="module">
         import GameScoreManager from '../game-score-manager.js';
-        
-        // Initialize score manager for Squario
         const scoreManager = new GameScoreManager('squario', true);
-        
+
         const canvas = document.getElementById('game');
         const ctx = canvas.getContext('2d');
         let timerInterval = null;
         
-        // Set canvas to window size
         function resizeCanvas() {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
@@ -276,7 +273,6 @@
         resizeCanvas();
         window.addEventListener('resize', resizeCanvas);
 
-        // Audio setup
         const sounds = {
             jump: new Audio('sounds/jump.mp3'),
             coin: new Audio('sounds/coin.mp3'),
@@ -313,6 +309,7 @@
             camera: 0,
             cameraY: 0, 
             score: 0,
+            coins: 0, // ADDED COIN TRACKER
             highScore: 0,
             lives: 3,
             time: 300,
@@ -327,21 +324,15 @@
 
         function startGame() {
             document.getElementById('startScreen').style.display = 'none';
-            // Reset score and lives for a new game
             gameState.score = 0;
+            gameState.coins = 0; // Reset coins
             gameState.lives = 3;
             lastTime = 0; 
-            
-            // Start tracking time
             scoreManager.startSession();
-            
             loadLevel(0); 
         }
-        
-        // Make globally accessible
         window.startGame = startGame;
 
-        // Player
         const player = {
             x: 100,
             y: 400,
@@ -369,7 +360,6 @@
             pipeLock: false 
         };
 
-        // Controls
         const keys = {};
         window.addEventListener('keydown', e => {
             keys[e.code] = true; 
@@ -377,14 +367,12 @@
         });
         window.addEventListener('keyup', e => keys[e.code] = false);
         
-        // MOBILE CONTROL LOGIC
         const leftBtn = document.getElementById('left-btn');
         const rightBtn = document.getElementById('right-btn');
         const downBtn = document.getElementById('down-btn');
         const jumpBtn = document.getElementById('jump-btn');
         const runBtn = document.getElementById('run-btn');
 
-        // Virtual Key Press Functions
         function virtualKeyDown(keyCode) {
             keys[keyCode] = true;
         }
@@ -417,11 +405,8 @@
             }
         });
 
-
-        // This object will hold the ACTIVE, MUTABLE level data
         let liveLevelData = {};
 
-        // NEW FUNCTION TO LOAD A LEVEL
         function loadLevel(levelIndex) {
             if (levelIndex >= levelTemplates.length) {
                 console.error("Level index out of bounds:", levelIndex);
@@ -502,9 +487,8 @@
                 ctx.fillStyle = '#787878';
             }
             
-            // Draw Platforms (including Moving Ones)
             room.platforms.forEach(p => {
-                if(p.type === 'moving') ctx.fillStyle = '#6082B6'; // Metallic Blue
+                if(p.type === 'moving') ctx.fillStyle = '#6082B6'; 
                 else if(gameState.currentRoom === 'main') ctx.fillStyle = '#8B4513';
                 else ctx.fillStyle = '#787878';
 
@@ -539,7 +523,7 @@
 
             room.enemies.forEach(e => {
                 if(e.type === 'bullet') {
-                    ctx.fillStyle = '#333'; // Dark Grey for bullets
+                    ctx.fillStyle = '#333'; 
                     ctx.beginPath();
                     ctx.arc(e.x - gameState.camera + e.width/2, e.y - gameState.cameraY + e.height/2, e.width/2, 0, Math.PI*2);
                     ctx.fill();
@@ -582,20 +566,15 @@
 
         function update(dt) {
             if (!gameState.gameRunning || !liveLevelData.main) return; 
-            
             dt = Math.min(dt, 0.05); 
-
             const room = getCurrentRoom();
 
-            // Handle death animation
             if (player.dying) {
                 player.vy += player.gravity * dt;
                 player.y += player.vy * dt;
-                
                 if (player.y > canvas.height + 500 + gameState.cameraY) { 
                     player.dying = false;
                     gameState.lives--;
-                    
                     if (gameState.lives <= 0) {
                         endGame(false);
                     } else {
@@ -605,19 +584,12 @@
                 return; 
             }
 
-            // Timers
             if (player.invincible) {
                 player.invincibleTimer -= dt;
-                if (player.invincibleTimer <= 0) {
-                    player.invincible = false;
-                }
+                if (player.invincibleTimer <= 0) player.invincible = false;
             }
-
-            if (player.pipeCooldown > 0) {
-                player.pipeCooldown -= dt;
-            }
+            if (player.pipeCooldown > 0) player.pipeCooldown -= dt;
             
-            // Power up size change
             if (gameState.powerUp) {
                 player.width = player.powerWidth;
                 player.height = player.powerHeight;
@@ -626,7 +598,6 @@
                 player.height = player.baseHeight;
             }
 
-            // PLAYER MOVEMENT
             const isRunning = keys['ShiftLeft'] || keys['ShiftRight'];
             const currentSpeed = isRunning ? player.runSpeed : player.speed;
             
@@ -640,19 +611,15 @@
                 player.vx = 0;
             }
 
-            // --- COYOTE TIME LOGIC ---
             if (player.onGround) {
                 player.coyoteTimeCounter = player.coyoteTime;
             } else {
                 player.coyoteTimeCounter -= dt;
             }
 
-            // Jump
             const jumpKeyActive = (keys['Space'] || keys['ArrowUp'] || keys['KeyW']);
-
             if (jumpKeyActive && !player.jumpKeyHeld) { 
                 player.jumpKeyHeld = true;
-                
                 if (player.onGround || player.coyoteTimeCounter > 0) { 
                     player.vy = -player.jumpPower;
                     player.onGround = false;
@@ -665,29 +632,21 @@
                     player.jumpCount = 2;
                 }
             }
-            if (!jumpKeyActive) { 
-                player.jumpKeyHeld = false;
-            }
+            if (!jumpKeyActive) player.jumpKeyHeld = false;
 
-            // Gravity and Position Integration
             player.vy += player.gravity * dt;
             player.y += player.vy * dt;
             player.x += player.vx * dt;
 
-            // MOVING PLATFORM LOGIC
             room.platforms.forEach(p => {
                 if (p.type === 'moving') {
-                    // Update platform position
                     p.x += p.vx * dt;
                     p.y += p.vy * dt;
-
-                    // Bounce off boundaries
                     if (p.x < p.minX || p.x > p.maxX) p.vx *= -1;
                     if (p.y < p.minY || p.y > p.maxY) p.vy *= -1;
                 }
             });
 
-            // Collision with platforms
             player.onGround = false;
             room.platforms.forEach(p => {
                 if (player.x + player.width > p.x && player.x < p.x + p.width) {
@@ -696,8 +655,6 @@
                         player.vy = 0;
                         player.onGround = true;
                         player.jumpCount = 0;
-
-                        // CARRY PLAYER ON MOVING PLATFORM
                         if (p.type === 'moving') {
                             player.x += p.vx * dt;
                             player.y += p.vy * dt;
@@ -706,7 +663,6 @@
                 }
             });
 
-            // Collision with blocks 
             room.blocks.forEach(b => {
                 if (player.x + player.width > b.x && player.x < b.x + b.width) {
                     if (player.y + player.height > b.y && player.y + player.height < b.y + 40 && player.vy > 0) {
@@ -718,7 +674,6 @@
                 }
             });
 
-            // Collision with pipes 
             room.pipes.forEach(p => {
                 if (player.x + player.width > p.x && player.x < p.x + p.width) {
                     if (player.y + player.height > p.y && player.y + player.height < p.y + 40 && player.vy > 0) {
@@ -730,14 +685,12 @@
                 }
             });
 
-            // Collision with stairs
             room.stairs.forEach(s => {
                 for (let i = 0; i < s.steps; i++) {
                     const stepHeight = 30;
                     const stepWidth = 40;
                     const stepX = s.x + (i * stepWidth);
                     const stepY = 550 - (i + 1) * stepHeight;
-                    
                     if (player.x + player.width > stepX && player.x < stepX + stepWidth) {
                         if (player.y + player.height > stepY && player.y + player.height < stepY + 40 && player.vy > 0) {
                             player.y = stepY - player.height;
@@ -749,7 +702,6 @@
                 }
             });
 
-            // Block collision (bottom)
             room.blocks.forEach(b => {
                 if (!b.hit && player.x + player.width > b.x && player.x < b.x + b.width) {
                     if (player.y < b.y + b.height && player.y > b.y && player.vy < 0) {
@@ -763,18 +715,21 @@
                             playSound('powerup');
                         } else { 
                             playSound('coin');
+                            // <<< --- COIN AND LIFE LOGIC --- >>>
+                            gameState.coins++;
+                            if(gameState.coins >= 50) {
+                                gameState.lives++;
+                                gameState.coins = 0;
+                                playSound('flagpole'); // Play positive sound for 1up
+                            }
+                            // <<< --- END LOGIC --- >>>
                         }
                     }
                 }
             });
 
-            // PIPE ENTRY LOGIC WITH INPUT LOCKING
             const downKeyActive = keys['ArrowDown'] || keys['KeyS'];
-            
-            // Unlock only if key is released
-            if (!downKeyActive) {
-                player.pipeLock = false;
-            }
+            if (!downKeyActive) player.pipeLock = false;
 
             room.pipes.forEach(p => {
                 if (player.x + player.width > p.x && player.x < p.x + p.width &&
@@ -803,37 +758,24 @@
                 }
             });
 
-            // Enemy AI
             room.enemies.forEach(e => {
                 if (e.type === 'bullet') {
                     e.x += (e.vx * 60) * dt;
                 } else {
                     e.x += (e.vx * 60) * dt;
-                    
                     let hitPipe = false;
                     room.pipes.forEach(p => {
                         if (e.x + e.width > p.x && e.x < p.x + p.width &&
-                            e.y + e.height > p.y && e.y < p.y + p.height) {
-                            hitPipe = true;
-                        }
+                            e.y + e.height > p.y && e.y < p.y + p.height) hitPipe = true;
                     });
-                    
-                    if (hitPipe) {
-                        e.vx *= -1;
-                        e.x += (e.vx * 60) * dt * 2; 
-                    }
+                    if (hitPipe) { e.vx *= -1; e.x += (e.vx * 60) * dt * 2; }
                     
                     let onPlatform = false;
                     room.platforms.forEach(p => {
                         if (e.x + e.width > p.x && e.x < p.x + p.width &&
-                            e.y + e.height >= p.y && e.y + e.height <= p.y + 20) {
-                            onPlatform = true;
-                        }
+                            e.y + e.height >= p.y && e.y + e.height <= p.y + 20) onPlatform = true;
                     });
-                    
-                    if (!onPlatform || e.x < 0 || e.x > 5000) {
-                        e.vx *= -1;
-                    }
+                    if (!onPlatform || e.x < 0 || e.x > 5000) e.vx *= -1;
                 }
 
                 if (player.x + player.width > e.x && player.x < e.x + e.width &&
@@ -859,14 +801,12 @@
                 }
             });
 
-            // Gap collision
             room.gaps.forEach(g => {
                 if (player.x + player.width > g.x && player.x < g.x + g.width && player.y > 550) {
                     playerDeath();
                 }
             });
 
-            // Flagpole
             if (room.flagpole) {
                 if (player.x + player.width > room.flagpole.x && player.x < room.flagpole.x + 50 &&
                     player.y < room.flagpole.y + room.flagpole.height) {
@@ -875,15 +815,9 @@
                 }
             }
 
-            // Camera & Bounds
             let targetCameraX = player.x - 400;
-            if (targetCameraX > gameState.camera) {
-                gameState.camera = targetCameraX;
-            }
-
-            if (player.x < gameState.camera) {
-                player.x = gameState.camera;
-            }
+            if (targetCameraX > gameState.camera) gameState.camera = targetCameraX;
+            if (player.x < gameState.camera) player.x = gameState.camera;
             
             if (canvas.height < 600) {
                 let targetCamY = player.y - (canvas.height / 2);
@@ -892,12 +826,11 @@
                 gameState.cameraY = 0;
             }
 
-            if (player.y > 700 && !player.dying) { 
-                playerDeath();
-            }
+            if (player.y > 700 && !player.dying) playerDeath();
 
             // Update UI
             document.getElementById('score').textContent = gameState.score;
+            document.getElementById('coins').textContent = gameState.coins; // Update Coin UI
             document.getElementById('lives').textContent = gameState.lives;
             document.getElementById('time').textContent = Math.ceil(gameState.time);
             document.getElementById('highScore').textContent = gameState.highScore; 
@@ -910,7 +843,6 @@
             gameState.score += timeBonus;
             
             let nextLevelIndex = gameState.currentLevelIndex + 1;
-
             if (nextLevelIndex < levelTemplates.length) {
                 setTimeout(() => {
                     loadLevel(nextLevelIndex);
@@ -922,16 +854,12 @@
 
         function playerDeath() {
             if (player.dying) return; 
-            
             gameState.gameRunning = false; 
             player.dying = true;
             player.vy = -900; 
             playSound('death');
             stopMusic();
-            
-            setTimeout(() => {
-                gameState.gameRunning = true;
-            }, 50);
+            setTimeout(() => { gameState.gameRunning = true; }, 50);
         }
 
         function endGame(won) {
@@ -939,7 +867,7 @@
             stopMusic();
             if (timerInterval) clearInterval(timerInterval); 
             
-            // Submit score to leaderboard
+            // Submit score
             scoreManager.submitGameResult(gameState.score);
             
             const endDiv = document.getElementById('gameOver');
@@ -947,11 +875,8 @@
             const finalScoreEl = document.getElementById('finalScore');
             const highScoreEl = document.getElementById('currentHighScore'); 
             
-            if (won) {
-                endMessage.textContent = 'Game Complete!';
-            } else {
-                endMessage.textContent = 'Game Over!';
-            }
+            if (won) endMessage.textContent = 'Game Complete!';
+            else endMessage.textContent = 'Game Over!';
             
             const playTime = scoreManager.getElapsedTimeFormatted();
             finalScoreEl.textContent = `Final Score: ${gameState.score} | Time: ${playTime}`;
@@ -975,27 +900,21 @@
             lastTime = 0; 
             loadLevel(0);
         }
-        
-        // Make globally accessible
         window.restartGame = restartGame;
 
         function drawParallaxBackground() {
             const groundY = 550; 
-            
             ctx.fillStyle = '#0a6c03'; 
             const backHillWidth = 600;
             const backScroll = (gameState.camera * 0.3) % backHillWidth;
-
             for (let i = -1; i < (canvas.width / backHillWidth) + 2; i++) {
                 ctx.beginPath();
                 ctx.arc(i * backHillWidth - backScroll + (backHillWidth / 2), groundY - gameState.cameraY, backHillWidth / 2, Math.PI, 0); 
                 ctx.fill();
             }
-
             ctx.fillStyle = '#1a9c04'; 
             const frontHillWidth = 450;
             const frontScroll = (gameState.camera * 0.5) % frontHillWidth;
-            
             for (let i = -1; i < (canvas.width / frontHillWidth) + 2; i++) {
                 ctx.beginPath();
                 ctx.arc(i * frontHillWidth - frontScroll + (frontHillWidth / 2), (groundY + 20) - gameState.cameraY, frontHillWidth / 2, Math.PI, 0); 
@@ -1009,15 +928,12 @@
             if (!lastTime) lastTime = timestamp;
             const dt = (timestamp - lastTime) / 1000;
             lastTime = timestamp;
-
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
             if (liveLevelData.main && gameState.currentRoom === 'main') {
                 ctx.fillStyle = '#5c94fc';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
-                
                 drawParallaxBackground();
-                
                 ctx.fillStyle = 'rgba(255, 255, 250, 0.8)';
                 const cloudScroll = (gameState.camera * 0.2) % 1000; 
                 for (let i = 0; i < 5; i++) {
@@ -1028,11 +944,9 @@
                     ctx.arc(cloudX + 50, 100 + i * 40 - gameState.cameraY * 0.5, 30, 0, Math.PI * 2);
                     ctx.fill();
                 }
-
             } else if (liveLevelData.bonus && gameState.currentRoom === 'bonus') {
                 ctx.fillStyle = '#6b4423';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
-
                 ctx.fillStyle = '#4a2f18';
                 const rockScroll = (gameState.camera * 0.2) % 200;
                 for(let i = 0; i < (canvas.width / 100) + 2; i++) {
@@ -1051,10 +965,8 @@
                 drawPlayer();
                 update(dt); 
             }
-            
             requestAnimationFrame(gameLoop);
         }
-
         gameLoop(0);
     </script>
 </body>
