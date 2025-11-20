@@ -206,7 +206,12 @@
     <audio id="sound-start" src="game_start.mp3" preload="auto"></audio>
     <audio id="sound-fire" src="laser_shot.mp3" preload="auto"></audio>
     <audio id="sound-die" src="player_die.mp3" preload="auto"></audio>
-    <script>
+    <script type="module">
+        import GameScoreManager from '../game-score-manager.js';
+        
+        // Initialize score manager for ASCII Doom
+        const scoreManager = new GameScoreManager('ascii_doom', true);
+        
         // Game configuration
         const config = {
             screenWidth: 80,
@@ -369,6 +374,9 @@
         function initGame(difficulty) {
             try {
                 config.difficulty = difficulty;
+                
+                // Start tracking time
+                scoreManager.startSession();
                 
                 // Reset game state
                 gameState = {
@@ -845,6 +853,9 @@
             gameOverScreen.style.display = 'flex';
             document.getElementById('enemy-radar').style.display = 'none';
             playSound('sound-die'); // Play player death sound
+            
+            // Submit score (enemies killed) to leaderboard
+            scoreManager.submitGameResult(gameState.enemiesKilled);
         }
 
         // Level complete
