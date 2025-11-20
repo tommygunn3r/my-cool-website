@@ -166,7 +166,12 @@
     <audio id="dripSound" src="drip.mp3" preload="auto"></audio>
     <audio id="splashSound" src="splash.mp3" preload="auto"></audio>
     
-    <script>
+    <script type="module">
+        // 1. IMPORT AND INITIALIZE GAME SCORE MANAGER
+        // This game only tracks time played, so we set hasScore to false.
+        import GameScoreManager from '../game-score-manager.js';
+        const scoreManager = new GameScoreManager('water', false);
+
         const canvas = document.getElementById('waterCanvas');
         const ctx = canvas.getContext('2d');
         const zoomLevelDisplay = document.getElementById('zoomLevel');
@@ -774,7 +779,27 @@
             requestAnimationFrame(loop);
         }
 
+        // 3. SUBMIT TIME PLAYED ON PAGE EXIT (Visibility API)
+        function submitPlayTime() {
+            // Since this is a simulation with no 'score', we pass 0 as the score argument.
+            // The manager will only log the time played, as configured above (hasScore: false).
+            scoreManager.submitGameResult(0); 
+        }
+
+        // Trigger submission when the page is hidden (user switches tabs, minimizes, or closes)
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'hidden') {
+                submitPlayTime();
+            }
+        });
+        
+        // Final attempt to catch beforeunload/page close (less reliable, but good fallback)
+        window.addEventListener('beforeunload', submitPlayTime);
+
+        // Initialization
         updateZoomDisplay();
+        // 2. START THE TRACKING SESSION
+        scoreManager.startSession();
         requestAnimationFrame(loop);
         
         // Initial controls timer
