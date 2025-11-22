@@ -737,7 +737,7 @@
             const suitClass = (card.suit === '♥' || card.suit === '♦') ? 'hearts' : 'clubs';
             
             cardEl.innerHTML = `
-                <div class="card-back" style="background-image: url('/mnt/user-data/uploads/card_back.png');"></div>
+                <div class="card-back" style="background-image: url('../assets/casino/card_back.png');"></div>
                 <div class="card-front">
                     <div class="card-value ${suitClass}">${card.value}</div>
                     <div class="card-suit ${suitClass}">${card.suit}</div>
@@ -1048,7 +1048,7 @@
             };
             
             document.getElementById('gameContainer').style.backgroundImage = 
-                `url('/mnt/user-data/uploads/${tableMap[selectedTable]}')`;
+                `url('../assets/casino/${tableMap[selectedTable]}')`;
             
             document.getElementById('tableSelector').classList.add('hidden');
             deck = createDeck();
@@ -1093,19 +1093,19 @@
                 'green': 'greentop.png'
             };
             document.getElementById('gameContainer').style.backgroundImage = 
-                `url('/mnt/user-data/uploads/${tableMap[selectedTable]}')`;
+                `url('../assets/casino/${tableMap[selectedTable]}')`;
             playChipSound();
         });
 
         // Set default table background for preview
-        document.querySelector('[data-table="red"]').style.backgroundImage = "url('/mnt/user-data/uploads/redtop.png')";
-        document.querySelector('[data-table="blue"]').style.backgroundImage = "url('/mnt/user-data/uploads/bluetop.png')";
-        document.querySelector('[data-table="green"]').style.backgroundImage = "url('/mnt/user-data/uploads/greentop.png')";
+        document.querySelector('[data-table="red"]').style.backgroundImage = "url('../assets/casino/redtop.png')";
+        document.querySelector('[data-table="blue"]').style.backgroundImage = "url('../assets/casino/bluetop.png')";
+        document.querySelector('[data-table="green"]').style.backgroundImage = "url('../assets/casino/greentop.png')";
         document.querySelector('[data-table="green"]').classList.add('selected');
         
         // Initialize game with green table
         document.getElementById('gameContainer').style.backgroundImage = 
-            "url('/mnt/user-data/uploads/greentop.png')";
+            "url('../assets/casino/greentop.png')";
         deck = createDeck();
         initializeAIPlayers();
     </script>
