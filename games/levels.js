@@ -85,59 +85,438 @@ const level14MainTemplate = {
 };
 const level14BonusTemplate = JSON.parse(JSON.stringify(level11BonusTemplate));
 
-// Level 15
+// Level 15 - MASTER PLATFORMING GAUNTLET
 const level15MainTemplate = {
-    platforms: [{x: 0, y: 550, width: 500, height: 50},{x: 600, y: 450, width: 100, height: 20, type: 'moving', vx: 150, vy: 0, minX: 600, maxX: 900, minY: 450, maxY: 450},{x: 1100, y: 550, width: 200, height: 50},{x: 1400, y: 350, width: 100, height: 20, type: 'moving', vx: 0, vy: 150, minX: 1400, maxX: 1400, minY: 200, maxY: 500},{x: 1700, y: 550, width: 200, height: 50},{x: 2100, y: 450, width: 100, height: 20},{x: 2400, y: 350, width: 100, height: 20},{x: 2700, y: 250, width: 100, height: 20},{x: 3000, y: 550, width: 1000, height: 50}],
-    blocks: [{x: 200, y: 350, width: 40, height: 40, hit: false, type: 'powerup'},{x: 1150, y: 350, width: 40, height: 40, hit: false, type: 'coin'},{x: 3300, y: 350, width: 40, height: 40, hit: false, type: 'powerup'}],
-    pipes: [], enemies: [{x: 750, y: 400, width: 24, height: 20, vx: -5, type: 'bullet'},{x: 1500, y: 300, width: 24, height: 20, vx: -5, type: 'bullet'},{x: 2200, y: 400, width: 24, height: 20, vx: -6, type: 'bullet'},{x: 2500, y: 300, width: 24, height: 20, vx: -6, type: 'bullet'},{x: 3500, y: 518, width: 32, height: 32, vx: 3, type: 'turtle'}],
-    gaps: [{x: 500, width: 600}, {x: 1300, width: 1700}], stairs: [{x: 3700, steps: 4}], flagpole: {x: 3950, y: 250, height: 300}
+    platforms: [
+        {x: 0, y: 550, width: 400, height: 50},
+        {x: 600, y: 450, width: 80, height: 20, type: 'moving', vx: 120, vy: 0, minX: 550, maxX: 900, minY: 450, maxY: 450},
+        {x: 1100, y: 350, width: 80, height: 20, type: 'moving', vx: 0, vy: 150, minX: 1100, maxX: 1100, minY: 200, maxY: 500},
+        {x: 1400, y: 250, width: 80, height: 20, type: 'moving', vx: -120, vy: 0, minX: 1300, maxX: 1600, minY: 250, maxY: 250},
+        {x: 1800, y: 400, width: 80, height: 20, type: 'moving', vx: 0, vy: -150, minX: 1800, maxX: 1800, minY: 200, maxY: 500},
+        {x: 2100, y: 550, width: 350, height: 50},
+        {x: 2650, y: 450, width: 80, height: 20, type: 'moving', vx: 150, vy: 0, minX: 2600, maxX: 3000, minY: 450, maxY: 450},
+        {x: 3200, y: 350, width: 80, height: 20, type: 'moving', vx: 0, vy: 120, minX: 3200, maxX: 3200, minY: 250, maxY: 550},
+        {x: 3500, y: 250, width: 80, height: 20, type: 'moving', vx: 150, vy: 0, minX: 3450, maxX: 3850, minY: 250, maxY: 250},
+        {x: 4050, y: 400, width: 80, height: 20, type: 'moving', vx: 0, vy: -150, minX: 4050, maxX: 4050, minY: 200, maxY: 550},
+        {x: 4350, y: 550, width: 300, height: 50},
+        {x: 4850, y: 450, width: 100, height: 20},
+        {x: 5150, y: 350, width: 100, height: 20},
+        {x: 5450, y: 250, width: 100, height: 20},
+        {x: 5750, y: 550, width: 650, height: 50}
+    ],
+    blocks: [
+        {x: 200, y: 350, width: 40, height: 40, hit: false, type: 'powerup'},
+        {x: 1400, y: 150, width: 40, height: 40, hit: false, type: 'coin'},
+        {x: 2300, y: 350, width: 40, height: 40, hit: false, type: 'coin'},
+        {x: 3500, y: 150, width: 40, height: 40, hit: false, type: 'powerup'},
+        {x: 4900, y: 350, width: 40, height: 40, hit: false, type: 'coin'},
+        {x: 5450, y: 150, width: 40, height: 40, hit: false, type: 'coin'}
+    ],
+    pipes: [{x: 2250, y: 470, width: 60, height: 80, dest: 'bonus', exitX: 2280, exitY: 460}],
+    enemies: [
+        {x: 300, y: 518, width: 32, height: 32, vx: 3, type: 'turtle'},
+        {x: 700, y: 400, width: 24, height: 20, vx: -6, type: 'bullet'},
+        {x: 1150, y: 300, width: 24, height: 20, vx: -7, type: 'bullet'},
+        {x: 1450, y: 200, width: 24, height: 20, vx: -7, type: 'bullet'},
+        {x: 1850, y: 350, width: 24, height: 20, vx: -8, type: 'bullet'},
+        {x: 2300, y: 518, width: 32, height: 32, vx: 3, type: 'turtle'},
+        {x: 2700, y: 400, width: 24, height: 20, vx: -7, type: 'bullet'},
+        {x: 3250, y: 300, width: 24, height: 20, vx: -8, type: 'bullet'},
+        {x: 3550, y: 200, width: 24, height: 20, vx: -8, type: 'bullet'},
+        {x: 4100, y: 350, width: 24, height: 20, vx: -9, type: 'bullet'},
+        {x: 4550, y: 518, width: 32, height: 32, vx: 3, type: 'turtle'},
+        {x: 4700, y: 518, width: 32, height: 32, vx: 3, type: 'turtle'},
+        {x: 5200, y: 300, width: 24, height: 20, vx: -8, type: 'bullet'},
+        {x: 5900, y: 518, width: 32, height: 32, vx: 3, type: 'turtle'},
+        {x: 6050, y: 518, width: 32, height: 32, vx: 3, type: 'turtle'}
+    ],
+    gaps: [
+        {x: 400, width: 650},
+        {x: 1000, width: 800},
+        {x: 2450, width: 750},
+        {x: 3100, width: 950},
+        {x: 4250, width: 600},
+        {x: 5550, width: 200}
+    ],
+    stairs: [{x: 5850, steps: 6}],
+    flagpole: {x: 6300, y: 250, height: 300}
 };
 const level15BonusTemplate = JSON.parse(JSON.stringify(level11BonusTemplate));
 
-// Level 16
+// Level 16 - PRECISION MOVING PLATFORM HELL
 const level16MainTemplate = {
-    platforms: [{x: 0, y: 550, width: 300, height: 50},{x: 400, y: 400, width: 100, height: 20},{x: 600, y: 300, width: 100, height: 20},{x: 800, y: 200, width: 500, height: 20},{x: 1400, y: 300, width: 100, height: 20},{x: 1600, y: 400, width: 100, height: 20},{x: 1800, y: 550, width: 300, height: 50},{x: 2200, y: 450, width: 100, height: 20, type: 'moving', vx: 100, vy: 0, minX: 2200, maxX: 2500, minY: 450, maxY: 450},{x: 2700, y: 550, width: 600, height: 50}],
-    blocks: [{x: 100, y: 350, width: 40, height: 40, hit: false, type: 'powerup'},{x: 1000, y: 100, width: 40, height: 40, hit: false, type: 'coin'}],
-    pipes: [], enemies: [{x: 900, y: 168, width: 32, height: 32, vx: 2, type: 'turtle'},{x: 1100, y: 168, width: 32, height: 32, vx: 2, type: 'turtle'},{x: 500, y: 350, width: 24, height: 20, vx: -4, type: 'bullet'},{x: 1500, y: 350, width: 24, height: 20, vx: -4, type: 'bullet'}],
-    gaps: [{x: 300, width: 1500}, {x: 2100, width: 600}], stairs: [{x: 2900, steps: 6}], flagpole: {x: 3250, y: 250, height: 300}
+    platforms: [
+        {x: 0, y: 550, width: 400, height: 50},
+        {x: 600, y: 400, width: 70, height: 20, type: 'moving', vx: 0, vy: 150, minX: 600, maxX: 600, minY: 200, maxY: 550},
+        {x: 850, y: 300, width: 70, height: 20, type: 'moving', vx: 0, vy: -150, minX: 850, maxX: 850, minY: 200, maxY: 550},
+        {x: 1100, y: 450, width: 70, height: 20, type: 'moving', vx: 0, vy: 150, minX: 1100, maxX: 1100, minY: 200, maxY: 550},
+        {x: 1350, y: 250, width: 70, height: 20, type: 'moving', vx: 0, vy: -150, minX: 1350, maxX: 1350, minY: 150, maxY: 550},
+        {x: 1700, y: 550, width: 300, height: 50},
+        {x: 2200, y: 450, width: 80, height: 20, type: 'moving', vx: 150, vy: 0, minX: 2100, maxX: 2600, minY: 450, maxY: 450},
+        {x: 2900, y: 350, width: 80, height: 20, type: 'moving', vx: -150, vy: 0, minX: 2700, maxX: 3100, minY: 350, maxY: 350},
+        {x: 3400, y: 250, width: 80, height: 20, type: 'moving', vx: 150, vy: 0, minX: 3300, maxX: 3700, minY: 250, maxY: 250},
+        {x: 4000, y: 550, width: 350, height: 50},
+        {x: 4550, y: 450, width: 70, height: 20, type: 'moving', vx: 0, vy: 120, minX: 4550, maxX: 4550, minY: 250, maxY: 550},
+        {x: 4800, y: 350, width: 70, height: 20, type: 'moving', vx: 0, vy: -120, minX: 4800, maxX: 4800, minY: 250, maxY: 550},
+        {x: 5050, y: 250, width: 70, height: 20, type: 'moving', vx: 0, vy: 120, minX: 5050, maxX: 5050, minY: 200, maxY: 550},
+        {x: 5400, y: 550, width: 600, height: 50}
+    ],
+    blocks: [
+        {x: 200, y: 350, width: 40, height: 40, hit: false, type: 'powerup'},
+        {x: 1350, y: 150, width: 40, height: 40, hit: false, type: 'coin'},
+        {x: 1900, y: 350, width: 40, height: 40, hit: false, type: 'coin'},
+        {x: 3400, y: 150, width: 40, height: 40, hit: false, type: 'powerup'},
+        {x: 4200, y: 350, width: 40, height: 40, hit: false, type: 'coin'},
+        {x: 5050, y: 150, width: 40, height: 40, hit: false, type: 'coin'}
+    ],
+    pipes: [{x: 1850, y: 470, width: 60, height: 80, dest: 'bonus', exitX: 1880, exitY: 460}],
+    enemies: [
+        {x: 300, y: 518, width: 32, height: 32, vx: 3, type: 'turtle'},
+        {x: 650, y: 350, width: 24, height: 20, vx: -7, type: 'bullet'},
+        {x: 900, y: 250, width: 24, height: 20, vx: -7, type: 'bullet'},
+        {x: 1150, y: 400, width: 24, height: 20, vx: -8, type: 'bullet'},
+        {x: 1400, y: 200, width: 24, height: 20, vx: -8, type: 'bullet'},
+        {x: 1900, y: 518, width: 32, height: 32, vx: 3, type: 'turtle'},
+        {x: 2250, y: 400, width: 24, height: 20, vx: -8, type: 'bullet'},
+        {x: 2950, y: 300, width: 24, height: 20, vx: -9, type: 'bullet'},
+        {x: 3450, y: 200, width: 24, height: 20, vx: -9, type: 'bullet'},
+        {x: 4200, y: 518, width: 32, height: 32, vx: 3, type: 'turtle'},
+        {x: 4350, y: 518, width: 32, height: 32, vx: 3, type: 'turtle'},
+        {x: 4600, y: 400, width: 24, height: 20, vx: -8, type: 'bullet'},
+        {x: 4850, y: 300, width: 24, height: 20, vx: -9, type: 'bullet'},
+        {x: 5100, y: 200, width: 24, height: 20, vx: -9, type: 'bullet'},
+        {x: 5600, y: 518, width: 32, height: 32, vx: 4, type: 'turtle'},
+        {x: 5750, y: 518, width: 32, height: 32, vx: 4, type: 'turtle'}
+    ],
+    gaps: [
+        {x: 400, width: 650},
+        {x: 1000, width: 700},
+        {x: 1600, width: 800},
+        {x: 2600, width: 1100},
+        {x: 4350, width: 650},
+        {x: 5300, width: 100}
+    ],
+    stairs: [{x: 5650, steps: 7}],
+    flagpole: {x: 5950, y: 250, height: 300}
 };
 const level16BonusTemplate = JSON.parse(JSON.stringify(level11BonusTemplate));
 
-// Level 17
+// Level 17 - BULLET STORM MARATHON
 const level17MainTemplate = {
-    platforms: [{x: 0, y: 550, width: 3000, height: 50},{x: 300, y: 350, width: 1000, height: 50},{x: 1500, y: 350, width: 1000, height: 50},{x: 3100, y: 550, width: 500, height: 50}],
-    blocks: [{x: 200, y: 450, width: 40, height: 40, hit: false, type: 'powerup'},{x: 1400, y: 450, width: 40, height: 40, hit: false, type: 'coin'}],
-    pipes: [], enemies: [{x: 800, y: 450, width: 24, height: 20, vx: -5, type: 'bullet'},{x: 1200, y: 450, width: 24, height: 20, vx: -5, type: 'bullet'},{x: 1800, y: 450, width: 24, height: 20, vx: -6, type: 'bullet'},{x: 2200, y: 450, width: 24, height: 20, vx: -6, type: 'bullet'},{x: 1000, y: 518, width: 32, height: 32, vx: 3, type: 'turtle'}],
-    gaps: [{x: 3000, width: 100}], stairs: [{x: 3200, steps: 3}], flagpole: {x: 3500, y: 250, height: 300}
+    platforms: [
+        {x: 0, y: 550, width: 500, height: 50},
+        {x: 700, y: 550, width: 400, height: 50},
+        {x: 1300, y: 550, width: 350, height: 50},
+        {x: 1850, y: 550, width: 400, height: 50},
+        {x: 2450, y: 550, width: 500, height: 50},
+        {x: 3150, y: 550, width: 400, height: 50},
+        {x: 3750, y: 550, width: 500, height: 50},
+        {x: 4450, y: 550, width: 600, height: 50},
+        {x: 5250, y: 550, width: 750, height: 50},
+        // Elevated platforms
+        {x: 600, y: 400, width: 100, height: 20},
+        {x: 900, y: 350, width: 100, height: 20},
+        {x: 1200, y: 300, width: 100, height: 20},
+        {x: 1500, y: 400, width: 100, height: 20},
+        {x: 1750, y: 450, width: 100, height: 20},
+        {x: 2100, y: 400, width: 100, height: 20},
+        {x: 2400, y: 350, width: 100, height: 20},
+        {x: 2700, y: 300, width: 100, height: 20},
+        {x: 3000, y: 400, width: 100, height: 20},
+        {x: 3400, y: 450, width: 100, height: 20},
+        {x: 3700, y: 400, width: 100, height: 20},
+        {x: 4000, y: 350, width: 100, height: 20},
+        {x: 4300, y: 300, width: 100, height: 20},
+        {x: 4700, y: 450, width: 100, height: 20},
+        {x: 5000, y: 400, width: 100, height: 20}
+    ],
+    blocks: [
+        {x: 300, y: 350, width: 40, height: 40, hit: false, type: 'powerup'},
+        {x: 900, y: 250, width: 40, height: 40, hit: false, type: 'coin'},
+        {x: 1500, y: 300, width: 40, height: 40, hit: false, type: 'coin'},
+        {x: 2100, y: 300, width: 40, height: 40, hit: false, type: 'powerup'},
+        {x: 2700, y: 200, width: 40, height: 40, hit: false, type: 'coin'},
+        {x: 3400, y: 350, width: 40, height: 40, hit: false, type: 'coin'},
+        {x: 4000, y: 250, width: 40, height: 40, hit: false, type: 'powerup'},
+        {x: 4700, y: 350, width: 40, height: 40, hit: false, type: 'coin'},
+        {x: 5400, y: 350, width: 40, height: 40, hit: false, type: 'coin'}
+    ],
+    pipes: [
+        {x: 1000, y: 470, width: 60, height: 80, dest: 'bonus', exitX: 1030, exitY: 460},
+        {x: 3300, y: 470, width: 60, height: 80, dest: 'bonus', exitX: 3330, exitY: 460}
+    ],
+    enemies: [
+        // Wave 1
+        {x: 650, y: 350, width: 24, height: 20, vx: -7, type: 'bullet'},
+        {x: 800, y: 518, width: 32, height: 32, vx: 3, type: 'turtle'},
+        {x: 950, y: 300, width: 24, height: 20, vx: -8, type: 'bullet'},
+        {x: 1100, y: 518, width: 32, height: 32, vx: 3, type: 'turtle'},
+        // Wave 2
+        {x: 1250, y: 250, width: 24, height: 20, vx: -8, type: 'bullet'},
+        {x: 1400, y: 518, width: 32, height: 32, vx: 3, type: 'turtle'},
+        {x: 1550, y: 350, width: 24, height: 20, vx: -9, type: 'bullet'},
+        {x: 1800, y: 400, width: 24, height: 20, vx: -8, type: 'bullet'},
+        // Wave 3
+        {x: 2000, y: 518, width: 32, height: 32, vx: 3, type: 'turtle'},
+        {x: 2150, y: 350, width: 24, height: 20, vx: -9, type: 'bullet'},
+        {x: 2450, y: 300, width: 24, height: 20, vx: -9, type: 'bullet'},
+        {x: 2600, y: 518, width: 32, height: 32, vx: 3, type: 'turtle'},
+        {x: 2750, y: 250, width: 24, height: 20, vx: -10, type: 'bullet'},
+        // Wave 4
+        {x: 2950, y: 518, width: 32, height: 32, vx: 4, type: 'turtle'},
+        {x: 3050, y: 350, width: 24, height: 20, vx: -9, type: 'bullet'},
+        {x: 3450, y: 400, width: 24, height: 20, vx: -9, type: 'bullet'},
+        {x: 3600, y: 518, width: 32, height: 32, vx: 4, type: 'turtle'},
+        // Wave 5
+        {x: 3750, y: 350, width: 24, height: 20, vx: -10, type: 'bullet'},
+        {x: 4050, y: 300, width: 24, height: 20, vx: -10, type: 'bullet'},
+        {x: 4250, y: 518, width: 32, height: 32, vx: 4, type: 'turtle'},
+        {x: 4350, y: 250, width: 24, height: 20, vx: -10, type: 'bullet'},
+        // Final wave
+        {x: 4600, y: 518, width: 32, height: 32, vx: 4, type: 'turtle'},
+        {x: 4750, y: 400, width: 24, height: 20, vx: -10, type: 'bullet'},
+        {x: 4900, y: 518, width: 32, height: 32, vx: 4, type: 'turtle'},
+        {x: 5050, y: 350, width: 24, height: 20, vx: -11, type: 'bullet'},
+        {x: 5500, y: 518, width: 32, height: 32, vx: 4, type: 'turtle'},
+        {x: 5650, y: 518, width: 32, height: 32, vx: 4, type: 'turtle'},
+        {x: 5800, y: 518, width: 32, height: 32, vx: 4, type: 'turtle'}
+    ],
+    gaps: [
+        {x: 500, width: 200},
+        {x: 1100, width: 200},
+        {x: 1650, width: 200},
+        {x: 2250, width: 200},
+        {x: 2950, width: 200},
+        {x: 3550, width: 200},
+        {x: 4250, width: 200},
+        {x: 5050, width: 200}
+    ],
+    stairs: [{x: 5700, steps: 7}],
+    flagpole: {x: 5950, y: 250, height: 300}
 };
 const level17BonusTemplate = JSON.parse(JSON.stringify(level11BonusTemplate));
 
-// Level 18
+// Level 18 - VERTICAL CHALLENGE
 const level18MainTemplate = {
-    platforms: [{x: 0, y: 550, width: 400, height: 50},{x: 500, y: 450, width: 80, height: 20, type: 'moving', vx: 0, vy: 100, minX: 500, maxX: 500, minY: 250, maxY: 500},{x: 700, y: 450, width: 80, height: 20, type: 'moving', vx: 0, vy: -100, minX: 700, maxX: 700, minY: 250, maxY: 500},{x: 900, y: 450, width: 80, height: 20, type: 'moving', vx: 0, vy: 100, minX: 900, maxX: 900, minY: 250, maxY: 500},{x: 1200, y: 550, width: 400, height: 50},{x: 1700, y: 450, width: 80, height: 20, type: 'moving', vx: 100, vy: 0, minX: 1700, maxX: 2000, minY: 450, maxY: 450},{x: 2300, y: 550, width: 600, height: 50}],
-    blocks: [{x: 200, y: 350, width: 40, height: 40, hit: false, type: 'powerup'}],
-    pipes: [], enemies: [{x: 600, y: 300, width: 24, height: 20, vx: -4, type: 'bullet'},{x: 800, y: 350, width: 24, height: 20, vx: -4, type: 'bullet'},{x: 1400, y: 518, width: 32, height: 32, vx: 2, type: 'turtle'}],
-    gaps: [{x: 400, width: 800}, {x: 1600, width: 700}], stairs: [{x: 2500, steps: 5}], flagpole: {x: 2850, y: 250, height: 300}
+    platforms: [
+        {x: 0, y: 550, width: 400, height: 50},
+        // First tower section
+        {x: 600, y: 500, width: 80, height: 20, type: 'moving', vx: 0, vy: 120, minX: 600, maxX: 600, minY: 200, maxY: 550},
+        {x: 850, y: 450, width: 80, height: 20, type: 'moving', vx: 0, vy: -120, minX: 850, maxX: 850, minY: 200, maxY: 550},
+        {x: 1100, y: 400, width: 80, height: 20, type: 'moving', vx: 0, vy: 120, minX: 1100, maxX: 1100, minY: 150, maxY: 550},
+        {x: 1350, y: 350, width: 80, height: 20, type: 'moving', vx: 0, vy: -120, minX: 1350, maxX: 1350, minY: 150, maxY: 550},
+        {x: 1600, y: 150, width: 400, height: 20},
+        // Second tower section
+        {x: 2200, y: 450, width: 80, height: 20, type: 'moving', vx: 0, vy: 150, minX: 2200, maxX: 2200, minY: 150, maxY: 550},
+        {x: 2450, y: 350, width: 80, height: 20, type: 'moving', vx: 0, vy: -150, minX: 2450, maxX: 2450, minY: 150, maxY: 550},
+        {x: 2700, y: 250, width: 80, height: 20, type: 'moving', vx: 0, vy: 150, minX: 2700, maxX: 2700, minY: 100, maxY: 550},
+        {x: 2950, y: 150, width: 80, height: 20, type: 'moving', vx: 0, vy: -150, minX: 2950, maxX: 2950, minY: 100, maxY: 550},
+        {x: 3200, y: 100, width: 300, height: 20},
+        // Third tower section
+        {x: 3700, y: 400, width: 80, height: 20, type: 'moving', vx: 0, vy: 120, minX: 3700, maxX: 3700, minY: 150, maxY: 550},
+        {x: 3950, y: 300, width: 80, height: 20, type: 'moving', vx: 0, vy: -120, minX: 3950, maxX: 3950, minY: 150, maxY: 550},
+        {x: 4200, y: 200, width: 80, height: 20, type: 'moving', vx: 0, vy: 120, minX: 4200, maxX: 4200, minY: 100, maxY: 550},
+        {x: 4500, y: 550, width: 500, height: 50},
+        {x: 5200, y: 450, width: 100, height: 20},
+        {x: 5500, y: 350, width: 100, height: 20},
+        {x: 5800, y: 250, width: 100, height: 20},
+        {x: 6100, y: 550, width: 400, height: 50}
+    ],
+    blocks: [
+        {x: 200, y: 350, width: 40, height: 40, hit: false, type: 'powerup'},
+        {x: 1100, y: 300, width: 40, height: 40, hit: false, type: 'coin'},
+        {x: 1750, y: 100, width: 40, height: 40, hit: false, type: 'coin'},
+        {x: 2700, y: 150, width: 40, height: 40, hit: false, type: 'powerup'},
+        {x: 3300, y: 50, width: 40, height: 40, hit: false, type: 'coin'},
+        {x: 4200, y: 100, width: 40, height: 40, hit: false, type: 'coin'},
+        {x: 5500, y: 250, width: 40, height: 40, hit: false, type: 'powerup'},
+        {x: 5800, y: 150, width: 40, height: 40, hit: false, type: 'coin'}
+    ],
+    pipes: [{x: 4600, y: 470, width: 60, height: 80, dest: 'bonus', exitX: 4630, exitY: 460}],
+    enemies: [
+        {x: 300, y: 518, width: 32, height: 32, vx: 3, type: 'turtle'},
+        {x: 650, y: 450, width: 24, height: 20, vx: -8, type: 'bullet'},
+        {x: 900, y: 400, width: 24, height: 20, vx: -8, type: 'bullet'},
+        {x: 1150, y: 350, width: 24, height: 20, vx: -9, type: 'bullet'},
+        {x: 1400, y: 300, width: 24, height: 20, vx: -9, type: 'bullet'},
+        {x: 1800, y: 118, width: 32, height: 32, vx: 3, type: 'turtle'},
+        {x: 2250, y: 400, width: 24, height: 20, vx: -9, type: 'bullet'},
+        {x: 2500, y: 300, width: 24, height: 20, vx: -10, type: 'bullet'},
+        {x: 2750, y: 200, width: 24, height: 20, vx: -10, type: 'bullet'},
+        {x: 3000, y: 100, width: 24, height: 20, vx: -10, type: 'bullet'},
+        {x: 3300, y: 68, width: 32, height: 32, vx: 3, type: 'turtle'},
+        {x: 3750, y: 350, width: 24, height: 20, vx: -9, type: 'bullet'},
+        {x: 4000, y: 250, width: 24, height: 20, vx: -10, type: 'bullet'},
+        {x: 4250, y: 150, width: 24, height: 20, vx: -10, type: 'bullet'},
+        {x: 4700, y: 518, width: 32, height: 32, vx: 4, type: 'turtle'},
+        {x: 4850, y: 518, width: 32, height: 32, vx: 4, type: 'turtle'},
+        {x: 5250, y: 400, width: 24, height: 20, vx: -9, type: 'bullet'},
+        {x: 5550, y: 300, width: 24, height: 20, vx: -10, type: 'bullet'},
+        {x: 5850, y: 200, width: 24, height: 20, vx: -10, type: 'bullet'},
+        {x: 6200, y: 518, width: 32, height: 32, vx: 4, type: 'turtle'}
+    ],
+    gaps: [
+        {x: 400, width: 850},
+        {x: 2000, width: 1200},
+        {x: 3500, width: 1000},
+        {x: 5100, width: 100},
+        {x: 6000, width: 100}
+    ],
+    stairs: [{x: 6200, steps: 7}],
+    flagpole: {x: 6450, y: 250, height: 300}
 };
 const level18BonusTemplate = JSON.parse(JSON.stringify(level11BonusTemplate));
 
-// Level 19
+// Level 19 - CHAOS COURSE
 const level19MainTemplate = {
-    platforms: [{x: 0, y: 550, width: 4000, height: 50},{x: 500, y: 400, width: 100, height: 20},{x: 1000, y: 400, width: 100, height: 20},{x: 1500, y: 400, width: 100, height: 20},{x: 2000, y: 400, width: 100, height: 20}],
-    blocks: [{x: 200, y: 350, width: 40, height: 40, hit: false, type: 'powerup'},{x: 2500, y: 350, width: 40, height: 40, hit: false, type: 'powerup'}],
-    pipes: [], enemies: [{x: 600, y: 500, width: 24, height: 20, vx: -6, type: 'bullet'},{x: 800, y: 450, width: 24, height: 20, vx: -6, type: 'bullet'},{x: 1000, y: 500, width: 24, height: 20, vx: -6, type: 'bullet'},{x: 1200, y: 400, width: 24, height: 20, vx: -6, type: 'bullet'},{x: 1500, y: 500, width: 24, height: 20, vx: -7, type: 'bullet'},{x: 1800, y: 450, width: 24, height: 20, vx: -7, type: 'bullet'},{x: 2200, y: 500, width: 24, height: 20, vx: -7, type: 'bullet'},{x: 3000, y: 518, width: 32, height: 32, vx: 3, type: 'turtle'}],
-    gaps: [], stairs: [{x: 3500, steps: 5}], flagpole: {x: 3800, y: 250, height: 300}
+    platforms: [
+        {x: 0, y: 550, width: 350, height: 50},
+        {x: 500, y: 450, width: 80, height: 20, type: 'moving', vx: 120, vy: 0, minX: 450, maxX: 800, minY: 450, maxY: 450},
+        {x: 1000, y: 350, width: 80, height: 20, type: 'moving', vx: 0, vy: 150, minX: 1000, maxX: 1000, minY: 200, maxY: 550},
+        {x: 1300, y: 250, width: 80, height: 20, type: 'moving', vx: -120, vy: 0, minX: 1200, maxX: 1600, minY: 250, maxY: 250},
+        {x: 1800, y: 400, width: 80, height: 20, type: 'moving', vx: 0, vy: -150, minX: 1800, maxX: 1800, minY: 150, maxY: 550},
+        {x: 2100, y: 550, width: 300, height: 50},
+        {x: 2600, y: 450, width: 80, height: 20, type: 'moving', vx: 150, vy: 0, minX: 2550, maxX: 2950, minY: 450, maxY: 450},
+        {x: 3200, y: 350, width: 80, height: 20, type: 'moving', vx: 0, vy: 120, minX: 3200, maxX: 3200, minY: 200, maxY: 550},
+        {x: 3500, y: 250, width: 80, height: 20, type: 'moving', vx: -150, vy: 0, minX: 3400, maxX: 3800, minY: 250, maxY: 250},
+        {x: 4000, y: 450, width: 80, height: 20, type: 'moving', vx: 0, vy: -120, minX: 4000, maxX: 4000, minY: 200, maxY: 550},
+        {x: 4300, y: 550, width: 350, height: 50},
+        {x: 4850, y: 450, width: 80, height: 20, type: 'moving', vx: 150, vy: 0, minX: 4800, maxX: 5200, minY: 450, maxY: 450},
+        {x: 5400, y: 350, width: 80, height: 20, type: 'moving', vx: 0, vy: 150, minX: 5400, maxX: 5400, minY: 200, maxY: 550},
+        {x: 5700, y: 250, width: 80, height: 20, type: 'moving', vx: -150, vy: 0, minX: 5600, maxX: 6000, minY: 250, maxY: 250},
+        {x: 6200, y: 400, width: 80, height: 20, type: 'moving', vx: 0, vy: -150, minX: 6200, maxX: 6200, minY: 150, maxY: 550},
+        {x: 6500, y: 550, width: 500, height: 50}
+    ],
+    blocks: [
+        {x: 200, y: 350, width: 40, height: 40, hit: false, type: 'powerup'},
+        {x: 1300, y: 150, width: 40, height: 40, hit: false, type: 'coin'},
+        {x: 2300, y: 350, width: 40, height: 40, hit: false, type: 'coin'},
+        {x: 3500, y: 150, width: 40, height: 40, hit: false, type: 'powerup'},
+        {x: 4500, y: 350, width: 40, height: 40, hit: false, type: 'coin'},
+        {x: 5700, y: 150, width: 40, height: 40, hit: false, type: 'coin'},
+        {x: 6700, y: 350, width: 40, height: 40, hit: false, type: 'powerup'}
+    ],
+    pipes: [
+        {x: 2200, y: 470, width: 60, height: 80, dest: 'bonus', exitX: 2230, exitY: 460},
+        {x: 4400, y: 470, width: 60, height: 80, dest: 'bonus', exitX: 4430, exitY: 460}
+    ],
+    enemies: [
+        {x: 250, y: 518, width: 32, height: 32, vx: 4, type: 'turtle'},
+        {x: 550, y: 400, width: 24, height: 20, vx: -8, type: 'bullet'},
+        {x: 1050, y: 300, width: 24, height: 20, vx: -9, type: 'bullet'},
+        {x: 1350, y: 200, width: 24, height: 20, vx: -10, type: 'bullet'},
+        {x: 1850, y: 350, width: 24, height: 20, vx: -9, type: 'bullet'},
+        {x: 2300, y: 518, width: 32, height: 32, vx: 4, type: 'turtle'},
+        {x: 2650, y: 400, width: 24, height: 20, vx: -9, type: 'bullet'},
+        {x: 3250, y: 300, width: 24, height: 20, vx: -10, type: 'bullet'},
+        {x: 3550, y: 200, width: 24, height: 20, vx: -11, type: 'bullet'},
+        {x: 4050, y: 400, width: 24, height: 20, vx: -10, type: 'bullet'},
+        {x: 4500, y: 518, width: 32, height: 32, vx: 4, type: 'turtle'},
+        {x: 4650, y: 518, width: 32, height: 32, vx: 4, type: 'turtle'},
+        {x: 4900, y: 400, width: 24, height: 20, vx: -10, type: 'bullet'},
+        {x: 5450, y: 300, width: 24, height: 20, vx: -11, type: 'bullet'},
+        {x: 5750, y: 200, width: 24, height: 20, vx: -11, type: 'bullet'},
+        {x: 6250, y: 350, width: 24, height: 20, vx: -11, type: 'bullet'},
+        {x: 6700, y: 518, width: 32, height: 32, vx: 4, type: 'turtle'},
+        {x: 6850, y: 518, width: 32, height: 32, vx: 4, type: 'turtle'}
+    ],
+    gaps: [
+        {x: 350, width: 650},
+        {x: 900, width: 900},
+        {x: 2400, width: 900},
+        {x: 3900, width: 950},
+        {x: 4650, width: 850},
+        {x: 6100, width: 400}
+    ],
+    stairs: [{x: 6650, steps: 8}],
+    flagpole: {x: 6950, y: 250, height: 300}
 };
 const level19BonusTemplate = JSON.parse(JSON.stringify(level11BonusTemplate));
 
-// Level 20
+// Level 20 - FINAL BOSS LEVEL
 const level20MainTemplate = {
-    platforms: [{x: 0, y: 550, width: 500, height: 50},{x: 600, y: 400, width: 100, height: 20, type: 'moving', vx: 150, vy: 0, minX: 600, maxX: 900, minY: 400, maxY: 400},{x: 1100, y: 550, width: 200, height: 50},{x: 1400, y: 300, width: 100, height: 20, type: 'moving', vx: 0, vy: 150, minX: 1400, maxX: 1400, minY: 200, maxY: 500},{x: 1800, y: 200, width: 500, height: 20},{x: 2500, y: 400, width: 100, height: 20, type: 'moving', vx: 200, vy: 0, minX: 2500, maxX: 3000, minY: 400, maxY: 400},{x: 3200, y: 550, width: 800, height: 50}],
-    blocks: [{x: 200, y: 350, width: 40, height: 40, hit: false, type: 'powerup'},{x: 2000, y: 150, width: 40, height: 40, hit: false, type: 'coin'}],
-    pipes: [], enemies: [{x: 700, y: 350, width: 24, height: 20, vx: -5, type: 'bullet'},{x: 1500, y: 200, width: 24, height: 20, vx: -5, type: 'bullet'},{x: 2000, y: 168, width: 32, height: 32, vx: 2, type: 'turtle'},{x: 2200, y: 168, width: 32, height: 32, vx: 2, type: 'turtle'},{x: 2700, y: 350, width: 24, height: 20, vx: -7, type: 'bullet'},{x: 3400, y: 518, width: 32, height: 32, vx: 4, type: 'turtle'}],
-    gaps: [{x: 500, width: 600}, {x: 1300, width: 1900}], stairs: [{x: 3500, steps: 6}], flagpole: {x: 3800, y: 250, height: 300}
+    platforms: [
+        {x: 0, y: 550, width: 400, height: 50},
+        // Zone 1: Moving platform maze
+        {x: 600, y: 450, width: 70, height: 20, type: 'moving', vx: 0, vy: 150, minX: 600, maxX: 600, minY: 200, maxY: 550},
+        {x: 850, y: 350, width: 70, height: 20, type: 'moving', vx: 0, vy: -150, minX: 850, maxX: 850, minY: 200, maxY: 550},
+        {x: 1100, y: 450, width: 70, height: 20, type: 'moving', vx: 0, vy: 150, minX: 1100, maxX: 1100, minY: 150, maxY: 550},
+        {x: 1350, y: 250, width: 70, height: 20, type: 'moving', vx: 0, vy: -150, minX: 1350, maxX: 1350, minY: 150, maxY: 550},
+        {x: 1600, y: 150, width: 300, height: 20},
+        // Zone 2: Horizontal moving platforms
+        {x: 2100, y: 450, width: 80, height: 20, type: 'moving', vx: 150, vy: 0, minX: 2000, maxX: 2500, minY: 450, maxY: 450},
+        {x: 2800, y: 350, width: 80, height: 20, type: 'moving', vx: -150, vy: 0, minX: 2600, maxX: 3000, minY: 350, maxY: 350},
+        {x: 3300, y: 250, width: 80, height: 20, type: 'moving', vx: 150, vy: 0, minX: 3200, maxX: 3700, minY: 250, maxY: 250},
+        {x: 4000, y: 400, width: 80, height: 20, type: 'moving', vx: -150, vy: 0, minX: 3900, maxX: 4300, minY: 400, maxY: 400},
+        {x: 4600, y: 550, width: 300, height: 50},
+        // Zone 3: Vertical challenge
+        {x: 5100, y: 450, width: 70, height: 20, type: 'moving', vx: 0, vy: 120, minX: 5100, maxX: 5100, minY: 200, maxY: 550},
+        {x: 5350, y: 350, width: 70, height: 20, type: 'moving', vx: 0, vy: -120, minX: 5350, maxX: 5350, minY: 150, maxY: 550},
+        {x: 5600, y: 250, width: 70, height: 20, type: 'moving', vx: 0, vy: 120, minX: 5600, maxX: 5600, minY: 100, maxY: 550},
+        {x: 5850, y: 150, width: 70, height: 20, type: 'moving', vx: 0, vy: -120, minX: 5850, maxX: 5850, minY: 100, maxY: 550},
+        {x: 6100, y: 100, width: 400, height: 20},
+        // Zone 4: Final gauntlet
+        {x: 6700, y: 400, width: 80, height: 20, type: 'moving', vx: 150, vy: 0, minX: 6600, maxX: 7100, minY: 400, maxY: 400},
+        {x: 7300, y: 300, width: 80, height: 20, type: 'moving', vx: 0, vy: 150, minX: 7300, maxX: 7300, minY: 150, maxY: 550},
+        {x: 7600, y: 550, width: 400, height: 50}
+    ],
+    blocks: [
+        {x: 200, y: 350, width: 40, height: 40, hit: false, type: 'powerup'},
+        {x: 1350, y: 150, width: 40, height: 40, hit: false, type: 'coin'},
+        {x: 1750, y: 100, width: 40, height: 40, hit: false, type: 'coin'},
+        {x: 3300, y: 150, width: 40, height: 40, hit: false, type: 'powerup'},
+        {x: 4750, y: 350, width: 40, height: 40, hit: false, type: 'coin'},
+        {x: 5600, y: 150, width: 40, height: 40, hit: false, type: 'coin'},
+        {x: 6250, y: 50, width: 40, height: 40, hit: false, type: 'powerup'},
+        {x: 7100, y: 350, width: 40, height: 40, hit: false, type: 'coin'}
+    ],
+    pipes: [
+        {x: 1750, y: 70, width: 60, height: 80, dest: 'bonus', exitX: 1780, exitY: 60},
+        {x: 4700, y: 470, width: 60, height: 80, dest: 'bonus', exitX: 4730, exitY: 460}
+    ],
+    enemies: [
+        // Zone 1
+        {x: 300, y: 518, width: 32, height: 32, vx: 4, type: 'turtle'},
+        {x: 650, y: 400, width: 24, height: 20, vx: -9, type: 'bullet'},
+        {x: 900, y: 300, width: 24, height: 20, vx: -10, type: 'bullet'},
+        {x: 1150, y: 400, width: 24, height: 20, vx: -10, type: 'bullet'},
+        {x: 1400, y: 200, width: 24, height: 20, vx: -11, type: 'bullet'},
+        {x: 1800, y: 118, width: 32, height: 32, vx: 4, type: 'turtle'},
+        // Zone 2
+        {x: 2150, y: 400, width: 24, height: 20, vx: -10, type: 'bullet'},
+        {x: 2850, y: 300, width: 24, height: 20, vx: -11, type: 'bullet'},
+        {x: 3350, y: 200, width: 24, height: 20, vx: -11, type: 'bullet'},
+        {x: 4050, y: 350, width: 24, height: 20, vx: -12, type: 'bullet'},
+        {x: 4800, y: 518, width: 32, height: 32, vx: 4, type: 'turtle'},
+        {x: 4950, y: 518, width: 32, height: 32, vx: 4, type: 'turtle'},
+        // Zone 3
+        {x: 5150, y: 400, width: 24, height: 20, vx: -11, type: 'bullet'},
+        {x: 5400, y: 300, width: 24, height: 20, vx: -11, type: 'bullet'},
+        {x: 5650, y: 200, width: 24, height: 20, vx: -12, type: 'bullet'},
+        {x: 5900, y: 100, width: 24, height: 20, vx: -12, type: 'bullet'},
+        {x: 6250, y: 68, width: 32, height: 32, vx: 4, type: 'turtle'},
+        {x: 6400, y: 68, width: 32, height: 32, vx: 4, type: 'turtle'},
+        // Zone 4 - Final boss wave
+        {x: 6750, y: 350, width: 24, height: 20, vx: -12, type: 'bullet'},
+        {x: 6900, y: 350, width: 24, height: 20, vx: -12, type: 'bullet'},
+        {x: 7350, y: 250, width: 24, height: 20, vx: -13, type: 'bullet'},
+        {x: 7800, y: 518, width: 32, height: 32, vx: 5, type: 'turtle'},
+        {x: 7950, y: 518, width: 32, height: 32, vx: 5, type: 'turtle'},
+        {x: 8050, y: 518, width: 32, height: 32, vx: 5, type: 'turtle'}
+    ],
+    gaps: [
+        {x: 400, width: 750},
+        {x: 1250, width: 850},
+        {x: 1900, width: 1100},
+        {x: 3700, width: 900},
+        {x: 4900, width: 1100},
+        {x: 6500, width: 1100}
+    ],
+    stairs: [{x: 7700, steps: 8}],
+    flagpole: {x: 8000, y: 250, height: 300}
 };
 const level20BonusTemplate = JSON.parse(JSON.stringify(level11BonusTemplate));
+
 
 // The main array holding all level templates
 const levelTemplates = [
