@@ -465,8 +465,51 @@
         }
 
         function launchGame(gameUrl) {
-            window.location.href = gameUrl;
+            // Create fullscreen iframe overlay
+            const overlay = document.createElement('div');
+            overlay.id = 'gameOverlay';
+            overlay.style.cssText = `
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: #000;
+                z-index: 1000;
+                display: flex;
+                flex-direction: column;
+            `;
+            
+            const iframe = document.createElement('iframe');
+            iframe.src = gameUrl;
+            iframe.style.cssText = `
+                width: 100%;
+                height: 100%;
+                border: none;
+            `;
+            
+            overlay.appendChild(iframe);
+            document.body.appendChild(overlay);
+            
+            // Hide main navigation when game is open
+            document.querySelector('.fixed-nav').style.display = 'none';
         }
+        
+        function closeGame() {
+            const overlay = document.getElementById('gameOverlay');
+            if (overlay) {
+                overlay.remove();
+            }
+            // Show navigation again
+            document.querySelector('.fixed-nav').style.display = 'flex';
+        }
+        
+        // Listen for close game message from iframe
+        window.addEventListener('message', function(event) {
+            if (event.data === 'closeGame') {
+                closeGame();
+            }
+        });
 
         // Parallax effect on mouse move
         document.addEventListener('mousemove', (e) => {
