@@ -1186,12 +1186,25 @@
         }
 
         function resetRound() {
-            document.getElementById('placeBet').disabled = false;
-            document.getElementById('betAmount').disabled = false;
-            
-            if (aiEnabled) {
-                document.querySelectorAll('.ai-player').forEach(el => el.classList.remove('active'));
-            }
+            // Clear cards after a short delay so player can see final result
+            setTimeout(() => {
+                document.getElementById('playerHand').innerHTML = '';
+                document.getElementById('dealerHand').innerHTML = '';
+                document.getElementById('playerScore').textContent = '';
+                document.getElementById('dealerScore').textContent = '';
+                
+                // Re-enable betting controls
+                document.getElementById('placeBet').disabled = false;
+                document.getElementById('betAmount').disabled = false;
+                
+                // Reset game state
+                gameActive = false;
+                currentBet = 0;
+                
+                if (aiEnabled) {
+                    document.querySelectorAll('.ai-player').forEach(el => el.classList.remove('active'));
+                }
+            }, 2000); // Wait 2 seconds before clearing
         }
 
         // Table selection
