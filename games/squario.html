@@ -43,6 +43,58 @@
             z-index: 10;
             font-family: 'Arial Black', Impact, sans-serif;
         }
+        #volume-container {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 15px;
+            border-radius: 10px;
+            color: white;
+            font-size: 18px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        #volume-container label {
+            font-weight: bold;
+        }
+        #volume-slider {
+            width: 120px;
+            height: 8px;
+            cursor: pointer;
+            -webkit-appearance: none;
+            appearance: none;
+            background: linear-gradient(to right, #4CAF50 0%, #4CAF50 50%, #ddd 50%, #ddd 100%);
+            border-radius: 5px;
+            outline: none;
+        }
+        #volume-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border: 2px solid #4CAF50;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        #volume-slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: white;
+            border: 2px solid #4CAF50;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        #volume-value {
+            min-width: 40px;
+            text-align: right;
+        }
         #gameOver {
             position: absolute;
             top: 50%;
@@ -202,6 +254,16 @@
             #mobile-controls {
                 display: flex;
             }
+            #volume-container {
+                top: auto;
+                bottom: 120px;
+                right: 20px;
+                font-size: 14px;
+                padding: 10px;
+            }
+            #volume-slider {
+                width: 80px;
+            }
         }
 
     </style>
@@ -237,6 +299,11 @@
         <div>Time: <span id="time">300</span></div>
         <div>Level: <span id="level">1</span></div>
         <div>High Score: <span id="highScore">0</span></div>
+    </div>
+    <div id="volume-container">
+        <label for="volume-slider">🔊</label>
+        <input type="range" id="volume-slider" min="0" max="100" value="50">
+        <span id="volume-value">50%</span>
     </div>
     <div id="gameOver">
         <h1 id="endMessage">Game Over!</h1>
@@ -286,7 +353,47 @@
 
         const music = new Audio('music/theme.mp3');
         music.loop = true;
-        music.volume = 0.2; 
+        music.volume = 0.5; 
+
+        // Volume control
+        let masterVolume = 0.5; // Default to 50%
+        const volumeSlider = document.getElementById('volume-slider');
+        const volumeValue = document.getElementById('volume-value');
+
+        // Load saved volume preference
+        const savedVolume = localStorage.getItem('squarioVolume');
+        if (savedVolume !== null) {
+            masterVolume = parseFloat(savedVolume);
+            volumeSlider.value = masterVolume * 100;
+            volumeValue.textContent = Math.round(masterVolume * 100) + '%';
+        }
+
+        // Update all audio volumes
+        function updateVolumes() {
+            music.volume = masterVolume;
+            Object.values(sounds).forEach(sound => {
+                sound.volume = masterVolume;
+            });
+        }
+
+        // Initialize volumes
+        updateVolumes();
+
+        // Volume slider event listener
+        volumeSlider.addEventListener('input', (e) => {
+            masterVolume = e.target.value / 100;
+            volumeValue.textContent = e.target.value + '%';
+            updateVolumes();
+            localStorage.setItem('squarioVolume', masterVolume);
+            
+            // Update slider background gradient
+            const percentage = e.target.value;
+            e.target.style.background = `linear-gradient(to right, #4CAF50 0%, #4CAF50 ${percentage}%, #ddd ${percentage}%, #ddd 100%)`;
+        });
+
+        // Initialize slider background
+        const initialPercentage = volumeSlider.value;
+        volumeSlider.style.background = `linear-gradient(to right, #4CAF50 0%, #4CAF50 ${initialPercentage}%, #ddd ${initialPercentage}%, #ddd 100%)`;
 
         function playSound(soundName) {
             if (sounds[soundName]) {
@@ -449,167 +556,157 @@
             
             startMusic();
             
-            if (timerInterval) clearInterval(timerInterval);
+            if (timerInterval) clearInterval(timerInterval); 
             timerInterval = setInterval(() => {
-                if (gameState.gameRunning) {
-                    gameState.time--;
+                if (gameState.gameRunning && !player.dying) { 
+                    gameState.time -= 1;
                     if (gameState.time <= 0) {
                         gameState.time = 0;
                         playerDeath();
                     }
                 }
-            }, 1000);
-        }
-
-        function getCurrentRoom() {
-            return liveLevelData[gameState.currentRoom];
-        }
-
-        function drawPlayer() {
-            if (player.invincible && Math.floor(player.invincibleTimer * 10) % 2 !== 0) {
-                return;
-            }
-
-            ctx.fillStyle = gameState.powerUp ? '#FFD700' : '#FF0000';
-            ctx.fillRect(player.x - gameState.camera, player.y - gameState.cameraY, player.width, player.height); 
-            
-            ctx.fillStyle = '#FFFFFF';
-            const eyeOffset = player.facingRight ? 8 : -8;
-            ctx.fillRect(player.x - gameState.camera + 10 + eyeOffset, player.y - gameState.cameraY + 10, 6, 6); 
+            }, 1000); 
         }
 
         function drawRoom() {
-            const room = getCurrentRoom();
-            
-            if (gameState.currentRoom === 'main') {
-                ctx.fillStyle = '#8B4513';
-            } else {
-                ctx.fillStyle = '#787878';
-            }
-            
-            room.platforms.forEach(p => {
-                if(p.type === 'moving') ctx.fillStyle = '#6082B6'; 
-                else if(gameState.currentRoom === 'main') ctx.fillStyle = '#8B4513';
-                else ctx.fillStyle = '#787878';
+            const room = gameState.currentRoom === 'main' ? liveLevelData.main : liveLevelData.bonus;
+            if (!room) return;
 
-                ctx.fillRect(p.x - gameState.camera, p.y - gameState.cameraY, p.width, p.height); 
+            room.platforms.forEach(p => {
+                ctx.fillStyle = '#8B4513';
+                ctx.fillRect(p.x - gameState.camera, p.y - gameState.cameraY, p.width, p.height);
+                ctx.fillStyle = '#00cc00';
+                ctx.fillRect(p.x - gameState.camera, p.y - gameState.cameraY - 15, p.width, 15);
+            });
+
+            room.pipes.forEach(p => {
+                ctx.fillStyle = p.color || '#00aa00';
+                ctx.fillRect(p.x - gameState.camera, p.y - gameState.cameraY, p.width, p.height);
+                ctx.fillStyle = '#006600';
+                ctx.fillRect(p.x - gameState.camera + 5, p.y - gameState.cameraY + 5, p.width - 10, p.height - 10);
+                ctx.fillRect(p.x - gameState.camera - 10, p.y - gameState.cameraY - 15, p.width + 20, 15);
             });
 
             room.blocks.forEach(b => {
-                if (b.hit) {
-                    ctx.fillStyle = '#A0A0A0';
-                    ctx.fillRect(b.x - gameState.camera, b.y - gameState.cameraY, b.width, b.height); 
-                } else if (b.type === 'powerup') {
-                    ctx.fillStyle = '#FF8C00';
-                    ctx.fillRect(b.x - gameState.camera, b.y - gameState.cameraY, b.width, b.height); 
-                    ctx.fillStyle = '#FFF';
-                    ctx.font = '30px Arial';
-                    ctx.fillText('P', b.x - gameState.camera + 10, b.y - gameState.cameraY + 32); 
-                } else { 
-                    ctx.fillStyle = '#FFD700';
-                    ctx.fillRect(b.x - gameState.camera, b.y - gameState.cameraY, b.width, b.height); 
-                    ctx.fillStyle = '#FFF';
-                    ctx.font = '30px Arial';
-                    ctx.fillText('?', b.x - gameState.camera + 10, b.y - gameState.cameraY + 32); 
+                if (b.type === 'brick') {
+                    ctx.fillStyle = '#cc6600';
+                    ctx.fillRect(b.x - gameState.camera, b.y - gameState.cameraY, b.width, b.height);
+                    ctx.strokeStyle = '#994400';
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(b.x - gameState.camera, b.y - gameState.cameraY, b.width, b.height);
+                } else if (b.type === 'mystery') {
+                    ctx.fillStyle = b.hit ? '#996633' : '#ffaa00';
+                    ctx.fillRect(b.x - gameState.camera, b.y - gameState.cameraY, b.width, b.height);
+                    if (!b.hit) {
+                        ctx.fillStyle = 'white';
+                        ctx.font = 'bold 30px Arial';
+                        ctx.textAlign = 'center';
+                        ctx.fillText('?', b.x - gameState.camera + b.width / 2, b.y - gameState.cameraY + b.height / 2 + 10);
+                    }
                 }
             });
 
-            ctx.fillStyle = '#00AA00';
-            room.pipes.forEach(p => {
-                ctx.fillRect(p.x - gameState.camera, p.y - gameState.cameraY, p.width, p.height); 
-                ctx.fillStyle = '#006600';
-                ctx.fillRect(p.x - gameState.camera, p.y - gameState.cameraY, p.width, 10); 
+            room.coins.forEach(c => {
+                if (!c.collected) {
+                    ctx.fillStyle = '#FFD700';
+                    ctx.beginPath();
+                    ctx.arc(c.x - gameState.camera, c.y - gameState.cameraY, 15, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = '#FFA500';
+                    ctx.font = 'bold 16px Arial';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('$', c.x - gameState.camera, c.y - gameState.cameraY + 5);
+                }
             });
 
             room.enemies.forEach(e => {
-                if(e.type === 'bullet') {
-                    ctx.fillStyle = '#333'; 
-                    ctx.beginPath();
-                    ctx.arc(e.x - gameState.camera + e.width/2, e.y - gameState.cameraY + e.height/2, e.width/2, 0, Math.PI*2);
-                    ctx.fill();
+                if (e.type === 'goomba') {
+                    ctx.fillStyle = '#8B4513';
+                    ctx.fillRect(e.x - gameState.camera, e.y - gameState.cameraY, e.width, e.height);
                     ctx.fillStyle = 'white';
-                    ctx.fillRect(e.x - gameState.camera + 4, e.y - gameState.cameraY + 4, 6, 6);
-                } else {
-                    ctx.fillStyle = '#228B22';
-                    ctx.fillRect(e.x - gameState.camera, e.y - gameState.cameraY, e.width, e.height); 
-                    ctx.fillStyle = '#FFD700';
-                    ctx.fillRect(e.x - gameState.camera + 5, e.y - gameState.cameraY + 5, e.width - 10, e.height - 10); 
-                }
-            });
-
-            ctx.fillStyle = '#000000';
-            room.gaps.forEach(g => {
-                ctx.fillRect(g.x - gameState.camera, 550 - gameState.cameraY, g.width, 50); 
-            });
-
-            ctx.fillStyle = '#CD853F';
-            room.stairs.forEach(s => {
-                for (let i = 0; i < s.steps; i++) {
-                    const stepHeight = 30;
-                    const stepWidth = 40;
-                    ctx.fillRect(
-                        s.x + (i * stepWidth) - gameState.camera,
-                        (550 - (i + 1) * stepHeight) - gameState.cameraY, 
-                        stepWidth,
-                        (i + 1) * stepHeight
-                    );
+                    ctx.fillRect(e.x - gameState.camera + 5, e.y - gameState.cameraY + 5, 8, 8);
+                    ctx.fillRect(e.x - gameState.camera + 17, e.y - gameState.cameraY + 5, 8, 8);
+                } else if (e.type === 'bullet') {
+                    ctx.fillStyle = 'black';
+                    ctx.beginPath();
+                    ctx.arc(e.x - gameState.camera, e.y - gameState.cameraY, e.width / 2, 0, Math.PI * 2);
+                    ctx.fill();
                 }
             });
 
             if (room.flagpole) {
-                ctx.fillStyle = '#444444';
-                ctx.fillRect(room.flagpole.x - gameState.camera, room.flagpole.y - gameState.cameraY, 10, room.flagpole.height); 
-                ctx.fillStyle = '#FF0000';
-                ctx.fillRect(room.flagpole.x - gameState.camera + 10, room.flagpole.y - gameState.cameraY, 40, 30); 
+                ctx.fillStyle = '#888888';
+                ctx.fillRect(room.flagpole.x - gameState.camera, room.flagpole.y - gameState.cameraY, 10, room.flagpole.height);
+                ctx.fillStyle = '#00FF00';
+                ctx.fillRect(room.flagpole.x - gameState.camera + 10, room.flagpole.y - gameState.cameraY, 60, 50);
             }
         }
 
+        function drawPlayer() {
+            if (player.invincible) {
+                ctx.globalAlpha = (Math.floor(Date.now() / 100) % 2 === 0) ? 0.5 : 1;
+            }
+
+            ctx.fillStyle = gameState.powerUp ? '#FFD700' : '#FF0000';
+            ctx.fillRect(player.x - gameState.camera, player.y - gameState.cameraY, player.width, player.height);
+            ctx.fillStyle = '#0066FF';
+            ctx.fillRect(player.x - gameState.camera + 5, player.y - gameState.cameraY + 5, player.width - 10, player.height - 10);
+
+            ctx.globalAlpha = 1;
+        }
+
         function update(dt) {
-            if (!gameState.gameRunning || !liveLevelData.main) return; 
-            dt = Math.min(dt, 0.05); 
-            const room = getCurrentRoom();
+            const room = gameState.currentRoom === 'main' ? liveLevelData.main : liveLevelData.bonus;
+            if (!room || !gameState.gameRunning) return;
+
+            if (player.invincible) {
+                player.invincibleTimer -= dt;
+                if (player.invincibleTimer <= 0) {
+                    player.invincible = false;
+                }
+            }
 
             if (player.dying) {
                 player.vy += player.gravity * dt;
                 player.y += player.vy * dt;
-                if (player.y > canvas.height + 500 + gameState.cameraY) { 
-                    player.dying = false;
-                    gameState.lives--;
+                if (player.y > 700) {
+                    gameState.lives -= 1;
                     if (gameState.lives <= 0) {
                         endGame(false);
                     } else {
-                        loadLevel(gameState.currentLevelIndex);
+                        setTimeout(() => { loadLevel(gameState.currentLevelIndex); }, 1000);
                     }
                 }
-                return; 
+                return;
             }
 
-            if (player.invincible) {
-                player.invincibleTimer -= dt;
-                if (player.invincibleTimer <= 0) player.invincible = false;
-            }
-            if (player.pipeCooldown > 0) player.pipeCooldown -= dt;
-            
-            if (gameState.powerUp) {
-                player.width = player.powerWidth;
-                player.height = player.powerHeight;
-            } else {
-                player.width = player.baseWidth;
-                player.height = player.baseHeight;
-            }
-
-            const isRunning = keys['ShiftLeft'] || keys['ShiftRight'];
-            const currentSpeed = isRunning ? player.runSpeed : player.speed;
-            
+            let moveSpeed = player.speed;
+            if (keys['ShiftLeft'] || keys['ShiftRight']) moveSpeed = player.runSpeed;
             if (keys['ArrowLeft'] || keys['KeyA']) {
-                player.vx = -currentSpeed;
+                player.vx = -moveSpeed;
                 player.facingRight = false;
-            } else if (keys['ArrowRight'] || keys['KeyD']) { 
-                player.vx = currentSpeed;
+            } else if (keys['ArrowRight'] || keys['KeyD']) {
+                player.vx = moveSpeed;
                 player.facingRight = true;
             } else {
                 player.vx = 0;
             }
+
+            player.x += (player.vx * 60) * dt;
+            player.vy += player.gravity * dt;
+            player.y += (player.vy * 60) * dt;
+
+            player.onGround = false;
+            room.platforms.forEach(p => {
+                if (player.x + player.width > p.x && player.x < p.x + p.width &&
+                    player.y + player.height >= p.y && player.y + player.height <= p.y + 20) {
+                    player.y = p.y - player.height;
+                    player.vy = 0;
+                    player.onGround = true;
+                    player.jumpCount = 0; 
+                    player.coyoteTimeCounter = player.coyoteTime;
+                }
+            });
 
             if (player.onGround) {
                 player.coyoteTimeCounter = player.coyoteTime;
@@ -617,141 +714,92 @@
                 player.coyoteTimeCounter -= dt;
             }
 
-            const jumpKeyActive = (keys['Space'] || keys['ArrowUp'] || keys['KeyW']);
-            if (jumpKeyActive && !player.jumpKeyHeld) { 
-                player.jumpKeyHeld = true;
-                if (player.onGround || player.coyoteTimeCounter > 0) { 
+            if (keys['Space'] || keys['ArrowUp']) {
+                if (!player.jumpKeyHeld && player.coyoteTimeCounter > 0 && player.jumpCount === 0) {
+                    playSound('jump');
                     player.vy = -player.jumpPower;
-                    player.onGround = false;
-                    player.coyoteTimeCounter = 0;
-                    playSound('jump');
+                    player.jumpKeyHeld = true;
                     player.jumpCount = 1;
-                } else if (gameState.powerUp && player.jumpCount < 2) { 
-                    player.vy = -player.jumpPower; 
-                    playSound('jump');
-                    player.jumpCount = 2;
+                    player.coyoteTimeCounter = 0; 
                 }
+            } else {
+                player.jumpKeyHeld = false;
             }
-            if (!jumpKeyActive) player.jumpKeyHeld = false;
 
-            player.vy += player.gravity * dt;
-            player.y += player.vy * dt;
-            player.x += player.vx * dt;
-
-            room.platforms.forEach(p => {
-                if (p.type === 'moving') {
-                    p.x += p.vx * dt;
-                    p.y += p.vy * dt;
-                    if (p.x < p.minX || p.x > p.maxX) p.vx *= -1;
-                    if (p.y < p.minY || p.y > p.maxY) p.vy *= -1;
-                }
-            });
-
-            player.onGround = false;
-            room.platforms.forEach(p => {
-                if (player.x + player.width > p.x && player.x < p.x + p.width) {
-                    if (player.y + player.height > p.y && player.y + player.height < p.y + 40 && player.vy > 0) {
-                        player.y = p.y - player.height;
-                        player.vy = 0;
-                        player.onGround = true;
-                        player.jumpCount = 0;
-                        if (p.type === 'moving') {
-                            player.x += p.vx * dt;
-                            player.y += p.vy * dt;
-                        }
-                    }
-                }
-            });
-
-            room.blocks.forEach(b => {
-                if (player.x + player.width > b.x && player.x < b.x + b.width) {
-                    if (player.y + player.height > b.y && player.y + player.height < b.y + 40 && player.vy > 0) {
-                        player.y = b.y - player.height;
-                        player.vy = 0;
-                        player.onGround = true;
-                        player.jumpCount = 0;
-                    }
-                }
-            });
-
-            room.pipes.forEach(p => {
-                if (player.x + player.width > p.x && player.x < p.x + p.width) {
-                    if (player.y + player.height > p.y && player.y + player.height < p.y + 40 && player.vy > 0) {
-                        player.y = p.y - player.height;
-                        player.vy = 0;
-                        player.onGround = true;
-                        player.jumpCount = 0;
-                    }
-                }
-            });
-
-            room.stairs.forEach(s => {
-                for (let i = 0; i < s.steps; i++) {
-                    const stepHeight = 30;
-                    const stepWidth = 40;
-                    const stepX = s.x + (i * stepWidth);
-                    const stepY = 550 - (i + 1) * stepHeight;
-                    if (player.x + player.width > stepX && player.x < stepX + stepWidth) {
-                        if (player.y + player.height > stepY && player.y + player.height < stepY + 40 && player.vy > 0) {
-                            player.y = stepY - player.height;
-                            player.vy = 0;
-                            player.onGround = true;
-                            player.jumpCount = 0; 
-                        }
-                    }
-                }
-            });
-
-            room.blocks.forEach(b => {
-                if (!b.hit && player.x + player.width > b.x && player.x < b.x + b.width) {
-                    if (player.y < b.y + b.height && player.y > b.y && player.vy < 0) {
-                        player.vy = 0;
-                        player.y = b.y + b.height;
-                        b.hit = true;
-                        gameState.score += 100;
-                        
-                        if (b.type === 'powerup') {
-                            gameState.powerUp = true;
-                            playSound('powerup');
-                        } else { 
-                            playSound('coin');
-                            // <<< --- COIN AND LIFE LOGIC --- >>>
-                            gameState.coins++;
-                            if(gameState.coins >= 50) {
-                                gameState.lives++;
-                                gameState.coins = 0;
-                                playSound('flagpole'); // Play positive sound for 1up
-                            }
-                            // <<< --- END LOGIC --- >>>
-                        }
-                    }
-                }
-            });
-
-            const downKeyActive = keys['ArrowDown'] || keys['KeyS'];
-            if (!downKeyActive) player.pipeLock = false;
-
-            room.pipes.forEach(p => {
-                if (player.x + player.width > p.x && player.x < p.x + p.width &&
-                    player.y + player.height >= p.y && player.y + player.height <= p.y + 10) {
-                    
-                    if (downKeyActive && !player.pipeLock) { 
+            if ((keys['ArrowDown'] || keys['KeyS']) && !player.pipeLock) {
+                room.pipes.forEach(p => {
+                    if (p.dest && player.x + player.width > p.x && player.x < p.x + p.width &&
+                        player.y + player.height > p.y && player.y + player.height < p.y + 40) {
                         playSound('pipe');
-                        player.pipeLock = true; 
-                        
+                        player.pipeLock = true;
                         if (p.dest === 'bonus') {
-                            gameState.returnX = p.exitX;
-                            gameState.returnY = p.exitY;
+                            gameState.returnX = player.x;
+                            gameState.returnY = player.y;
                             gameState.currentRoom = 'bonus';
-                            player.x = 100; 
+                            player.x = 100;
                             player.y = 400;
                             gameState.camera = 0;
                             gameState.cameraY = 0;
                         } else if (p.dest === 'main') {
                             gameState.currentRoom = 'main';
-                            player.x = gameState.returnX; 
-                            player.y = gameState.returnY; 
-                            gameState.camera = Math.max(0, player.x - 400); 
+                            player.x = gameState.returnX;
+                            player.y = gameState.returnY;
+                            gameState.camera = Math.max(0, player.x - 400);
+                            gameState.cameraY = 0;
+                        }
+                    }
+                });
+            } else if (!keys['ArrowDown'] && !keys['KeyS']) {
+                player.pipeLock = false;
+            }
+
+            room.blocks.forEach(b => {
+                if (player.x + player.width > b.x && player.x < b.x + b.width &&
+                    player.y < b.y + b.height && player.y + player.height > b.y) {
+                    
+                    if (player.vy < 0 && player.y + player.height - b.y > b.height - 20) {
+                        player.y = b.y + b.height;
+                        player.vy = 0;
+                        if (!b.hit) {
+                            playSound('coin');
+                            b.hit = true;
+                            gameState.score += 100;
+                            if (b.type === 'mystery') {
+                                if (Math.random() < 0.3) {
+                                    playSound('powerup');
+                                    gameState.powerUp = true;
+                                    player.width = player.powerWidth;
+                                    player.height = player.powerHeight;
+                                    player.invincible = true;
+                                    player.invincibleTimer = 10; 
+                                } else {
+                                    gameState.coins += 1;
+                                    if (gameState.coins >= 50) { 
+                                        gameState.lives += 1;
+                                        gameState.coins = 0; 
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            room.coins.forEach(c => {
+                if (!c.collected && player.x + player.width > c.x - 15 && player.x < c.x + 15 &&
+                    player.y + player.height > c.y - 15 && player.y < c.y + 15) {
+                    c.collected = true;
+                    playSound('coin');
+                    gameState.coins += 1; 
+                    gameState.score += 50;
+                    if (gameState.coins >= 50) { 
+                        gameState.lives += 1;
+                        gameState.coins = 0; 
+                        if (gameState.currentRoom === 'bonus') {
+                            gameState.currentRoom = 'main';
+                            player.x = gameState.returnX;
+                            player.y = gameState.returnY;
+                            gameState.camera = Math.max(0, player.x - 400);
                             gameState.cameraY = 0;
                         }
                     }
