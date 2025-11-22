@@ -347,6 +347,44 @@
             border: none;
         }
 
+        /* Game Navigation Overlay Buttons */
+        .game-nav-overlay {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            display: none;
+            gap: 15px;
+            z-index: 2001;
+            flex-direction: row;
+        }
+
+        .game-overlay.active ~ .game-nav-overlay {
+            display: flex;
+        }
+
+        .game-nav-btn {
+            padding: 15px 30px;
+            background: rgba(10, 10, 10, 0.95);
+            border: 2px solid #e94560;
+            border-radius: 10px;
+            color: #fff;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(233, 69, 96, 0.3);
+        }
+
+        .game-nav-btn:hover {
+            background: rgba(233, 69, 96, 0.2);
+            box-shadow: 0 0 25px rgba(233, 69, 96, 0.6);
+            transform: translateY(-2px);
+        }
+
         /* Mobile Responsive */
         @media (max-width: 1024px) {
             .title {
@@ -450,6 +488,18 @@
             .nav-arrow.right {
                 right: 10px;
             }
+
+            /* Game navigation overlay mobile */
+            .game-nav-overlay {
+                bottom: 20px;
+                right: 20px;
+                flex-direction: column;
+            }
+
+            .game-nav-btn {
+                padding: 12px 20px;
+                font-size: 0.9rem;
+            }
         }
     </style>
 </head>
@@ -500,6 +550,18 @@
     <!-- Game Launcher Overlay -->
     <div class="game-overlay" id="gameOverlay">
         <iframe class="game-frame" id="gameFrame" src=""></iframe>
+    </div>
+
+    <!-- Navigation buttons that appear over games -->
+    <div class="game-nav-overlay">
+        <button class="game-nav-btn" onclick="closeGame()">
+            <span>←</span>
+            <span>Back to Arcade</span>
+        </button>
+        <a href="index.html" class="game-nav-btn">
+            <span>🏠</span>
+            <span>Home</span>
+        </a>
     </div>
 
     <script>
