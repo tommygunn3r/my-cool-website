@@ -12,23 +12,118 @@
         }
 
         body {
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-            font-family: Arial, sans-serif;
+            background: #000000;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             color: white;
             min-height: 100vh;
             padding: 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Parallax Background Layers */
+        .parallax-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .parallax-layer {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Layer 1 - Deep background with grid */
+        .layer-1 {
+            background: 
+                linear-gradient(0deg, transparent 24%, rgba(233, 69, 96, 0.05) 25%, rgba(233, 69, 96, 0.05) 26%, transparent 27%, transparent 74%, rgba(233, 69, 96, 0.05) 75%, rgba(233, 69, 96, 0.05) 76%, transparent 77%, transparent),
+                linear-gradient(90deg, transparent 24%, rgba(233, 69, 96, 0.05) 25%, rgba(233, 69, 96, 0.05) 26%, transparent 27%, transparent 74%, rgba(233, 69, 96, 0.05) 75%, rgba(233, 69, 96, 0.05) 76%, transparent 77%, transparent);
+            background-size: 50px 50px;
+            animation: gridMove 20s linear infinite;
+        }
+
+        @keyframes gridMove {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(50px); }
+        }
+
+        /* Layer 2 - Floating neon particles */
+        .layer-2 {
+            background-image: 
+                radial-gradient(circle at 20% 30%, rgba(233, 69, 96, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(255, 215, 0, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 50% 50%, rgba(76, 175, 80, 0.08) 0%, transparent 50%);
+            animation: floatParticles 15s ease-in-out infinite;
+        }
+
+        @keyframes floatParticles {
+            0%, 100% { transform: translate(0, 0); }
+            50% { transform: translate(30px, -20px); }
+        }
+
+        /* Layer 3 - Trophy shapes */
+        .neon-shape {
+            position: absolute;
+            border: 2px solid rgba(255, 215, 0, 0.3);
+            border-radius: 50%;
+            animation: rotate 30s linear infinite;
+        }
+
+        .neon-shape:nth-child(1) {
+            width: 300px;
+            height: 300px;
+            top: 10%;
+            left: 10%;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.2);
+        }
+
+        .neon-shape:nth-child(2) {
+            width: 200px;
+            height: 200px;
+            top: 60%;
+            right: 15%;
+            animation-duration: 25s;
+            animation-direction: reverse;
+            box-shadow: 0 0 15px rgba(233, 69, 96, 0.2);
+            border-color: rgba(233, 69, 96, 0.3);
+        }
+
+        .neon-shape:nth-child(3) {
+            width: 150px;
+            height: 150px;
+            bottom: 20%;
+            left: 30%;
+            animation-duration: 35s;
+            box-shadow: 0 0 10px rgba(76, 175, 80, 0.2);
+            border-color: rgba(76, 175, 80, 0.3);
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
         }
 
         .container {
             max-width: 1200px;
             margin: 0 auto;
+            position: relative;
+            z-index: 1;
         }
 
         h1 {
             text-align: center;
             font-size: 48px;
             margin: 30px 0;
-            text-shadow: 3px 3px 6px rgba(0,0,0,0.5);
+            text-shadow: 
+                0 0 10px rgba(255, 215, 0, 0.8),
+                0 0 20px rgba(255, 215, 0, 0.6),
+                0 0 30px rgba(255, 215, 0, 0.4);
+            letter-spacing: 2px;
         }
 
         .mode-selector {
@@ -41,8 +136,8 @@
 
         .mode-btn {
             padding: 15px 30px;
-            background: rgba(255,255,255,0.1);
-            border: 3px solid white;
+            background: rgba(10, 10, 10, 0.8);
+            border: 3px solid #FFD700;
             color: white;
             cursor: pointer;
             font-size: 18px;
@@ -53,14 +148,16 @@
         }
 
         .mode-btn:hover {
-            background: rgba(255,255,255,0.2);
+            background: rgba(255, 215, 0, 0.2);
             transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
         }
 
         .mode-btn.active {
             background: #FFD700;
-            color: #333;
+            color: #000;
             border-color: #FFD700;
+            box-shadow: 0 0 25px rgba(255, 215, 0, 0.6);
         }
 
         .tabs {
@@ -73,8 +170,8 @@
 
         .tab {
             padding: 12px 24px;
-            background: rgba(255,255,255,0.1);
-            border: 2px solid white;
+            background: rgba(10, 10, 10, 0.8);
+            border: 2px solid #e94560;
             color: white;
             cursor: pointer;
             font-size: 16px;
@@ -84,20 +181,24 @@
         }
 
         .tab:hover {
-            background: rgba(255,255,255,0.2);
+            background: rgba(233, 69, 96, 0.2);
             transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(233, 69, 96, 0.4);
         }
 
         .tab.active {
             background: #4CAF50;
             color: white;
             border-color: #4CAF50;
+            box-shadow: 0 0 20px rgba(76, 175, 80, 0.6);
         }
 
         .leaderboard {
-            background: rgba(0,0,0,0.6);
-            border-radius: 10px;
+            background: rgba(10, 10, 10, 0.9);
+            border: 2px solid #1a1a1a;
+            border-radius: 20px;
             padding: 30px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.9);
         }
 
         .leaderboard-header {
@@ -105,13 +206,14 @@
             font-size: 32px;
             margin-bottom: 20px;
             color: #FFD700;
+            text-shadow: 0 0 15px rgba(255, 215, 0, 0.6);
         }
 
         .leaderboard-subheader {
             text-align: center;
             font-size: 18px;
             margin-bottom: 30px;
-            color: #CCC;
+            color: #a8b2d1;
         }
 
         .score-entry {
@@ -120,15 +222,18 @@
             gap: 20px;
             align-items: center;
             padding: 15px 20px;
-            background: rgba(255,255,255,0.1);
+            background: rgba(255,255,255,0.05);
             margin-bottom: 10px;
-            border-radius: 5px;
+            border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.1);
             transition: all 0.3s ease;
         }
 
         .score-entry:hover {
-            background: rgba(255,255,255,0.2);
+            background: rgba(233, 69, 96, 0.1);
+            border-color: #e94560;
             transform: translateX(5px);
+            box-shadow: 0 5px 15px rgba(233, 69, 96, 0.3);
         }
 
         .rank {
@@ -137,9 +242,18 @@
             text-align: center;
         }
 
-        .rank.gold { color: #FFD700; }
-        .rank.silver { color: #C0C0C0; }
-        .rank.bronze { color: #CD7F32; }
+        .rank.gold { 
+            color: #FFD700; 
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.6);
+        }
+        .rank.silver { 
+            color: #C0C0C0; 
+            text-shadow: 0 0 10px rgba(192, 192, 192, 0.6);
+        }
+        .rank.bronze { 
+            color: #CD7F32; 
+            text-shadow: 0 0 10px rgba(205, 127, 50, 0.6);
+        }
 
         .player-name {
             font-size: 20px;
@@ -153,6 +267,7 @@
             font-weight: bold;
             color: #4CAF50;
             white-space: nowrap;
+            text-shadow: 0 0 10px rgba(76, 175, 80, 0.4);
         }
 
         .time-value {
@@ -165,42 +280,45 @@
             text-align: center;
             font-size: 24px;
             padding: 50px;
+            color: #a8b2d1;
         }
 
-        .back-button {
+        .fixed-nav {
             position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 12px 24px;
-            background: rgba(255, 215, 0, 0.9);
-            color: #333;
+            bottom: 30px;
+            right: 30px;
+            display: flex;
+            gap: 15px;
+            z-index: 1000;
+        }
+
+        .nav-button {
+            padding: 15px 30px;
+            background: rgba(10, 10, 10, 0.95);
             border: 2px solid #FFD700;
-            border-radius: 5px;
-            font-size: 16px;
+            border-radius: 10px;
+            color: #fff;
+            font-size: 1rem;
             font-weight: bold;
             cursor: pointer;
-            transition: all 0.3s ease;
-            z-index: 1000;
             text-decoration: none;
-            display: block;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
         }
 
-        .back-button:hover {
-            background: rgba(255, 165, 0, 0.9);
-            transform: scale(1.05);
+        .nav-button:hover {
+            background: rgba(255, 215, 0, 0.2);
+            box-shadow: 0 0 25px rgba(255, 215, 0, 0.6);
+            transform: translateY(-2px);
         }
 
         @media (max-width: 768px) {
             h1 {
                 font-size: 32px;
-                margin-top: 60px;
-            }
-            
-            .back-button {
-                top: 10px;
-                right: 10px;
-                padding: 8px 16px;
-                font-size: 14px;
+                margin-top: 20px;
             }
 
             .score-entry {
@@ -220,11 +338,31 @@
             .score-value, .time-value {
                 font-size: 18px;
             }
+
+            .fixed-nav {
+                bottom: 20px;
+                right: 20px;
+                flex-direction: column;
+            }
+
+            .nav-button {
+                padding: 12px 20px;
+                font-size: 0.9rem;
+            }
         }
     </style>
 </head>
 <body>
-    <a href="/" class="back-button">← Back to Arcade</a>
+    <!-- Parallax Background -->
+    <div class="parallax-container">
+        <div class="parallax-layer layer-1"></div>
+        <div class="parallax-layer layer-2"></div>
+        <div class="parallax-layer layer-3">
+            <div class="neon-shape"></div>
+            <div class="neon-shape"></div>
+            <div class="neon-shape"></div>
+        </div>
+    </div>
     
     <div class="container">
         <h1>🏆 LEADERBOARDS 🏆</h1>
@@ -244,9 +382,21 @@
         </div>
     </div>
 
+    <!-- Fixed Navigation -->
+    <div class="fixed-nav">
+        <a href="#" class="nav-button" id="backButton">
+            <span>←</span>
+            <span id="backButtonText">Back</span>
+        </a>
+        <a href="index.html" class="nav-button">
+            <span>🏠</span>
+            <span>Home</span>
+        </a>
+    </div>
+
     <script type="module">
         import { db } from './firebase-config.js';
-        import { collection, query, where, orderBy, limit, getDocs } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+        import { collection, query, orderBy, limit, getDocs } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
         const games = [
             { id: 'ascii_doom', name: 'ASCII Doom', hasScore: true },
@@ -262,6 +412,27 @@
 
         let currentMode = 'scores';
         let currentTab = 'all';
+
+        // Detect where the user came from and set the back button
+        function setupBackButton() {
+            const referrer = document.referrer;
+            const backButton = document.getElementById('backButton');
+            const backButtonText = document.getElementById('backButtonText');
+            
+            if (referrer.includes('arcade.html')) {
+                backButton.href = 'arcade.html';
+                backButtonText.textContent = 'Back to Arcade';
+            } else if (referrer.includes('casino.html')) {
+                backButton.href = 'casino.html';
+                backButtonText.textContent = 'Back to Casino';
+            } else if (referrer.includes('solitaire.html')) {
+                backButton.href = 'solitaire.html';
+                backButtonText.textContent = 'Back to Solitaire';
+            } else {
+                backButton.href = 'index.html';
+                backButtonText.textContent = 'Back to Home';
+            }
+        }
 
         function formatTime(seconds) {
             if (!seconds) return '0s';
@@ -285,8 +456,6 @@
                 let q;
 
                 const orderField = mode === 'scores' ? 'score' : 'timePlayed';
-
-                // Always get all scores, then filter client-side if needed
                 q = query(scoresRef, orderBy(orderField, 'desc'), limit(200));
 
                 const querySnapshot = await getDocs(q);
@@ -295,7 +464,6 @@
                 querySnapshot.forEach((doc) => {
                     const data = doc.data();
                     
-                    // Filter by game if not 'all'
                     if (gameId === 'all' || data.gameName === gameId) {
                         results.push({
                             playerName: data.playerName,
@@ -306,7 +474,6 @@
                     }
                 });
 
-                // Limit results after filtering
                 return results.slice(0, 10);
             } catch (error) {
                 console.error('Error loading scores:', error);
@@ -352,7 +519,7 @@
             results.forEach((result, index) => {
                 const rankClass = getRankClass(index);
                 const gameName = isAllGames ? games.find(g => g.id === result.gameName)?.name || result.gameName : '';
-                const gameTag = isAllGames ? `<br><small style="color: #AAA;">${gameName}</small>` : '';
+                const gameTag = isAllGames ? `<br><small style="color: #888;">${gameName}</small>` : '';
                 
                 let primaryValue = '';
                 let secondaryValue = '';
@@ -363,7 +530,6 @@
                         secondaryValue = `<div class="time-value">${formatTime(result.timePlayed)}</div>`;
                     }
                 } else {
-                    // Time mode or water game
                     primaryValue = `<div class="time-value" style="font-size: 24px; font-weight: bold;">${formatTime(result.timePlayed)}</div>`;
                     if (gameHasScore && result.score > 0) {
                         secondaryValue = `<div class="score-value" style="font-size: 16px;">${result.score.toLocaleString()} pts</div>`;
@@ -425,12 +591,29 @@
         };
 
         async function init() {
+            setupBackButton();
             createTabs();
             const results = await loadScores('all', 'scores');
             displayScores(results, 'scores', true);
         }
 
         init();
+
+        // Parallax effect on mouse move
+        document.addEventListener('mousemove', (e) => {
+            const x = e.clientX / window.innerWidth;
+            const y = e.clientY / window.innerHeight;
+
+            const layer2 = document.querySelector('.layer-2');
+            const layer3 = document.querySelector('.layer-3');
+            
+            if (layer2) {
+                layer2.style.transform = `translate(${x * 20}px, ${y * 20}px)`;
+            }
+            if (layer3) {
+                layer3.style.transform = `translate(${x * 40}px, ${y * 40}px)`;
+            }
+        });
     </script>
 </body>
 </html>

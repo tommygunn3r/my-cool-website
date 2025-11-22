@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About Us - Gunner's Games</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #000000;
+            color: #e0e0e0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            background: #0a0a0a;
+            padding: 20px 20px;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.9);
+            border-bottom: 3px solid #e94560;
+        }
+
+        .banner {
+            max-width: 60%;
+            margin: 0 auto;
+        }
+
+        .banner-image {
+            width: 100%;
+            height: auto;
+            max-height: 150px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .banner-placeholder {
+            width: 100%;
+            height: 120px;
+            background: linear-gradient(45deg, #e94560, #f39c12, #e94560);
+            background-size: 200% auto;
+            animation: shine 3s linear infinite;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            font-size: 2rem;
+            font-weight: bold;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        @keyframes shine {
+            to {
+                background-position: 200% center;
+            }
+        }
+
+        main {
+            flex: 1;
+            max-width: 900px;
+            margin: 60px auto;
+            padding: 0 40px;
+        }
+
+        .about-section {
+            background: #0a0a0a;
+            border-radius: 20px;
+            padding: 50px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.9);
+            border: 2px solid #1a1a1a;
+        }
+
+        h1 {
+            font-size: 3rem;
+            color: #e94560;
+            margin-bottom: 30px;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        h2 {
+            font-size: 2rem;
+            color: #f39c12;
+            margin: 30px 0 15px 0;
+            border-bottom: 2px solid #e94560;
+            padding-bottom: 10px;
+        }
+
+        p {
+            color: #a8b2d1;
+            line-height: 1.8;
+            font-size: 1.1rem;
+            margin-bottom: 20px;
+        }
+
+        .highlight {
+            color: #e94560;
+            font-weight: bold;
+        }
+
+        .mission-box {
+            background: #1a1a1a;
+            border-left: 4px solid #e94560;
+            padding: 25px;
+            margin: 30px 0;
+            border-radius: 10px;
+            font-style: italic;
+        }
+
+        .mission-box p {
+            font-size: 1.3rem;
+            color: #f39c12;
+            margin: 0;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-top: 30px;
+            padding: 15px 30px;
+            background: #e94560;
+            color: white;
+            text-decoration: none;
+            border-radius: 10px;
+            transition: background 0.3s ease, transform 0.3s ease;
+            font-weight: bold;
+        }
+
+        .back-link:hover {
+            background: #f39c12;
+            transform: translateY(-3px);
+        }
+
+        footer {
+            background: #0a0a0a;
+            padding: 30px 20px;
+            text-align: center;
+            border-top: 3px solid #e94560;
+            margin-top: auto;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .footer-links {
+            margin-bottom: 15px;
+        }
+
+        .footer-links a {
+            color: #a8b2d1;
+            text-decoration: none;
+            margin: 0 15px;
+            transition: color 0.3s ease;
+        }
+
+        .footer-links a:hover {
+            color: #e94560;
+        }
+
+        .copyright {
+            color: #6b7688;
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 768px) {
+            .about-section {
+                padding: 30px 20px;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            main {
+                padding: 0 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="banner">
+            <img src="assets/banner.png" alt="Gunner's Games" class="banner-image">
+            <noscript>
+                <div class="banner-placeholder">GunnersGames.com</div>
+            </noscript>
+        </div>
+    </header>
+
+    <main>
+        <div class="about-section">
+            <h1>About Us</h1>
+            
+            <h2>The Mastermind (or Mad Scientist?)</h2>
+            <p>
+                Gunner's Games is run by none other than <span class="highlight">Tommygunner</span>, 
+                a person who discovered that asking AI to make games is somehow more entertaining 
+                than actually playing them. Who knew?
+            </p>
+
+            <div class="mission-box">
+                <p>"Making stupid games with AI is more fun than it should be."</p>
+            </div>
+
+            <h2>Our Origin Story</h2>
+            <p>
+                Founded in <span class="highlight">2025</span>, Gunner's Games was born from a 
+                simple realization: if you're going to waste time, you might as well waste it 
+                <em>creatively</em>. What started as "let's see what happens if I ask an AI to 
+                make a game" quickly spiraled into a full-blown collection of digital shenanigans.
+            </p>
+
+            <h2>What We Do</h2>
+            <p>
+                We harness the power of artificial intelligence to create games that range from 
+                "surprisingly decent" to "what were we thinking?" Each game is a unique blend of 
+                human creativity and AI chaos, resulting in entertainment that's 100% authentic 
+                and 0% guaranteed to make sense.
+            </p>
+
+            <h2>Our Philosophy</h2>
+            <p>
+                Life's too short for boring games. Whether you're spinning slots, flipping cards, 
+                or blasting aliens (probably), we believe gaming should be fun, ridiculous, and 
+                occasionally baffling. If you're not laughing at our games, you're at least 
+                laughing at the fact that they exist.
+            </p>
+
+            <p>
+                So grab a controller (or keyboard, or touchscreen, or whatever), pick a game, 
+                and prepare for an experience that's been lovingly crafted by a human-AI dream 
+                team that may or may not know what they're doing.
+            </p>
+
+            <p style="text-align: center; margin-top: 40px; font-size: 1.2rem;">
+                <span class="highlight">Welcome to Gunner's Games. It's weird here. We like it that way.</span>
+            </p>
+
+            <div style="text-align: center;">
+                <a href="index.html" class="back-link">← Back to Games</a>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-links">
+                <a href="about.html">About Us</a>
+                <a href="contact.html">Contact Us</a>
+                <a href="privacy.html">Privacy Policy</a>
+                <a href="terms.html">Terms of Service</a>
+            </div>
+            <div class="copyright">
+                <p>&copy; 2025 Gunner's Games. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        document.querySelector('.banner-image').addEventListener('error', function() {
+            this.style.display = 'none';
+            const placeholder = document.createElement('div');
+            placeholder.className = 'banner-placeholder';
+            placeholder.textContent = 'GunnersGames.com';
+            this.parentElement.appendChild(placeholder);
+        });
+    </script>
+</body>
+</html>

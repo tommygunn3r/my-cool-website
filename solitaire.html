@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solitaire Games - Gunner's Games</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #000000;
+            color: #e0e0e0;
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* Parallax Background Layers */
+        .parallax-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .parallax-layer {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Layer 1 - Deep background with grid */
+        .layer-1 {
+            background: 
+                linear-gradient(0deg, transparent 24%, rgba(76, 175, 80, 0.05) 25%, rgba(76, 175, 80, 0.05) 26%, transparent 27%, transparent 74%, rgba(76, 175, 80, 0.05) 75%, rgba(76, 175, 80, 0.05) 76%, transparent 77%, transparent),
+                linear-gradient(90deg, transparent 24%, rgba(76, 175, 80, 0.05) 25%, rgba(76, 175, 80, 0.05) 26%, transparent 27%, transparent 74%, rgba(76, 175, 80, 0.05) 75%, rgba(76, 175, 80, 0.05) 76%, transparent 77%, transparent);
+            background-size: 50px 50px;
+            animation: gridMove 20s linear infinite;
+        }
+
+        @keyframes gridMove {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(50px); }
+        }
+
+        /* Layer 2 - Floating neon particles */
+        .layer-2 {
+            background-image: 
+                radial-gradient(circle at 20% 30%, rgba(76, 175, 80, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(255, 215, 0, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 50% 50%, rgba(76, 175, 80, 0.08) 0%, transparent 50%);
+            animation: floatParticles 15s ease-in-out infinite;
+        }
+
+        @keyframes floatParticles {
+            0%, 100% { transform: translate(0, 0); }
+            50% { transform: translate(30px, -20px); }
+        }
+
+        /* Layer 3 - Geometric neon shapes */
+        .neon-shape {
+            position: absolute;
+            border: 2px solid rgba(76, 175, 80, 0.3);
+            border-radius: 10px;
+            animation: rotate 30s linear infinite;
+        }
+
+        .neon-shape:nth-child(1) {
+            width: 300px;
+            height: 300px;
+            top: 10%;
+            left: 10%;
+            box-shadow: 0 0 20px rgba(76, 175, 80, 0.2);
+            transform: rotate(45deg);
+        }
+
+        .neon-shape:nth-child(2) {
+            width: 200px;
+            height: 200px;
+            top: 60%;
+            right: 15%;
+            animation-duration: 25s;
+            animation-direction: reverse;
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.2);
+            border-color: rgba(255, 215, 0, 0.3);
+            transform: rotate(15deg);
+        }
+
+        .neon-shape:nth-child(3) {
+            width: 150px;
+            height: 150px;
+            bottom: 20%;
+            left: 30%;
+            animation-duration: 35s;
+            box-shadow: 0 0 10px rgba(76, 175, 80, 0.2);
+            transform: rotate(30deg);
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* Main Content */
+        .content {
+            position: relative;
+            z-index: 1;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+        }
+
+        .title {
+            font-size: 4rem;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 60px;
+            color: #fff;
+            text-shadow: 
+                0 0 10px rgba(76, 175, 80, 0.8),
+                0 0 20px rgba(76, 175, 80, 0.6),
+                0 0 30px rgba(76, 175, 80, 0.4);
+            letter-spacing: 4px;
+        }
+
+        /* Carousel Container */
+        .carousel-container {
+            position: relative;
+            width: 100%;
+            max-width: 1400px;
+            height: 500px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            perspective: 1200px;
+        }
+
+        .carousel {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .game-card {
+            position: absolute;
+            width: 300px;
+            height: 400px;
+            background: rgba(10, 10, 10, 0.95);
+            border: 2px solid #1a1a1a;
+            border-radius: 20px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.9);
+            transform-style: preserve-3d;
+        }
+
+        .game-card.center {
+            width: 350px;
+            height: 450px;
+            z-index: 10;
+            border-color: #4CAF50;
+            box-shadow: 
+                0 15px 60px rgba(76, 175, 80, 0.4),
+                0 0 40px rgba(76, 175, 80, 0.3);
+            filter: blur(0);
+        }
+
+        .game-card.left-1 {
+            transform: translateX(-380px) scale(0.85);
+            z-index: 9;
+            opacity: 0.7;
+            filter: blur(2px);
+        }
+
+        .game-card.left-2 {
+            transform: translateX(-700px) scale(0.7);
+            z-index: 8;
+            opacity: 0.4;
+            filter: blur(4px);
+        }
+
+        .game-card.right-1 {
+            transform: translateX(380px) scale(0.85);
+            z-index: 9;
+            opacity: 0.7;
+            filter: blur(2px);
+        }
+
+        .game-card.right-2 {
+            transform: translateX(700px) scale(0.7);
+            z-index: 8;
+            opacity: 0.4;
+            filter: blur(4px);
+        }
+
+        .game-card.hidden {
+            opacity: 0;
+            transform: scale(0.5);
+            pointer-events: none;
+        }
+
+        .game-image {
+            width: 100%;
+            height: 70%;
+            background: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .game-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .game-image::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(to bottom, transparent 60%, rgba(0, 0, 0, 0.8));
+        }
+
+        .game-info {
+            padding: 20px;
+            text-align: center;
+        }
+
+        .game-title {
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: #fff;
+            margin-bottom: 10px;
+            text-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
+        }
+
+        .game-card.center .game-title {
+            font-size: 1.6rem;
+        }
+
+        /* Navigation Arrows */
+        .nav-arrow {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 60px;
+            height: 60px;
+            background: rgba(76, 175, 80, 0.2);
+            border: 2px solid #4CAF50;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 100;
+            transition: all 0.3s ease;
+            color: #4CAF50;
+            font-size: 2rem;
+            user-select: none;
+        }
+
+        .nav-arrow:hover {
+            background: rgba(76, 175, 80, 0.4);
+            box-shadow: 0 0 20px rgba(76, 175, 80, 0.6);
+        }
+
+        .nav-arrow.left {
+            left: 20px;
+        }
+
+        .nav-arrow.right {
+            right: 20px;
+        }
+
+        /* Fixed Navigation Buttons */
+        .fixed-nav {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            display: flex;
+            gap: 15px;
+            z-index: 1000;
+        }
+
+        .nav-button {
+            padding: 15px 30px;
+            background: rgba(10, 10, 10, 0.95);
+            border: 2px solid #4CAF50;
+            border-radius: 10px;
+            color: #fff;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+        }
+
+        .nav-button:hover {
+            background: rgba(76, 175, 80, 0.2);
+            box-shadow: 0 0 25px rgba(76, 175, 80, 0.6);
+            transform: translateY(-2px);
+        }
+
+        /* Game Launcher Overlay */
+        .game-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 2000;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        .game-overlay.active {
+            display: block;
+            opacity: 1;
+        }
+
+        .game-frame {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 1024px) {
+            .title {
+                font-size: 2.5rem;
+                margin-bottom: 40px;
+            }
+
+            .carousel-container {
+                height: 400px;
+            }
+
+            .game-card {
+                width: 250px;
+                height: 350px;
+            }
+
+            .game-card.center {
+                width: 280px;
+                height: 380px;
+            }
+
+            .nav-arrow {
+                width: 50px;
+                height: 50px;
+                font-size: 1.5rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .title {
+                font-size: 2rem;
+                margin-bottom: 30px;
+            }
+
+            .carousel-container {
+                height: 350px;
+            }
+
+            .game-card {
+                width: 200px;
+                height: 300px;
+            }
+
+            .game-card.center {
+                width: 220px;
+                height: 320px;
+            }
+
+            .fixed-nav {
+                bottom: 20px;
+                right: 20px;
+                flex-direction: column;
+            }
+
+            .nav-button {
+                padding: 12px 20px;
+                font-size: 0.9rem;
+            }
+
+            .nav-arrow {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Parallax Background -->
+    <div class="parallax-container">
+        <div class="parallax-layer layer-1"></div>
+        <div class="parallax-layer layer-2"></div>
+        <div class="parallax-layer layer-3">
+            <div class="neon-shape"></div>
+            <div class="neon-shape"></div>
+            <div class="neon-shape"></div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="content">
+        <h1 class="title">SOLITAIRE GAMES</h1>
+        
+        <div class="carousel-container">
+            <!-- Navigation Arrows -->
+            <div class="nav-arrow left" onclick="moveCarousel(-1)">‹</div>
+            <div class="nav-arrow right" onclick="moveCarousel(1)">›</div>
+
+            <!-- Carousel -->
+            <div class="carousel" id="carousel">
+                <!-- Game cards will be inserted here by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Fixed Navigation -->
+    <div class="fixed-nav">
+        <a href="leaderboard.html" class="nav-button">
+            <span>🏆</span>
+            <span>Leaderboard</span>
+        </a>
+        <a href="solitaire.html" class="nav-button" style="display: none;">
+            <span>←</span>
+            <span>Back to Solitaire</span>
+        </a>
+        <a href="index.html" class="nav-button">
+            <span>🏠</span>
+            <span>Home</span>
+        </a>
+    </div>
+
+    <!-- Game Launcher Overlay -->
+    <div class="game-overlay" id="gameOverlay">
+        <iframe class="game-frame" id="gameFrame" src=""></iframe>
+    </div>
+
+    <script>
+        const games = [
+            { title: 'Spider Solitaire', file: 'spidersolitaire.html', image: 'games/assets/solitaire/spidersolitaire.png' }
+        ];
+
+        let currentIndex = 0;
+        const carousel = document.getElementById('carousel');
+        const gameOverlay = document.getElementById('gameOverlay');
+        const gameFrame = document.getElementById('gameFrame');
+
+        function createGameCards() {
+            carousel.innerHTML = '';
+            games.forEach((game, index) => {
+                const card = document.createElement('div');
+                card.className = 'game-card';
+                card.innerHTML = `
+                    <div class="game-image">
+                        <img src="${game.image}" alt="${game.title}" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22300%22 height=%22300%22%3E%3Crect fill=%22%23000%22 width=%22300%22 height=%22300%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 font-size=%2224%22 fill=%22%234CAF50%22 text-anchor=%22middle%22 dy=%22.3em%22%3E${game.title}%3C/text%3E%3C/svg%3E'">
+                    </div>
+                    <div class="game-info">
+                        <div class="game-title">${game.title}</div>
+                    </div>
+                `;
+                card.onclick = () => launchGame(index);
+                carousel.appendChild(card);
+            });
+            updateCarousel();
+        }
+
+        function updateCarousel() {
+            const cards = carousel.querySelectorAll('.game-card');
+            
+            // For single game, just center it
+            cards.forEach((card) => {
+                card.className = 'game-card center';
+            });
+        }
+
+        function moveCarousel(direction) {
+            // With only one game, carousel doesn't move
+            // But keeping the function for consistency
+            return;
+        }
+
+        function launchGame(index) {
+            const game = games[index];
+            gameFrame.src = `games/solitaire/${game.file}`;
+            gameOverlay.classList.add('active');
+        }
+
+        function closeGame() {
+            gameOverlay.classList.remove('active');
+            setTimeout(() => {
+                gameFrame.src = '';
+            }, 500);
+        }
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (gameOverlay.classList.contains('active')) {
+                if (e.key === 'Escape') {
+                    closeGame();
+                }
+            } else {
+                if (e.key === 'Enter') {
+                    launchGame(currentIndex);
+                }
+            }
+        });
+
+        // Parallax effect on mouse move
+        document.addEventListener('mousemove', (e) => {
+            const x = e.clientX / window.innerWidth;
+            const y = e.clientY / window.innerHeight;
+
+            document.querySelector('.layer-2').style.transform = 
+                `translate(${x * 20}px, ${y * 20}px)`;
+            document.querySelector('.layer-3').style.transform = 
+                `translate(${x * 40}px, ${y * 40}px)`;
+        });
+
+        // Initialize
+        createGameCards();
+
+        // Listen for messages from game iframes to close overlay
+        window.addEventListener('message', (e) => {
+            if (e.data === 'closeGame') {
+                closeGame();
+            }
+        });
+    </script>
+</body>
+</html>

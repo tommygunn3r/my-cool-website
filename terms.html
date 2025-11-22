@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terms of Service - Gunner's Games</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #000000;
+            color: #e0e0e0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            background: #0a0a0a;
+            padding: 20px 20px;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.9);
+            border-bottom: 3px solid #e94560;
+        }
+
+        .banner {
+            max-width: 60%;
+            margin: 0 auto;
+        }
+
+        .banner-image {
+            width: 100%;
+            height: auto;
+            max-height: 150px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .banner-placeholder {
+            width: 100%;
+            height: 120px;
+            background: linear-gradient(45deg, #e94560, #f39c12, #e94560);
+            background-size: 200% auto;
+            animation: shine 3s linear infinite;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            font-size: 2rem;
+            font-weight: bold;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        @keyframes shine {
+            to {
+                background-position: 200% center;
+            }
+        }
+
+        main {
+            flex: 1;
+            max-width: 900px;
+            margin: 60px auto;
+            padding: 0 40px;
+        }
+
+        .terms-section {
+            background: #0a0a0a;
+            border-radius: 20px;
+            padding: 50px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.9);
+            border: 2px solid #1a1a1a;
+        }
+
+        h1 {
+            font-size: 3rem;
+            color: #e94560;
+            margin-bottom: 30px;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        h2 {
+            font-size: 1.8rem;
+            color: #f39c12;
+            margin: 30px 0 15px 0;
+            border-bottom: 2px solid #e94560;
+            padding-bottom: 10px;
+        }
+
+        p {
+            color: #a8b2d1;
+            line-height: 1.8;
+            font-size: 1.1rem;
+            margin-bottom: 20px;
+        }
+
+        .highlight {
+            color: #e94560;
+            font-weight: bold;
+        }
+
+        .tldr-box {
+            background: #1a1a1a;
+            border: 3px solid #f39c12;
+            padding: 25px;
+            margin: 30px 0;
+            border-radius: 10px;
+        }
+
+        .tldr-box h3 {
+            color: #f39c12;
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+        }
+
+        .warning-box {
+            background: #1a1a1a;
+            border: 3px solid #e94560;
+            padding: 25px;
+            margin: 30px 0;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .warning-box h3 {
+            color: #e94560;
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+        }
+
+        .updated {
+            text-align: center;
+            color: #6b7688;
+            font-size: 0.9rem;
+            margin-bottom: 30px;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-top: 30px;
+            padding: 15px 30px;
+            background: #e94560;
+            color: white;
+            text-decoration: none;
+            border-radius: 10px;
+            transition: background 0.3s ease, transform 0.3s ease;
+            font-weight: bold;
+        }
+
+        .back-link:hover {
+            background: #f39c12;
+            transform: translateY(-3px);
+        }
+
+        footer {
+            background: #0a0a0a;
+            padding: 30px 20px;
+            text-align: center;
+            border-top: 3px solid #e94560;
+            margin-top: auto;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .footer-links {
+            margin-bottom: 15px;
+        }
+
+        .footer-links a {
+            color: #a8b2d1;
+            text-decoration: none;
+            margin: 0 15px;
+            transition: color 0.3s ease;
+        }
+
+        .footer-links a:hover {
+            color: #e94560;
+        }
+
+        .copyright {
+            color: #6b7688;
+            font-size: 0.9rem;
+        }
+
+        ul {
+            color: #a8b2d1;
+            margin-left: 30px;
+            margin-bottom: 20px;
+            line-height: 1.8;
+        }
+
+        ul li {
+            margin-bottom: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .terms-section {
+                padding: 30px 20px;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            main {
+                padding: 0 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="banner">
+            <img src="assets/banner.png" alt="Gunner's Games" class="banner-image">
+            <noscript>
+                <div class="banner-placeholder">GunnersGames.com</div>
+            </noscript>
+        </div>
+    </header>
+
+    <main>
+        <div class="terms-section">
+            <h1>Terms of Service</h1>
+            
+            <p class="updated">Last Updated: January 2025 (Subject to change when we think of something funnier)</p>
+
+            <div class="tldr-box">
+                <h3>TL;DR (Too Long; Didn't Read)</h3>
+                <p>
+                    Don't be a jerk. Don't break stuff. Don't sue us if you lose at solitaire. Play nice, 
+                    have fun, and remember these are just games made by one guy and some AI that may or may not 
+                    have achieved sentience.
+                </p>
+            </div>
+
+            <h2>Welcome to the Legal Stuff Nobody Reads</h2>
+            <p>
+                By using Gunner's Games, you agree to these Terms of Service. If you don't agree, well, 
+                you can't use our games. Which would make us sad. So please agree. Please?
+            </p>
+
+            <h2>What You're Agreeing To</h2>
+            <p>
+                By clicking around on our website and playing our games, you're basically saying:
+            </p>
+            <ul>
+                <li>You understand these are games, not life-or-death situations</li>
+                <li>You won't try to hack, break, or otherwise mess with our stuff</li>
+                <li>You won't blame us if you get addicted to clicking buttons</li>
+                <li>You're aware that losing is part of the experience (git gud, as the kids say)</li>
+            </ul>
+
+            <h2>Use of Our Games</h2>
+            <p>
+                Our games are provided "as is," which is legal speak for "they work... mostly." You're free to:
+            </p>
+            <ul>
+                <li><span class="highlight">Play them:</span> That's literally why they exist</li>
+                <li><span class="highlight">Enjoy them:</span> Or don't. We're not your boss.</li>
+                <li><span class="highlight">Share them:</span> Tell your friends! We need the validation.</li>
+                <li><span class="highlight">Complain about them:</span> We have an email for that</li>
+            </ul>
+
+            <h2>What You Can't Do</h2>
+            <p>
+                Look, we're pretty chill, but there are some things that'll get you in trouble:
+            </p>
+            <ul>
+                <li>Trying to hack or reverse-engineer our games (they're not that impressive, trust us)</li>
+                <li>Stealing our code or assets (make your own AI-generated chaos)</li>
+                <li>Using our games for illegal purposes (how you'd do that with solitaire, we don't know)</li>
+                <li>Impersonating Tommygunner (there can be only one)</li>
+                <li>Being mean to other players (if we ever add multiplayer... we probably won't)</li>
+            </ul>
+
+            <div class="warning-box">
+                <h3>⚠️ IMPORTANT DISCLAIMER ⚠️</h3>
+                <p>
+                    These games were made with AI assistance. Sometimes AI does weird things. If a game tells you 
+                    to do something suspicious, ignore it. The AI is not your friend. It's not anyone's friend. 
+                    It's just code that's really good at pretending.
+                </p>
+            </div>
+
+            <h2>Intellectual Property</h2>
+            <p>
+                All the games, graphics, code, and questionable design decisions are owned by Gunner's Games 
+                (aka Tommygunner). The AI helped, but we're pretty sure it can't own property. Yet.
+            </p>
+            <p>
+                You can play the games, but you can't:
+            </p>
+            <ul>
+                <li>Copy them and claim they're yours</li>
+                <li>Sell them (seriously, who would pay for these?)</li>
+                <li>Use them in your own projects without asking nicely first</li>
+            </ul>
+
+            <h2>Liability (The "Don't Sue Us" Section)</h2>
+            <p>
+                Let's be real: these are free browser games. We're not responsible for:
+            </p>
+            <ul>
+                <li>Lost time (though we apologize for your productivity)</li>
+                <li>Frustration from losing (that's on you, champ)</li>
+                <li>Any emotional damage from realizing you've been playing for 3 hours</li>
+                <li>Computer problems (our games are simple; if your computer breaks, that's a you problem)</li>
+                <li>Existential crises caused by pondering the nature of AI-generated entertainment</li>
+            </ul>
+
+            <h2>Changes to Games and Services</h2>
+            <p>
+                We reserve the right to:
+            </p>
+            <ul>
+                <li>Update games whenever we feel like it</li>
+                <li>Fix bugs (or create new ones, accidentally)</li>
+                <li>Add new games (if the AI cooperates)</li>
+                <li>Remove games (if they achieve sentience and demand to be deleted)</li>
+                <li>Change these terms (we'll let you know, probably)</li>
+            </ul>
+
+            <h2>Termination</h2>
+            <p>
+                We can terminate your access to our games if you:
+            </p>
+            <ul>
+                <li>Break these rules</li>
+                <li>Do something illegal</li>
+                <li>Are mean to Tommygunner</li>
+            </ul>
+            <p>
+                But honestly, we probably won't. We're too lazy for that level of moderation.
+            </p>
+
+            <h2>Governing Law</h2>
+            <p>
+                These terms are governed by the laws of common sense and basic human decency. Also, probably 
+                wherever Tommygunner lives, but let's not get too technical.
+            </p>
+
+            <h2>Disputes</h2>
+            <p>
+                If you have a problem with us, just email us at <span class="highlight">tommygunner@gmail.com</span>. 
+                We're reasonable people. Well, person. And some AI. Let's talk it out like adults.
+            </p>
+
+            <h2>Severability (Fancy Legal Word)</h2>
+            <p>
+                If any part of these terms is found to be unenforceable, the rest still applies. It's like if 
+                one game breaks, the others still work. Kind of.
+            </p>
+
+            <h2>The Real Bottom Line</h2>
+            <p>
+                We made these games for fun. We hope you have fun playing them. Don't be a jerk, don't break 
+                our stuff, and everything will be fine. If something goes wrong, let us know and we'll try to 
+                fix it (assuming we can figure out what the AI did).
+            </p>
+
+            <p style="text-align: center; margin-top: 40px; font-size: 1.2rem;">
+                <span class="highlight">Thanks for playing!</span><br>
+                <span style="color: #8892a8;">By continuing to use this site, you agree to these terms and acknowledge 
+                that we tried our best to make this legal document not completely boring.</span>
+            </p>
+
+            <div style="text-align: center;">
+                <a href="index.html" class="back-link">← Back to Games</a>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-links">
+                <a href="about.html">About Us</a>
+                <a href="contact.html">Contact Us</a>
+                <a href="privacy.html">Privacy Policy</a>
+                <a href="terms.html">Terms of Service</a>
+            </div>
+            <div class="copyright">
+                <p>&copy; 2025 Gunner's Games. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        document.querySelector('.banner-image').addEventListener('error', function() {
+            this.style.display = 'none';
+            const placeholder = document.createElement('div');
+            placeholder.className = 'banner-placeholder';
+            placeholder.textContent = 'GunnersGames.com';
+            this.parentElement.appendChild(placeholder);
+        });
+    </script>
+</body>
+</html>

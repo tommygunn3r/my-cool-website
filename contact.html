@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact Us - Gunner's Games</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #000000;
+            color: #e0e0e0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            background: #0a0a0a;
+            padding: 20px 20px;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.9);
+            border-bottom: 3px solid #e94560;
+        }
+
+        .banner {
+            max-width: 60%;
+            margin: 0 auto;
+        }
+
+        .banner-image {
+            width: 100%;
+            height: auto;
+            max-height: 150px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .banner-placeholder {
+            width: 100%;
+            height: 120px;
+            background: linear-gradient(45deg, #e94560, #f39c12, #e94560);
+            background-size: 200% auto;
+            animation: shine 3s linear infinite;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            font-size: 2rem;
+            font-weight: bold;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+
+        @keyframes shine {
+            to {
+                background-position: 200% center;
+            }
+        }
+
+        main {
+            flex: 1;
+            max-width: 900px;
+            margin: 60px auto;
+            padding: 0 40px;
+        }
+
+        .contact-section {
+            background: #0a0a0a;
+            border-radius: 20px;
+            padding: 50px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.9);
+            border: 2px solid #1a1a1a;
+        }
+
+        h1 {
+            font-size: 3rem;
+            color: #e94560;
+            margin-bottom: 30px;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        h2 {
+            font-size: 2rem;
+            color: #f39c12;
+            margin: 30px 0 15px 0;
+            border-bottom: 2px solid #e94560;
+            padding-bottom: 10px;
+        }
+
+        p {
+            color: #a8b2d1;
+            line-height: 1.8;
+            font-size: 1.1rem;
+            margin-bottom: 20px;
+        }
+
+        .highlight {
+            color: #e94560;
+            font-weight: bold;
+        }
+
+        .emergency-box {
+            background: #1a1a1a;
+            border: 3px solid #e94560;
+            padding: 30px;
+            margin: 30px 0;
+            border-radius: 10px;
+            text-align: center;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                border-color: #e94560;
+                box-shadow: 0 0 10px rgba(233, 69, 96, 0.3);
+            }
+            50% {
+                border-color: #f39c12;
+                box-shadow: 0 0 20px rgba(243, 156, 18, 0.5);
+            }
+        }
+
+        .emergency-box h3 {
+            color: #e94560;
+            font-size: 1.8rem;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .emergency-box p {
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+        }
+
+        .email-link {
+            display: inline-block;
+            background: #e94560;
+            color: white;
+            padding: 20px 40px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-size: 1.3rem;
+            font-weight: bold;
+            margin: 20px 0;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(233, 69, 96, 0.3);
+        }
+
+        .email-link:hover {
+            background: #f39c12;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(243, 156, 18, 0.4);
+        }
+
+        .disclaimer {
+            background: #1a1a1a;
+            border-left: 4px solid #f39c12;
+            padding: 20px;
+            margin: 30px 0;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            color: #8892a8;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-top: 30px;
+            padding: 15px 30px;
+            background: #e94560;
+            color: white;
+            text-decoration: none;
+            border-radius: 10px;
+            transition: background 0.3s ease, transform 0.3s ease;
+            font-weight: bold;
+        }
+
+        .back-link:hover {
+            background: #f39c12;
+            transform: translateY(-3px);
+        }
+
+        footer {
+            background: #0a0a0a;
+            padding: 30px 20px;
+            text-align: center;
+            border-top: 3px solid #e94560;
+            margin-top: auto;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .footer-links {
+            margin-bottom: 15px;
+        }
+
+        .footer-links a {
+            color: #a8b2d1;
+            text-decoration: none;
+            margin: 0 15px;
+            transition: color 0.3s ease;
+        }
+
+        .footer-links a:hover {
+            color: #e94560;
+        }
+
+        .copyright {
+            color: #6b7688;
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 768px) {
+            .contact-section {
+                padding: 30px 20px;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            main {
+                padding: 0 20px;
+            }
+
+            .email-link {
+                font-size: 1.1rem;
+                padding: 15px 30px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="banner">
+            <img src="assets/banner.png" alt="Gunner's Games" class="banner-image">
+            <noscript>
+                <div class="banner-placeholder">GunnersGames.com</div>
+            </noscript>
+        </div>
+    </header>
+
+    <main>
+        <div class="contact-section">
+            <h1>Contact Us</h1>
+            
+            <p style="text-align: center; font-size: 1.2rem;">
+                Need to reach the person responsible for this digital playground? You've come to the right place!
+            </p>
+
+            <div class="emergency-box">
+                <h3>⚠️ In Case of Emergency ⚠️</h3>
+                <p>
+                    By "emergency," we mean: broken games, weird glitches, AI acting suspicious, 
+                    or you just want to tell us how awesome (or hilariously broken) our games are.
+                </p>
+                <p style="margin-top: 20px;">
+                    <span class="highlight">For actual emergencies, please call 911. We make games, not miracles.</span>
+                </p>
+            </div>
+
+            <div style="text-align: center;">
+                <h2 style="border: none; text-align: center;">Drop Us a Line</h2>
+                <p>
+                    Have questions? Complaints? Compliments? Screenshots of our games doing something 
+                    completely unexpected? We want to hear from you!
+                </p>
+                <a href="mailto:tommygunner@gmail.com" class="email-link">📧 tommygunner@gmail.com</a>
+            </div>
+
+            <h2>What You Can Contact Us About:</h2>
+            <p>
+                <span class="highlight">✓</span> Bug reports (the digital kind, not the insect kind)<br>
+                <span class="highlight">✓</span> Game suggestions (we can't promise we'll make them, but we'll probably laugh)<br>
+                <span class="highlight">✓</span> Fan mail (yes, we're optimistic)<br>
+                <span class="highlight">✓</span> Questions about how we made these games<br>
+                <span class="highlight">✓</span> Existential questions about AI and gaming<br>
+                <span class="highlight">✓</span> General shenanigans
+            </p>
+
+            <h2>Response Time:</h2>
+            <p>
+                We aim to respond within 24-48 hours, or whenever Tommygunner stops playing the games 
+                long enough to check email. Whichever comes first.
+            </p>
+
+            <div class="disclaimer">
+                <strong>Pro Tip:</strong> If your email subject line makes us laugh, you'll get a faster response. 
+                We're simple people with simple pleasures.
+            </div>
+
+            <p style="text-align: center; margin-top: 40px; font-size: 1.2rem;">
+                <span class="highlight">Looking forward to hearing from you!</span><br>
+                <span style="color: #8892a8; font-size: 1rem;">- The Gunner's Games Team (it's literally just Tommygunner and some very confused AI)</span>
+            </p>
+
+            <div style="text-align: center;">
+                <a href="index.html" class="back-link">← Back to Games</a>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-links">
+                <a href="about.html">About Us</a>
+                <a href="contact.html">Contact Us</a>
+                <a href="privacy.html">Privacy Policy</a>
+                <a href="terms.html">Terms of Service</a>
+            </div>
+            <div class="copyright">
+                <p>&copy; 2025 Gunner's Games. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        document.querySelector('.banner-image').addEventListener('error', function() {
+            this.style.display = 'none';
+            const placeholder = document.createElement('div');
+            placeholder.className = 'banner-placeholder';
+            placeholder.textContent = 'GunnersGames.com';
+            this.parentElement.appendChild(placeholder);
+        });
+    </script>
+</body>
+</html>
