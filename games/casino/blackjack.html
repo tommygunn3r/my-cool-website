@@ -520,6 +520,53 @@
             margin-top: 2rem;
             width: 100%;
         }
+
+        /* Fixed Navigation */
+        .fixed-nav {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            display: flex;
+            gap: 15px;
+            z-index: 200;
+        }
+
+        .nav-button {
+            padding: 12px 24px;
+            background: rgba(10, 10, 10, 0.95);
+            border: 2px solid var(--gold);
+            border-radius: 10px;
+            color: var(--cream);
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
+            font-family: 'Cinzel', serif;
+        }
+
+        .nav-button:hover {
+            background: rgba(212, 175, 55, 0.2);
+            box-shadow: 0 0 25px rgba(212, 175, 55, 0.6);
+            transform: translateY(-2px);
+        }
+
+        @media (max-width: 768px) {
+            .fixed-nav {
+                bottom: 20px;
+                right: 20px;
+                flex-direction: column;
+            }
+
+            .nav-button {
+                padding: 10px 18px;
+                font-size: 0.9rem;
+            }
+        }
     </style>
 </head>
 <body>
@@ -611,7 +658,28 @@
         </div>
     </div>
 
+    <!-- Fixed Navigation -->
+    <div class="fixed-nav">
+        <a href="#" class="nav-button" onclick="closeGame(); return false;">
+            <span>←</span>
+            <span>Back to Casino</span>
+        </a>
+    </div>
+
     <script type="module">
+        // Function to close game and return to casino
+        function closeGame() {
+            // Send message to parent window to close the iframe
+            if (window.parent !== window) {
+                window.parent.postMessage('closeGame', '*');
+            } else {
+                // If not in iframe, navigate directly
+                window.location.href = '../../casino.html';
+            }
+        }
+        
+        // Make closeGame available globally
+        window.closeGame = closeGame;
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
         import { getFirestore, doc, getDoc, updateDoc, increment } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
