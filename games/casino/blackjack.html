@@ -701,13 +701,49 @@
         let playerHand = [];
         let dealerHand = [];
         let currentBet = 0;
-        let balance = 1000;
+        let balance = 5000; // Default starting balance
         let gameActive = false;
         let soundEnabled = true;
         let aiEnabled = false;
         let animationSpeed = 0.5;
         let selectedTable = 'green';
         let aiPlayers = [];
+
+        // Initialize GunnerCoins from localStorage
+        function initializeBalance() {
+            const savedBalance = localStorage.getItem('gunnercoins');
+            if (savedBalance !== null) {
+                balance = parseInt(savedBalance);
+            } else {
+                // First time playing
+                balance = 5000;
+                localStorage.setItem('gunnercoins', balance);
+            }
+            document.getElementById('balance').textContent = balance;
+            
+            // Sync with Firebase in background
+            syncBalanceWithFirebase();
+        }
+
+        async function syncBalanceWithFirebase() {
+            try {
+                const userDoc = doc(db, 'users', 'currentUser');
+                const docSnap = await getDoc(userDoc);
+                
+                if (docSnap.exists()) {
+                    const firebaseBalance = docSnap.data().gunnercoins || 5000;
+                    // Use Firebase balance if different
+                    if (firebaseBalance !== balance) {
+                        balance = firebaseBalance;
+                        localStorage.setItem('gunnercoins', balance);
+                        document.getElementById('balance').textContent = balance;
+                    }
+                }
+            } catch (error) {
+                console.log('Firebase sync:', error);
+                // Continue with localStorage balance
+            }
+        }
 
         // Audio Context for sound effects
         const audioContext = new (window.AudioContext || window.webkitAudioContext)();
@@ -854,7 +890,10 @@
             balance += amount;
             document.getElementById('balance').textContent = balance;
             
-            // Update Firebase
+            // Save to localStorage immediately
+            localStorage.setItem('gunnercoins', balance);
+            
+            // Update Firebase in background (don't await)
             try {
                 const userDoc = doc(db, 'users', 'currentUser'); // Replace with actual user ID
                 await updateDoc(userDoc, {
@@ -942,7 +981,15 @@
             }
             
             currentBet = betAmount;
-            await updateBalance(-currentBet);
+            
+            // Update balance locally first (don't block on Firebase)
+            balance -= currentBet;
+            document.getElementById('balance').textContent = balance;
+            localStorage.setItem('gunnercoins', balance);
+            
+            // Update Firebase in background
+            updateBalance(-currentBet).catch(err => console.log('Firebase update error:', err));
+            
             playChipSound();
             
             // Reset
@@ -1174,6 +1221,11 @@
         // Initialize game with green table
         document.getElementById('gameContainer').style.backgroundImage = 
             "url('../assets/casino/greentop.png')";
+        
+        // Initialize balance from localStorage/Firebase
+        initializeBalance();
+        
+        // Initialize game
         deck = createDeck();
         initializeAIPlayers();
     </script>
