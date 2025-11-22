@@ -2,451 +2,273 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Gunner's Games">
-    <link rel="manifest" href="/manifest.json">
-    
-    <title>Gunner's Games Arcade</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gunner's Games - Play Online Games</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            -webkit-touch-callout: none;
-            -webkit-user-select: none;
-            user-select: none;
         }
 
         body {
-            background: #000;
-            font-family: Arial, sans-serif;
-            overflow-x: hidden;
-            overflow-y: auto;
-            padding-top: env(safe-area-inset-top);
-            padding-bottom: env(safe-area-inset-bottom);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #000000;
+            color: #e0e0e0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
 
-        .arcade-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        header {
+            background: #0a0a0a;
+            padding: 20px 20px;
+            text-align: center;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.9);
+            border-bottom: 3px solid #e94560;
+        }
+
+        .banner {
+            max-width: 60%;
+            margin: 0 auto;
+        }
+
+        .banner-image {
             width: 100%;
-            min-height: calc(100vh - 75px);
-            margin-top: 70px;
-            padding-bottom: 20px;
-        }
-
-        @media (min-width: 1400px) {
-            .arcade-grid {
-                grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            }
-        }
-
-        .game-tile {
-            position: relative;
-            aspect-ratio: 1;
-            overflow: hidden;
-            cursor: pointer;
-            transition: transform 0.2s ease;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        .game-tile:hover {
-            transform: scale(1.05);
-            z-index: 10;
-        }
-
-        .game-tile img {
-            width: 100%;
-            height: 100%;
+            height: auto;
+            max-height: 150px;
             object-fit: cover;
             display: block;
         }
 
-        .coming-soon {
-            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+        /* Placeholder styling if no image is provided yet */
+        .banner-placeholder {
+            width: 100%;
+            height: 120px;
+            background: linear-gradient(45deg, #e94560, #f39c12, #e94560);
+            background-size: 200% auto;
+            animation: shine 3s linear infinite;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.5em;
-            color: #666;
-            text-transform: uppercase;
+            border-radius: 10px;
+            font-size: 2rem;
+            font-weight: bold;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
         }
 
-        @media (max-width: 768px) {
-            .arcade-grid {
-                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-                margin-top: 90px;
-                min-height: calc(100vh - 90px);
-            }
-            .coming-soon {
-                font-size: 1.2em;
+        @keyframes shine {
+            to {
+                background-position: 200% center;
             }
         }
 
-        @media (max-width: 480px) {
-            .arcade-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-            .coming-soon {
-                font-size: 1em;
-            }
+        main {
+            flex: 1;
+            max-width: 1200px;
+            margin: 60px auto;
+            padding: 0 20px;
         }
 
-        /* Game container */
-        .game-container {
-            display: none;
-            position: fixed;
+        .game-categories {
+            display: flex;
+            gap: 30px;
+            margin-bottom: 60px;
+            justify-content: center;
+        }
+
+        .game-card {
+            background: #0a0a0a;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.9);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            cursor: pointer;
+            border: 2px solid #1a1a1a;
+            flex: 1;
+            max-width: 350px;
+        }
+
+        .game-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 50px rgba(233, 69, 96, 0.4);
+            border-color: #e94560;
+        }
+
+        .game-card a {
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+
+        .game-image {
+            width: 100%;
+            height: 250px;
+            background: #000000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .game-image::after {
+            content: '';
+            position: absolute;
             top: 0;
             left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.2);
+            transition: background 0.3s ease;
+        }
+
+        .game-card:hover .game-image::after {
+            background: rgba(0, 0, 0, 0);
+        }
+
+        .game-icon-img {
             width: 100%;
             height: 100%;
-            z-index: 1000;
-            background: #000;
-            padding-top: env(safe-area-inset-top);
+            object-fit: cover;
+            position: relative;
+            z-index: 1;
         }
 
-        .game-container.active {
-            display: block;
+        .game-info {
+            padding: 20px;
+            text-align: center;
         }
 
-        .game-frame {
-            width: 100%;
-            height: 100%;
-            border: none;
+        .game-info p {
+            color: #a8b2d1;
+            line-height: 1.6;
+            font-size: 1rem;
         }
 
-        /* Button Group for Game View */
-        .game-controls {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 1001;
-            display: flex;
-            gap: 10px;
-            pointer-events: none; /* Let clicks pass through container */
+        footer {
+            background: #0a0a0a;
+            padding: 30px 20px;
+            text-align: center;
+            border-top: 3px solid #e94560;
+            margin-top: auto;
         }
 
-        .control-btn {
-            pointer-events: auto; /* Re-enable clicks on buttons */
-            background: rgba(255, 215, 0, 0.9);
-            color: #333;
-            border: 2px solid #FFD700;
-            border-radius: 5px;
-            padding: 12px 24px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: none; /* Hidden by default */
-            -webkit-tap-highlight-color: transparent;
-            white-space: nowrap;
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
         }
 
-        .control-btn.active {
-            display: block;
+        .footer-links {
+            margin-bottom: 15px;
         }
 
-        .control-btn:hover {
-            background: rgba(255, 165, 0, 0.9);
-            transform: scale(1.05);
-        }
-
-        /* Secondary style for fullscreen button */
-        .fs-btn {
-            background: rgba(0, 0, 0, 0.6);
-            color: #FFD700;
-            border: 2px solid #FFD700;
-        }
-        .fs-btn:hover {
-            background: rgba(0, 0, 0, 0.9);
-        }
-
-        /* Top Bar (Player Info) */
-        .top-bar {
-            position: fixed;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 1001;
-            display: flex;
-            gap: 15px;
-            align-items: center;
-            width: 90%;
-            justify-content: center;
-        }
-
-        .player-info {
-            background: rgba(0, 0, 0, 0.8);
-            color: #fff;
-            padding: 10px 20px;
-            border-radius: 5px;
-            border: 2px solid #fff;
-            font-size: 16px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            white-space: nowrap;
-        }
-
-        .player-name {
-            font-weight: bold;
-            color: #FFD700;
-        }
-
-        .change-name-btn {
-            background: rgba(255, 255, 255, 0.2);
-            border: 1px solid #fff;
-            color: #fff;
-            padding: 5px 10px;
-            border-radius: 3px;
-            cursor: pointer;
-            font-size: 12px;
-        }
-
-        .leaderboard-btn {
-            background: rgba(255, 215, 0, 0.9);
-            color: #333;
-            padding: 10px 20px;
-            border-radius: 5px;
-            border: 2px solid #FFD700;
+        .footer-links a {
+            color: #a8b2d1;
             text-decoration: none;
-            font-weight: bold;
-            font-size: 16px;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            white-space: nowrap;
+            margin: 0 15px;
+            transition: color 0.3s ease;
+        }
+
+        .footer-links a:hover {
+            color: #e94560;
+        }
+
+        .copyright {
+            color: #6b7688;
+            font-size: 0.9rem;
         }
 
         @media (max-width: 768px) {
-            .top-bar {
+            .banner h1 {
+                font-size: 2.5rem;
+            }
+
+            .game-categories {
                 flex-direction: column;
                 align-items: center;
-                top: 10px;
-                gap: 10px;
             }
 
-            .player-info, .leaderboard-btn {
-                font-size: 14px;
-                padding: 8px 15px;
+            .game-card {
+                max-width: 100%;
                 width: 100%;
-                justify-content: center;
             }
-
-            .game-controls {
-                top: 10px;
-                right: 10px;
-            }
-            
-            .control-btn {
-                padding: 8px 16px;
-                font-size: 14px;
-            }
-        }
-
-        .top-bar.hidden {
-            display: none;
         }
     </style>
 </head>
 <body>
-    <div class="top-bar" id="topBar">
-        <div class="player-info">
-            Player: <span class="player-name" id="playerName">Guest</span>
-            <button class="change-name-btn" onclick="changePlayerName()">Change</button>
+    <header>
+        <div class="banner">
+            <!-- Replace 'banner.png' with your actual banner image file -->
+            <img src="assets/banner.png" alt="Gunner's Games" class="banner-image">
+            <!-- Fallback placeholder if image not found -->
+            <noscript>
+                <div class="banner-placeholder">GunnersGames.com</div>
+            </noscript>
         </div>
-        <a href="/leaderboard.html" class="leaderboard-btn">
-            🏆 Leaders
-        </a>
-    </div>
+    </header>
 
-    <div class="arcade-grid" id="arcadeGrid"></div>
-    
-    <div class="game-controls">
-        <button class="control-btn fs-btn" id="fsButton" onclick="toggleFullscreen()">⛶ Full Screen</button>
-        <button class="control-btn" id="backButton">← Exit</button>
-    </div>
-    
-    <div class="game-container" id="gameContainer">
-        <iframe class="game-frame" id="gameFrame"></iframe>
-    </div>
+    <main>
+        <div class="game-categories">
+            <div class="game-card">
+                <a href="arcade.html">
+                    <div class="game-image">
+                        <img src="assets/arcade.png" alt="Arcade Games" class="game-icon-img">
+                    </div>
+                    <div class="game-info">
+                        <p>Fast-paced action and classic gaming!</p>
+                    </div>
+                </a>
+            </div>
+
+            <div class="game-card">
+                <a href="casino.html">
+                    <div class="game-image">
+                        <img src="assets/casino.png" alt="Casino Games" class="game-icon-img">
+                    </div>
+                    <div class="game-info">
+                        <p>Try your luck with casino classics!</p>
+                    </div>
+                </a>
+            </div>
+
+            <div class="game-card">
+                <a href="solitaire.html">
+                    <div class="game-image">
+                        <img src="assets/solitaire.png" alt="Solitaire Games" class="game-icon-img">
+                    </div>
+                    <div class="game-info">
+                        <p>Relax with timeless card games!</p>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="footer-content">
+            <div class="footer-links">
+                <a href="about.html">About Us</a>
+                <a href="contact.html">Contact Us</a>
+                <a href="privacy.html">Privacy Policy</a>
+                <a href="terms.html">Terms of Service</a>
+            </div>
+            <div class="copyright">
+                <p>&copy; 2025 Gunner's Games. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
 
     <script>
-        const games = [
-            { id: 'ascii_doom', name: 'ascii-doom', file: 'ascii-doom.html' },
-            { id: 'shooter', name: 'shooter', file: 'shooter.html' },
-            { id: 'square_man', name: 'square-man', file: 'square-man.html' },
-            { id: 'squario', name: 'squario', file: 'squario.html' },
-            { id: 'squartris', name: 'squartris', file: 'squartris.html' },
-            { id: 'water', name: 'water', file: 'water.html' },
-            { id: 'word_slider', name: 'word_slider', file: 'word_slider.html' },
-            { id: 'wordrush', name: 'wordrush', file: 'wordrush.html' },
-            { id: 'square_bird', name: 'square-bird', file: 'square-bird.html' },
-            { id: 'spider_solitaire', name: 'spider', file: 'spiderSolitaire.html' }
-        ];
-
-        let playCounts = {};
-
-        // --- Detection for Mobile ---
-        function isMobile() {
-            return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-        }
-
-        function getPlayerName() {
-            let name = localStorage.getItem('gunners-player-name');
-            if (!name) { name = promptForName(); }
-            return name;
-        }
-
-        function promptForName() {
-            let name = prompt('Welcome to Gunner\'s Games! Enter your player name:');
-            if (!name || name.trim() === '') { name = 'Guest'; }
-            localStorage.setItem('gunners-player-name', name);
-            return name;
-        }
-
-        function displayPlayerName() {
-            document.getElementById('playerName').textContent = getPlayerName();
-        }
-
-        function changePlayerName() {
-            const newName = prompt('Enter new player name:');
-            if (newName && newName.trim() !== '') {
-                localStorage.setItem('gunners-player-name', newName);
-                displayPlayerName();
-            }
-        }
-
-        function loadPlayCounts() {
-            try {
-                const stored = localStorage.getItem('game-play-counts');
-                if (stored) playCounts = JSON.parse(stored);
-            } catch (error) { playCounts = {}; }
-        }
-
-        function savePlayCounts() {
-            localStorage.setItem('game-play-counts', JSON.stringify(playCounts));
-        }
-
-        function incrementPlayCount(gameId) {
-            playCounts[gameId] = (playCounts[gameId] || 0) + 1;
-            savePlayCounts();
-        }
-
-        function getSortedGames() {
-            return [...games].sort((a, b) => (playCounts[b.id] || 0) - (playCounts[a.id] || 0));
-        }
-
-        function renderArcade() {
-            const grid = document.getElementById('arcadeGrid');
-            grid.innerHTML = '';
-            const sortedGames = getSortedGames();
-
-            sortedGames.forEach(game => {
-                const tile = document.createElement('div');
-                tile.className = 'game-tile';
-                const img = document.createElement('img');
-                img.src = `/previews/arcade-${game.name}.png`;
-                img.alt = game.name;
-                img.loading = 'lazy';
-                
-                tile.appendChild(img);
-                tile.onclick = () => {
-                    incrementPlayCount(game.id);
-                    loadGame(game.file);
-                };
-                grid.appendChild(tile);
-            });
-
-            const comingSoon = document.createElement('div');
-            comingSoon.className = 'game-tile coming-soon';
-            comingSoon.textContent = 'Coming Soon';
-            grid.appendChild(comingSoon);
-        }
-
-        // --- Full Screen Logic ---
-        function toggleFullscreen() {
-            if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-                openFullscreen();
-            } else {
-                closeFullscreen();
-            }
-        }
-
-        function openFullscreen() {
-            const elem = document.documentElement;
-            if (elem.requestFullscreen) {
-                elem.requestFullscreen().catch(e => console.log(e));
-            } else if (elem.webkitRequestFullscreen) { 
-                elem.webkitRequestFullscreen();
-            }
-        }
-
-        function closeFullscreen() {
-            if (document.exitFullscreen) {
-                document.exitFullscreen();
-            } else if (document.webkitExitFullscreen) { 
-                document.webkitExitFullscreen();
-            }
-        }
-
-        function loadGame(gameFile) {
-            const gameContainer = document.getElementById('gameContainer');
-            const gameFrame = document.getElementById('gameFrame');
-            const backButton = document.getElementById('backButton');
-            const fsButton = document.getElementById('fsButton');
-            const arcadeGrid = document.getElementById('arcadeGrid');
-            const topBar = document.getElementById('topBar');
-
-            // MOBILE: Auto Fullscreen
-            if (isMobile()) {
-                openFullscreen();
-            } 
-            // DESKTOP: Show manual Fullscreen button
-            else {
-                fsButton.classList.add('active');
-            }
-
-            gameFrame.src = `/games/${gameFile}`;
-            gameContainer.classList.add('active');
-            backButton.classList.add('active');
-            arcadeGrid.style.display = 'none';
-            topBar.classList.add('hidden');
-        }
-
-        function backToArcade() {
-            const gameContainer = document.getElementById('gameContainer');
-            const gameFrame = document.getElementById('gameFrame');
-            const backButton = document.getElementById('backButton');
-            const fsButton = document.getElementById('fsButton');
-            const arcadeGrid = document.getElementById('arcadeGrid');
-            const topBar = document.getElementById('topBar');
-
-            // Exit fullscreen when closing game
-            closeFullscreen();
-
-            gameFrame.src = '';
-            gameContainer.classList.remove('active');
-            backButton.classList.remove('active');
-            fsButton.classList.remove('active'); // Hide fs button
-            arcadeGrid.style.display = 'grid';
-            topBar.classList.remove('hidden');
-            
-            renderArcade();
-        }
-
-        document.getElementById('backButton').onclick = backToArcade;
-
-        function init() {
-            loadPlayCounts();
-            displayPlayerName();
-            renderArcade();
-        }
-
-        init();
+        // Show placeholder if banner image fails to load
+        document.querySelector('.banner-image').addEventListener('error', function() {
+            this.style.display = 'none';
+            const placeholder = document.createElement('div');
+            placeholder.className = 'banner-placeholder';
+            placeholder.textContent = 'GunnersGames.com';
+            this.parentElement.appendChild(placeholder);
+        });
     </script>
 </body>
 </html>
