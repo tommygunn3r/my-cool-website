@@ -313,6 +313,8 @@
             padding: 2rem;
             background: linear-gradient(0deg, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.4) 100%);
             border-top: 2px solid var(--gold);
+            visibility: visible;
+            opacity: 1;
         }
 
         .betting-area {
@@ -354,8 +356,9 @@
         }
 
         .game-button:disabled {
-            opacity: 0.5;
+            opacity: 0.3;
             cursor: not-allowed;
+            filter: grayscale(0.8);
         }
 
         .message-overlay {
@@ -1032,7 +1035,7 @@
         function enableGameButtons() {
             document.getElementById('hitBtn').disabled = false;
             document.getElementById('standBtn').disabled = false;
-            document.getElementById('doubleBtn').disabled = balance >= currentBet;
+            document.getElementById('doubleBtn').disabled = balance < currentBet; // Disable if insufficient funds
         }
 
         function disableGameButtons() {
