@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arcade Leaderboards - Gunner's Games</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #000000;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: white;
+            min-height: 100vh;
+            padding: 20px;
+            position: relative;
+            overflow-x: hidden;
+            margin: 0;
+            width: 100%;
+        }
+
+        /* Parallax Background Layers */
+        .parallax-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .parallax-layer {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+        }
+
+        .layer-1 {
+            background: 
+                linear-gradient(0deg, transparent 24%, rgba(233, 69, 96, 0.05) 25%, rgba(233, 69, 96, 0.05) 26%, transparent 27%, transparent 74%, rgba(233, 69, 96, 0.05) 75%, rgba(233, 69, 96, 0.05) 76%, transparent 77%, transparent),
+                linear-gradient(90deg, transparent 24%, rgba(233, 69, 96, 0.05) 25%, rgba(233, 69, 96, 0.05) 26%, transparent 27%, transparent 74%, rgba(233, 69, 96, 0.05) 75%, rgba(233, 69, 96, 0.05) 76%, transparent 77%, transparent);
+            background-size: 50px 50px;
+            animation: gridMove 20s linear infinite;
+        }
+
+        @keyframes gridMove {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(50px); }
+        }
+
+        .layer-2 {
+            background-image: 
+                radial-gradient(circle at 20% 30%, rgba(233, 69, 96, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(255, 215, 0, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 50% 50%, rgba(233, 69, 96, 0.08) 0%, transparent 50%);
+            animation: floatParticles 15s ease-in-out infinite;
+        }
+
+        @keyframes floatParticles {
+            0%, 100% { transform: translate(0, 0); }
+            50% { transform: translate(30px, -20px); }
+        }
+
+        .neon-shape {
+            position: absolute;
+            border: 2px solid rgba(233, 69, 96, 0.3);
+            border-radius: 50%;
+            animation: rotate 30s linear infinite;
+        }
+
+        .neon-shape:nth-child(1) {
+            width: 300px;
+            height: 300px;
+            top: 10%;
+            left: 10%;
+            box-shadow: 0 0 20px rgba(233, 69, 96, 0.2);
+        }
+
+        .neon-shape:nth-child(2) {
+            width: 200px;
+            height: 200px;
+            top: 60%;
+            right: 15%;
+            animation-duration: 25s;
+            animation-direction: reverse;
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.2);
+            border-color: rgba(255, 215, 0, 0.3);
+        }
+
+        .neon-shape:nth-child(3) {
+            width: 150px;
+            height: 150px;
+            bottom: 20%;
+            left: 30%;
+            animation-duration: 35s;
+            box-shadow: 0 0 10px rgba(233, 69, 96, 0.2);
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 48px;
+            margin: 30px 0;
+            text-shadow: 
+                0 0 10px rgba(233, 69, 96, 0.8),
+                0 0 20px rgba(233, 69, 96, 0.6),
+                0 0 30px rgba(233, 69, 96, 0.4);
+            letter-spacing: 2px;
+        }
+
+        .mode-selector {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .mode-btn {
+            padding: 15px 30px;
+            background: rgba(10, 10, 10, 0.8);
+            border: 3px solid #e94560;
+            color: white;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            border-radius: 10px;
+            text-transform: uppercase;
+        }
+
+        .mode-btn:hover {
+            background: rgba(233, 69, 96, 0.2);
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(233, 69, 96, 0.4);
+        }
+
+        .mode-btn.active {
+            background: #e94560;
+            color: #000;
+            border-color: #e94560;
+            box-shadow: 0 0 25px rgba(233, 69, 96, 0.6);
+        }
+
+        .tabs {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        .tab {
+            padding: 12px 24px;
+            background: rgba(10, 10, 10, 0.8);
+            border: 2px solid #e94560;
+            color: white;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            border-radius: 5px;
+        }
+
+        .tab:hover {
+            background: rgba(233, 69, 96, 0.2);
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(233, 69, 96, 0.4);
+        }
+
+        .tab.active {
+            background: #e94560;
+            color: white;
+            border-color: #e94560;
+            box-shadow: 0 0 20px rgba(233, 69, 96, 0.6);
+        }
+
+        .leaderboards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .leaderboard {
+            background: rgba(10, 10, 10, 0.9);
+            border: 2px solid #1a1a1a;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.9);
+        }
+
+        .leaderboard-header {
+            text-align: center;
+            font-size: 28px;
+            margin-bottom: 20px;
+            color: #e94560;
+            text-shadow: 0 0 15px rgba(233, 69, 96, 0.6);
+        }
+
+        .leaderboard-subheader {
+            text-align: center;
+            font-size: 16px;
+            margin-bottom: 25px;
+            color: #a8b2d1;
+        }
+
+        .score-entry {
+            display: grid;
+            grid-template-columns: 60px 1fr auto auto;
+            gap: 20px;
+            align-items: center;
+            padding: 15px 20px;
+            background: rgba(255,255,255,0.05);
+            margin-bottom: 10px;
+            border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.1);
+            transition: all 0.3s ease;
+        }
+
+        .score-entry:hover {
+            background: rgba(233, 69, 96, 0.1);
+            border-color: #e94560;
+            transform: translateX(5px);
+            box-shadow: 0 5px 15px rgba(233, 69, 96, 0.3);
+        }
+
+        .rank {
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .rank.gold { 
+            color: #FFD700; 
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.6);
+        }
+        .rank.silver { 
+            color: #C0C0C0; 
+            text-shadow: 0 0 10px rgba(192, 192, 192, 0.6);
+        }
+        .rank.bronze { 
+            color: #CD7F32; 
+            text-shadow: 0 0 10px rgba(205, 127, 50, 0.6);
+        }
+
+        .player-name {
+            font-size: 18px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .score-value {
+            font-size: 22px;
+            font-weight: bold;
+            color: #4CAF50;
+            white-space: nowrap;
+            text-shadow: 0 0 10px rgba(76, 175, 80, 0.4);
+        }
+
+        .time-value {
+            font-size: 16px;
+            color: #87CEEB;
+            white-space: nowrap;
+        }
+
+        .loading {
+            text-align: center;
+            font-size: 24px;
+            padding: 50px;
+            color: #a8b2d1;
+        }
+
+        /* Total Score Section */
+        .total-score-section {
+            background: rgba(10, 10, 10, 0.9);
+            border: 3px solid #e94560;
+            border-radius: 20px;
+            padding: 40px;
+            margin-bottom: 40px;
+            box-shadow: 
+                0 15px 60px rgba(233, 69, 96, 0.4),
+                0 0 40px rgba(233, 69, 96, 0.3);
+        }
+
+        .total-score-header {
+            text-align: center;
+            font-size: 36px;
+            margin-bottom: 30px;
+            color: #FFD700;
+            text-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+        }
+
+        .fixed-nav {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            display: flex;
+            gap: 15px;
+            z-index: 1000;
+        }
+
+        .nav-button {
+            padding: 15px 30px;
+            background: rgba(10, 10, 10, 0.95);
+            border: 2px solid #e94560;
+            border-radius: 10px;
+            color: #fff;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(233, 69, 96, 0.3);
+        }
+
+        .nav-button:hover {
+            background: rgba(233, 69, 96, 0.2);
+            box-shadow: 0 0 25px rgba(233, 69, 96, 0.6);
+            transform: translateY(-2px);
+        }
+
+        @media (max-width: 768px) {
+            html, body {
+                overflow-x: hidden;
+                width: 100%;
+            }
+
+            h1 {
+                font-size: 32px;
+                margin-top: 20px;
+            }
+
+            .leaderboards-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .score-entry {
+                grid-template-columns: 50px 1fr;
+                gap: 10px;
+            }
+
+            .rank {
+                font-size: 18px;
+            }
+
+            .player-name {
+                font-size: 16px;
+                grid-column: 1 / -1;
+            }
+
+            .score-value, .time-value {
+                font-size: 18px;
+            }
+
+            .fixed-nav {
+                bottom: 15px;
+                right: 15px;
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .nav-button {
+                padding: 10px 18px;
+                font-size: 0.85rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Parallax Background -->
+    <div class="parallax-container">
+        <div class="parallax-layer layer-1"></div>
+        <div class="parallax-layer layer-2"></div>
+        <div class="parallax-layer layer-3">
+            <div class="neon-shape"></div>
+            <div class="neon-shape"></div>
+            <div class="neon-shape"></div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h1>🕹️ ARCADE LEADERBOARDS 🕹️</h1>
+
+        <!-- Mode Selector -->
+        <div class="mode-selector">
+            <button class="mode-btn" onclick="switchMode('total')">Total Scores</button>
+            <button class="mode-btn active" onclick="switchMode('individual')">Individual Games</button>
+            <button class="mode-btn" onclick="switchMode('time')">Most Time Played</button>
+        </div>
+
+        <!-- Total Score Leaderboard -->
+        <div id="totalScoreSection" style="display: none;">
+            <div class="total-score-section">
+                <div class="total-score-header">🏆 TOTAL ARCADE CHAMPIONS 🏆</div>
+                <div class="leaderboard-subheader">Combined scores across all arcade games</div>
+                <div id="totalScoreBoard"></div>
+            </div>
+        </div>
+
+        <!-- Individual Game Tabs -->
+        <div id="individualSection">
+            <div class="tabs" id="tabs"></div>
+
+            <!-- Leaderboards Grid -->
+            <div class="leaderboards-grid" id="leaderboards">
+                <div class="loading">Loading...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fixed Navigation -->
+    <div class="fixed-nav">
+        <a href="arcade.html" class="nav-button">
+            <span>←</span>
+            <span>Back to Arcade</span>
+        </a>
+        <a href="index.html" class="nav-button">
+            <span>🏠</span>
+            <span>Home</span>
+        </a>
+    </div>
+
+    <script type="module">
+        import { db } from './firebase-config.js';
+        import { collection, query, orderBy, limit, getDocs } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        const games = [
+            { id: 'ascii_doom', name: 'ASCII Doom', hasScore: true },
+            { id: 'shooter', name: 'Space Shooter', hasScore: true },
+            { id: 'square_man', name: 'Square Man', hasScore: true },
+            { id: 'squario', name: 'Squario', hasScore: true },
+            { id: 'squartris', name: 'Squartris', hasScore: true },
+            { id: 'water', name: 'The Water Game', hasScore: false },
+            { id: 'word_slider', name: 'Word Slider', hasScore: true },
+            { id: 'wordrush', name: 'Word Rush', hasScore: true },
+            { id: 'square_bird', name: 'Square Bird', hasScore: true }
+        ];
+
+        let currentMode = 'individual';
+
+        function formatTime(seconds) {
+            if (!seconds) return '0s';
+            if (seconds < 60) return `${seconds}s`;
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            if (seconds < 3600) return `${mins}m ${secs}s`;
+            const hours = Math.floor(seconds / 3600);
+            const remainMins = Math.floor((seconds % 3600) / 60);
+            return `${hours}h ${remainMins}m`;
+        }
+
+        async function loadScores(gameId, mode = 'scores') {
+            try {
+                const scoresRef = collection(db, 'scores');
+                const orderField = mode === 'scores' ? 'score' : 'timePlayed';
+                const q = query(scoresRef, orderBy(orderField, 'desc'), limit(200));
+                const querySnapshot = await getDocs(q);
+                const results = [];
+                
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    if (gameId === 'all' || data.gameName === gameId) {
+                        results.push({
+                            playerName: data.playerName,
+                            score: data.score || 0,
+                            timePlayed: data.timePlayed || 0,
+                            gameName: data.gameName
+                        });
+                    }
+                });
+
+                return results.slice(0, 10);
+            } catch (error) {
+                console.error('Error loading scores:', error);
+                return [];
+            }
+        }
+
+        async function loadTotalScores() {
+            try {
+                const scoresRef = collection(db, 'scores');
+                const q = query(scoresRef, orderBy('score', 'desc'), limit(500));
+                const querySnapshot = await getDocs(q);
+                
+                const playerTotals = {};
+                
+                querySnapshot.forEach((doc) => {
+                    const data = doc.data();
+                    // Only count arcade games with scores
+                    const game = games.find(g => g.id === data.gameName);
+                    if (game && game.hasScore) {
+                        if (!playerTotals[data.playerName]) {
+                            playerTotals[data.playerName] = 0;
+                        }
+                        playerTotals[data.playerName] += (data.score || 0);
+                    }
+                });
+
+                const sortedPlayers = Object.entries(playerTotals)
+                    .map(([name, total]) => ({ playerName: name, totalScore: total }))
+                    .sort((a, b) => b.totalScore - a.totalScore)
+                    .slice(0, 10);
+
+                return sortedPlayers;
+            } catch (error) {
+                console.error('Error loading total scores:', error);
+                return [];
+            }
+        }
+
+        function getRankClass(index) {
+            if (index === 0) return 'gold';
+            if (index === 1) return 'silver';
+            if (index === 2) return 'bronze';
+            return '';
+        }
+
+        function displayTotalScores(results) {
+            const board = document.getElementById('totalScoreBoard');
+            
+            if (results.length === 0) {
+                board.innerHTML = '<div class="loading">No scores yet!</div>';
+                return;
+            }
+
+            let html = '';
+            results.forEach((result, index) => {
+                const rankClass = getRankClass(index);
+                html += `
+                    <div class="score-entry">
+                        <div class="rank ${rankClass}">#${index + 1}</div>
+                        <div class="player-name">${result.playerName}</div>
+                        <div class="score-value">${result.totalScore.toLocaleString()}</div>
+                    </div>
+                `;
+            });
+            
+            board.innerHTML = html;
+        }
+
+        function displayIndividualScores(allResults) {
+            const board = document.getElementById('leaderboards');
+            let html = '';
+            
+            games.forEach(game => {
+                const gameResults = allResults[game.id] || [];
+                
+                html += `
+                    <div class="leaderboard">
+                        <div class="leaderboard-header">${game.name}</div>
+                        <div class="leaderboard-subheader">${game.hasScore ? 'Top 10 Scores' : 'Top 10 Play Times'}</div>
+                `;
+                
+                if (gameResults.length === 0) {
+                    html += '<div class="loading" style="padding: 20px; font-size: 16px;">No scores yet</div>';
+                } else {
+                    gameResults.forEach((result, index) => {
+                        const rankClass = getRankClass(index);
+                        const mainValue = game.hasScore ? 
+                            `<div class="score-value">${result.score.toLocaleString()}</div>` :
+                            `<div class="time-value" style="font-size: 22px; font-weight: bold;">${formatTime(result.timePlayed)}</div>`;
+                        
+                        html += `
+                            <div class="score-entry">
+                                <div class="rank ${rankClass}">#${index + 1}</div>
+                                <div class="player-name">${result.playerName}</div>
+                                ${mainValue}
+                            </div>
+                        `;
+                    });
+                }
+                
+                html += '</div>';
+            });
+            
+            board.innerHTML = html;
+        }
+
+        window.switchMode = async function(mode) {
+            currentMode = mode;
+            
+            document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            if (mode === 'total') {
+                document.getElementById('totalScoreSection').style.display = 'block';
+                document.getElementById('individualSection').style.display = 'none';
+                document.getElementById('totalScoreBoard').innerHTML = '<div class="loading">Loading...</div>';
+                const results = await loadTotalScores();
+                displayTotalScores(results);
+            } else {
+                document.getElementById('totalScoreSection').style.display = 'none';
+                document.getElementById('individualSection').style.display = 'block';
+                document.getElementById('leaderboards').innerHTML = '<div class="loading">Loading...</div>';
+                
+                const allResults = {};
+                for (const game of games) {
+                    allResults[game.id] = await loadScores(game.id, mode === 'time' ? 'time' : 'scores');
+                }
+                displayIndividualScores(allResults);
+            }
+        };
+
+        async function init() {
+            const allResults = {};
+            for (const game of games) {
+                allResults[game.id] = await loadScores(game.id, 'scores');
+            }
+            displayIndividualScores(allResults);
+        }
+
+        init();
+
+        // Parallax effect
+        document.addEventListener('mousemove', (e) => {
+            const x = e.clientX / window.innerWidth;
+            const y = e.clientY / window.innerHeight;
+            const layer2 = document.querySelector('.layer-2');
+            const layer3 = document.querySelector('.layer-3');
+            if (layer2) layer2.style.transform = `translate(${x * 20}px, ${y * 20}px)`;
+            if (layer3) layer3.style.transform = `translate(${x * 40}px, ${y * 40}px)`;
+        });
+    </script>
+</body>
+</html>
