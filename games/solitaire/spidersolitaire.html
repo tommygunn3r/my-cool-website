@@ -223,23 +223,103 @@
     </div>
 
     <script type="module">
-        // Import Score Manager from your website structure
-        import GameScoreManager from '../game-score-manager.js';
+        // ===== EMBEDDED FIREBASE CONFIGURATION AND SCORE MANAGER =====
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth, signInAnonymously } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { getFirestore, collection, addDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        // Firebase configuration - You need to replace this with your actual Firebase config
+     const firebaseConfig = {
+  apiKey: "AIzaSyDjdo3U9qg_h4TKvplsFoZgxVNepAbCpFA",
+  authDomain: "gunners-games.firebaseapp.com",
+  projectId: "gunners-games",
+  storageBucket: "gunners-games.firebasestorage.app",
+  messagingSenderId: "644077315462",
+  appId: "1:644077315462:web:431dd985426f3dbe02f807",
+  measurementId: "G-RWNL900X43"
+};
+
+        // Initialize Firebase
+        let db = null;
+        let auth = null;
+        let firebaseInitialized = false;
+
+        async function initFirebase() {
+            try {
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+                await signInAnonymously(auth);
+                firebaseInitialized = true;
+                console.log('Firebase initialized successfully');
+            } catch (error) {
+                console.warn('Firebase not available, game will work without leaderboard:', error.message);
+            }
+        }
+
+        // Initialize Firebase (non-blocking)
+        initFirebase();
+
+        // Embedded GameScoreManager class
+        class GameScoreManager {
+            constructor(gameName, hasScore = true) {
+                this.gameName = gameName;
+                this.hasScore = hasScore;
+                this.sessionStartTime = null;
+                this.playerName = localStorage.getItem('playerName') || this.generatePlayerName();
+            }
+
+            generatePlayerName() {
+                const adjectives = ['Swift', 'Mighty', 'Epic', 'Legendary', 'Brave', 'Noble', 'Quick', 'Bold'];
+                const nouns = ['Gamer', 'Player', 'Hero', 'Champion', 'Master', 'Legend', 'Pro', 'Ace'];
+                const name = `${adjectives[Math.floor(Math.random() * adjectives.length)]}${nouns[Math.floor(Math.random() * nouns.length)]}${Math.floor(Math.random() * 999)}`;
+                localStorage.setItem('playerName', name);
+                return name;
+            }
+
+            startSession() {
+                this.sessionStartTime = Date.now();
+            }
+
+            getElapsedTime() {
+                if (!this.sessionStartTime) return 0;
+                return Math.floor((Date.now() - this.sessionStartTime) / 1000);
+            }
+
+            getElapsedTimeFormatted() {
+                const seconds = this.getElapsedTime();
+                if (seconds < 60) return `${seconds}s`;
+                const mins = Math.floor(seconds / 60);
+                const secs = seconds % 60;
+                return `${mins}m ${secs}s`;
+            }
+
+            async submitGameResult(score = 0) {
+                if (!firebaseInitialized || !db) {
+                    console.log('Leaderboard unavailable - playing offline');
+                    return;
+                }
+
+                const timePlayed = this.getElapsedTime();
+                
+                try {
+                    await addDoc(collection(db, 'scores'), {
+                        gameName: this.gameName,
+                        playerName: this.playerName,
+                        score: this.hasScore ? score : 0,
+                        timePlayed: timePlayed,
+                        timestamp: serverTimestamp()
+                    });
+                    console.log('Score submitted to leaderboard');
+                } catch (error) {
+                    console.warn('Failed to submit score:', error.message);
+                }
+            }
+        }
+        // ===== END EMBEDDED CODE =====
 
         // Initialize score manager
-        let scoreManager;
-        try {
-            // Assuming this game ID is unique for your system
-            scoreManager = new GameScoreManager('spider_solitaire', true);
-        } catch (e) {
-            console.warn("GameScoreManager not found. Leaderboard features disabled for preview.");
-            // Mock for preview environment so game doesn't crash
-            scoreManager = {
-                startSession: () => {},
-                submitGameResult: () => {},
-                getElapsedTimeFormatted: () => "00:00"
-            };
-        }
+        const scoreManager = new GameScoreManager('spider_solitaire', true);
 
         // --- SVG Assets for Clean Look ---
         const SVG_ICONS = {
