@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Squartris</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Load Tone.js for programmatic audio effects -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js"></script>
+    <style>
+        /* Custom styles for the Tetris board and pieces */
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+        :root {
+            --block-size: 30px; /* Base size for one block */
+            --board-width: 10;
+            --board-height: 20;
+            --border-color: #333;
+        }
+
+        body {
+            font-family: 'Press Start 2P', cursive;
+            background-color: #1a1a2e; /* Deep purple background */
+        }
+
+        .tetris-block {
+            width: var(--block-size);
+            height: var(--block-size);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            box-sizing: border-box;
+            box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.5);
+            transition: background-color 0.1s;
+        }
+
+        #game-board {
+            display: grid;
+            grid-template-columns: repeat(var(--board-width), var(--block-size));
+            grid-template-rows: repeat(var(--board-height), var(--block-size));
+            border: 8px solid var(--border-color);
+            background-color: #0d0d1a; /* Darker board background */
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.5), inset 0 0 10px rgba(255, 255, 255, 0.1);
+            margin: 0 auto;
+            border-radius: 8px;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 640px) {
+            :root {
+                --block-size: 20px; /* Smaller blocks on mobile */
+            }
+        }
+
+        /* Piece colors (matching the TETROMINOS map in JS) */
+        .color-0 { background-color: #00ffff; } /* I */
+        .color-1 { background-color: #0000ff; } /* J */
+        .color-2 { background-color: #ffa500; } /* L */
+        .color-3 { background-color: #ffff00; } /* O */
+        .color-4 { background-color: #00ff00; } /* S */
+        .color-5 { background-color: #800080; } /* T */
+        .color-6 { background-color: #ff0000; } /* Z */
+
+        .color-0, .color-1, .color-2, .color-3, .color-4, .color-5, .color-6 {
+            border-color: rgba(0, 0, 0, 0.5);
+        }
+
+        .stats-card {
+            background-color: #2b3a55; /* Blue-grey card */
+            color: #ffffff;
+            border-radius: 8px;
+            padding: 1rem;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+            text-align: center;
+        }
+
+        .btn-game {
+            transition: all 0.1s ease-in-out;
+            box-shadow: 0 4px 0 0 #0f4c75;
+            transform: translateY(0);
+        }
+
+        .btn-game:active {
+            box-shadow: 0 0 0 0 #0f4c75;
+            transform: translateY(4px);
+        }
+
+        .message-box {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: #fff;
+            padding: 3rem;
+            border-radius: 10px;
+            text-align: center;
+            border: 5px solid #ffcc00;
+            box-shadow: 0 0 30px #ffcc00;
+            z-index: 100;
+        }
+        
+        #next-piece-display {
+            display: grid;
+            grid-template-columns: repeat(4, 15px);
+            grid-template-rows: repeat(4, 15px);
+            margin: 1rem auto;
+            width: 60px; /* 4 * 15px */
+            height: 60px; /* 4 * 15px */
+            border: 2px dashed #00bfff;
+            padding: 5px;
+        }
+
+        #next-piece-display .tetris-block {
+            width: 15px;
+            height: 15px;
+            border-width: 1px;
+        }
+    </style>
+</head>
+<body class="min-h-screen p-4 flex items-center justify-center">
+
+    <div id="game-container" class="flex flex-col lg:flex-row gap-8 items-center lg:items-start p-4 bg-gray-900/80 rounded-xl shadow-2xl max-w-6xl w-full">
+
+        <!-- Game Info / Controls (Left/Top) -->
+        <div class="flex flex-col gap-4 w-full lg:w-1/3">
+            <h1 class="text-4xl text-cyan-300 text-center uppercase tracking-widest mt-4 lg:mt-0 shadow-sm">Squartris</h1>
+
+            <!-- Stats -->
+            <div class="stats-card">
+                <p class="text-xl mb-2">Score</p>
+                <div id="score" class="text-3xl text-yellow-300">0</div>
+            </div>
+
+            <div class="stats-card">
+                <p class="text-xl mb-2">Next</p>
+                <div id="next-piece-display"></div>
+            </div>
+            
+            <!-- Controls -->
+            <div class="stats-card">
+                <p class="text-xl mb-2">Controls</p>
+                <p class="text-sm">A / Left: Move Left</p>
+                <p class="text-sm">D / Right: Move Right</p>
+                <p class="text-sm">W / Up: Rotate</p>
+                <p class="text-sm">S / Down: Soft Drop</p>
+                <p class="text-sm">Space: Hard Drop</p>
+                <p class="text-sm">P: Pause/Resume</p>
+            </div>
+
+            <button id="start-button" class="btn-game bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-lg uppercase tracking-wider">Start Game</button>
+        </div>
+
+        <!-- Game Board (Center) -->
+        <div id="game-board-wrapper" class="relative">
+            <div id="game-board">
+                <!-- Blocks generated by JS -->
+            </div>
+            <!-- Message Box for Game Over/Paused -->
+            <div id="message-overlay" class="hidden message-box">
+                <p id="message-text" class="text-3xl mb-4"></p>
+                <button id="restart-button" class="btn-game bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded uppercase text-lg hidden">Restart</button>
+            </div>
+        </div>
+        
+        <!-- Mobile Controls (Bottom) -->
+        <div id="mobile-controls" class="lg:hidden w-full flex justify-around p-4">
+            <button class="mobile-btn" data-key="ArrowLeft">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8"><path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" /></svg>
+            </button>
+            <button class="mobile-btn" data-key="ArrowDown">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 13.5 12 21m0 0-7.5-7.5M12 21V3" /></svg>
+            </button>
+            <button class="mobile-btn" data-key="ArrowRight">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" /></svg>
+            </button>
+            <button class="mobile-btn" data-key="ArrowUp">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 10.5 12 3m0 0 7.5 7.5M12 3v18" /></svg>
+            </button>
+            <button class="mobile-btn text-lg" data-key="Space">
+                DROP
+            </button>
+        </div>
+        <style>
+            .mobile-btn {
+                background-color: #3f51b5;
+                color: white;
+                padding: 10px;
+                border-radius: 8px;
+                box-shadow: 0 3px 0 0 #2c387e;
+                transition: all 0.1s;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            .mobile-btn:active {
+                box-shadow: 0 0 0 0 #2c387e;
+                transform: translateY(3px);
+            }
+        </style>
+
+    </div>
+
+    <script type="module">
+        // ===== EMBEDDED FIREBASE CONFIGURATION AND SCORE MANAGER =====
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth, signInAnonymously } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { getFirestore, collection, addDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        const firebaseConfig = {
+  apiKey: "AIzaSyDjdo3U9qg_h4TKvplsFoZgxVNepAbCpFA",
+  authDomain: "gunners-games.firebaseapp.com",
+  projectId: "gunners-games",
+  storageBucket: "gunners-games.firebasestorage.app",
+  messagingSenderId: "644077315462",
+  appId: "1:644077315462:web:431dd985426f3dbe02f807",
+  measurementId: "G-RWNL900X43"
+};;
+
+        let db = null, auth = null, firebaseInitialized = false;
+
+        async function initFirebase() {
+            try {
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+                await signInAnonymously(auth);
+                firebaseInitialized = true;
+                console.log('Firebase initialized');
+            } catch (error) {
+                console.warn('Firebase unavailable:', error.message);
+            }
+        }
+
+        initFirebase();
+
+        class GameScoreManager {
+            constructor(gameName, hasScore = true) {
+                this.gameName = gameName;
+                this.hasScore = hasScore;
+                this.sessionStartTime = null;
+                this.playerName = localStorage.getItem('playerName') || this.generatePlayerName();
+            }
+
+            generatePlayerName() {
+                const adjectives = ['Swift', 'Mighty', 'Epic', 'Legendary', 'Brave', 'Noble', 'Quick', 'Bold'];
+                const nouns = ['Gamer', 'Player', 'Hero', 'Champion', 'Master', 'Legend', 'Pro', 'Ace'];
+                const name = `${adjectives[Math.floor(Math.random() * adjectives.length)]}${nouns[Math.floor(Math.random() * nouns.length)]}${Math.floor(Math.random() * 999)}`;
+                localStorage.setItem('playerName', name);
+                return name;
+            }
+
+            startSession() {
+                this.sessionStartTime = Date.now();
+            }
+
+            getElapsedTime() {
+                if (!this.sessionStartTime) return 0;
+                return Math.floor((Date.now() - this.sessionStartTime) / 1000);
+            }
+
+            async submitGameResult(score = 0) {
+                if (!firebaseInitialized || !db) return;
+                try {
+                    await addDoc(collection(db, 'scores'), {
+                        gameName: this.gameName,
+                        playerName: this.playerName,
+                        score: this.hasScore ? score : 0,
+                        timePlayed: this.getElapsedTime(),
+                        timestamp: serverTimestamp()
+                    });
+                    console.log('Score submitted');
+                } catch (error) {
+                    console.warn('Failed to submit score');
+                }
+            }
+        }
+
+        const scoreManager = new GameScoreManager('squartris', true);
+        // ===== END EMBEDDED CODE =====
+
+        const BOARD_WIDTH = 10;
+        const BOARD_HEIGHT = 20;
+        const BLOCK_SIZE = 30; // Matches CSS var in :root
+        const SCORE_PER_LINE = [0, 40, 100, 300, 1200]; // 0, Single, Double, Triple, Tetris
+        const INITIAL_DROP_RATE = 1000; // 1000ms (1 second)
+
+        // 7 Tetromino shapes and their corresponding colors (0-6)
+        const TETROMINOS = [
+            // I (Cyan, Color 0)
+            [[1, 1, 1, 1]],
+            // J (Blue, Color 1)
+            [[1, 0, 0], [1, 1, 1]],
+            // L (Orange, Color 2)
+            [[0, 0, 1], [1, 1, 1]],
+            // O (Yellow, Color 3)
+            [[1, 1], [1, 1]],
+            // S (Green, Color 4)
+            [[0, 1, 1], [1, 1, 0]],
+            // T (Purple, Color 5)
+            [[0, 1, 0], [1, 1, 1]],
+            // Z (Red, Color 6)
+            [[1, 1, 0], [0, 1, 1]],
+        ];
+
+        let board = [];
+        let score = 0;
+        let isPlaying = false;
+        let isPaused = false;
+        let dropCounter = 0;
+        let dropInterval = INITIAL_DROP_RATE;
+        let lastTime = 0;
+        let currentPiece;
+        let nextPiece;
+
+        // --- Audio Setup (Tone.js) ---
+        let clearSynth;
+        let lockSynth;
+        
+        // Initialize synthesizers for sound effects
+        function initializeAudio() {
+            // Synth for Lock/Push sound (simple click/thump)
+            lockSynth = new Tone.MembraneSynth({
+                pitchDecay: 0.05,
+                octaves: 2,
+                envelope: {
+                    attack: 0.001,
+                    decay: 0.2,
+                    sustain: 0.01,
+                    release: 0.1
+                }
+            }).toDestination();
+
+            // Synth for Clear Row sound (quick arpeggio)
+            clearSynth = new Tone.PolySynth(Tone.Synth, {
+                oscillator: { type: "square" },
+                envelope: {
+                    attack: 0.005,
+                    decay: 0.1,
+                    sustain: 0,
+                }
+            }).toDestination();
+        }
+
+        // Play the "Push" (Lock) sound
+        function playLockSound() {
+            if (lockSynth) {
+                lockSynth.triggerAttackRelease("C2", "8n");
+            }
+        }
+
+        // Play the "Defuse" (Clear) sound (an ascending chord)
+        function playClearSound(linesCleared) {
+            if (clearSynth) {
+                const notes = ["C5", "E5", "G5", "C6"].slice(0, linesCleared + 1);
+                clearSynth.triggerAttackRelease(notes, "16n");
+            }
+        }
+
+        const boardElement = document.getElementById('game-board');
+        const scoreElement = document.getElementById('score');
+        const startButton = document.getElementById('start-button');
+        const restartButton = document.getElementById('restart-button');
+        const messageOverlay = document.getElementById('message-overlay');
+        const messageText = document.getElementById('message-text');
+        const nextPieceDisplay = document.getElementById('next-piece-display');
+
+        // --- Game State Functions ---
+
+        /**
+         * Creates the initial board grid with empty cells (0)
+         * and renders the HTML elements.
+         */
+        function createBoard() {
+            board = Array.from({ length: BOARD_HEIGHT }, () => Array(BOARD_WIDTH).fill(null));
+            boardElement.innerHTML = '';
+            boardElement.style.setProperty('--block-size', `${BLOCK_SIZE}px`);
+            boardElement.style.width = `${BOARD_WIDTH * BLOCK_SIZE + 16}px`; // +8px border on each side
+            boardElement.style.height = `${BOARD_HEIGHT * BLOCK_SIZE + 16}px`;
+
+            for (let y = 0; y < BOARD_HEIGHT; y++) {
+                for (let x = 0; x < BOARD_WIDTH; x++) {
+                    const cell = document.createElement('div');
+                    cell.classList.add('tetris-block');
+                    boardElement.appendChild(cell);
+                }
+            }
+        }
+
+        /**
+         * Gets the corresponding HTML cell element for a given board coordinate.
+         * @param {number} x - x-coordinate (column)
+         * @param {number} y - y-coordinate (row)
+         * @returns {HTMLElement} The cell element.
+         */
+        function getCell(x, y) {
+            return boardElement.children[y * BOARD_WIDTH + x];
+        }
+
+        /**
+         * Generates a random Tetromino shape and its color index.
+         * @returns {object} The new piece object.
+         */
+        function generatePiece() {
+            const index = Math.floor(Math.random() * TETROMINOS.length);
+            const shape = TETROMINOS[index];
+            return {
+                shape: shape,
+                color: index,
+                x: Math.floor(BOARD_WIDTH / 2) - Math.ceil(shape[0].length / 2),
+                y: 0,
+            };
+        }
+
+        /**
+         * Rotates a 2D matrix (the piece shape) 90 degrees clockwise.
+         * @param {number[][]} matrix - The piece matrix.
+         * @returns {number[][]} The rotated matrix.
+         */
+        function rotateMatrix(matrix) {
+            const rows = matrix.length;
+            const cols = matrix[0].length;
+            // Create a new matrix with swapped dimensions (cols x rows)
+            const newMatrix = Array.from({ length: cols }, () => Array(rows).fill(0));
+
+            for (let y = 0; y < rows; y++) {
+                for (let x = 0; x < cols; x++) {
+                    // Rotate 90 degrees clockwise
+                    newMatrix[x][rows - 1 - y] = matrix[y][x];
+                }
+            }
+            return newMatrix;
+        }
+
+        /**
+         * Attempts to move the current piece by a given delta (dx, dy).
+         * @param {number} dx - Change in x position.
+         * @param {number} dy - Change in y position.
+         * @returns {boolean} True if the move was successful, false otherwise.
+         */
+        function movePiece(dx, dy) {
+            currentPiece.x += dx;
+            currentPiece.y += dy;
+            if (isValidMove(currentPiece.shape, currentPiece.x, currentPiece.y)) {
+                return true;
+            } else {
+                // Revert move
+                currentPiece.x -= dx;
+                currentPiece.y -= dy;
+                return false;
+            }
+        }
+
+        /**
+         * Attempts to rotate the current piece.
+         */
+        function rotatePiece() {
+            const rotated = rotateMatrix(currentPiece.shape);
+            if (isValidMove(rotated, currentPiece.x, currentPiece.y)) {
+                currentPiece.shape = rotated;
+                return true;
+            }
+            // Simple wall kick/floor kick check (for basic gameplay)
+            // Try shifting one unit left/right
+            for (const offset of [1, -1]) {
+                if (isValidMove(rotated, currentPiece.x + offset, currentPiece.y)) {
+                    currentPiece.x += offset;
+                    currentPiece.shape = rotated;
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        /**
+         * Checks if the given shape can exist at (x, y) on the board.
+         * @param {number[][]} shape - The piece matrix.
+         * @param {number} x - The x position.
+         * @param {number} y - The y position.
+         * @returns {boolean} True if the move is valid (no collision, in bounds).
+         */
+        function isValidMove(shape, x, y) {
+            for (let row = 0; row < shape.length; row++) {
+                for (let col = 0; col < shape[row].length; col++) {
+                    if (shape[row][col]) {
+                        const boardX = x + col;
+                        const boardY = y + row;
+
+                        // 1. Check bounds
+                        if (boardX < 0 || boardX >= BOARD_WIDTH || boardY >= BOARD_HEIGHT) {
+                            return false; // Out of horizontal or bottom bounds
+                        }
+                        if (boardY < 0) {
+                            // The piece is still above the visible board, which is fine
+                            continue;
+                        }
+
+                        // 2. Check for collision with settled blocks
+                        if (board[boardY] && board[boardY][boardX] !== null) {
+                            return false;
+                        }
+                    }
+                }
+            }
+            return true;
+        }
+
+        /**
+         * Merges the current piece into the board array (locking it).
+         */
+        function lockPiece() {
+            // Play lock/push sound
+            playLockSound(); 
+
+            for (let row = 0; row < currentPiece.shape.length; row++) {
+                for (let col = 0; col < currentPiece.shape[row].length; col++) {
+                    if (currentPiece.shape[row][col]) {
+                        const boardY = currentPiece.y + row;
+                        const boardX = currentPiece.x + col;
+
+                        // Check for Game Over: piece locks above the board
+                        if (boardY < 0) {
+                            gameOver();
+                            return;
+                        }
+
+                        if (boardY < BOARD_HEIGHT && boardX < BOARD_WIDTH) {
+                            board[boardY][boardX] = currentPiece.color;
+                        }
+                    }
+                }
+            }
+            clearLines();
+            currentPiece = nextPiece;
+            nextPiece = generatePiece();
+            drawNextPiece();
+
+            // Check if the new piece spawns into a block (immediate Game Over)
+            if (!isValidMove(currentPiece.shape, currentPiece.x, currentPiece.y)) {
+                gameOver();
+            }
+        }
+
+        /**
+         * Clears completed lines and updates the score.
+         */
+        function clearLines() {
+            let linesCleared = 0;
+            for (let y = BOARD_HEIGHT - 1; y >= 0; y--) {
+                if (board[y].every(cell => cell !== null)) {
+                    linesCleared++;
+                    // Remove the current line
+                    board.splice(y, 1);
+                    // Add a new empty line at the top
+                    board.unshift(Array(BOARD_WIDTH).fill(null));
+                    y++; // Recheck the new line that has dropped into this position
+                }
+            }
+
+            if (linesCleared > 0) {
+                // Play clear/defuse sound
+                playClearSound(linesCleared); 
+                
+                // Update score based on lines cleared
+                score += SCORE_PER_LINE[linesCleared] || 0;
+                scoreElement.textContent = score;
+
+                // Increase difficulty (faster drop rate)
+                dropInterval = Math.max(100, INITIAL_DROP_RATE - Math.floor(score / 500) * 50);
+            }
+        }
+
+        /**
+         * Draws the current state of the game (board and current piece) onto the HTML grid.
+         */
+        function draw() {
+            // 1. Reset all cells
+            for (let i = 0; i < boardElement.children.length; i++) {
+                const cell = boardElement.children[i];
+                cell.className = 'tetris-block';
+            }
+
+            // 2. Draw settled blocks
+            for (let y = 0; y < BOARD_HEIGHT; y++) {
+                for (let x = 0; x < BOARD_WIDTH; x++) {
+                    if (board[y][x] !== null) {
+                        const cell = getCell(x, y);
+                        cell.classList.add(`color-${board[y][x]}`);
+                    }
+                }
+            }
+
+            // 3. Draw current piece
+            if (currentPiece) {
+                for (let row = 0; row < currentPiece.shape.length; row++) {
+                    for (let col = 0; col < currentPiece.shape[row].length; col++) {
+                        if (currentPiece.shape[row][col]) {
+                            const boardY = currentPiece.y + row;
+                            const boardX = currentPiece.x + col;
+                            if (boardY >= 0 && boardY < BOARD_HEIGHT && boardX >= 0 && boardX < BOARD_WIDTH) {
+                                const cell = getCell(boardX, boardY);
+                                cell.classList.add(`color-${currentPiece.color}`);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        /**
+         * Draws the next piece in the dedicated display area.
+         */
+        function drawNextPiece() {
+            nextPieceDisplay.innerHTML = '';
+            // Create mini blocks for the display
+            for (let y = 0; y < 4; y++) {
+                for (let x = 0; x < 4; x++) {
+                    const cell = document.createElement('div');
+                    cell.classList.add('tetris-block');
+
+                    if (nextPiece) {
+                        const shape = nextPiece.shape;
+                        // Center the piece in the 4x4 grid
+                        const startX = Math.floor((4 - shape[0].length) / 2);
+                        const startY = Math.floor((4 - shape.length) / 2);
+
+                        const shapeX = x - startX;
+                        const shapeY = y - startY;
+
+                        if (shapeY >= 0 && shapeY < shape.length && shapeX >= 0 && shapeX < shape[0].length) {
+                            if (shape[shapeY][shapeX]) {
+                                cell.classList.add(`color-${nextPiece.color}`);
+                            }
+                        }
+                    }
+                    nextPieceDisplay.appendChild(cell);
+                }
+            }
+        }
+
+
+        // --- Game Flow and Loop ---
+
+        /**
+         * Main game loop responsible for dropping the piece over time.
+         * @param {number} time - Timestamp from requestAnimationFrame.
+         */
+        function gameLoop(time = 0) {
+            if (!isPlaying || isPaused) {
+                draw(); // Ensure final state is drawn even when paused/stopped
+                return;
+            }
+
+            const deltaTime = time - lastTime;
+            lastTime = time;
+
+            dropCounter += deltaTime;
+
+            if (dropCounter > dropInterval) {
+                dropPiece();
+                dropCounter = 0;
+            }
+
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+
+        /**
+         * Attempts to drop the piece one unit. If it fails, locks it.
+         */
+        function dropPiece() {
+            if (!movePiece(0, 1)) {
+                lockPiece();
+            }
+            dropCounter = 0;
+        }
+
+        /**
+         * Instantly drops the piece to the bottom.
+         */
+        function hardDrop() {
+            if (!isPlaying || isPaused) return;
+            while (movePiece(0, 1)) {
+                // Keep moving until collision
+            }
+            lockPiece();
+        }
+
+        /**
+         * Displays the game over message and stops the game loop.
+         */
+        function gameOver() {
+            isPlaying = false;
+            showMessage('Game Over! Final Score: ' + score, true);
+            // Submit score to leaderboard
+            scoreManager.submitGameResult(score);
+            // Optionally play a Game Over sound
+            if (lockSynth) lockSynth.triggerAttackRelease("A1", 0.5); 
+        }
+
+        /**
+         * Toggles the pause state.
+         */
+        function togglePause() {
+            if (!isPlaying) return;
+
+            isPaused = !isPaused;
+            if (isPaused) {
+                showMessage('PAUSED', false);
+            } else {
+                hideMessage();
+                // Restart the game loop
+                lastTime = performance.now(); // Reset time to prevent instant drop after pause
+                requestAnimationFrame(gameLoop);
+            }
+        }
+
+        /**
+         * Displays a message overlay.
+         * @param {string} msg - The message to show.
+         * @param {boolean} showRestart - Whether to show the restart button.
+         */
+        function showMessage(msg, showRestart) {
+            messageText.textContent = msg;
+            if (showRestart) {
+                restartButton.classList.remove('hidden');
+            } else {
+                restartButton.classList.add('hidden');
+            }
+            messageOverlay.classList.remove('hidden');
+        }
+
+        /**
+         * Hides the message overlay.
+         */
+        function hideMessage() {
+            messageOverlay.classList.add('hidden');
+        }
+
+        /**
+         * Resets and starts a new game.
+         */
+        async function startGame() {
+            // Initialize Tone.js only after user interaction
+            if (Tone.context.state !== 'running') {
+                await Tone.start();
+            }
+            
+            if (isPlaying) return;
+
+            createBoard();
+            score = 0;
+            scoreElement.textContent = score;
+            dropInterval = INITIAL_DROP_RATE;
+            isPaused = false;
+            isPlaying = true;
+            hideMessage();
+            
+            // Start tracking session time
+            scoreManager.startSession();
+
+            // Setup first piece and next piece
+            currentPiece = generatePiece();
+            nextPiece = generatePiece();
+            drawNextPiece();
+
+            lastTime = performance.now();
+            requestAnimationFrame(gameLoop);
+        }
+
+        // --- Event Listeners ---
+
+        function handleKey(key) {
+             if (!isPlaying || isPaused) return;
+
+            switch (key) {
+                case 'ArrowLeft':
+                case 'KeyA': // A for Left
+                    movePiece(-1, 0);
+                    break;
+                case 'ArrowRight':
+                case 'KeyD': // D for Right
+                    movePiece(1, 0);
+                    break;
+                case 'ArrowDown':
+                case 'KeyS': // S for Soft Drop
+                    movePiece(0, 1); // Soft drop moves one unit down
+                    break;
+                case 'ArrowUp':
+                case 'KeyW': // W for Rotate
+                    rotatePiece();
+                    break;
+                case ' ': // Spacebar
+                case 'Space':
+                    hardDrop();
+                    break;
+            }
+        }
+
+        document.addEventListener('keydown', (e) => {
+            // Prevent default behavior for spacebar (scrolling) and arrows/wasd (scrolling/browser function)
+            if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'KeyW', 'KeyA', 'KeyS', 'KeyD'].includes(e.code)) {
+                e.preventDefault();
+            }
+
+            if (e.code === 'KeyP') {
+                togglePause();
+            } else {
+                handleKey(e.code);
+            }
+        });
+
+        // Mobile controls
+        document.querySelectorAll('.mobile-btn').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const key = e.currentTarget.getAttribute('data-key');
+                if (key === 'Space') {
+                    e.preventDefault(); // Just in case, though the element type should prevent scroll
+                    hardDrop();
+                } else {
+                    handleKey(key);
+                }
+            });
+        });
+
+        startButton.addEventListener('click', startGame);
+        restartButton.addEventListener('click', startGame);
+
+        // Initial setup on load
+        window.onload = function() {
+            initializeAudio(); // Initialize synths on load
+            createBoard();
+            showMessage('Press START to play!', false);
+        };
+    </script>
+</body>
+</html>

@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Water Ripples Simulation</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+        }
+        #waterCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+        }
+        .controls-container {
+            position: fixed;
+            bottom: 10px;
+            left: 10px;
+            display: flex;
+            flex-direction: column;
+            background: rgba(255, 255, 255, 0.8);
+            padding: 15px;
+            border-radius: 5px;
+            z-index: 10;
+            max-width: 350px;
+            transition: transform 0.3s ease, max-height 0.3s ease, opacity 0.3s ease;
+            max-height: 500px;
+            overflow: hidden;
+            transform-origin: bottom left;
+        }
+        .controls-container.minimized {
+            max-height: 40px;
+            opacity: 0.7;
+            transform: scale(0.7);
+        }
+        .controls-header {
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .controls-header h3 {
+            margin: 0;
+        }
+        .toggle-icon {
+            font-size: 18px;
+            transition: transform 0.3s ease;
+        }
+        .controls-container.minimized .toggle-icon {
+            transform: rotate(180deg);
+        }
+        .controls-content {
+            transition: opacity 0.3s ease;
+            opacity: 1;
+        }
+        .controls-container.minimized .controls-content {
+            opacity: 0;
+            pointer-events: none;
+        }
+        .control-group {
+            margin-bottom: 10px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        .control-group:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+        .slider-container {
+            margin: 8px 0;
+        }
+        label {
+            display: inline-block;
+            width: 120px;
+            font-size: 14px;
+        }
+        button {
+            padding: 8px 12px;
+            background: #0066cc;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 5px;
+            margin-bottom: 5px;
+        }
+        button:hover {
+            background: #0055aa;
+        }
+        input[type="file"] {
+            display: none;
+        }
+        .zoom-info {
+            margin-top: 5px;
+            font-size: 14px;
+        }
+        .touch-controls {
+            display: none;
+            margin-top: 10px;
+        }
+        @media (max-width: 768px) {
+            .touch-controls {
+                display: block;
+            }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="waterCanvas"></canvas>
+    
+    <div class="controls-container minimized">
+        <div class="controls-header">
+            <h3>Controls</h3>
+            <span class="toggle-icon">▼</span>
+        </div>
+        
+        <div class="controls-content">
+            <div class="control-group">
+                <h3 style="margin-top: 0;">Water Controls</h3>
+                <div class="slider-container">
+                    <label for="amplitudeSlider">Amplitude:</label>
+                    <input type="range" id="amplitudeSlider" min="0" max="100" value="50">
+                </div>
+                <div class="slider-container">
+                    <label for="durationSlider">Duration:</label>
+                    <input type="range" id="durationSlider" min="0" max="100" value="50">
+                </div>
+                <div class="slider-container">
+                    <label for="opacitySlider">Water Opacity:</label>
+                    <input type="range" id="opacitySlider" min="0" max="100" value="70">
+                </div>
+            </div>
+            
+            <div class="control-group">
+                <h3 style="margin-top: 0;">Background Image</h3>
+                <button id="loadImageBtn">Load Background Image</button>
+                <input type="file" id="imageInput" accept="image/*">
+                <button id="removeImageBtn">Remove Image</button>
+            </div>
+            
+            <div class="control-group">
+                <h3 style="margin-top: 0;">View Controls</h3>
+                <div class="zoom-info">
+                    <p style="margin: 5px 0;">Zoom: <span id="zoomLevel">100</span>%</p>
+                    <p style="margin: 5px 0; font-style: italic;">Use mouse wheel to zoom in/out</p>
+                    <p style="margin: 5px 0; font-style: italic;">Zooming fully out recenters the view</p>
+                </div>
+                <div class="touch-controls">
+                    <p style="margin: 5px 0; font-style: italic;">Pinch to zoom in/out</p>
+                    <p style="margin: 5px 0; font-style: italic;">Tap to create ripples</p>
+                    <button id="zoomInBtn">Zoom In</button>
+                    <button id="zoomOutBtn">Zoom Out</button>
+                </div>
+                <button id="resetViewBtn">Reset View</button>
+            </div>
+        </div>
+    </div>
+    
+    <audio id="dripSound" src="drip.mp3" preload="auto"></audio>
+    <audio id="splashSound" src="splash.mp3" preload="auto"></audio>
+    
+    <script type="module">
+        // 1. IMPORT AND INITIALIZE GAME SCORE MANAGER
+        // This game only tracks time played, so we set hasScore to false.
+        // ===== EMBEDDED FIREBASE CONFIGURATION AND SCORE MANAGER =====
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth, signInAnonymously } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { getFirestore, collection, addDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        // Firebase configuration - You need to replace this with your actual Firebase config
+        // Get this from your Firebase Console > Project Settings > General > Your apps
+       const firebaseConfig = {
+  apiKey: "AIzaSyDjdo3U9qg_h4TKvplsFoZgxVNepAbCpFA",
+  authDomain: "gunners-games.firebaseapp.com",
+  projectId: "gunners-games",
+  storageBucket: "gunners-games.firebasestorage.app",
+  messagingSenderId: "644077315462",
+  appId: "1:644077315462:web:431dd985426f3dbe02f807",
+  measurementId: "G-RWNL900X43"
+};
+
+        // Initialize Firebase
+        let db = null;
+        let auth = null;
+        let firebaseInitialized = false;
+
+        async function initFirebase() {
+            try {
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+                await signInAnonymously(auth);
+                firebaseInitialized = true;
+                console.log('Firebase initialized successfully');
+            } catch (error) {
+                console.warn('Firebase not available, game will work without leaderboard:', error.message);
+            }
+        }
+
+        // Initialize Firebase (non-blocking)
+        initFirebase();
+
+        // Embedded GameScoreManager class
+        class GameScoreManager {
+            constructor(gameName, hasScore = true) {
+                this.gameName = gameName;
+                this.hasScore = hasScore;
+                this.sessionStartTime = null;
+                this.playerName = localStorage.getItem('playerName') || this.generatePlayerName();
+            }
+
+            generatePlayerName() {
+                const adjectives = ['Swift', 'Mighty', 'Epic', 'Legendary', 'Brave', 'Noble', 'Quick', 'Bold'];
+                const nouns = ['Gamer', 'Player', 'Hero', 'Champion', 'Master', 'Legend', 'Pro', 'Ace'];
+                const name = `${adjectives[Math.floor(Math.random() * adjectives.length)]}${nouns[Math.floor(Math.random() * nouns.length)]}${Math.floor(Math.random() * 999)}`;
+                localStorage.setItem('playerName', name);
+                return name;
+            }
+
+            startSession() {
+                this.sessionStartTime = Date.now();
+            }
+
+            getElapsedTime() {
+                if (!this.sessionStartTime) return 0;
+                return Math.floor((Date.now() - this.sessionStartTime) / 1000);
+            }
+
+            getElapsedTimeFormatted() {
+                const seconds = this.getElapsedTime();
+                if (seconds < 60) return `${seconds}s`;
+                const mins = Math.floor(seconds / 60);
+                const secs = seconds % 60;
+                return `${mins}m ${secs}s`;
+            }
+
+            async submitGameResult(score = 0) {
+                if (!firebaseInitialized || !db) {
+                    console.log('Leaderboard unavailable - playing offline');
+                    return;
+                }
+
+                const timePlayed = this.getElapsedTime();
+                
+                try {
+                    await addDoc(collection(db, 'scores'), {
+                        gameName: this.gameName,
+                        playerName: this.playerName,
+                        score: this.hasScore ? score : 0,
+                        timePlayed: timePlayed,
+                        timestamp: serverTimestamp()
+                    });
+                    console.log('Score submitted to leaderboard');
+                } catch (error) {
+                    console.warn('Failed to submit score:', error.message);
+                }
+            }
+        }
+        // ===== END EMBEDDED CODE =====
+        
+        // Initialize score manager for water
+        const scoreManager = new GameScoreManager('water', false);
+
+        const canvas = document.getElementById('waterCanvas');
+        const ctx = canvas.getContext('2d');
+        const zoomLevelDisplay = document.getElementById('zoomLevel');
+        const loadImageBtn = document.getElementById('loadImageBtn');
+        const imageInput = document.getElementById('imageInput');
+        const removeImageBtn = document.getElementById('removeImageBtn');
+        const opacitySlider = document.getElementById('opacitySlider');
+        const controlsContainer = document.querySelector('.controls-container');
+        const controlsHeader = document.querySelector('.controls-header');
+        const resetViewBtn = document.getElementById('resetViewBtn');
+        const zoomInBtn = document.getElementById('zoomInBtn');
+        const zoomOutBtn = document.getElementById('zoomOutBtn');
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        const amplitudeSlider = document.getElementById('amplitudeSlider');
+        const durationSlider = document.getElementById('durationSlider');
+
+        // AUDIO REFERENCES ADDED HERE
+        const dripSound = document.getElementById('dripSound');
+        const splashSound = document.getElementById('splashSound');
+
+        // Function to play sound and reset time to enable quick, repeated playing
+        function playSound(audioElement) {
+            audioElement.currentTime = 0; 
+            audioElement.play().catch(e => {
+                // This catch handles the browser policy where media can't autoplay 
+                // until a user has interacted with the document.
+                if (e.name !== 'NotAllowedError') {
+                    console.log('Audio play blocked:', e);
+                }
+            });
+        }
+
+
+        // Base dimensions for simulation
+        const baseWidth = canvas.width;
+        const baseHeight = canvas.height;
+        
+        // Current display dimensions and offset
+        let zoom = 1.0;
+        let offsetX = 0;
+        let offsetY = 0;
+        let isZooming = false;
+        
+        // Background image
+        let backgroundImage = null;
+        let backgroundLoaded = false;
+
+        // Create water height arrays based on base dimensions
+        let currentHeight = new Float32Array(baseWidth * baseHeight);
+        let previousHeight = new Float32Array(baseWidth * baseHeight);
+        let nextHeight = new Float32Array(baseWidth * baseHeight);
+
+        const imageData = ctx.createImageData(baseWidth, baseHeight);
+
+        let isMouseDown = false;
+        let mouseX = 0;
+        let mouseY = 0;
+        
+        // Touch variables
+        let lastTouchX = 0;
+        let lastTouchY = 0;
+        let isTouching = false;
+        let lastPinchDistance = 0;
+        let isPinching = false;
+        let touchStartTime = 0;
+        
+        // Controls auto-minimize timer
+        let controlsTimer = null;
+        const CONTROLS_TIMEOUT = 5000; // 5 seconds before auto-minimize
+        
+        // Function to minimize the controls
+        function minimizeControls() {
+            controlsContainer.classList.add('minimized');
+        }
+        
+        // Function to reset the auto-minimize timer
+        function resetControlsTimer() {
+            if (controlsTimer) {
+                clearTimeout(controlsTimer);
+            }
+            controlsTimer = setTimeout(minimizeControls, CONTROLS_TIMEOUT);
+        }
+        
+        // Reset view function
+        function resetView() {
+            zoom = 1.0;
+            offsetX = 0;
+            offsetY = 0;
+            updateZoomDisplay();
+        }
+        
+        resetViewBtn.addEventListener('click', resetView);
+        
+        // Zoom buttons
+        if (zoomInBtn) {
+            zoomInBtn.addEventListener('click', () => {
+                zoom = Math.min(5.0, zoom * 1.2);
+                updateZoomDisplay();
+                resetControlsTimer();
+            });
+        }
+        
+        if (zoomOutBtn) {
+            zoomOutBtn.addEventListener('click', () => {
+                const newZoom = zoom * 0.8;
+                if (newZoom < 1.0) {
+                    resetView();
+                } else {
+                    zoom = newZoom;
+                    updateZoomDisplay();
+                }
+                resetControlsTimer();
+            });
+        }
+
+        // Controls toggle for mouse
+        controlsContainer.addEventListener('mouseenter', () => {
+            controlsContainer.classList.remove('minimized');
+            resetControlsTimer();
+        });
+        
+        // Controls toggle for touch and click
+        controlsHeader.addEventListener('click', (e) => {
+            e.stopPropagation();
+            controlsContainer.classList.toggle('minimized');
+            if (!controlsContainer.classList.contains('minimized')) {
+                resetControlsTimer();
+            } else {
+                if (controlsTimer) {
+                    clearTimeout(controlsTimer);
+                    controlsTimer = null;
+                }
+            }
+        });
+        
+        // Prevent auto-minimize when interacting with controls
+        controlsContainer.addEventListener('click', (e) => {
+            if (!e.target.closest('.controls-header')) {
+                e.stopPropagation();
+                resetControlsTimer();
+            }
+        });
+        
+        controlsContainer.addEventListener('touchstart', (e) => {
+            if (!controlsContainer.classList.contains('minimized')) {
+                resetControlsTimer();
+            }
+        });
+        
+        // Auto-minimize when clicking/touching outside controls
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.controls-container') && !controlsContainer.classList.contains('minimized')) {
+                minimizeControls();
+            }
+        });
+        
+        document.addEventListener('touchstart', (e) => {
+            if (!e.target.closest('.controls-container') && !controlsContainer.classList.contains('minimized')) {
+                minimizeControls();
+            }
+        }, { passive: true });
+
+        // Image loading functionality
+        loadImageBtn.addEventListener('click', () => {
+            imageInput.click();
+            resetControlsTimer();
+        });
+
+        imageInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file && file.type.match('image.*')) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    backgroundImage = new Image();
+                    backgroundImage.onload = function() {
+                        backgroundLoaded = true;
+                    };
+                    backgroundImage.src = event.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+            resetControlsTimer();
+        });
+
+        removeImageBtn.addEventListener('click', () => {
+            backgroundImage = null;
+            backgroundLoaded = false;
+            imageInput.value = '';
+            resetControlsTimer();
+        });
+
+        function updateZoomDisplay() {
+            zoomLevelDisplay.textContent = Math.round(zoom * 100);
+        }
+
+        function worldToScreen(x, y) {
+            return {
+                x: (x - offsetX) * zoom,
+                y: (y - offsetY) * zoom
+            };
+        }
+
+        function screenToWorld(x, y) {
+            return {
+                x: x / zoom + offsetX,
+                y: y / zoom + offsetY
+            };
+        }
+
+        function simulate() {
+            const durationValue = durationSlider.value / 100;
+            const damping = 0.95 + 0.045 * durationValue;
+
+            for (let y = 1; y < baseHeight - 1; y++) {
+                for (let x = 1; x < baseWidth - 1; x++) {
+                    const index = y * baseWidth + x;
+                    const left = currentHeight[index - 1];
+                    const right = currentHeight[index + 1];
+                    const up = currentHeight[index - baseWidth];
+                    const down = currentHeight[index + baseWidth];
+                    nextHeight[index] = (left + right + up + down) / 2 - previousHeight[index];
+                    nextHeight[index] *= damping;
+                }
+            }
+
+            for (let y = 0; y < baseHeight; y++) {
+                nextHeight[y * baseWidth] = nextHeight[y * baseWidth + 1];
+                nextHeight[y * baseWidth + baseWidth - 1] = nextHeight[y * baseWidth + baseWidth - 2];
+            }
+            for (let x = 0; x < baseWidth; x++) {
+                nextHeight[x] = nextHeight[baseWidth + x];
+                nextHeight[(baseHeight - 1) * baseWidth + x] = nextHeight[(baseHeight - 2) * baseWidth + x];
+            }
+
+            const temp = previousHeight;
+            previousHeight = currentHeight;
+            currentHeight = nextHeight;
+            nextHeight = temp;
+        }
+
+        function render() {
+            // Clear canvas with base color
+            ctx.fillStyle = '#0066cc';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Calculate visible area in world coordinates
+            const visibleLeft = offsetX;
+            const visibleTop = offsetY;
+            const visibleWidth = canvas.width / zoom;
+            const visibleHeight = canvas.height / zoom;
+
+            // Draw background image if available
+            if (backgroundLoaded && backgroundImage) {
+                ctx.save();
+                ctx.translate(-offsetX * zoom, -offsetY * zoom);
+                ctx.scale(zoom, zoom);
+                
+                // Calculate how to fit the image while maintaining aspect ratio
+                const imgRatio = backgroundImage.width / backgroundImage.height;
+                const canvasRatio = baseWidth / baseHeight;
+                
+                let drawWidth, drawHeight, drawX, drawY;
+                
+                if (imgRatio > canvasRatio) {
+                    drawHeight = baseHeight;
+                    drawWidth = backgroundImage.width * (baseHeight / backgroundImage.height);
+                    drawX = (baseWidth - drawWidth) / 2;
+                    drawY = 0;
+                } else {
+                    drawWidth = baseWidth;
+                    drawHeight = backgroundImage.height * (baseWidth / backgroundImage.width);
+                    drawX = 0;
+                    drawY = (baseHeight - drawHeight) / 2;
+                }
+                
+                ctx.drawImage(backgroundImage, drawX, drawY, drawWidth, drawHeight);
+                ctx.restore();
+            }
+
+            // Only process pixels that are visible
+            const startX = Math.max(0, Math.floor(visibleLeft));
+            const startY = Math.max(0, Math.floor(visibleTop));
+            const endX = Math.min(baseWidth, Math.ceil(visibleLeft + visibleWidth));
+            const endY = Math.min(baseHeight, Math.ceil(visibleTop + visibleHeight));
+
+            // Get water opacity from slider
+            const waterOpacity = opacitySlider.value / 100;
+
+            // Render the base simulation
+            for (let y = 0; y < baseHeight; y++) {
+                for (let x = 0; x < baseWidth; x++) {
+                    const index = y * baseWidth + x;
+                    const velocity = currentHeight[index] - previousHeight[index];
+                    // Change color to black (with blue tint for velocity)
+                    const blue = Math.min(255, Math.max(0, 128 + velocity * 5000));
+                    const pixelIndex = index * 4;
+                    imageData.data[pixelIndex] = 0;     // Red: 0
+                    imageData.data[pixelIndex + 1] = 0; // Green: 0
+                    imageData.data[pixelIndex + 2] = blue;
+                    imageData.data[pixelIndex + 3] = backgroundLoaded ? Math.round(255 * waterOpacity) : 255;
+                }
+            }
+
+            // Create a temporary canvas for scaling
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = baseWidth;
+            tempCanvas.height = baseHeight;
+            const tempCtx = tempCanvas.getContext('2d');
+            tempCtx.putImageData(imageData, 0, 0);
+
+            // Draw the zoomed portion to the main canvas
+            ctx.save();
+            ctx.imageSmoothingEnabled = zoom < 1; // Smooth only when zooming out
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.drawImage(
+                tempCanvas,
+                offsetX, offsetY, visibleWidth, visibleHeight,
+                0, 0, canvas.width, canvas.height
+            );
+            ctx.restore();
+        }
+
+        function createSplash(x, y) {
+            // Convert screen coordinates to world coordinates
+            const worldCoords = screenToWorld(x, y);
+            const worldX = Math.floor(worldCoords.x);
+            const worldY = Math.floor(worldCoords.y);
+
+            const radius = 15;
+            const amplitude = (amplitudeSlider.value / 50) * 2;
+            for (let dy = -radius; dy <= radius; dy++) {
+                for (let dx = -radius; dx <= radius; dx++) {
+                    if (dx * dx + dy * dy <= radius * radius) {
+                        const ix = worldX + dx;
+                        const iy = worldY + dy;
+                        if (ix >= 0 && ix < baseWidth && iy >= 0 && iy < baseHeight) {
+                            const index = iy * baseWidth + ix;
+                            currentHeight[index] = amplitude;
+                        }
+                    }
+                }
+            }
+        }
+
+        // Mouse event handlers
+        canvas.addEventListener('mousemove', (event) => {
+            mouseX = Math.floor(event.clientX);
+            mouseY = Math.floor(event.clientY);
+            
+            if (!isMouseDown) {
+                const worldCoords = screenToWorld(mouseX, mouseY);
+                const worldX = Math.floor(worldCoords.x);
+                const worldY = Math.floor(worldCoords.y);
+                
+                if (worldX >= 0 && worldX < baseWidth && worldY >= 0 && worldY < baseHeight) {
+                    const index = worldY * baseWidth + worldX;
+                    const amplitude = (amplitudeSlider.value / 50) * 0.2;
+                    currentHeight[index] = amplitude;
+
+                    // NEW DRIP SOUND LOGIC (5% chance to play on subtle ripple)
+                    if (Math.random() < 0.05) { 
+                        playSound(dripSound);
+                    }
+                }
+            }
+        });
+
+        canvas.addEventListener('mousedown', (event) => {
+            if (event.target === canvas) {
+                isMouseDown = true;
+                mouseX = Math.floor(event.clientX);
+                mouseY = Math.floor(event.clientY);
+                createSplash(mouseX, mouseY);
+                // NEW SPLASH SOUND LOGIC (Play on main interaction)
+                playSound(splashSound);
+            }
+        });
+
+        canvas.addEventListener('mouseup', () => {
+            isMouseDown = false;
+        });
+
+        canvas.addEventListener('wheel', (event) => {
+            event.preventDefault();
+            isZooming = true;
+            
+            // Get mouse position
+            const mouseX = event.clientX;
+            const mouseY = event.clientY;
+            
+            // Convert to world coordinates before zoom change
+            const worldBeforeZoom = screenToWorld(mouseX, mouseY);
+            
+            // Adjust zoom level
+            const zoomDelta = event.deltaY < 0 ? 1.1 : 0.9;
+            
+            // Check current zoom level
+            const oldZoom = zoom;
+            
+            // Limit zoom out to original window size (zoom = 1.0)
+            const newZoom = zoom * zoomDelta;
+            zoom = Math.max(1.0, Math.min(5.0, newZoom));
+            
+            // If we're hitting the zoom limit at 1.0, recenter the view
+            if (newZoom < 1.0 && zoom === 1.0) {
+                // Reset to center view
+                offsetX = 0;
+                offsetY = 0;
+            } else {
+                // Normal zoom behavior keeping mouse point fixed
+                // Convert back to world coordinates after zoom change
+                const worldAfterZoom = screenToWorld(mouseX, mouseY);
+                
+                // Adjust offset to keep mouse position fixed
+                offsetX += worldBeforeZoom.x - worldAfterZoom.x;
+                offsetY += worldBeforeZoom.y - worldAfterZoom.y;
+            }
+            
+            // Update displayed zoom level
+            updateZoomDisplay();
+            
+            setTimeout(() => {
+                isZooming = false;
+            }, 300);
+        });
+
+        // Touch event handlers
+        canvas.addEventListener('touchstart', (event) => {
+            // Only process touch events on the canvas itself, not controls
+            if (!event.target.closest('.controls-container')) {
+                event.preventDefault();
+                touchStartTime = Date.now();
+                
+                if (event.touches.length === 1) {
+                    // Single touch - create splash
+                    isTouching = true;
+                    lastTouchX = Math.floor(event.touches[0].clientX);
+                    lastTouchY = Math.floor(event.touches[0].clientY);
+                    createSplash(lastTouchX, lastTouchY);
+                    // NEW SPLASH SOUND LOGIC (Play on single touch start)
+                    playSound(splashSound);
+                } else if (event.touches.length === 2) {
+                    // Pinch to zoom - calculate initial distance
+                    isPinching = true;
+                    const touch1 = event.touches[0];
+                    const touch2 = event.touches[1];
+                    lastPinchDistance = Math.hypot(
+                        touch2.clientX - touch1.clientX,
+                        touch2.clientY - touch1.clientY
+                    );
+                }
+            }
+        }, { passive: false });
+
+        canvas.addEventListener('touchmove', (event) => {
+            // Only process touch events on the canvas itself, not controls
+            if (!event.target.closest('.controls-container')) {
+                event.preventDefault();
+                
+                if (event.touches.length === 1 && isTouching) {
+                    // Single touch move - create ripples as we drag
+                    const touchX = Math.floor(event.touches[0].clientX);
+                    const touchY = Math.floor(event.touches[0].clientY);
+                    
+                    // Calculate distance moved
+                    const dx = touchX - lastTouchX;
+                    const dy = touchY - lastTouchY;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    // Only create new splash if moved enough distance
+                    if (distance > 10) {
+                        createSplash(touchX, touchY);
+                        lastTouchX = touchX;
+                        lastTouchY = touchY;
+                        // NEW DRIP SOUND LOGIC (5% chance to play on touch drag ripple)
+                        if (Math.random() < 0.05) { 
+                            playSound(dripSound);
+                        }
+                    }
+                } else if (event.touches.length === 2 && isPinching) {
+                    // Pinch to zoom
+                    const touch1 = event.touches[0];
+                    const touch2 = event.touches[1];
+                    
+                    // Calculate new distance
+                    const currentPinchDistance = Math.hypot(
+                        touch2.clientX - touch1.clientX,
+                        touch2.clientY - touch1.clientY
+                    );
+                    
+                    // Calculate zoom factor
+                    const pinchRatio = currentPinchDistance / lastPinchDistance;
+                    lastPinchDistance = currentPinchDistance;
+                    
+                    // Get touch center position
+                    const centerX = (touch1.clientX + touch2.clientX) / 2;
+                    const centerY = (touch1.clientY + touch2.clientY) / 2;
+                    
+                    // Convert to world coordinates before zoom change
+                    const worldBeforeZoom = screenToWorld(centerX, centerY);
+                    
+                    // Apply zoom
+                    const newZoom = zoom * pinchRatio;
+                    zoom = Math.max(1.0, Math.min(5.0, newZoom));
+                    
+                    // If zooming out to minimum, recenter
+                    if (newZoom < 1.0 && zoom === 1.0) {
+                        offsetX = 0;
+                        offsetY = 0;
+                    } else {
+                        // Convert back to world coordinates after zoom change
+                        const worldAfterZoom = screenToWorld(centerX, centerY);
+                        
+                        // Adjust offset to keep center point fixed
+                        offsetX += worldBeforeZoom.x - worldAfterZoom.x;
+                        offsetY += worldBeforeZoom.y - worldAfterZoom.y;
+                    }
+                    
+                    // Update displayed zoom level
+                    updateZoomDisplay();
+                }
+            }
+        }, { passive: false });
+
+        canvas.addEventListener('touchend', (event) => {
+            // Only process touch events on the canvas itself, not controls
+            if (!event.target.closest('.controls-container')) {
+                event.preventDefault();
+                
+                // Handle tap (quick touch)
+                const touchDuration = Date.now() - touchStartTime;
+                
+                if (touchDuration < 300 && event.changedTouches.length === 1 && !isPinching) {
+                    const touchX = Math.floor(event.changedTouches[0].clientX);
+                    const touchY = Math.floor(event.changedTouches[0].clientY);
+                    createSplash(touchX, touchY);
+                    // NEW SPLASH SOUND LOGIC (Play on quick tap)
+                    playSound(splashSound);
+                }
+                
+                // Reset flags based on remaining touches
+                if (event.touches.length === 0) {
+                    isTouching = false;
+                    isPinching = false;
+                } else if (event.touches.length === 1) {
+                    isPinching = false;
+                    // Update last touch position for continued single touch
+                    lastTouchX = Math.floor(event.touches[0].clientX);
+                    lastTouchY = Math.floor(event.touches[0].clientY);
+                }
+            }
+        }, { passive: false });
+
+        canvas.addEventListener('touchcancel', (event) => {
+            isTouching = false;
+            isPinching = false;
+        });
+
+        canvas.addEventListener('contextmenu', (event) => event.preventDefault());
+
+        window.addEventListener('resize', () => {
+            // Store old dimensions
+            const oldWidth = canvas.width;
+            const oldHeight = canvas.height;
+            
+            // Update canvas size
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            
+            // Create new arrays if canvas size changed significantly
+            if (Math.abs(canvas.width - baseWidth) > 100 || Math.abs(canvas.height - baseHeight) > 100) {
+                // Save old values
+                const oldCurrentHeight = currentHeight;
+                const oldPreviousHeight = previousHeight;
+                
+                // Create new arrays
+                currentHeight = new Float32Array(canvas.width * canvas.height);
+                previousHeight = new Float32Array(canvas.width * canvas.height);
+                nextHeight = new Float32Array(canvas.width * canvas.height);
+                
+                // Copy old values (where possible)
+                const copyWidth = Math.min(oldWidth, canvas.width);
+                const copyHeight = Math.min(oldHeight, canvas.height);
+                
+                for (let y = 0; y < copyHeight; y++) {
+                    for (let x = 0; x < copyWidth; x++) {
+                        const newIndex = y * canvas.width + x;
+                        const oldIndex = y * oldWidth + x;
+                        currentHeight[newIndex] = oldCurrentHeight[oldIndex];
+                        previousHeight[newIndex] = oldPreviousHeight[oldIndex];
+                    }
+                }
+            }
+        });
+
+        function loop() {
+            simulate();
+            if (isMouseDown && mouseX >= 0 && mouseX < canvas.width && mouseY >= 0 && mouseY < canvas.height) {
+                createSplash(mouseX, mouseY);
+            }
+            render();
+            requestAnimationFrame(loop);
+        }
+
+        // 3. SUBMIT TIME PLAYED ON PAGE EXIT (Visibility API)
+        function submitPlayTime() {
+            // Since this is a simulation with no 'score', we pass 0 as the score argument.
+            // The manager will only log the time played, as configured above (hasScore: false).
+            scoreManager.submitGameResult(0); 
+        }
+
+        // Trigger submission when the page is hidden (user switches tabs, minimizes, or closes)
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'hidden') {
+                submitPlayTime();
+            }
+        });
+        
+        // Final attempt to catch beforeunload/page close (less reliable, but good fallback)
+        window.addEventListener('beforeunload', submitPlayTime);
+
+        // Initialization
+        updateZoomDisplay();
+        // 2. START THE TRACKING SESSION
+        scoreManager.startSession();
+        requestAnimationFrame(loop);
+        
+        // Initial controls timer
+        resetControlsTimer();
+    </script>
+</body>
+</html>

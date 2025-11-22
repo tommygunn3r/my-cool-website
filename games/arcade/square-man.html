@@ -1,0 +1,1108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Square-Man: 8-bit Maze Game</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Tone.js for music and sound effects -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <!-- Firebase/Firestore Imports (Required for canvas environment) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+     const firebaseConfig = {
+  apiKey: "AIzaSyDjdo3U9qg_h4TKvplsFoZgxVNepAbCpFA",
+  authDomain: "gunners-games.firebaseapp.com",
+  projectId: "gunners-games",
+  storageBucket: "gunners-games.firebasestorage.app",
+  messagingSenderId: "644077315462",
+  appId: "1:644077315462:web:431dd985426f3dbe02f807",
+  measurementId: "G-RWNL900X43"
+};
+
+        let db = null, auth = null, firebaseInitialized = false;
+
+        // Function to initialize Firebase
+        async function initFirebase() {
+            if (!firebaseConfig.apiKey || firebaseConfig.apiKey === "YOUR_API_KEY_HERE") {
+                console.warn("Firebase config is missing. Data persistence will be unavailable.");
+                return;
+            }
+            try {
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+                await signInAnonymously(auth);
+                firebaseInitialized = true;
+                console.log("Firebase initialized and user signed in.");
+                window.userId = auth.currentUser?.uid || crypto.randomUUID();
+            } catch (error) {
+                console.error("Firebase initialization failed:", error);
+            }
+        }
+
+        initFirebase();
+        
+        // Export for use in game script
+        window.firebaseDb = () => db;
+        window.firebaseAuth = () => auth;
+        window.isFirebaseReady = () => firebaseInitialized;
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+        /* Custom 8-bit look */
+        body {
+            font-family: 'Press Start 2P', monospace;
+            background-color: #0d1117; /* Dark background */
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 1rem;
+            flex-direction: column;
+        }
+        .game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 600px;
+        }
+        canvas {
+            background-color: #000; /* Maze background */
+            border: 4px solid #fff;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+            image-rendering: pixelated; /* Crucial for 8-bit look */
+            touch-action: none; /* Prevent browser touch behavior */
+            width: 90vw; /* Responsive width */
+            max-width: 500px;
+            aspect-ratio: 1 / 1; /* Keep it square */
+        }
+        .info-bar {
+            width: 100%;
+            max-width: 500px;
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            font-size: 0.8rem;
+        }
+        .btn-8bit {
+            background-color: #ff0;
+            color: #000;
+            border: 3px solid #000;
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            box-shadow: 4px 4px 0 #888;
+            transition: all 0.1s;
+            text-shadow: 2px 2px 0 #f00;
+            font-size: 0.8rem;
+            margin: 0.5rem;
+        }
+        .btn-8bit:hover {
+            box-shadow: 2px 2px 0 #888;
+            transform: translate(2px, 2px);
+        }
+        .btn-8bit:active {
+            box-shadow: none;
+            transform: translate(4px, 4px);
+        }
+        .mobile-controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 1rem;
+            font-size: 1.5rem;
+        }
+        @media (min-width: 768px) {
+            .mobile-controls {
+                display: none; /* Hide on desktop */
+            }
+        }
+    </style>
+</head>
+<body class="p-4">
+
+    <div class="game-container">
+        <h1 class="text-3xl mb-4 text-yellow-400">Square-Man</h1>
+        <div class="info-bar">
+            <div id="scoreDisplay">SCORE: 000</div>
+            <div id="livesDisplay">LIVES: 3</div>
+        </div>
+        <canvas id="gameCanvas" width="500" height="500"></canvas>
+        <div id="messageBox" class="text-center text-xl mt-4 p-2 rounded-lg bg-red-800 text-yellow-400 hidden">
+            <p>Ready!</p>
+        </div>
+        <button id="startButton" class="btn-8bit mt-6">
+            Start Game (Click to Enable Audio)
+        </button>
+        <div class="mobile-controls">
+            <button class="btn-8bit" onclick="handleTouchInput('up')">▲</button>
+            <div class="flex flex-col">
+                <button class="btn-8bit" onclick="handleTouchInput('left')">◀</button>
+                <button class="btn-8bit" onclick="handleTouchInput('right')">▶</button>
+            </div>
+            <button class="btn-8bit" onclick="handleTouchInput('down')">▼</button>
+        </div>
+    </div>
+
+    <script type="module">
+        // ===== EMBEDDED GAME SCORE MANAGER =====
+        import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+        
+        class GameScoreManager {
+            constructor(gameName, hasScore = true) {
+                this.gameName = gameName;
+                this.hasScore = hasScore;
+                this.sessionStartTime = null;
+                this.playerName = localStorage.getItem('playerName') || this.generatePlayerName();
+            }
+
+            generatePlayerName() {
+                const adjectives = ['Swift', 'Mighty', 'Epic', 'Legendary', 'Brave', 'Noble', 'Quick', 'Bold'];
+                const nouns = ['Gamer', 'Player', 'Hero', 'Champion', 'Master', 'Legend', 'Pro', 'Ace'];
+                const name = `${adjectives[Math.floor(Math.random() * adjectives.length)]}${nouns[Math.floor(Math.random() * nouns.length)]}${Math.floor(Math.random() * 999)}`;
+                localStorage.setItem('playerName', name);
+                return name;
+            }
+
+            startSession() {
+                this.sessionStartTime = Date.now();
+            }
+
+            getElapsedTime() {
+                if (!this.sessionStartTime) return 0;
+                return Math.floor((Date.now() - this.sessionStartTime) / 1000);
+            }
+
+            async submitGameResult(score = 0) {
+                if (!window.isFirebaseReady || !window.isFirebaseReady()) {
+                    console.log('Leaderboard unavailable');
+                    return;
+                }
+                
+                const db = window.firebaseDb();
+                if (!db) return;
+
+                try {
+                    await addDoc(collection(db, 'scores'), {
+                        gameName: this.gameName,
+                        playerName: this.playerName,
+                        score: this.hasScore ? score : 0,
+                        timePlayed: this.getElapsedTime(),
+                        timestamp: serverTimestamp()
+                    });
+                    console.log('Score submitted');
+                } catch (error) {
+                    console.warn('Failed to submit score');
+                }
+            }
+        }
+        // ===== END EMBEDDED CODE =====
+        
+        // Initialize score manager for Square Man
+        const scoreManager = new GameScoreManager('square_man', true);
+        
+        // --- Game Setup Constants ---
+        let lastTimestamp = null; // for time-based movement (60 FPS baseline)
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreDisplay = document.getElementById('scoreDisplay');
+        const livesDisplay = document.getElementById('livesDisplay');
+        const messageBox = document.getElementById('messageBox');
+        const startButton = document.getElementById('startButton');
+
+        const GRID_ROWS = 20; 
+        const GRID_COLS = 21;
+        let TILE_SIZE; // Calculated dynamically
+        const MOVE_THRESHOLD = 0.05; // Tight tolerance for turning
+
+        // 0: Dot, 1: Wall, 2: Empty/Path, 3: Power-Up, 4: Ghost Home, 5: Tunnel
+        let MAP = [
+            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+            [1,3,0,0,0,0,0,0,0,1,2,1,0,0,0,0,0,0,0,3,1],
+            [1,0,1,1,0,1,1,1,0,1,2,1,0,1,1,1,0,1,1,0,1],
+            [1,0,1,1,0,1,1,1,0,1,2,1,0,1,1,1,0,1,1,0,1],
+            [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+            [1,0,1,1,0,1,0,1,1,1,1,1,1,1,0,1,0,1,1,0,1],
+            [1,0,0,0,0,1,0,0,0,1,2,1,0,0,0,1,0,0,0,0,1],
+            [1,1,1,1,0,1,1,1,0,1,2,1,0,1,1,1,0,1,1,1,1],
+            [1,2,2,1,0,1,0,0,0,0,0,0,0,0,0,1,0,1,2,2,1],
+            [1,1,1,1,0,1,0,1,1,4,4,4,1,1,0,1,0,1,1,1,1],
+            [5,2,2,2,0,0,0,1,4,4,4,4,4,1,0,0,0,2,2,2,5], // Tunnel Tiles (5) at ends
+            [1,1,1,1,0,1,0,1,1,1,1,1,1,1,0,1,0,1,1,1,1],
+            [1,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,1],
+            [1,0,1,1,0,1,0,1,1,1,1,1,1,1,0,1,0,1,1,0,1],
+            [1,0,1,1,0,0,0,0,0,0,1,0,0,0,0,0,0,1,1,0,1],
+            [1,0,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,0,1],
+            [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+            [1,0,1,1,1,1,1,1,0,1,1,1,0,1,1,1,1,1,1,0,1],
+            [1,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,1],
+            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+        ];
+
+        const GHOST_EXIT_TARGET = { row: 8, col: 10 }; // Tile right above the ghost house
+        const HOME_POS = { row: 10.0, col: 10.0 }; // Center of the ghost box for respawn
+
+        let game;
+
+        // --- Tone.js Audio Setup ---
+        let bgm, bgmSynth, bgmVolume, munchSynth, powerUpSynth, deathSynth; 
+
+        function setupAudio() {
+            // 1. Create BGM Volume node and connect to destination
+            bgmVolume = new Tone.Volume(-15).toDestination();
+
+            // 2. Create BGM Synth and connect it to the volume node
+            bgmSynth = new Tone.Synth({
+                oscillator: { type: "square" },
+                envelope: { attack: 0.005, decay: 0.1, sustain: 0.1, release: 0.05 }
+            }).connect(bgmVolume);
+
+
+            // Background Music (BGM) - Simple 8-bit chip tune
+            bgm = new Tone.Loop(time => {
+                const notes = ["C4", "E4", "G4", "C5", "G4", "E4"];
+                // 3. Trigger notes on the persistent bgmSynth
+                notes.forEach((note, index) => {
+                    bgmSynth.triggerAttackRelease(note, "8n", time + index * 0.15);
+                });
+            }, "1n");
+
+            // Munch SFX
+            munchSynth = new Tone.Synth({
+                oscillator: { type: "square" },
+                envelope: { attack: 0.001, decay: 0.05, sustain: 0.01, release: 0.05 }
+            }).toDestination();
+            munchSynth.volume.value = -10;
+
+            // Power-Up SFX
+            powerUpSynth = new Tone.MembraneSynth({
+                pitchDecay: 0.01,
+                octaves: 3,
+                oscillator: { type: "square" },
+                envelope: { attack: 0.005, decay: 0.2, sustain: 0.1, release: 0.5 }
+            }).toDestination();
+            powerUpSynth.volume.value = -5;
+
+            // Death SFX (A simple descending arpeggio)
+            deathSynth = new Tone.PolySynth(Tone.Synth, {
+                oscillator: { type: "square" },
+                envelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 0.5 }
+            }).toDestination();
+            deathSynth.volume.value = -10;
+        }
+
+        function playMunch() {
+            munchSynth.triggerAttackRelease("C5", "16n");
+        }
+
+        function playPowerUp() {
+            powerUpSynth.triggerAttackRelease("C3", "2n");
+            powerUpSynth.triggerAttackRelease("G3", "1n", "+0.1");
+        }
+
+        function playDeath() {
+            deathSynth.triggerAttackRelease(["C3", "B2", "A2", "G2"], "8n", 0);
+        }
+
+        function startBGM() {
+            if (bgm && !bgm.state) {
+                bgm.start(0);
+                Tone.Transport.start();
+            }
+        }
+
+        function stopBGM() {
+            if (bgm && bgm.state === 'started') {
+                bgm.stop();
+                Tone.Transport.stop();
+            }
+        }
+
+        // --- Utility Functions ---
+
+        // Manhattan distance for AI pathfinding
+        function manhattanDistance(r1, c1, r2, c2) {
+            return Math.abs(r1 - r2) + Math.abs(c1 - c2);
+        }
+
+        // --- Game Entity Classes ---
+
+        class Entity {
+            constructor(row, col, color) {
+                // Now uses float positions for smooth movement
+                this.row = parseFloat(row);
+                this.col = parseFloat(col);
+                this.color = color;
+                this.sizeRatio = 0.8; // Base size of the entity relative to TILE_SIZE
+                this.currentDirection = 'none'; // 'up', 'down', 'left', 'right'
+                this.nextDirection = 'none';
+                this.speed = 0.1; // Default speed: 10% of a tile per frame
+            }
+
+            draw() {
+                const x = this.col * TILE_SIZE + TILE_SIZE / 2;
+                const y = this.row * TILE_SIZE + TILE_SIZE / 2;
+                const size = TILE_SIZE * this.sizeRatio;
+
+                ctx.fillStyle = this.color;
+                ctx.fillRect(x - size / 2, y - size / 2, size, size);
+
+                // Draw 8-bit eyes/details (simple black squares)
+                ctx.fillStyle = "#000";
+                const eyeSize = size * 0.1;
+                ctx.fillRect(x - size * 0.25 - eyeSize / 2, y - size * 0.25 - eyeSize / 2, eyeSize, eyeSize);
+                ctx.fillRect(x + size * 0.25 - eyeSize / 2, y - size * 0.25 - eyeSize / 2, eyeSize, eyeSize);
+            }
+
+            move(map, delta = 1) {
+                // 1. Handle buffered direction change (turning)
+                this.handleTurns(map);
+
+                let nextRow = this.row;
+                let nextCol = this.col;
+                const speed = this.speed * delta; // time-based speed (tiles per 60FPS-second)
+
+                // Determine the current integer tile for robust wall checking
+                const currentTileR = Math.round(this.row);
+                const currentTileC = Math.round(this.col);
+
+                // FIX: Use base size ratio for collision detection, not powered-up size
+                const collisionSize = this.baseSizeRatio;
+
+                // --- Movement & Collision Prediction ---
+                
+                if (this.currentDirection === 'up') {
+                    nextRow -= speed; 
+                    nextCol = currentTileC; // Stay aligned on column axis 
+                    
+                    const tileAhead = Math.floor(nextRow - collisionSize / 2); // Check the tile the entity's edge is moving into
+                    // Check for wall one tile ahead
+                    if (map[tileAhead] && map[tileAhead][currentTileC] === 1) {
+                        // Clamp so the entity's TOP EDGE stops at the wall boundary
+                        const clampValue = tileAhead + 1 - collisionSize / 2 ; // Add small epsilon
+                        if (nextRow <= clampValue) {
+                            nextRow = clampValue;
+                            this.currentDirection = 'none';
+                        }
+                    }
+                } else if (this.currentDirection === 'down') {
+                    nextRow += speed; 
+                    nextCol = currentTileC; // Stay aligned on column axis
+
+                    const tileAhead = Math.ceil(nextRow + collisionSize / 2); // Check the tile the entity's edge is moving into
+                    if (map[tileAhead] && map[tileAhead][currentTileC] === 1) {
+                         // Clamp so the entity's BOTTOM EDGE stops at the wall boundary
+                        const clampValue = tileAhead - 1 + collisionSize / 2 ; // Subtract small epsilon
+                        if (nextRow >= clampValue) {
+                            nextRow = clampValue;
+                            this.currentDirection = 'none';
+                        }
+                    }
+                } else if (this.currentDirection === 'left') {
+                    nextCol -= speed;
+                    nextRow = currentTileR; // Stay aligned on row axis
+
+                    const tileAhead = Math.floor(nextCol - collisionSize / 2); // Check the tile the entity's edge is moving into
+                    if (map[currentTileR] && map[currentTileR][tileAhead] === 1) {
+                         // Clamp so the entity's LEFT EDGE stops at the wall boundary
+                        const clampValue = tileAhead + 1 - collisionSize / 2 ; // Add small epsilon
+                        if (nextCol <= clampValue) {
+                            nextCol = clampValue;
+                            this.currentDirection = 'none';
+                        }
+                    }
+                } else if (this.currentDirection === 'right') {
+                    nextCol += speed;
+                    nextRow = currentTileR; // Stay aligned on row axis
+
+                    const tileAhead = Math.ceil(nextCol + collisionSize / 2); // Check the tile the entity's edge is moving into
+                    if (map[currentTileR] && map[currentTileR][tileAhead] === 1) {
+                         // Clamp so the entity's RIGHT EDGE stops at the wall boundary
+                        const clampValue = tileAhead - 1 + collisionSize / 2 ; // Subtract small epsilon
+                        if (nextCol >= clampValue) {
+                            nextCol = clampValue;
+                            this.currentDirection = 'none';
+                        }
+                    }
+                }
+
+                // --- Position Update ---
+                this.row = nextRow;
+                this.col = nextCol;
+                
+                // --- Teleport Check (Boundary Wrap-around) ---
+                if (this.col < 0) {
+                    this.col = GRID_COLS - 1; // Wrap to right side
+                    this.row = 10.0; // Ensure it stays aligned in the tunnel row
+                } else if (this.col >= GRID_COLS) {
+                    this.col = 0; // Wrap to left side
+                    this.row = 10.0; // Ensure it stays aligned in the tunnel row
+                }
+
+
+                // Return true if movement occurred, false if clamped/stopped
+                const moved = this.currentDirection !== 'none';
+
+                // Stuck recovery auto-center (not in ghost home)
+                {
+                    const rCenter = Math.round(this.row);
+                    const cCenter = Math.round(this.col);
+                    const tileHere = map[rCenter]?.[cCenter];
+                    if (!moved && tileHere !== 4) {
+                        this.row = rCenter;
+                        this.col = cCenter;
+                    }
+                }
+
+                return moved; 
+            }
+
+            handleTurns(map) {
+                // Only allow turning if the entity is close to the center of a tile
+                const rowCenter = Math.round(this.row);
+                const colCenter = Math.round(this.col);
+                
+                // isAligned check uses a tight threshold
+                const isAligned = (Math.abs(this.row - rowCenter) < MOVE_THRESHOLD) && 
+                                  (Math.abs(this.col - colCenter) < MOVE_THRESHOLD);
+
+                if (this.nextDirection !== 'none') {
+                    // Determine the integer coordinates of the tile we would enter
+                    let nextR = rowCenter;
+                    let nextC = colCenter;
+                    if (this.nextDirection === 'up') nextR--;
+                    else if (this.nextDirection === 'down') nextR++;
+                    else if (this.nextDirection === 'left') nextC--;
+                    else if (this.nextDirection === 'right') nextC++;
+
+                    // Special check for ghosts when leaving home
+                    const isGhostLeavingHome = (this instanceof Ghost) && this.isLeavingHome;
+                    
+                    // Ghost home tiles (4) should only block non-leaving ghosts
+                    let blocksTile = map[nextR] && map[nextR][nextC] === 1;
+
+                    if (!isGhostLeavingHome) {
+                        blocksTile = blocksTile || (map[nextR] && map[nextR][nextC] === 4);
+                    }
+
+
+                    // Check if that intended tile is a path (not a wall '1', or blocked '4')
+                    if (map[nextR] && !blocksTile) {
+                        // Allow turn if aligned OR if the entity is stopped (just hit a wall)
+                        if (isAligned || this.currentDirection === 'none') { 
+                            // Force snap to center to ensure perfect alignment before starting new movement
+                            this.row = rowCenter;
+            this.col = colCenter;  // force-perfect centering before turn
+                            this.col = colCenter;
+                            this.currentDirection = this.nextDirection;
+                            this.nextDirection = 'none';
+                        }
+                    }
+                }
+            }
+        }
+
+        class Player extends Entity {
+            constructor(row, col) {
+                super(row, col, '#ff0'); // Yellow player
+                this.baseSizeRatio = 0.8;
+                this.sizeRatio = this.baseSizeRatio;
+                this.isPoweredUp = false;
+                this.powerUpTimer = 0;
+                this.speed = 0.12; // Player moves slightly faster
+            }
+
+            update(map, ghosts, delta) {
+                if (this.move(map, delta)) {
+                    this.checkCollisions(map, ghosts);
+                }
+
+                if (this.isPoweredUp) {
+                    // 300 ~= 5 seconds at 60 FPS; delta is "60fps frames"
+                    this.powerUpTimer -= delta;
+                    this.sizeRatio = this.baseSizeRatio * 1.2; // Get bigger
+                    if (this.powerUpTimer <= 0) {
+                        this.isPoweredUp = false;
+                        this.sizeRatio = this.baseSizeRatio; // Back to normal size
+                        ghosts.forEach(g => g.color = g.originalColor);
+                    }
+                }
+            }
+
+            checkCollisions(map, ghosts) {
+                // Check dot/power-up collision only at the rounded (integer) grid position
+                const r = Math.round(this.row);
+                const c = Math.round(this.col);
+
+                // Boundary check before accessing map (especially important near tunnels)
+                if (r < 0 || r >= GRID_ROWS || c < 0 || c >= GRID_COLS) return;
+
+                const tileValue = map[r][c];
+
+                if (tileValue === 0) { // Dot collision
+                    map[r][c] = 2; // Munch the dot
+                    game.score += 10;
+                    game.dotsRemaining--;
+                    playMunch();
+                } else if (tileValue === 3) { // Power-up collision
+                    map[r][c] = 2; // Consume power-up
+                    this.isPoweredUp = true;
+                    this.powerUpTimer = 300; // 5 seconds at 60 FPS
+                    game.score += 50;
+                    playPowerUp();
+
+                    // Ghosts turn blue/vulnerable
+                    ghosts.forEach(g => g.color = '#00f');
+                }
+            }
+        }
+
+        class Ghost extends Entity {
+            constructor(row, col, color) {
+                super(row, col, color);
+                this.originalColor = color;
+                this.startRow = row; // Store original starting position
+                this.startCol = col;
+                this.speed = 0.08; // Ghosts move slightly slower than player
+                this.isLeavingHome = true;
+            }
+
+            update(map, player, delta) {
+                // Get the AI's intended next direction first
+                this.nextDirection = this.determineNextAction(map, player);
+
+                // Perform the move
+                this.move(map, delta);
+
+                // Check collision with player
+                this.checkPlayerCollision(player);
+
+                // Check if the ghost is done leaving home
+                if (this.isLeavingHome) {
+                    const r = Math.round(this.row);
+                    const c = Math.round(this.col);
+                    // Check if ghost has reached the exit tile
+                    if (r === GHOST_EXIT_TARGET.row && c === GHOST_EXIT_TARGET.col) {
+                        this.isLeavingHome = false;
+                    }
+                }
+            }
+            
+            determineNextAction(map, player) {
+                const r = Math.round(this.row);
+                const c = Math.round(this.col);
+                
+                // Only choose a new direction when aligned to the grid center
+                if (Math.abs(this.row - r) > 0.01 || Math.abs(this.col - c) > 0.01) {
+                    return this.nextDirection; // Keep current buffered direction if not aligned
+                }
+
+                let targetR, targetC;
+
+                if (this.isLeavingHome) {
+                    // Target: The maze exit above the house
+                    targetR = GHOST_EXIT_TARGET.row;
+                    targetC = GHOST_EXIT_TARGET.col;
+                    return this.chooseDirectionToTarget(map, targetR, targetC, false);
+                } else if (player.isPoweredUp && this.color === '#00f') {
+                    // Flee Mode: Target the corner farthest from the player
+                    targetR = r < GRID_ROWS / 2 ? GRID_ROWS - 2 : 1;
+                    targetC = c < GRID_COLS / 2 ? GRID_COLS - 2 : 1;
+                    return this.chooseDirectionToTarget(map, targetR, targetC, true); // true for Flee mode (Maximize distance)
+                } else {
+                    // Chase Mode: Target the player's current tile
+                    targetR = Math.round(player.row);
+                    targetC = Math.round(player.col);
+                    return this.chooseDirectionToTarget(map, targetR, targetC, false); // false for Chase mode (Minimize distance)
+                }
+            }
+
+            // Centralized AI decision function
+            chooseDirectionToTarget(map, targetR, targetC, isFleeing) {
+                const directions = ['up', 'down', 'left', 'right'];
+                let bestDir = 'none';
+                let bestScore = isFleeing ? -1 : Infinity; // Minimize for chase, Maximize for flee
+                
+                const r = Math.round(this.row);
+                const c = Math.round(this.col);
+
+                for (const dir of directions) {
+                    const tempRow = r + (dir === 'up' ? -1 : dir === 'down' ? 1 : 0);
+                    const tempCol = c + (dir === 'left' ? -1 : dir === 'right' ? 1 : 0);
+
+                    // Check boundaries
+                    if (tempRow < 0 || tempRow >= GRID_ROWS || tempCol < 0 || tempCol >= GRID_COLS) continue;
+
+                    // Ghost home tiles (4) should ONLY block non-leaving ghosts
+                    const isBlocked = map[tempRow][tempCol] === 1 || (!this.isLeavingHome && map[tempRow][tempCol] === 4);
+
+
+                    if (!isBlocked) 
+                    {
+                        // Prevent instant 180-degree turns
+                        if (this.getOppositeDirection(this.currentDirection) !== dir) 
+                        {
+                            const dist = manhattanDistance(tempRow, tempCol, targetR, targetC);
+                            
+                            if (isFleeing) {
+                                if (dist > bestScore) {
+                                    bestScore = dist;
+                                    bestDir = dir;
+                                }
+                            } else { // Chase Mode (or Leaving Home)
+                                if (dist < bestScore) {
+                                    bestScore = dist;
+                                    bestDir = dir;
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                // Fallback: If no smart non-180 move is possible (e.g., dead end), allow a 180.
+                if (bestDir === 'none' && this.currentDirection !== 'none') {
+                    const opposite = this.getOppositeDirection(this.currentDirection);
+                    const tempRow = r + (opposite === 'up' ? -1 : opposite === 'down' ? 1 : 0);
+                    const tempCol = c + (opposite === 'left' ? -1 : opposite === 'right' ? 1 : 0);
+
+                    if (tempRow >= 0 && tempRow < GRID_ROWS && tempCol >= 0 && tempCol < GRID_COLS) {
+                        const isBlocked = map[tempRow][tempCol] === 1 || (!this.isLeavingHome && map[tempRow][tempCol] === 4);
+                        if (!isBlocked) {
+                             return opposite;
+                        }
+                    }
+                }
+
+                return bestDir;
+            }
+
+            getOppositeDirection(dir) {
+                if (dir === 'up') return 'down';
+                if (dir === 'down') return 'up';
+                if (dir === 'left') return 'right';
+                if (dir === 'right') return 'left';
+                return 'none';
+            }
+
+            checkPlayerCollision(player) {
+                // Check if the center points of the entities are close enough
+                const distance = Math.sqrt(Math.pow(this.row - player.row, 2) + Math.pow(this.col - player.col, 2));
+
+                if (distance < 0.7) { // 0.7 tiles distance for collision
+                    if (player.isPoweredUp && this.color === '#00f') {
+                        // Player eats ghost
+                        game.score += 200;
+                        this.respawn();
+                        player.powerUpTimer = Math.max(0, player.powerUpTimer - 60); // Penalty for eating (shortens power up)
+                    } else {
+                        // Ghost eats player
+                        game.loseLife();
+                    }
+                }
+            }
+
+            respawn() {
+                // Return to original starting position
+                this.row = this.startRow;
+                this.col = this.startCol;
+                this.currentDirection = 'none';
+                this.nextDirection = 'none';
+                this.isLeavingHome = true;
+                this.color = this.originalColor;
+            }
+        }
+
+        // --- Game Manager ---
+
+        class DotMuncherGame {
+            constructor() {
+                this.score = 0;
+                this.lives = 3;
+                this.level = 1;
+                this.isRunning = false;
+                this.isPaused = true;
+                this.dotsRemaining = 0;
+                this.player = null;
+                this.ghosts = [];
+                this.map = this.deepCopyMap(MAP);
+
+                this.initialize();
+                window.addEventListener('resize', this.resizeCanvas.bind(this));
+            }
+
+            deepCopyMap(original) {
+                return original.map(row => [...row]);
+            }
+
+            initialize() {
+                this.score = 0;
+                this.lives = 3;
+                this.level = 1;
+                this.dotsRemaining = 0;
+                this.map = this.deepCopyMap(MAP);
+
+                // Count dots and position entities
+                for (let r = 0; r < GRID_ROWS; r++) {
+                    for (let c = 0; c < GRID_COLS; c++) {
+                        // Count dots, including power-ups
+                        if (this.map[r][c] === 0 || this.map[r][c] === 3) {
+                            this.dotsRemaining++;
+                        }
+                    }
+                }
+
+                // Player starts at 16.0, 10.0 (clear path tile)
+                this.player = new Player(16.0, 10.0);
+
+                // Initialize ghosts near the "ghost home" (float coordinates)
+                this.ghosts = [
+                    new Ghost(9.0, 9.0, '#f00'), // Red
+                    new Ghost(9.0, 11.0, '#ff8800'), // Orange
+                    new Ghost(10.0, 9.0, '#0f0'), // Green
+                    new Ghost(10.0, 11.0, '#ffc0cb'), // Pink
+                ];
+
+                this.resizeCanvas();
+                this.updateDisplay();
+                this.showMessage("GET READY!", false);
+            }
+
+            /**
+             * Resizes the canvas and recalculates TILE_SIZE, ensuring a valid size 
+             * is used even if initial container measurements are 0.
+             */
+            resizeCanvas() {
+                const container = canvas.parentElement;
+                
+                // Get the size, safely defaulting to 500 if clientWidth/Height are 0
+                let size = Math.min(container.clientWidth || 500, container.clientHeight || 500, 500);
+
+                // Final safety check to prevent TILE_SIZE from becoming 0
+                if (size < 100) {
+                    size = 500; 
+                }
+
+                // Set canvas internal dimensions
+                canvas.width = size;
+                canvas.height = size;
+                
+                // Recalculate TILE_SIZE
+                TILE_SIZE = canvas.width / GRID_COLS;
+                this.draw();
+            }
+
+            start() {
+                if (this.isRunning) return;
+                this.isRunning = true;
+                this.isPaused = false;
+                this.hideMessage();
+                
+                // Start tracking time
+                scoreManager.startSession();
+                
+                startBGM();
+                lastTimestamp = null; // reset timing at (re)start
+                requestAnimationFrame(this.gameLoop.bind(this));
+            }
+
+            pause() {
+                this.isPaused = true;
+                stopBGM();
+                this.showMessage("PAUSED - Press Enter/Space to Resume");
+            }
+
+            loseLife() {
+                this.lives--;
+                playDeath();
+                stopBGM();
+                this.updateDisplay();
+                if (this.lives <= 0) {
+                    this.gameOver();
+                } else {
+                    this.resetPosition();
+                }
+            }
+
+            resetPosition() {
+                this.isPaused = true;
+                // Reset to float coordinates, using the fixed starting position
+                this.player.row = 16.0;
+                this.player.col = 10.0;
+                this.player.currentDirection = 'none';
+                this.player.nextDirection = 'none';
+                this.player.isPoweredUp = false;
+                this.player.powerUpTimer = 0;
+                this.player.sizeRatio = this.player.baseSizeRatio;
+
+                this.ghosts.forEach(g => {
+                    g.respawn();
+                });
+
+                this.showMessage(`LIFE LOST! LIVES: ${this.lives}`, false);
+                setTimeout(() => {
+                    this.showMessage("GET READY!", false);
+                    setTimeout(() => {
+                        this.isPaused = false;
+                        this.hideMessage();
+                        startBGM();
+                    }, 2000);
+                }, 1000);
+            }
+
+            gameOver() {
+                this.isRunning = false;
+                this.isPaused = true;
+                stopBGM();
+                
+                // Submit score to leaderboard
+                scoreManager.submitGameResult(this.score);
+                
+                const playTime = scoreManager.getElapsedTimeFormatted();
+                this.showMessage(`GAME OVER! Final Score: ${this.score} | Time: ${playTime}`, true, 'bg-red-900');
+            }
+
+            winGame() {
+                this.isRunning = false;
+                this.isPaused = true;
+                stopBGM();
+                
+                this.level++;
+                const levelBonus = 1000 * this.level;
+                this.score += levelBonus;
+                
+                this.showMessage(`LEVEL ${this.level - 1} COMPLETE! Bonus: ${levelBonus}`, false);
+                
+                setTimeout(() => {
+                    this.nextLevel();
+                }, 3000);
+            }
+            
+            nextLevel() {
+                // Reset map but keep score and lives
+                this.map = this.deepCopyMap(MAP);
+                this.dotsRemaining = 0;
+                
+                // Count dots
+                for (let r = 0; r < GRID_ROWS; r++) {
+                    for (let c = 0; c < GRID_COLS; c++) {
+                        if (this.map[r][c] === 0 || this.map[r][c] === 3) {
+                            this.dotsRemaining++;
+                        }
+                    }
+                }
+                
+                // Reset player position
+                this.player.row = 16.0;
+                this.player.col = 10.0;
+                this.player.currentDirection = 'none';
+                this.player.nextDirection = 'none';
+                this.player.isPoweredUp = false;
+                this.player.powerUpTimer = 0;
+                this.player.sizeRatio = this.player.baseSizeRatio;
+                
+                // Reset all ghosts to starting positions
+                this.ghosts.forEach(g => g.respawn());
+                
+                this.updateDisplay();
+                this.showMessage(`LEVEL ${this.level} - GET READY!`, false);
+                
+                setTimeout(() => {
+                    this.isPaused = false;
+                    this.isRunning = true;
+                    this.hideMessage();
+                    startBGM();
+                }, 2000);
+            }
+
+            update(delta) {
+                if (this.isPaused || !this.isRunning) return;
+
+                this.player.update(this.map, this.ghosts, delta);
+                this.ghosts.forEach(g => g.update(this.map, this.player, delta));
+
+                this.updateDisplay();
+
+                if (this.dotsRemaining === 0) {
+                    this.winGame();
+                }
+            }
+
+            draw() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                for (let r = 0; r < GRID_ROWS; r++) {
+                    for (let c = 0; c < GRID_COLS; c++) {
+                        const x = c * TILE_SIZE;
+                        const y = r * TILE_SIZE;
+
+                        const tile = this.map[r][c];
+
+                        if (tile === 1) { // Wall (Solid Block)
+                            ctx.fillStyle = '#0044ff'; // Blue Wall
+                            ctx.fillRect(x, y, TILE_SIZE, TILE_SIZE);
+                            ctx.strokeStyle = '#002288';
+                            ctx.lineWidth = 1;
+                            ctx.strokeRect(x, y, TILE_SIZE, TILE_SIZE);
+                        } else if (tile === 5) { // Tunnel (Empty/Black)
+                            ctx.fillStyle = '#000';
+                            ctx.fillRect(x, y, TILE_SIZE, TILE_SIZE);
+                        } else if (tile === 0) { // Dot (Small Square)
+                            ctx.fillStyle = '#fff';
+                            const dotSize = TILE_SIZE / 6;
+                            ctx.fillRect(x + TILE_SIZE / 2 - dotSize / 2, y + TILE_SIZE / 2 - dotSize / 2, dotSize, dotSize);
+                        } else if (tile === 3) { // Power-Up (Bigger Square)
+                            ctx.fillStyle = '#ff00ff'; // Pink Power-Up
+                            const puSize = TILE_SIZE / 3;
+                            ctx.fillRect(x + TILE_SIZE / 2 - puSize / 2, y + TILE_SIZE / 2 - puSize / 2, puSize, puSize);
+                        }
+                    }
+                }
+
+                // Draw Entities
+                this.player.draw();
+                this.ghosts.forEach(g => g.draw());
+            }
+
+            gameLoop(timestamp) {
+                if (lastTimestamp === null) lastTimestamp = timestamp;
+                const delta = (timestamp - lastTimestamp) / 16.67; // 1.0 ~= one 60 FPS frame
+                lastTimestamp = timestamp;
+
+                this.update(delta);
+                this.draw();
+                if (this.isRunning) {
+                    requestAnimationFrame(this.gameLoop.bind(this));
+                }
+            }
+
+            updateDisplay() {
+                scoreDisplay.textContent = `SCORE: ${String(this.score).padStart(3, '0')}`;
+                livesDisplay.textContent = `LIVES: ${this.lives}`;
+            }
+
+            showMessage(text, isPermanent = false, bgColor = 'bg-red-800') {
+                messageBox.classList.remove('hidden', 'bg-red-800', 'bg-green-900');
+                messageBox.classList.add(bgColor);
+                messageBox.innerHTML = `<p>${text}</p>`;
+
+                if (!isPermanent) {
+                    setTimeout(() => {
+                        messageBox.classList.add('hidden');
+                    }, 1500);
+                }
+            }
+
+            hideMessage() {
+                messageBox.classList.add('hidden');
+            }
+        }
+
+        // --- Input and Event Handlers ---
+
+        function handleKeyDown(e) {
+            if (!game || game.isPaused) {
+                if (e.key === ' ' || e.key === 'Enter') {
+                    game.start();
+                }
+                return;
+            }
+
+            let newDir = 'none';
+            switch (e.key) {
+                case 'ArrowUp':
+                case 'w':
+                    newDir = 'up'; break;
+                case 'ArrowDown':
+                case 's':
+                    newDir = 'down'; break;
+                case 'ArrowLeft':
+                case 'a':
+                    newDir = 'left'; break;
+                case 'ArrowRight':
+                case 'd':
+                    newDir = 'right'; break;
+                case 'p':
+                    game.pause();
+                    break;
+            }
+            if (newDir !== 'none') {
+                game.player.nextDirection = newDir;
+            }
+        }
+
+        // Mobile touch input logic
+        function handleTouchInput(direction) {
+            if (game && game.isRunning && !game.isPaused) {
+                game.player.nextDirection = direction;
+            } else if (game && !game.isRunning) {
+                 game.start();
+            }
+        }
+
+        // Touch swipe detection for movement
+        let touchstartX = 0;
+        let touchstartY = 0;
+
+        canvas.addEventListener('touchstart', e => {
+            if (e.touches.length === 1) {
+                touchstartX = e.touches[0].clientX;
+                touchstartY = e.touches[0].clientY;
+            }
+            e.preventDefault();
+        }, { passive: false });
+
+        canvas.addEventListener('touchend', e => {
+            const touchendX = e.changedTouches[0].clientX;
+            const touchendY = e.changedTouches[0].clientY;
+
+            const diffX = touchendX - touchstartX;
+            const diffY = touchendY - touchstartY;
+
+            if (Math.abs(diffX) > 10 || Math.abs(diffY) > 10) {
+                if (Math.abs(diffX) > Math.abs(diffY)) {
+                    // Horizontal swipe
+                    game.player.nextDirection = diffX > 0 ? 'right' : 'left';
+                } else {
+                    // Vertical swipe
+                    game.player.nextDirection = diffY > 0 ? 'down' : 'up';
+                }
+            }
+            e.preventDefault();
+        }, { passive: false });
+
+
+        // --- Initialization ---
+
+        function initGame() {
+            // Setup game objects
+            game = new DotMuncherGame();
+
+            // Setup audio components
+            setupAudio();
+
+            // Set up event listeners
+            document.addEventListener('keydown', handleKeyDown);
+
+            // Start button handles first interaction (mandatory for web audio API)
+            startButton.addEventListener('click', async () => {
+                await Tone.start();
+                startButton.textContent = 'Use Arrow Keys/WASD or Swipe to Play!';
+                startButton.disabled = true;
+                startButton.classList.add('hidden');
+                game.start();
+            });
+
+            // Initial draw before loop starts
+            game.draw();
+        }
+
+        window.onload = initGame;
+    </script>
+</body>
+</html>
