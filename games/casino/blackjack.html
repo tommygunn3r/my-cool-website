@@ -693,7 +693,7 @@
         // Make closeGame available globally
         window.closeGame = closeGame;
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-        import { getFirestore, doc, getDoc, updateDoc, increment } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+        import { getFirestore, doc, getDoc, setDoc, updateDoc, increment } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
         // Firebase configuration for GunnersGames
         const firebaseConfig = {
@@ -720,6 +720,22 @@
         let animationSpeed = 0.5;
         let selectedTable = 'green';
         let aiPlayers = [];
+        let playerName = '';
+        let userId = '';
+
+        // Initialize player name
+        function initializePlayer() {
+            // Get or create player name
+            playerName = localStorage.getItem('playerName');
+            if (!playerName) {
+                // Generate a random player name
+                playerName = 'Player' + Math.floor(Math.random() * 10000);
+                localStorage.setItem('playerName', playerName);
+            }
+            
+            // Use player name as user ID (simplified)
+            userId = playerName;
+        }
 
         // Initialize GunnerCoins from localStorage
         function initializeBalance() {
@@ -739,7 +755,7 @@
 
         async function syncBalanceWithFirebase() {
             try {
-                const userDoc = doc(db, 'users', 'currentUser');
+                const userDoc = doc(db, 'users', userId);
                 const docSnap = await getDoc(userDoc);
                 
                 if (docSnap.exists()) {
@@ -750,6 +766,13 @@
                         localStorage.setItem('gunnercoins', balance);
                         document.getElementById('balance').textContent = balance;
                     }
+                } else {
+                    // Create new user document
+                    await setDoc(userDoc, {
+                        playerName: playerName,
+                        gunnercoins: balance,
+                        createdAt: new Date()
+                    });
                 }
             } catch (error) {
                 console.log('Firebase sync:', error);
@@ -905,12 +928,14 @@
             // Save to localStorage immediately
             localStorage.setItem('gunnercoins', balance);
             
-            // Update Firebase in background (don't await)
+            // Update Firebase in background
             try {
-                const userDoc = doc(db, 'users', 'currentUser'); // Replace with actual user ID
-                await updateDoc(userDoc, {
-                    gunnercoins: increment(amount)
-                });
+                const userDoc = doc(db, 'users', userId);
+                await setDoc(userDoc, {
+                    playerName: playerName,
+                    gunnercoins: balance,
+                    lastPlayed: new Date()
+                }, { merge: true });
             } catch (error) {
                 console.log('Firebase update:', error);
             }
@@ -994,13 +1019,24 @@
             
             currentBet = betAmount;
             
-            // Update balance locally first (don't block on Firebase)
+            // Update balance immediately
             balance -= currentBet;
             document.getElementById('balance').textContent = balance;
             localStorage.setItem('gunnercoins', balance);
             
             // Update Firebase in background
-            updateBalance(-currentBet).catch(err => console.log('Firebase update error:', err));
+            try {
+                const userDoc = doc(db, 'users', userId);
+                setDoc(userDoc, {
+                    playerName: playerName,
+                    gunnercoins: balance,
+                    lastPlayed: new Date()
+                }, { merge: true }).catch(err => 
+                    console.log('Firebase update:', err)
+                );
+            } catch (error) {
+                console.log('Firebase error:', error);
+            }
             
             playChipSound();
             
@@ -1234,7 +1270,8 @@
         document.getElementById('gameContainer').style.backgroundImage = 
             "url('../assets/casino/greentop.png')";
         
-        // Initialize balance from localStorage/Firebase
+        // Initialize player and balance
+        initializePlayer();
         initializeBalance();
         
         // Initialize game
