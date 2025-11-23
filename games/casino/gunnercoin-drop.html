@@ -555,7 +555,7 @@
         let lastHitWasX10 = false;
 
         const gravity = 0.38;
-        const pegRadius = 11;
+        const pegRadius = 8;          // was 11 – smaller peg for easier flow
         const coinRadius = 22;
         const dropZoneHeightRatio = 0.15;
         let dropZoneHeightPx = 0;
@@ -610,18 +610,26 @@
             setupPrizeBoxes();
         }
 
+        // UPDATED: Wider peg spacing so coin can fall
         function setupPegGrid() {
             pegGrid = [];
-            const cols = Math.floor(width / 60);
+
+            const spacingX = 90;   // wider columns
+            const spacingY = 90;   // wider rows
+            let cols = Math.floor(width / spacingX) - 1;
+            if (cols < 3) cols = 3;    // safety for small screens
+
             const rows = 7;
-            const startY = dropZoneHeightPx + 60;
-            const spacingX = width / cols;
-            const spacingY = 60;
+            const startY = dropZoneHeightPx + 80; // push first row lower
+
             for (let r = 0; r < rows; r++) {
                 const y = startY + r * spacingY;
                 for (let c = 0; c < cols; c++) {
-                    let x = (c + 0.5) * spacingX;
+                    let x = (c + 1) * spacingX;
+
+                    // stagger every other row (classic Plinko layout)
                     if (r % 2 === 1) x += spacingX / 2;
+
                     pegGrid.push({ x, y });
                 }
             }
@@ -697,15 +705,17 @@
             coin.y += coin.vy;
             coin.spinning += 0.18;
 
+            // Edge collision – slightly softer rebound
             if (coin.x < coin.radius) {
                 coin.x = coin.radius;
-                coin.vx *= -0.4;
+                coin.vx *= -0.35;
             }
             if (coin.x > width - coin.radius) {
                 coin.x = width - coin.radius;
-                coin.vx *= -0.4;
+                coin.vx *= -0.35;
             }
 
+            // Peg collisions
             for (let peg of pegGrid) {
                 const dx = coin.x - peg.x;
                 const dy = coin.y - peg.y;
@@ -720,13 +730,15 @@
                     const dot = coin.vx * nx + coin.vy * ny;
                     coin.vx -= 2 * dot * nx;
                     coin.vy -= 2 * dot * ny;
-                    coin.vx *= 0.8;
-                    coin.vy *= 0.8;
+                    // Softer damping so it doesn't stall
+                    coin.vx *= 0.92;
+                    coin.vy *= 0.92;
                     playPegHitSound();
                     addParticles(coin.x, coin.y, 6, 'gold');
                 }
             }
 
+            // Prize line
             if (coin.y + coin.radius >= prizeTrackY) {
                 const box = getPrizeBoxUnderCoin(coin.x);
                 if (box) {
@@ -739,6 +751,7 @@
                 }
             }
 
+            // Fell off bottom (no prize)
             if (coin.y - coin.radius > height + 50) {
                 coin.landed = true;
                 coin.prize = 0;
