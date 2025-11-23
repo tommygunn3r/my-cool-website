@@ -19,20 +19,26 @@
             --accent: #ffcc33;
         }
 
+        html, body {
+            width: 100%;
+            height: 100%;
+        }
+
         body {
             font-family: 'Cormorant Garamond', serif;
-            overflow: auto;
-            height: 100vh;
-            width: 100vw;
             margin: 0;
             padding: 0;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden; /* no scroll */
             background-color: #0a4a2e;
             background-size: cover;
             background-position: center;
             transition: background-image 0.5s ease-in-out;
+            touch-action: manipulation; /* better taps on mobile */
         }
 
-        /* --- Start Screen (reusing blackjack style) --- */
+        /* --- Start Screen --- */
         #tableSelector {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: linear-gradient(135deg, var(--dark) 0%, #2a1f1a 100%);
@@ -63,41 +69,45 @@
             background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
             color: var(--dark); border: none; border-radius: 50px; cursor: pointer; font-weight: 600;
             letter-spacing: 0.1em; transition: all 0.3s ease; box-shadow: 0 5px 20px rgba(212, 175, 55, 0.4);
-            display: none; /* Hidden until loaded */
+            display: none;
         }
         .start-button:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(212, 175, 55, 0.6); }
 
         /* --- Game Layout --- */
         #gameContainer {
-            width: 100vw; min-height: 100vh; height: auto;
-            display: flex; flex-direction: column; position: relative;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
         }
 
         .header {
-            display: flex; justify-content: space-between; align-items: center; padding: 1rem 2rem;
+            display: flex; justify-content: space-between; align-items: center; padding: 0.6rem 1.2rem;
             background: linear-gradient(180deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.6) 100%);
             border-bottom: 2px solid var(--gold); flex-shrink: 0;
         }
         .logo {
-            font-family: 'Cinzel', serif; font-size: 1.4rem; font-weight: 700; color: var(--gold);
+            font-family: 'Cinzel', serif; font-size: 1.2rem; font-weight: 700; color: var(--gold);
             letter-spacing: 0.15em; text-shadow: 0 0 15px rgba(212, 175, 55, 0.6);
         }
 
         .game-title {
-            font-family: 'Cinzel', serif; font-size: 1.2rem; font-weight: 600; color: var(--cream);
-            letter-spacing: 0.15em; text-align: center;
+            font-family: 'Cinzel', serif; font-size: 1rem; font-weight: 600; color: var(--cream);
+            letter-spacing: 0.12em; text-align: center;
         }
 
-        .balance { display: flex; align-items: center; gap: 0.5rem; font-size: 1.3rem; color: var(--cream); font-weight: 600; }
+        .balance { display: flex; align-items: center; gap: 0.3rem; font-size: 1.1rem; color: var(--cream); font-weight: 600; }
         .coin-icon {
-            width: 30px; height: 30px; background: radial-gradient(circle, var(--gold-light) 0%, var(--gold) 100%);
+            width: 26px; height: 26px; background: radial-gradient(circle, var(--gold-light) 0%, var(--gold) 100%);
             border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            font-weight: 700; color: var(--dark); font-size: 1rem; box-shadow: 0 2px 10px rgba(212, 175, 55, 0.5);
+            font-weight: 700; color: var(--dark); font-size: 0.9rem; box-shadow: 0 2px 10px rgba(212, 175, 55, 0.5);
         }
 
         .settings-button {
             background: rgba(0, 0, 0, 0.6); border: 2px solid var(--gold); color: var(--gold);
-            width: 40px; height: 40px; border-radius: 50%; cursor: pointer; font-size: 1.2rem; transition: all 0.3s;
+            width: 34px; height: 34px; border-radius: 50%; cursor: pointer; font-size: 1.1rem; transition: all 0.3s;
             display: flex; align-items: center; justify-content: center;
         }
         .settings-button:hover { background: rgba(212, 175, 55, 0.2); transform: rotate(90deg); }
@@ -106,39 +116,45 @@
             flex: 1;
             display: flex;
             flex-direction: column;
-            padding: 1rem 1rem 5rem 1rem;
+            padding: 0.5rem 0.8rem 3.5rem;
             position: relative;
+            overflow: hidden;
+            justify-content: center;
         }
 
         /* --- Slot Machine --- */
         .slot-wrapper {
             max-width: 950px;
             margin: 0 auto;
-            margin-top: 1rem;
-            padding: 1rem 1.5rem 1.5rem;
+            padding: 0.6rem 0.8rem 1rem;
             background: radial-gradient(circle at top, rgba(255,255,255,0.08), rgba(0,0,0,0.85));
             border-radius: 25px;
             border: 2px solid rgba(212, 175, 55, 0.6);
             box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+            max-height: calc(100vh - 130px); /* header + nav area */
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
         }
 
         .slot-header-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: .5rem;
+            margin-bottom: .4rem;
+            gap: 0.4rem;
         }
 
         .slot-status {
             color: var(--cream);
-            font-size: 1rem;
+            font-size: 0.9rem;
         }
 
         .status-label {
             color: var(--gold);
             font-weight: 600;
             letter-spacing: 0.08em;
-            font-size: 0.95rem;
+            font-size: 0.85rem;
         }
 
         .status-value {
@@ -146,12 +162,12 @@
         }
 
         .free-spin-indicator {
-            padding: 0.3rem 0.8rem;
+            padding: 0.25rem 0.7rem;
             border-radius: 999px;
             border: 1px solid var(--gold);
             background: rgba(0,0,0,0.6);
             color: var(--accent);
-            font-size: 0.9rem;
+            font-size: 0.8rem;
             display: flex;
             align-items: center;
             gap: 0.3rem;
@@ -164,24 +180,26 @@
 
         .slot-grid {
             position: relative;
-            overflow: hidden;
+            overflow: visible;
             border-radius: 18px;
             border: 2px solid rgba(0,0,0,0.8);
             background: linear-gradient(180deg, #4fa64a 0%, #26602a 100%);
-            padding: 0.6rem;
-            margin-bottom: 0.8rem;
+            padding: 0.4rem;
+            margin-bottom: 0.4rem;
+            transform-origin: top center;
+            transform: scale(1);
         }
 
         .slot-reels {
             display: grid;
             grid-template-columns: repeat(5, 1fr);
-            gap: 0.4rem;
+            gap: 0.35rem;
         }
 
         .reel-column {
             display: grid;
             grid-template-rows: repeat(3, 1fr);
-            gap: 0.4rem;
+            gap: 0.35rem;
         }
 
         .slot-symbol {
@@ -231,7 +249,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            gap: 1rem;
+            gap: 0.6rem;
             flex-wrap: wrap;
             margin-top: 0.3rem;
         }
@@ -239,24 +257,24 @@
         .betting-area {
             display: flex;
             align-items: center;
-            gap: 0.5rem;
+            gap: 0.4rem;
         }
 
         .bet-label {
             color: var(--cream);
-            font-size: 1rem;
+            font-size: 0.9rem;
         }
 
         .bet-input {
-            width: 110px; padding: 0.6rem; font-size: 1rem; font-family: 'Cormorant Garamond', serif;
+            width: 90px; padding: 0.5rem; font-size: 0.95rem; font-family: 'Cormorant Garamond', serif;
             background: rgba(0, 0, 0, 0.6); border: 2px solid var(--gold); border-radius: 8px;
             color: var(--cream); text-align: center;
         }
 
         .game-button {
-            font-family: 'Cinzel', serif; font-size: 1rem; padding: 0.7rem 1.6rem;
+            font-family: 'Cinzel', serif; font-size: 0.9rem; padding: 0.6rem 1.4rem;
             background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
-            color: var(--dark); border: none; border-radius: 25px; cursor: pointer; font-weight: 600;
+            color: var(--dark); border: none; border-radius: 22px; cursor: pointer; font-weight: 600;
             letter-spacing: 0.05em; transition: all 0.3s ease; box-shadow: 0 3px 15px rgba(212, 175, 55, 0.4);
             white-space: nowrap;
         }
@@ -268,7 +286,7 @@
             color: var(--gold);
             border: 1px solid var(--gold);
             box-shadow: none;
-            font-size: 0.9rem;
+            font-size: 0.8rem;
             padding: 0.5rem 1rem;
         }
 
@@ -277,10 +295,10 @@
         }
 
         .win-info {
-            min-width: 180px;
+            min-width: 150px;
             text-align: right;
             color: var(--cream);
-            font-size: 0.95rem;
+            font-size: 0.85rem;
         }
 
         .win-info span {
@@ -289,8 +307,8 @@
 
         .message-overlay {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            background: rgba(0, 0, 0, 0.92); padding: 2rem 4rem; border-radius: 15px;
-            border: 3px solid var(--gold); font-family: 'Cinzel', serif; font-size: 2rem;
+            background: rgba(0, 0, 0, 0.92); padding: 1.6rem 3rem; border-radius: 15px;
+            border: 3px solid var(--gold); font-family: 'Cinzel', serif; font-size: 1.7rem;
             color: var(--gold); font-weight: 600; letter-spacing: 0.1em;
             text-shadow: 0 0 20px rgba(212, 175, 55, 0.8); z-index: 100;
             opacity: 0; animation: fadeIn 0.3s forwards; pointer-events: none;
@@ -300,28 +318,28 @@
 
         .message-overlay small {
             display: block;
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             margin-top: 0.4rem;
             letter-spacing: 0.08em;
             color: var(--cream);
         }
 
-        /* --- Modal --- */
+        /* --- Settings Modal --- */
         .modal {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0, 0, 0, 0.8); display: none; align-items: center; justify-content: center; z-index: 200;
         }
         .modal.active { display: flex; }
         .modal-content {
-            background: linear-gradient(135deg, #2a1f1a 0%, var(--dark) 100%); padding: 3rem;
-            border-radius: 20px; border: 3px solid var(--gold); max-width: 500px; width: 90%;
+            background: linear-gradient(135deg, #2a1f1a 0%, var(--dark) 100%); padding: 2.2rem;
+            border-radius: 20px; border: 3px solid var(--gold); max-width: 480px; width: 90%;
         }
         .modal-title {
-            font-family: 'Cinzel', serif; font-size: 2rem; color: var(--gold); margin-bottom: 2rem; letter-spacing: 0.1em;
+            font-family: 'Cinzel', serif; font-size: 1.7rem; color: var(--gold); margin-bottom: 1.5rem; letter-spacing: 0.1em;
         }
         .setting-row {
-            display: flex; justify-content: space-between; align-items: center; padding: 1rem 0;
-            border-bottom: 1px solid rgba(212, 175, 55, 0.3); color: var(--cream); font-size: 1.1rem;
+            display: flex; justify-content: space-between; align-items: center; padding: 0.8rem 0;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.3); color: var(--cream); font-size: 1rem;
         }
         .toggle {
             width: 60px; height: 30px; background: rgba(0, 0, 0, 0.5); border: 2px solid var(--gold);
@@ -342,29 +360,218 @@
             border: 2px solid var(--gold);
             color: var(--cream);
             font-family: 'Cormorant Garamond', serif;
-            font-size: 1rem;
+            font-size: 0.95rem;
         }
 
-        .close-button { margin-top: 2rem; width: 100%; }
+        .close-button { margin-top: 1.4rem; width: 100%; }
 
         /* Fixed Navigation */
         .fixed-nav {
-            position: fixed; bottom: 30px; right: 30px; display: flex; gap: 15px; z-index: 200;
+            position: fixed; bottom: 10px; right: 10px; display: flex; gap: 10px; z-index: 200;
         }
         .nav-button {
-            padding: 12px 24px; background: rgba(10, 10, 10, 0.95); border: 2px solid var(--gold);
-            border-radius: 10px; color: var(--cream); font-size: 1rem; font-weight: bold; cursor: pointer;
-            text-decoration: none; display: flex; align-items: center; gap: 8px; transition: all 0.3s ease;
+            padding: 9px 16px; background: rgba(10, 10, 10, 0.95); border: 2px solid var(--gold);
+            border-radius: 10px; color: var(--cream); font-size: 0.85rem; font-weight: bold; cursor: pointer;
+            text-decoration: none; display: flex; align-items: center; gap: 6px; transition: all 0.3s ease;
             box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3); font-family: 'Cinzel', serif;
         }
         .nav-button:hover { background: rgba(212, 175, 55, 0.2); box-shadow: 0 0 25px rgba(212, 175, 55, 0.6); transform: translateY(-2px); }
 
+        /* --- BONUS OVERLAY --- */
+        .bonus-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.85);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 300;
+        }
+
+        .bonus-window {
+            background: radial-gradient(circle at top, rgba(255,255,255,0.08), rgba(0,0,0,0.95));
+            border-radius: 24px;
+            border: 3px solid var(--gold);
+            box-shadow: 0 0 40px rgba(0,0,0,0.9);
+            padding: 1.8rem 1.4rem 1.4rem;
+            max-width: 480px;
+            width: 94vw;
+            max-height: 92vh;
+            overflow-y: auto;
+            text-align: center;
+            color: var(--cream);
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        .bonus-title {
+            font-family: 'Cinzel', serif;
+            font-size: 1.5rem;
+            letter-spacing: 0.18em;
+            color: var(--gold);
+            margin-bottom: 0.4rem;
+        }
+
+        .bonus-subtitle {
+            font-size: 0.9rem;
+            letter-spacing: 0.08em;
+            margin-bottom: 1rem;
+            color: var(--accent);
+        }
+
+        .bonus-block-grid {
+            display: flex;
+            justify-content: center;
+            gap: 0.7rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .bonus-block {
+            width: 76px;
+            height: 76px;
+            border-radius: 14px;
+            background: linear-gradient(145deg, #ffdf73, #e0a832);
+            border: 2px solid #9b6c00;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Cinzel', serif;
+            font-weight: 700;
+            font-size: 2rem;
+            color: #5a3a00;
+            box-shadow: 0 8px 0 #8a5d00, 0 0 20px rgba(255,223,115,0.7);
+            cursor: pointer;
+            position: relative;
+            transform-origin: center bottom;
+            animation: blockIdle 1.2s ease-in-out infinite;
+        }
+
+        .bonus-block.disabled {
+            cursor: default;
+            opacity: 0.5;
+            box-shadow: 0 4px 0 #8a5d00;
+            animation: none;
+        }
+
+        .bonus-block::after {
+            content: '';
+            position: absolute;
+            inset: -3px;
+            border-radius: inherit;
+            border: 2px solid rgba(255,255,255,0.3);
+            pointer-events: none;
+        }
+
+        .bonus-block:hover:not(.disabled) {
+            box-shadow: 0 10px 0 #8a5d00, 0 0 25px rgba(255,255,255,0.85);
+            transform: translateY(-4px);
+        }
+
+        .bonus-block.revealing {
+            animation: blockReveal 0.45s ease forwards;
+        }
+
+        @keyframes blockIdle {
+            0%,100% { transform: translateY(0); }
+            50% { transform: translateY(-4px); }
+        }
+
+        @keyframes blockReveal {
+            0% { transform: translateY(-4px) scale(1); }
+            30% { transform: translateY(-12px) scale(1.05); }
+            60% { transform: translateY(4px) scale(0.96); }
+            100% { transform: translateY(0) scale(1); }
+        }
+
+        .bonus-result-text {
+            font-size: 1rem;
+            margin-bottom: 0.4rem;
+        }
+
+        .bonus-result-text strong {
+            color: var(--gold-light);
+        }
+
+        .bonus-close-hint {
+            font-size: 0.8rem;
+            opacity: 0.8;
+        }
+
+        .bonus-icon {
+            font-size: 1.6rem;
+        }
+
+        .bonus-reveal-label {
+            font-size: 0.75rem;
+            margin-top: 0.1rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+
+        .bonus-contents {
+            transition: opacity 0.2s ease;
+        }
+
+        .bonus-contents.disabled {
+            opacity: 0.5;
+        }
+
+        .bonus-cta {
+            margin-top: 0.6rem;
+        }
+
         @media (max-width: 768px) {
-            .slot-wrapper { margin-top: 0.5rem; padding: 0.7rem; }
+            .slot-wrapper { max-height: calc(100vh - 130px); }
             .slot-footer { flex-direction: column; align-items: stretch; }
             .win-info { text-align: left; }
-            .fixed-nav { bottom: 20px; right: 20px; flex-direction: column; }
-            .nav-button { padding: 10px 18px; font-size: 0.9rem; }
+            .fixed-nav { bottom: 8px; right: 8px; flex-direction: column; }
+            .nav-button { padding: 8px 14px; font-size: 0.8rem; }
+        }
+
+        /* Auto-scale reels by height & phone width */
+        @media (max-height: 850px) {
+            .slot-grid { transform: scale(0.9); }
+        }
+        @media (max-height: 750px) {
+            .slot-grid { transform: scale(0.82); }
+        }
+        @media (max-height: 650px) {
+            .slot-grid { transform: scale(0.74); }
+        }
+        @media (max-height: 560px) {
+            .slot-grid { transform: scale(0.66); }
+        }
+        @media (max-height: 480px) {
+            .slot-grid { transform: scale(0.58); }
+        }
+
+        @media (max-width: 480px) {
+            .header { padding: 0.4rem 0.6rem; }
+            .logo { font-size: 0.95rem; }
+            .game-title { display: none; }
+            .balance span { font-size: 0.85rem; }
+
+            .game-button,
+            .secondary-button {
+                padding: 0.7rem 1.6rem;
+                font-size: 1rem;
+            }
+
+            .bonus-block {
+                width: 84px;
+                height: 84px;
+                font-size: 2.3rem;
+            }
+
+            .modal-content {
+                padding: 1.6rem;
+            }
+
+            .message-overlay {
+                padding: 1.2rem 2rem;
+                font-size: 1.4rem;
+            }
         }
     </style>
 </head>
@@ -413,7 +620,7 @@
 
                 <div class="slot-footer">
                     <div class="betting-area">
-                        <span class="bet-label">BET PER SPIN</span>
+                        <span class="bet-label">BET</span>
                         <input type="number" id="betAmount" class="bet-input" value="10" min="1" step="10">
                         <button class="game-button secondary-button" id="maxBetBtn">MAX BET</button>
                     </div>
@@ -461,16 +668,14 @@
     <div class="fixed-nav">
         <a href="#" class="nav-button" onclick="closeGame(); return false;">
             <span>←</span>
-            <span>Back to Casino</span>
+            <span>Back</span>
         </a>
     </div>
 
     <script type="module">
-        // Back to arcade
         function closeGame() { window.location.href = '/index.html'; }
         window.closeGame = closeGame;
 
-        // Firebase imports (same pattern as blackjack)
         import { db } from '/firebase-config.js';
         import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
         import { collection, addDoc, serverTimestamp, doc, getDoc, setDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
@@ -486,16 +691,14 @@
         let freeSpinsRemaining = 0;
         let sessionTotalWin = 0;
         let lastWinAmount = 0;
+        let superWildSpinsRemaining = 0;
+        let bonusActive = false;
 
         const audioContext = new (window.AudioContext || window.webkitAudioContext)();
 
-        // --- Symbol & Payline Config ---
         const REELS = 5;
         const ROWS = 3;
 
-        const SYMBOLS = ['squario','star','mushroom','coin','block','pipe','powerup'];
-
-        // External PNGs in same directory tree as blackjack
         const SYMBOL_IMAGES = {
             squario: '/games/assets/casino/squario_symbol.png',
             star: '/games/assets/casino/star_symbol.png',
@@ -506,11 +709,10 @@
             powerup: '/games/assets/casino/powerup_symbol.png'
         };
 
-        // Simple 10-payline pattern (row indices for cols 0–4)
         const PAYLINES = [
-            [1,1,1,1,1], // Middle row
-            [0,0,0,0,0], // Top row
-            [2,2,2,2,2], // Bottom row
+            [1,1,1,1,1],
+            [0,0,0,0,0],
+            [2,2,2,2,2],
             [0,1,2,1,0],
             [2,1,0,1,2],
             [0,1,1,1,0],
@@ -520,7 +722,6 @@
             [0,0,1,2,2]
         ];
 
-        // Multipliers by symbol & match count (3,4,5)
         const PAYTABLE = {
             squario: {3: 10, 4: 40, 5: 150},
             star:    {3: 8,  4: 25, 5: 100},
@@ -528,10 +729,10 @@
             coin:    {3: 4,  4: 12, 5: 40},
             block:   {3: 3,  4: 8,  5: 25},
             pipe:    {3: 3,  4: 8,  5: 25}
-            // powerup is scatter only
         };
 
-        // --- Utility & Visuals ---
+        let currentGrid = [];
+
         function playSound(frequency, duration, type = 'sine', volume = 0.35) {
             if (!soundEnabled) return;
             if (audioContext.state === 'suspended') audioContext.resume();
@@ -544,34 +745,30 @@
             o.start(audioContext.currentTime); o.stop(audioContext.currentTime + duration);
         }
 
-        function playSpinStart() {
-            playSound(180, 0.25, 'square', 0.25);
-        }
-
-        function playReelStop() {
-            playSound(280, 0.15, 'square', 0.25);
-        }
-
+        function playSpinStart() { playSound(180, 0.25, 'square', 0.25); }
+        function playReelStop() { playSound(280, 0.15, 'square', 0.25); }
         function playWin() {
             playSound(523.25, 0.18);
             setTimeout(()=>playSound(659.25,0.18),120);
             setTimeout(()=>playSound(783.99,0.25),240);
         }
-
         function playBigWin() {
             playSound(400,0.2,'sawtooth',0.4);
             setTimeout(()=>playSound(500,0.2,'sawtooth',0.4),200);
             setTimeout(()=>playSound(600,0.3,'sawtooth',0.4),400);
         }
-
         function playLose() {
             playSound(220, 0.2, 'triangle', 0.3);
             setTimeout(()=>playSound(150,0.25,'triangle',0.25),160);
         }
-
-        function playBonus() {
-            playSound(880,0.25,'square',0.35);
-            setTimeout(()=>playSound(1046.5,0.25,'square',0.35),220);
+        function playBonusOpen() {
+            playSound(700,0.2,'square',0.35);
+            setTimeout(()=>playSound(880,0.2,'square',0.35),200);
+        }
+        function playBonusReveal() {
+            playSound(500,0.2,'square',0.3);
+            setTimeout(()=>playSound(650,0.2,'square',0.3),150);
+            setTimeout(()=>playSound(800,0.25,'square',0.3),300);
         }
 
         function showMessage(text, sub = '') {
@@ -611,11 +808,7 @@
             try {
                 const userDoc = doc(db, 'users', userId);
                 const docSnap = await getDoc(userDoc);
-                if (docSnap.exists()) {
-                    balance = docSnap.data().gunnercoins || 0;
-                } else {
-                    balance = 0;
-                }
+                balance = docSnap.exists() ? (docSnap.data().gunnercoins || 0) : 0;
                 updateBalanceDisplay();
             } catch (e) {
                 console.error("Balance Load Error:", e);
@@ -640,6 +833,7 @@
                     balanceAfter: balance,
                     freeSpinUsed,
                     grid,
+                    superWildSpinsRemaining,
                     timestamp: serverTimestamp()
                 });
             } catch (e) {
@@ -647,8 +841,21 @@
             }
         }
 
-        // --- Slot Grid Management ---
-        let currentGrid = [];
+        async function logBonusToFirestore(bet, reward) {
+            try {
+                const colRef = collection(db, 'slots_squario_bonus');
+                await addDoc(colRef, {
+                    uid: userId,
+                    displayName: playerName,
+                    bet,
+                    reward,
+                    balanceAfter: balance,
+                    timestamp: serverTimestamp()
+                });
+            } catch (e) {
+                console.warn('Bonus log failed:', e);
+            }
+        }
 
         function initGrid() {
             currentGrid = [];
@@ -669,7 +876,6 @@
         }
 
         function getRandomSymbol() {
-            // Bias slightly toward low symbols, less Squario/powerup
             const rand = Math.random();
             if (rand < 0.18) return 'coin';
             if (rand < 0.36) return 'block';
@@ -677,7 +883,7 @@
             if (rand < 0.68) return 'mushroom';
             if (rand < 0.82) return 'star';
             if (rand < 0.94) return 'squario';
-            return 'powerup'; // rare scatter
+            return 'powerup';
         }
 
         function createSymbolElement(symbol, col, row) {
@@ -716,14 +922,213 @@
         }
 
         function clearWinHighlights() {
-            const symbols = document.querySelectorAll('.slot-symbol');
-            symbols.forEach(s => s.classList.remove('win'));
+            document.querySelectorAll('.slot-symbol').forEach(s => s.classList.remove('win'));
         }
 
-        // --- Spin Logic ---
+        function evalSymbolForPay(sym) {
+            if (superWildSpinsRemaining > 0 && (sym === 'mushroom' || sym === 'squario')) {
+                return 'squario';
+            }
+            return sym;
+        }
+
+        function highlightPositions(positions) {
+            const reelsContainer = document.getElementById('slotReels');
+            positions.forEach(pos => {
+                const colEl = reelsContainer.children[pos.c];
+                if (!colEl) return;
+                const symEl = colEl.children[pos.r];
+                if (!symEl) return;
+                symEl.classList.add('win');
+            });
+        }
+
+        function evaluateGrid(bet) {
+            let totalWin = 0;
+            let freeSpinsAwarded = 0;
+            let scatterCount = 0;
+            let squarioCount = 0;
+
+            for (let c = 0; c < REELS; c++) {
+                for (let r = 0; r < ROWS; r++) {
+                    const sym = currentGrid[c][r];
+                    if (sym === 'powerup') scatterCount++;
+                    if (sym === 'squario') squarioCount++;
+                }
+            }
+
+            if (scatterCount >= 3) {
+                freeSpinsAwarded = 8 + (scatterCount - 3) * 2;
+            }
+
+            PAYLINES.forEach(line => {
+                const firstRow = line[0];
+                const firstRaw = currentGrid[0][firstRow];
+                const firstSymbol = evalSymbolForPay(firstRaw);
+                if (!PAYTABLE[firstSymbol]) return;
+
+                let count = 1;
+                const positions = [{c:0, r:firstRow}];
+
+                for (let c = 1; c < REELS; c++) {
+                    const r = line[c];
+                    const symRaw = currentGrid[c][r];
+                    const symEval = evalSymbolForPay(symRaw);
+                    if (symEval === firstSymbol) {
+                        count++;
+                        positions.push({c,r});
+                    } else {
+                        break;
+                    }
+                }
+
+                if (count >= 3) {
+                    const mult = PAYTABLE[firstSymbol][count] || 0;
+                    const win = bet * mult;
+                    if (mult > 0) {
+                        totalWin += win;
+                        highlightPositions(positions);
+                    }
+                }
+            });
+
+            return { totalWin, freeSpinsAwarded, squarioCount };
+        }
+
+        function chooseBonusReward(bet) {
+            const p = Math.random();
+            if (p < 0.30) {
+                return { type: 'coins', amount: bet * 10, label: `+${(bet*10).toLocaleString()} G`, icon: '💰' };
+            } else if (p < 0.55) {
+                return { type: 'coins', amount: bet * 20, label: `+${(bet*20).toLocaleString()} G`, icon: '💰' };
+            } else if (p < 0.70) {
+                return { type: 'coins', amount: bet * 40, label: `+${(bet*40).toLocaleString()} G`, icon: '💰' };
+            } else if (p < 0.75) {
+                return { type: 'coins', amount: bet * 100, label: `+${(bet*100).toLocaleString()} G`, icon: '💎' };
+            } else if (p < 0.90) {
+                return { type: 'freespins', spins: 5, label: '+5 FREE SPINS', icon: '⭐' };
+            } else if (p < 0.97) {
+                return { type: 'superwild', spins: 3, label: 'SUPER WILD x3 SPINS', icon: '🍄' };
+            } else {
+                return { type: 'nothing', label: 'DUD BLOCK', icon: '❌' };
+            }
+        }
+
+        function applyBonusReward(bet, reward) {
+            if (reward.type === 'coins') {
+                updateBalance(reward.amount);
+                lastWinAmount += reward.amount;
+                sessionTotalWin += reward.amount;
+                updateStatsDisplay();
+                if (reward.amount >= bet * 40) playBigWin(); else playWin();
+            } else if (reward.type === 'freespins') {
+                freeSpinsRemaining += reward.spins;
+                updateFreeSpinBadge();
+                playBonusOpen();
+            } else if (reward.type === 'superwild') {
+                superWildSpinsRemaining += reward.spins;
+                playBonusOpen();
+            } else {
+                playLose();
+            }
+        }
+
+        function launchBonusGame(squarioCount, bet) {
+            bonusActive = true;
+            playBonusOpen();
+
+            const numBlocks = Math.min(5, Math.max(3, squarioCount));
+            const overlay = document.createElement('div');
+            overlay.className = 'bonus-overlay';
+
+            const windowEl = document.createElement('div');
+            windowEl.className = 'bonus-window';
+
+            const title = document.createElement('div');
+            title.className = 'bonus-title';
+            title.textContent = '? BLOCK BONUS';
+
+            const subtitle = document.createElement('div');
+            subtitle.className = 'bonus-subtitle';
+            subtitle.textContent = 'PICK A BLOCK • REVEAL YOUR POWER-UP';
+
+            const contents = document.createElement('div');
+            contents.className = 'bonus-contents';
+
+            const grid = document.createElement('div');
+            grid.className = 'bonus-block-grid';
+
+            let chosen = false;
+
+            for (let i = 0; i < numBlocks; i++) {
+                const block = document.createElement('div');
+                block.className = 'bonus-block';
+                block.textContent = '?';
+
+                block.addEventListener('click', async () => {
+                    if (chosen) return;
+                    chosen = true;
+
+                    contents.classList.add('disabled');
+                    block.classList.add('revealing');
+                    block.classList.remove('disabled');
+
+                    playBonusReveal();
+
+                    const reward = chooseBonusReward(bet);
+                    await new Promise(res => setTimeout(res, 320));
+
+                    block.innerHTML = `
+                        <div class="bonus-icon">${reward.icon}</div>
+                        <div class="bonus-reveal-label">${reward.label}</div>
+                    `;
+
+                    applyBonusReward(bet, reward);
+                    logBonusToFirestore(bet, reward);
+
+                    const resultText = document.createElement('div');
+                    resultText.className = 'bonus-result-text';
+                    if (reward.type === 'coins') {
+                        resultText.innerHTML = `YOU WON <strong>${reward.label}</strong>`;
+                    } else if (reward.type === 'freespins') {
+                        resultText.innerHTML = `BONUS AWARDED: <strong>${reward.label}</strong>`;
+                    } else if (reward.type === 'superwild') {
+                        resultText.innerHTML = `SQUARIO POWER-UP: <strong>${reward.label}</strong>`;
+                    } else {
+                        resultText.innerHTML = `<strong>EMPTY BLOCK!</strong> BETTER LUCK NEXT TIME.`;
+                    }
+
+                    const closeHint = document.createElement('div');
+                    closeHint.className = 'bonus-close-hint';
+                    closeHint.textContent = 'Tap anywhere to return to Squario Slots.';
+
+                    contents.appendChild(resultText);
+                    contents.appendChild(closeHint);
+                });
+
+                grid.appendChild(block);
+            }
+
+            contents.appendChild(grid);
+            windowEl.appendChild(title);
+            windowEl.appendChild(subtitle);
+            windowEl.appendChild(contents);
+            overlay.appendChild(windowEl);
+            document.body.appendChild(overlay);
+
+            overlay.addEventListener('click', () => {
+                if (!chosen) return;
+                overlay.remove();
+                bonusActive = false;
+
+                if (freeSpinsRemaining > 0 && !spinning) {
+                    setTimeout(() => handleSpinClick(), 800);
+                }
+            });
+        }
+
         async function handleSpinClick() {
-            if (spinning) return;
-            if (!userId) return;
+            if (spinning || bonusActive || !userId) return;
 
             const betInput = document.getElementById('betAmount');
             let bet = parseInt(betInput.value, 10);
@@ -739,12 +1144,15 @@
                 return;
             }
 
-            // Deduct bet only if not in free spin mode
             if (!usingFreeSpin) {
                 updateBalance(-bet);
             } else {
                 freeSpinsRemaining--;
                 updateFreeSpinBadge();
+            }
+
+            if (superWildSpinsRemaining > 0) {
+                superWildSpinsRemaining--;
             }
 
             spinning = true;
@@ -756,7 +1164,6 @@
             const reelsContainer = document.getElementById('slotReels');
             const cols = Array.from(reelsContainer.children);
 
-            // Initial spin visual
             cols.forEach((colEl, colIndex) => {
                 const newSymbols = [];
                 for (let row = 0; row < ROWS; row++) {
@@ -765,7 +1172,6 @@
                 updateColumnSymbols(colIndex, newSymbols, true);
             });
 
-            // Stop reels sequentially
             const duration = spinDuration;
             await new Promise(resolve => {
                 let colIndex = 0;
@@ -786,7 +1192,6 @@
                 setTimeout(stopNext, duration * 250);
             });
 
-            // Evaluate result
             const result = evaluateGrid(bet);
             lastWinAmount = result.totalWin;
             sessionTotalWin += result.totalWin;
@@ -808,94 +1213,30 @@
             if (result.freeSpinsAwarded > 0) {
                 freeSpinsRemaining += result.freeSpinsAwarded;
                 updateFreeSpinBadge();
-                playBonus();
-                showMessage('POWER-UP BONUS!', `${result.freeSpinsAwarded} FREE SPINS`);
+                playBonusOpen();
+                showMessage('POWER-UP FREE SPINS!', `+${result.freeSpinsAwarded} FREE SPINS`);
             }
 
-            // Log spin (not critical if fails)
             const simpleGrid = currentGrid.map(col => col.slice());
             logSpinToFirestore(bet, result.totalWin, simpleGrid, usingFreeSpin);
 
+            if (result.squarioCount >= 3) {
+                setTimeout(() => launchBonusGame(result.squarioCount, bet), 600);
+            }
+
             spinning = false;
 
-            // Auto-play remaining free spins
-            if (freeSpinsRemaining > 0) {
-                setTimeout(() => {
-                    handleSpinClick();
-                }, 900);
+            if (!bonusActive && freeSpinsRemaining > 0) {
+                setTimeout(() => handleSpinClick(), 900);
             }
         }
 
-        function evaluateGrid(bet) {
-            let totalWin = 0;
-            let freeSpinsAwarded = 0;
-
-            // Tally scatters
-            let scatterCount = 0;
-            for (let c = 0; c < REELS; c++) {
-                for (let r = 0; r < ROWS; r++) {
-                    if (currentGrid[c][r] === 'powerup') scatterCount++;
-                }
-            }
-
-            if (scatterCount >= 3) {
-                freeSpinsAwarded = 8 + (scatterCount - 3) * 2; // 3 = 8FS, 4 = 10FS, 5+ = 12FS
-            }
-
-            // Line wins
-            PAYLINES.forEach(line => {
-                const firstRow = line[0];
-                const firstSymbol = currentGrid[0][firstRow];
-                if (!PAYTABLE[firstSymbol]) return; // skip scatters
-
-                let count = 1;
-                const positions = [{c:0, r:firstRow}];
-
-                for (let c = 1; c < REELS; c++) {
-                    const r = line[c];
-                    const sym = currentGrid[c][r];
-                    if (sym === firstSymbol) {
-                        count++;
-                        positions.push({c,r});
-                    } else {
-                        break;
-                    }
-                }
-
-                if (count >= 3) {
-                    const mult = PAYTABLE[firstSymbol][count] || 0;
-                    if (mult > 0) {
-                        const win = bet * mult;
-                        totalWin += win;
-                        // highlight winning positions
-                        highlightPositions(positions);
-                    }
-                }
-            });
-
-            return { totalWin, freeSpinsAwarded };
-        }
-
-        function highlightPositions(positions) {
-            const reelsContainer = document.getElementById('slotReels');
-            positions.forEach(pos => {
-                const colEl = reelsContainer.children[pos.c];
-                if (!colEl) return;
-                const symEl = colEl.children[pos.r];
-                if (!symEl) return;
-                symEl.classList.add('win');
-            });
-        }
-
-        // --- Init & Auth ---
         async function initGameSystem() {
-            // Theme preference shared with blackjack
             const savedTheme = localStorage.getItem('blackjack_theme');
             if (savedTheme) selectedTable = savedTheme;
             document.getElementById('tableSelect').value = selectedTable;
             applyTableVisuals();
 
-            // Auth
             try {
                 auth = getAuth(db.app);
                 onAuthStateChanged(auth, async (user) => {
@@ -918,7 +1259,6 @@
             }
         }
 
-        // --- Event Listeners ---
         document.getElementById('startGame').addEventListener('click', () => {
             document.getElementById('tableSelector').classList.add('hidden');
             if (audioContext.state === 'suspended') audioContext.resume();
@@ -929,7 +1269,7 @@
         document.getElementById('maxBetBtn').addEventListener('click', () => {
             if (balance <= 0) return;
             const betInput = document.getElementById('betAmount');
-            const maxBet = Math.max(1, Math.floor(balance / 5)); // simple cap
+            const maxBet = Math.max(1, Math.floor(balance / 5));
             betInput.value = maxBet;
         });
 
@@ -955,7 +1295,6 @@
             applyTableVisuals();
         });
 
-        // Start
         initGameSystem();
     </script>
 </body>
