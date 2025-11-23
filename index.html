@@ -20,12 +20,57 @@
             flex-direction: column;
         }
 
+        /* --- NEW: User Bar Styling --- */
+        .user-bar {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .auth-btn {
+            background: transparent;
+            border: 2px solid #e94560;
+            color: #e94560;
+            padding: 8px 20px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+            border-radius: 5px;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+        }
+
+        .auth-btn:hover {
+            background: #e94560;
+            color: #fff;
+            box-shadow: 0 0 15px rgba(233, 69, 96, 0.6);
+        }
+
+        .user-info {
+            display: none; /* Hidden by default */
+            align-items: center;
+            gap: 15px;
+            background: rgba(10, 10, 10, 0.8);
+            padding: 8px 20px;
+            border-radius: 30px;
+            border: 1px solid #333;
+        }
+
+        .user-name { color: #fff; font-weight: bold; }
+        .user-balance { color: #ffd700; font-weight: bold; }
+
+        /* --- Existing Header --- */
         header {
             background: #0a0a0a;
             padding: 20px 20px;
             text-align: center;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.9);
             border-bottom: 3px solid #e94560;
+            position: relative; /* For user-bar positioning */
         }
 
         .banner {
@@ -41,7 +86,6 @@
             display: block;
         }
 
-        /* Placeholder styling if no image is provided yet */
         .banner-placeholder {
             width: 100%;
             height: 120px;
@@ -58,11 +102,7 @@
             text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
         }
 
-        @keyframes shine {
-            to {
-                background-position: 200% center;
-            }
-        }
+        @keyframes shine { to { background-position: 200% center; } }
 
         main {
             flex: 1;
@@ -116,17 +156,12 @@
         .game-image::after {
             content: '';
             position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
+            top: 0; left: 0; right: 0; bottom: 0;
             background: rgba(0, 0, 0, 0.2);
             transition: background 0.3s ease;
         }
 
-        .game-card:hover .game-image::after {
-            background: rgba(0, 0, 0, 0);
-        }
+        .game-card:hover .game-image::after { background: rgba(0, 0, 0, 0); }
 
         .game-icon-img {
             width: 100%;
@@ -136,16 +171,8 @@
             z-index: 1;
         }
 
-        .game-info {
-            padding: 20px;
-            text-align: center;
-        }
-
-        .game-info p {
-            color: #a8b2d1;
-            line-height: 1.6;
-            font-size: 1rem;
-        }
+        .game-info { padding: 20px; text-align: center; }
+        .game-info p { color: #a8b2d1; line-height: 1.6; font-size: 1rem; }
 
         footer {
             background: #0a0a0a;
@@ -155,54 +182,102 @@
             margin-top: auto;
         }
 
-        .footer-content {
-            max-width: 1200px;
-            margin: 0 auto;
+        .footer-content { max-width: 1200px; margin: 0 auto; }
+        .footer-links { margin-bottom: 15px; }
+        .footer-links a { color: #a8b2d1; text-decoration: none; margin: 0 15px; transition: color 0.3s ease; }
+        .footer-links a:hover { color: #e94560; }
+        .copyright { color: #6b7688; font-size: 0.9rem; }
+
+        /* --- NEW: Authentication Modal --- */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
         }
 
-        .footer-links {
-            margin-bottom: 15px;
+        .modal-content {
+            background: #111;
+            padding: 40px;
+            border-radius: 15px;
+            border: 2px solid #e94560;
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 0 50px rgba(233, 69, 96, 0.3);
+            position: relative;
         }
 
-        .footer-links a {
-            color: #a8b2d1;
-            text-decoration: none;
-            margin: 0 15px;
-            transition: color 0.3s ease;
+        .close-modal {
+            position: absolute;
+            top: 10px; right: 15px;
+            color: #888;
+            font-size: 24px;
+            cursor: pointer;
         }
 
-        .footer-links a:hover {
-            color: #e94560;
-        }
+        .modal h2 { color: #e94560; margin-bottom: 20px; font-size: 2rem; }
 
-        .copyright {
-            color: #6b7688;
-            font-size: 0.9rem;
+        .input-group { margin-bottom: 15px; text-align: left; }
+        .input-group label { display: block; color: #aaa; margin-bottom: 5px; font-size: 0.9rem; }
+        .input-field {
+            width: 100%;
+            padding: 12px;
+            background: #050505;
+            border: 1px solid #333;
+            color: white;
+            border-radius: 5px;
+            font-size: 1rem;
         }
+        .input-field:focus { border-color: #e94560; outline: none; }
+
+        .submit-btn {
+            width: 100%;
+            padding: 12px;
+            background: #e94560;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: 0.3s;
+        }
+        .submit-btn:hover { background: #ff2e4d; }
+
+        .switch-link { margin-top: 20px; color: #888; font-size: 0.9rem; }
+        .switch-link span { color: #e94560; cursor: pointer; text-decoration: underline; }
+        .error-msg { color: #ff4444; margin-bottom: 15px; display: none; }
 
         @media (max-width: 768px) {
-            .banner h1 {
-                font-size: 2.5rem;
-            }
-
-            .game-categories {
-                flex-direction: column;
-                align-items: center;
-            }
-
-            .game-card {
-                max-width: 100%;
-                width: 100%;
-            }
+            .banner h1 { font-size: 2.5rem; }
+            .game-categories { flex-direction: column; align-items: center; }
+            .game-card { max-width: 100%; width: 100%; }
+            .user-bar { top: 10px; right: 10px; }
+            .banner { max-width: 90%; margin-top: 40px; } /* Make room for user bar */
         }
     </style>
 </head>
 <body>
     <header>
+        <div class="user-bar">
+            <div id="loggedOutView">
+                <button class="auth-btn" onclick="openModal('login')">Login</button>
+                <button class="auth-btn" onclick="openModal('signup')">Sign Up</button>
+            </div>
+            <div id="loggedInView" class="user-info">
+                <span class="user-name" id="displayName">Pilot</span>
+                <span class="user-balance">🪙 <span id="displayBalance">0</span></span>
+                <button class="auth-btn" style="border: 1px solid #555; color: #aaa; padding: 4px 10px; font-size: 0.8rem; margin-left: 10px;" onclick="handleLogout()">Logout</button>
+            </div>
+        </div>
+
         <div class="banner">
-            <!-- Replace 'banner.png' with your actual banner image file -->
             <img src="assets/banner.png" alt="Gunner's Games" class="banner-image">
-            <!-- Fallback placeholder if image not found -->
             <noscript>
                 <div class="banner-placeholder">GunnersGames.com</div>
             </noscript>
@@ -260,14 +335,181 @@
         </div>
     </footer>
 
-    <script>
-        // Show placeholder if banner image fails to load
+    <div id="authModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeModal()">&times;</span>
+            
+            <div id="loginForm">
+                <h2>PILOT LOGIN</h2>
+                <div class="error-msg" id="loginError"></div>
+                <div class="input-group">
+                    <label>Email</label>
+                    <input type="email" id="loginEmail" class="input-field" placeholder="pilot@gunnersgames.com">
+                </div>
+                <div class="input-group">
+                    <label>Password</label>
+                    <input type="password" id="loginPass" class="input-field" placeholder="••••••••">
+                </div>
+                <button class="submit-btn" id="btnLogin">ACCESS SYSTEM</button>
+                <div class="switch-link">New recruit? <span onclick="switchForm('signup')">Create Account</span></div>
+            </div>
+
+            <div id="signupForm" style="display: none;">
+                <h2>NEW RECRUIT</h2>
+                <div class="error-msg" id="signupError"></div>
+                <div class="input-group">
+                    <label>Pilot Name</label>
+                    <input type="text" id="regName" class="input-field" placeholder="Maverick">
+                </div>
+                <div class="input-group">
+                    <label>Email</label>
+                    <input type="email" id="regEmail" class="input-field" placeholder="pilot@gunnersgames.com">
+                </div>
+                <div class="input-group">
+                    <label>Password</label>
+                    <input type="password" id="regPass" class="input-field" placeholder="••••••••">
+                </div>
+                <button class="submit-btn" id="btnSignup">INITIALIZE ACCOUNT</button>
+                <div class="switch-link">Already have access? <span onclick="switchForm('login')">Login</span></div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { db } from '/firebase-config.js';
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, updateProfile } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { doc, setDoc, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        const auth = getAuth(db.app);
+
+        // UI Elements
+        const modal = document.getElementById('authModal');
+        const loggedOutView = document.getElementById('loggedOutView');
+        const loggedInView = document.getElementById('loggedInView');
+        const displayNameEl = document.getElementById('displayName');
+        const displayBalanceEl = document.getElementById('displayBalance');
+
+        // --- AUTH STATE OBSERVER ---
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                // User is Logged In
+                console.log("User logged in:", user.uid);
+                loggedOutView.style.display = 'none';
+                loggedInView.style.display = 'flex';
+                
+                displayNameEl.textContent = user.displayName || "Pilot";
+                closeModal();
+
+                // Listen to Balance Real-time
+                const userDocRef = doc(db, "users", user.uid);
+                onSnapshot(userDocRef, (doc) => {
+                    if (doc.exists()) {
+                        const data = doc.data();
+                        displayBalanceEl.textContent = (data.gunnercoins || 0).toLocaleString();
+                        
+                        // Sync to localStorage for legacy game support
+                        localStorage.setItem('gunnercoins', data.gunnercoins);
+                        localStorage.setItem('playerName', data.playerName);
+                    }
+                });
+
+            } else {
+                // User is Logged Out
+                loggedOutView.style.display = 'block';
+                loggedInView.style.display = 'none';
+                localStorage.removeItem('gunnercoins'); // Clear local data
+            }
+        });
+
+        // --- BUTTON LOGIC ---
+
+        // Sign Up
+        document.getElementById('btnSignup').addEventListener('click', async () => {
+            const name = document.getElementById('regName').value;
+            const email = document.getElementById('regEmail').value;
+            const pass = document.getElementById('regPass').value;
+            const errDiv = document.getElementById('signupError');
+
+            if(name.length < 3) {
+                errDiv.style.display = 'block';
+                errDiv.textContent = "Name too short.";
+                return;
+            }
+
+            try {
+                // 1. Create Auth
+                const credential = await createUserWithEmailAndPassword(auth, email, pass);
+                const user = credential.user;
+
+                // 2. Set Display Name
+                await updateProfile(user, { displayName: name });
+
+                // 3. Create Database Record (5000 Coin Bonus)
+                await setDoc(doc(db, "users", user.uid), {
+                    playerName: name,
+                    email: email,
+                    gunnercoins: 5000,
+                    createdAt: new Date(),
+                    uid: user.uid
+                });
+
+            } catch (error) {
+                errDiv.style.display = 'block';
+                errDiv.textContent = error.message;
+            }
+        });
+
+        // Login
+        document.getElementById('btnLogin').addEventListener('click', async () => {
+            const email = document.getElementById('loginEmail').value;
+            const pass = document.getElementById('loginPass').value;
+            const errDiv = document.getElementById('loginError');
+
+            try {
+                await signInWithEmailAndPassword(auth, email, pass);
+            } catch (error) {
+                errDiv.style.display = 'block';
+                errDiv.textContent = "Invalid credentials.";
+            }
+        });
+
+        // Logout
+        window.handleLogout = () => {
+            signOut(auth);
+        };
+
+        // --- MODAL LOGIC ---
+        window.openModal = (type) => {
+            modal.style.display = 'flex';
+            switchForm(type);
+        };
+
+        window.closeModal = () => {
+            modal.style.display = 'none';
+        };
+
+        window.switchForm = (type) => {
+            document.getElementById('loginError').style.display = 'none';
+            document.getElementById('signupError').style.display = 'none';
+            
+            if(type === 'login') {
+                document.getElementById('loginForm').style.display = 'block';
+                document.getElementById('signupForm').style.display = 'none';
+            } else {
+                document.getElementById('loginForm').style.display = 'none';
+                document.getElementById('signupForm').style.display = 'block';
+            }
+        };
+
+        // Close modal if clicking outside
+        window.onclick = (event) => {
+            if (event.target == modal) closeModal();
+        };
+
+        // Placeholder banner logic
         document.querySelector('.banner-image').addEventListener('error', function() {
             this.style.display = 'none';
-            const placeholder = document.createElement('div');
-            placeholder.className = 'banner-placeholder';
-            placeholder.textContent = 'GunnersGames.com';
-            this.parentElement.appendChild(placeholder);
+            document.querySelector('.banner-placeholder').style.display = 'flex';
         });
     </script>
 </body>
