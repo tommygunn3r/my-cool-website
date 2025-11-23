@@ -4,23 +4,30 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Mom's Spider Solitaire</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:wght@300;400;600&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         /* --- Visuals --- */
+        :root {
+            --gold: #d4af37;
+            --gold-dark: #b8941f;
+            --gold-light: #f4e5a7;
+            --dark: #1a1410;
+        }
+
         body {
             /* Default Fallback Color */
             background-color: #1a472a; 
-            /* Background Settings */
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
-            background-attachment: fixed; /* Keeps bg still while dragging if view bounces */
+            background-attachment: fixed;
             transition: background-image 0.5s ease-in-out;
             
             overscroll-behavior: none;
             user-select: none;
             -webkit-user-select: none;
-            font-family: sans-serif;
+            font-family: 'Cormorant Garamond', serif; /* Body text matches Blackjack */
             touch-action: none; 
         }
 
@@ -36,10 +43,13 @@
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            padding: 0.2rem;
+            padding: 0.3rem; /* Adjusted padding */
             cursor: grab;
             backface-visibility: hidden;
             z-index: 10;
+            /* MATCHING BLACKJACK FONT */
+            font-family: 'Cinzel', serif; 
+            font-weight: 700;
         }
         
         .card:active { cursor: grabbing; }
@@ -47,44 +57,36 @@
         @media (min-width: 640px) {
             .card {
                 border-radius: 0.5rem;
-                padding: 0.3rem;
+                padding: 0.4rem;
                 box-shadow: 2px 2px 5px rgba(0,0,0,0.4);
             }
         }
 
-        /* --- CUSTOM CARD BACK ASSET --- */
         .card-face-down {
             background-image: url('/games/assets/solitaire/card_back.png');
             background-size: cover;
             background-repeat: no-repeat;
             background-position: center;
-            border: 1px solid #ddd; /* Subtle border for the image */
+            border: 1px solid #ddd;
             cursor: default;
         }
         
         .card-face-down > * { display: none !important; }
 
-        /* Highlight for click-selection */
         .card.selected {
             transform: translateY(-10px);
-            box-shadow: 0 0 0 4px #fbbf24, 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 0 0 3px var(--gold), 0 10px 15px -3px rgba(0, 0, 0, 0.5); /* Gold selection highlight */
             z-index: 50 !important;
         }
         
-        /* State when card is being dragged */
         .card.dragging {
-            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.6);
             z-index: 9999 !important;
             pointer-events: none; 
         }
         
-        /* Snap back animation class */
         .card.snapping { transition: top 0.2s ease-out, left 0.2s ease-out; }
-
-        .card.hint-anim {
-            animation: wiggle 0.5s ease-in-out;
-            z-index: 60 !important;
-        }
+        .card.hint-anim { animation: wiggle 0.5s ease-in-out; z-index: 60 !important; }
 
         @keyframes wiggle {
             0%, 100% { transform: rotate(0deg); }
@@ -92,8 +94,9 @@
             75% { transform: rotate(5deg); }
         }
 
-        .suit-red { color: #dc2626; }
-        .suit-black { color: #171717; }
+        /* Suit Colors - Darker/Richer to match casino vibe */
+        .suit-red { color: #8b0000; }
+        .suit-black { color: #1a1410; }
 
         /* Layout Grid */
         .game-board {
@@ -105,40 +108,53 @@
             margin: 0 auto;
             padding: 0.5rem;
         }
-        
         @media (min-width: 768px) { .game-board { gap: 0.75rem; } }
 
         .column { position: relative; min-height: 60vh; }
         
         .column.drag-hover {
-            background-color: rgba(255, 255, 255, 0.2);
+            background-color: rgba(212, 175, 55, 0.2); /* Gold tint on hover */
             border-radius: 0.5rem;
-            box-shadow: inset 0 0 20px rgba(255,255,255,0.3);
+            box-shadow: inset 0 0 20px rgba(212, 175, 55, 0.3);
         }
 
-        /* Top Bar */
+        /* Top Bar - Matches Blackjack Header Style */
         .top-bar {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 0.5rem 1rem;
-            background-color: rgba(0,0,0,0.4); /* Darker for better contrast on images */
-            backdrop-filter: blur(5px);
-            color: white;
-            border-bottom: 1px solid rgba(255,255,255,0.2);
+            padding: 0.8rem 1.5rem;
+            background: linear-gradient(180deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.7) 100%);
+            border-bottom: 2px solid var(--gold);
+            color: var(--gold);
+            font-family: 'Cinzel', serif;
         }
 
-        .modal { background-color: rgba(0, 0, 0, 0.85); }
+        /* Buttons - Match Blackjack Gold Buttons */
+        .game-btn {
+            font-family: 'Cinzel', serif;
+            background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
+            color: var(--dark);
+            border: none;
+            font-weight: 700;
+            box-shadow: 0 3px 10px rgba(212, 175, 55, 0.3);
+            transition: all 0.2s;
+        }
+        .game-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(212, 175, 55, 0.5);
+        }
         
-        #confetti-canvas {
-            position: fixed;
-            top: 0; left: 0; pointer-events: none; z-index: 100;
+        /* Modal - Matches Blackjack Settings */
+        .modal { background-color: rgba(0, 0, 0, 0.85); }
+        .modal-content {
+            background: linear-gradient(135deg, #2a1f1a 0%, var(--dark) 100%);
+            border: 3px solid var(--gold);
+            color: #f5f3e8;
         }
 
-        #drag-layer {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9000;
-        }
+        #confetti-canvas { position: fixed; top: 0; left: 0; pointer-events: none; z-index: 100; }
+        #drag-layer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9000; }
     </style>
 </head>
 <body class="h-screen flex flex-col overflow-hidden font-sans text-gray-900">
@@ -149,28 +165,28 @@
 
     <div class="top-bar shrink-0 z-20">
         <div class="flex gap-2">
-            <button onclick="toggleMenu()" class="bg-green-700 hover:bg-green-600 text-white px-3 py-2 sm:px-4 sm:py-2 rounded shadow font-bold border border-green-500 text-sm sm:text-base">
-                Menu
+            <button onclick="toggleMenu()" class="game-btn px-3 py-2 sm:px-4 sm:py-2 rounded text-sm sm:text-base">
+                MENU
             </button>
-            <button onclick="undoMove()" id="undoBtn" class="bg-yellow-600 hover:bg-yellow-500 text-white px-3 py-2 sm:px-4 sm:py-2 rounded shadow font-bold border border-yellow-400 disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base">
-                Undo
+            <button onclick="undoMove()" id="undoBtn" class="bg-gray-700 text-white border border-gray-600 px-3 py-2 sm:px-4 sm:py-2 rounded font-bold hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base font-cinzel">
+                UNDO
             </button>
         </div>
         
         <div class="flex flex-col items-center">
-            <div class="text-lg sm:text-2xl font-bold text-white drop-shadow-md" id="scoreDisplay">Score: 500</div>
-            <div class="text-xs sm:text-sm font-medium text-yellow-300 drop-shadow-md" id="highScoreDisplay">Best: 0</div>
+            <div class="text-xl sm:text-2xl font-bold text-gold drop-shadow-md" style="color: var(--gold);" id="scoreDisplay">Score: 500</div>
+            <div class="text-xs sm:text-sm font-medium text-yellow-200" id="highScoreDisplay">Best: 0</div>
         </div>
 
         <div class="flex gap-2 items-center">
-             <button onclick="showHint()" class="bg-blue-600 hover:bg-blue-500 text-white px-3 py-2 sm:px-4 sm:py-2 rounded shadow font-bold border border-blue-400 text-sm sm:text-base">
-                Hint
+             <button onclick="showHint()" class="bg-blue-800 text-white border border-blue-600 px-3 py-2 sm:px-4 sm:py-2 rounded font-bold hover:bg-blue-700 text-sm sm:text-base font-cinzel">
+                HINT
             </button>
             <div class="relative w-16 h-20 sm:w-20 sm:h-28">
                 <div id="stock-pile" onclick="dealStock()" class="card card-face-down absolute top-0 left-0 cursor-pointer hover:brightness-110 flex items-center justify-center">
-                   <div class="absolute inset-0 flex flex-col items-center justify-center bg-black bg-opacity-40 rounded">
-                       <span class="text-white font-black text-lg sm:text-xl tracking-wider drop-shadow-md">DEAL</span>
-                       <div class="mt-1 bg-white text-blue-900 font-bold text-xs px-2 py-0.5 rounded-full shadow-sm">
+                   <div class="absolute inset-0 flex flex-col items-center justify-center bg-black bg-opacity-60 rounded">
+                       <span class="text-white font-black text-lg sm:text-xl tracking-wider drop-shadow-md" style="font-family: 'Cinzel', serif; color: var(--gold);">DEAL</span>
+                       <div class="mt-1 bg-black border border-gold text-gold font-bold text-xs px-2 py-0.5 rounded-full shadow-sm" style="border-color: var(--gold); color: var(--gold);">
                            <span id="stock-count">5</span>
                        </div>
                    </div>
@@ -183,31 +199,31 @@
         <div class="game-board h-full pt-2" id="tableau">
             </div>
 
-        <div id="foundations" class="absolute bottom-2 right-2 z-0 flex gap-1 opacity-80 pointer-events-none transform scale-75 origin-bottom-right">
+        <div id="foundations" class="absolute bottom-2 right-2 z-0 flex gap-1 opacity-90 pointer-events-none transform scale-75 origin-bottom-right">
         </div>
     </div>
 
     <div id="winModal" class="modal fixed inset-0 hidden flex items-center justify-center z-50">
-        <div class="bg-white p-8 rounded-xl shadow-2xl text-center max-w-md mx-4 border-4 border-green-600">
-            <h2 class="text-4xl font-bold text-green-700 mb-4">You Won!</h2>
-            <p class="text-lg text-gray-700 mb-2">Final Score: <span id="finalScoreDisplay" class="font-bold">0</span></p>
-            <button onclick="startNewGame()" class="bg-green-600 text-white px-8 py-3 rounded-lg text-xl font-bold shadow-lg hover:bg-green-500 transform hover:scale-105 transition">
-                Play Again
+        <div class="modal-content p-8 rounded-xl shadow-2xl text-center max-w-md mx-4">
+            <h2 class="text-4xl font-bold mb-4" style="color: var(--gold); font-family: 'Cinzel', serif;">YOU WON!</h2>
+            <p class="text-lg mb-6" style="color: #f5f3e8;">Final Score: <span id="finalScoreDisplay" class="font-bold text-gold" style="color: var(--gold);">0</span></p>
+            <button onclick="startNewGame()" class="game-btn px-8 py-3 rounded-full text-xl shadow-lg hover:scale-105 transition">
+                PLAY AGAIN
             </button>
         </div>
     </div>
 
     <div id="menuModal" class="modal fixed inset-0 hidden flex items-center justify-center z-50">
-        <div class="bg-white p-6 rounded-xl shadow-2xl max-w-sm w-full mx-4">
-            <div class="flex justify-between items-center mb-6 border-b pb-2">
-                <h2 class="text-2xl font-bold text-gray-800">Settings</h2>
-                <button onclick="toggleMenu()" class="text-gray-500 hover:text-gray-800 text-3xl">&times;</button>
+        <div class="modal-content p-6 rounded-xl shadow-2xl max-w-sm w-full mx-4">
+            <div class="flex justify-between items-center mb-6 border-b border-gray-600 pb-2">
+                <h2 class="text-2xl font-bold" style="color: var(--gold); font-family: 'Cinzel', serif;">SETTINGS</h2>
+                <button onclick="toggleMenu()" class="text-gray-400 hover:text-white text-3xl">&times;</button>
             </div>
             
-            <div class="space-y-4">
+            <div class="space-y-4 font-cormorant">
                 <div>
-                    <label class="block text-gray-700 font-bold mb-2">Difficulty:</label>
-                    <select id="difficultySelect" class="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 text-lg font-medium">
+                    <label class="block font-bold mb-2 text-gold" style="color: var(--gold);">Difficulty:</label>
+                    <select id="difficultySelect" class="w-full p-3 border border-gray-600 rounded-lg bg-black text-white text-lg font-medium focus:border-gold outline-none">
                         <option value="1">Easy (1 Suit) - Spades</option>
                         <option value="2">Medium (2 Suits)</option>
                         <option value="4">Hard (4 Suits)</option>
@@ -215,21 +231,21 @@
                 </div>
                 
                 <div>
-                    <label class="block text-gray-700 font-bold mb-2">Table Top:</label>
-                    <select id="themeSelect" class="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 text-lg font-medium">
+                    <label class="block font-bold mb-2 text-gold" style="color: var(--gold);">Table Top:</label>
+                    <select id="themeSelect" class="w-full p-3 border border-gray-600 rounded-lg bg-black text-white text-lg font-medium focus:border-gold outline-none">
                         <option value="green">Classic Green</option>
                         <option value="red">Royal Red</option>
                         <option value="blue">Midnight Blue</option>
                     </select>
                 </div>
 
-                <button onclick="confirmNewGame()" class="w-full bg-green-600 text-white py-3 rounded-lg font-bold text-lg shadow hover:bg-green-500 mt-4">Save & Start New Game</button>
-                <button onclick="saveAndResume()" class="w-full bg-gray-200 text-gray-800 py-3 rounded-lg font-bold mt-2 hover:bg-gray-300">Save & Resume Game</button>
+                <button onclick="confirmNewGame()" class="game-btn w-full py-3 rounded-full font-bold text-lg shadow mt-4">SAVE & NEW GAME</button>
+                <button onclick="saveAndResume()" class="w-full bg-gray-800 text-gray-300 border border-gray-600 py-3 rounded-full font-bold mt-2 hover:bg-gray-700 transition">RESUME GAME</button>
             </div>
         </div>
     </div>
 
-    <div id="messageToast" class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-black bg-opacity-90 text-white px-6 py-3 rounded-lg pointer-events-none opacity-0 transition-opacity duration-300 z-50 text-center font-bold text-lg shadow-xl border border-gray-600">Message</div>
+    <div id="messageToast" class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-black bg-opacity-90 text-gold border border-gold px-6 py-4 rounded-lg pointer-events-none opacity-0 transition-opacity duration-300 z-50 text-center font-bold text-xl shadow-xl font-cinzel" style="color: var(--gold); border-color: var(--gold);">Message</div>
 
     <script type="module">
         import { db } from '/firebase-config.js';
@@ -312,7 +328,6 @@
         const RANKS = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
         const VALUES = { 'A': 1, '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9, '10': 10, 'J': 11, 'Q': 12, 'K': 13 };
         
-        // --- ASSET CONFIGURATION ---
         const THEMES = {
             green: '/games/assets/solitaire/greentop.png',
             red: '/games/assets/solitaire/redtop.png',
@@ -326,7 +341,6 @@
             theme: 'green' // Default theme
         };
 
-        // --- Drag State ---
         let drag = {
             active: false,
             startX: 0, startY: 0,
@@ -337,20 +351,16 @@
             hasMoved: false
         };
 
-        // --- Init ---
         function init() {
-            // Load Difficulty
             const savedDiff = localStorage.getItem('spider_difficulty');
             if (savedDiff) state.difficulty = parseInt(savedDiff);
             document.getElementById('difficultySelect').value = state.difficulty;
             
-            // Load Theme
             const savedTheme = localStorage.getItem('spider_theme');
             if (savedTheme && THEMES[savedTheme]) state.theme = savedTheme;
             document.getElementById('themeSelect').value = state.theme;
-            applyTheme(); // Apply visual
+            applyTheme();
 
-            // Load High Score
             const savedHighScore = localStorage.getItem('spider_highscore');
             if (savedHighScore) state.highScore = parseInt(savedHighScore);
             updateHighScoreDisplay();
@@ -358,14 +368,12 @@
             startNewGame();
             window.addEventListener('resize', renderBoard);
             
-            // Global Input Listeners for Drag End/Move
             document.addEventListener('mousemove', handleGlobalMove);
             document.addEventListener('mouseup', handleGlobalEnd);
             document.addEventListener('touchmove', handleGlobalMove, {passive: false});
             document.addEventListener('touchend', handleGlobalEnd, {passive: false});
         }
 
-        // --- Core Logic ---
         function startNewGame() {
             document.getElementById('winModal').classList.add('hidden');
             stopConfetti();
@@ -629,8 +637,6 @@
             return { x: e.clientX, y: e.clientY };
         }
 
-        // --- Click Handling (Fallback) ---
-
         function handleCardClick(colIndex, cardIndex) {
             const col = state.tableau[colIndex];
             const card = col[cardIndex];
@@ -742,13 +748,13 @@
                     if (card.faceUp) {
                         const topDiv = document.createElement('div');
                         topDiv.className = 'flex flex-col items-center leading-none select-none';
-                        topDiv.innerHTML = `<span class="text-lg font-bold">${card.rank}</span><span class="text-xl">${SVG_ICONS[card.suit]}</span>`;
+                        topDiv.innerHTML = `<span class="text-xl">${card.rank}</span><span class="text-2xl">${SVG_ICONS[card.suit]}</span>`;
                         const centerDiv = document.createElement('div');
                         centerDiv.className = 'absolute inset-0 flex items-center justify-center opacity-100 pointer-events-none';
                         centerDiv.innerHTML = `<span class="text-6xl opacity-30">${ICONS[card.suit]}</span>`;
                         const botDiv = document.createElement('div');
                         botDiv.className = 'flex flex-col items-center leading-none select-none transform rotate-180';
-                        botDiv.innerHTML = `<span class="text-lg font-bold">${card.rank}</span><span class="text-xl">${SVG_ICONS[card.suit]}</span>`;
+                        botDiv.innerHTML = `<span class="text-xl">${card.rank}</span><span class="text-2xl">${SVG_ICONS[card.suit]}</span>`;
                         cardEl.appendChild(topDiv); cardEl.appendChild(centerDiv); cardEl.appendChild(botDiv);
                     }
 
@@ -779,7 +785,6 @@
         }
 
         function saveAndResume() {
-            // Just close menu, applying theme if changed, but NOT resetting game
             const themeSelect = document.getElementById('themeSelect');
             const newTheme = themeSelect.value;
             if (newTheme !== state.theme) {
@@ -791,12 +796,10 @@
         }
 
         function confirmNewGame() {
-            // Apply Difficulty
             const diffSelect = document.getElementById('difficultySelect');
             state.difficulty = parseInt(diffSelect.value);
             localStorage.setItem('spider_difficulty', state.difficulty);
             
-            // Apply Theme
             const themeSelect = document.getElementById('themeSelect');
             state.theme = themeSelect.value;
             localStorage.setItem('spider_theme', state.theme);
@@ -809,7 +812,7 @@
         function addFoundationGraphic(suit) {
             const fContainer = document.getElementById('foundations');
             const div = document.createElement('div');
-            div.className = 'w-10 h-14 sm:w-14 sm:h-20 bg-white rounded border-2 border-gray-300 flex items-center justify-center shadow-md ' + getSuitColor(suit);
+            div.className = 'w-10 h-14 sm:w-14 sm:h-20 bg-white rounded border-2 border-gray-400 flex items-center justify-center shadow-md ' + getSuitColor(suit);
             div.innerHTML = `<div class="w-6 h-6 sm:w-8 sm:h-8">${SVG_ICONS[suit]}</div>`;
             fContainer.appendChild(div);
         }
@@ -846,12 +849,12 @@
             const ctx = canvas.getContext('2d');
             canvas.width = window.innerWidth; canvas.height = window.innerHeight;
             const pieces = [];
-            const colors = ['#f44336', '#2196f3', '#ffeb3b', '#4caf50', '#ff9800'];
+            const colors = ['#d4af37', '#f4e5a7', '#ffffff', '#b8941f']; // Gold/White confetti
             for(let i=0; i<200; i++) {
                 pieces.push({
                     x: Math.random() * canvas.width, y: Math.random() * canvas.height - canvas.height,
                     color: colors[Math.floor(Math.random() * colors.length)],
-                    size: Math.random() * 10 + 5, speedY: Math.random() * 5 + 2, speedX: Math.random() * 2 - 1
+                    size: Math.random() * 8 + 4, speedY: Math.random() * 5 + 2, speedX: Math.random() * 2 - 1
                 });
             }
             function animate() {
@@ -872,7 +875,6 @@
             ctx.clearRect(0, 0, canvas.width, canvas.height);
         }
 
-        // Globals for buttons
         window.dealStock = dealStock;
         window.toggleMenu = toggleMenu;
         window.undoMove = undoMove;
