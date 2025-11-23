@@ -58,18 +58,6 @@
 
         main { flex: 1; max-width: 1200px; margin: 60px auto; padding: 0 20px; }
         
-        /* --- Locked State --- */
-        .locked-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.7); z-index: 50;
-            display: flex; align-items: center; justify-content: center;
-            backdrop-filter: blur(5px);
-        }
-        .locked-msg {
-            text-align: center; font-size: 2rem; color: #e94560; font-weight: bold;
-            text-shadow: 0 0 20px black;
-        }
-
         .game-categories { display: flex; gap: 30px; margin-bottom: 60px; justify-content: center; }
         .game-card {
             background: #0a0a0a; border-radius: 20px; overflow: hidden;
@@ -174,6 +162,7 @@
                 <a href="about.html">About</a>
                 <a href="contact.html">Contact</a>
                 <a href="privacy.html">Privacy</a>
+                <a href="terms.html">Terms</a>
             </div>
             <div class="copyright"><p>&copy; 2025 Gunner's Games</p></div>
         </div>
@@ -250,6 +239,9 @@
                         const data = doc.data();
                         document.getElementById('displayName').textContent = (data.playerName || "Pilot").toUpperCase();
                         document.getElementById('displayBalance').textContent = (data.gunnercoins || 0).toLocaleString();
+                        // Sync local storage for game iframe access
+                        localStorage.setItem('gunnercoins', data.gunnercoins);
+                        localStorage.setItem('playerName', data.playerName);
                     }
                 });
             } else {
@@ -265,7 +257,6 @@
             const email = document.getElementById('userEmail').value;
             const actionCodeSettings = {
                 // URL you want to redirect back to. 
-                // MUST match what is in Firebase Console -> Authorized Domains
                 url: window.location.href, 
                 handleCodeInApp: true
             };
@@ -285,7 +276,10 @@
         });
 
         // 4. UTILS
-        window.handleLogout = () => signOut(auth);
+        window.handleLogout = () => {
+            signOut(auth);
+            localStorage.clear();
+        }
         window.openModal = () => modal.style.display = 'flex';
         window.closeModal = () => modal.style.display = 'none';
         
