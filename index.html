@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gunner's Games - Player Portal</title>
+    <title>Gunner's Games - Games Portal</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -122,10 +122,10 @@
     <header>
         <div class="user-bar">
             <div id="loggedOutView">
-                <button class="auth-btn" onclick="openModal()">PILOT LOGIN</button>
+                <button class="auth-btn" onclick="openModal()">PLAYER LOGIN</button>
             </div>
             <div id="loggedInView" class="user-info">
-                <span class="user-name" id="displayName">Pilot</span>
+                <span class="user-name" id="displayName">Player</span>
                 <span class="user-balance">🪙 <span id="displayBalance">0</span></span>
                 <button class="auth-btn" style="border: 1px solid #555; color: #aaa; padding: 4px 10px; font-size: 0.8rem; margin-left: 10px;" onclick="handleLogout()">LOGOUT</button>
             </div>
@@ -171,13 +171,14 @@
     <div id="authModal" class="modal">
         <div class="modal-content">
             <span class="close-modal" onclick="closeModal()">&times;</span>
-            <h2 style="color: #e94560; margin-bottom: 20px;">PILOT ACCESS</h2>
+            
+            <h2 style="color: #e94560; margin-bottom: 20px;">PLAYER ACCESS</h2>
             <p style="color: #888; margin-bottom: 20px;">Enter your email. We will send a Magic Link to sign you in instantly.</p>
             
             <div class="error-msg" id="authError"></div>
             <div class="status-msg" id="authStatus">Link Sent! Check your email inbox.</div>
             
-            <input type="email" id="userEmail" class="input-field" placeholder="pilot@gunnersgames.com">
+            <input type="email" id="userEmail" class="input-field" placeholder="player@gunnersgames.com">
             <button class="submit-btn" id="btnSendLink">SEND LOGIN LINK</button>
         </div>
     </div>
@@ -237,8 +238,10 @@
                 onSnapshot(doc(db, "users", user.uid), (doc) => {
                     if(doc.exists()) {
                         const data = doc.data();
-                        document.getElementById('displayName').textContent = (data.playerName || "Pilot").toUpperCase();
+                        // CHANGED: Default name fallback to Player
+                        document.getElementById('displayName').textContent = (data.playerName || "Player").toUpperCase();
                         document.getElementById('displayBalance').textContent = (data.gunnercoins || 0).toLocaleString();
+                        
                         // Sync local storage for game iframe access
                         localStorage.setItem('gunnercoins', data.gunnercoins);
                         localStorage.setItem('playerName', data.playerName);
