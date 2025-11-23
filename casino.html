@@ -198,6 +198,14 @@
             object-fit: cover;
             border: 2px solid rgba(255, 215, 0, 0.5);
             margin-bottom: 15px;
+            cursor: pointer;
+            transition: transform 0.3s ease, border-color 0.3s ease;
+        }
+
+        .game-thumbnail:hover {
+            transform: scale(1.02);
+            border-color: #FFD700;
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
         }
 
         .game-title {
@@ -215,26 +223,6 @@
             text-align: center;
             margin-bottom: 15px;
             flex-grow: 1;
-        }
-
-        .play-button {
-            padding: 12px 30px;
-            background: linear-gradient(135deg, #FFD700, #FFA500);
-            color: #000;
-            border: none;
-            border-radius: 25px;
-            font-family: 'Orbitron', sans-serif;
-            font-weight: 700;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: all 0.3s;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .play-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(255, 215, 0, 0.6);
         }
 
         /* Carousel Controls */
@@ -272,53 +260,6 @@
             box-shadow: 0 0 20px rgba(255, 215, 0, 0.6);
         }
         
-        /* Scroll Indicator */
-        .scroll-hint {
-            position: absolute;
-            bottom: 40px;
-            left: 50%;
-            transform: translateX(-50%);
-            color: rgba(255, 215, 0, 0.6);
-            font-size: 0.9rem;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 5px;
-            animation: bounce 2s infinite;
-        }
-        
-        .scroll-icon {
-            width: 20px;
-            height: 30px;
-            border: 2px solid rgba(255, 215, 0, 0.6);
-            border-radius: 10px;
-            position: relative;
-        }
-        
-        .scroll-icon::before {
-            content: '';
-            position: absolute;
-            top: 5px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 4px;
-            height: 6px;
-            background: rgba(255, 215, 0, 0.6);
-            border-radius: 2px;
-            animation: scroll 1.5s infinite;
-        }
-        
-        @keyframes scroll {
-            0% { top: 5px; opacity: 1; }
-            100% { top: 15px; opacity: 0; }
-        }
-        
-        @keyframes bounce {
-            0%, 20%, 50%, 80%, 100% { transform: translate(-50%, 0); }
-            40% { transform: translate(-50%, -10px); }
-            60% { transform: translate(-50%, -5px); }
-        }
-
         /* Fixed Navigation */
         .fixed-nav {
             position: fixed;
@@ -347,6 +288,69 @@
         }
 
         .nav-button:hover {
+            background: rgba(255, 215, 0, 0.2);
+            box-shadow: 0 0 25px rgba(255, 215, 0, 0.6);
+            transform: translateY(-2px);
+        }
+
+        /* Game Launcher Overlay */
+        .game-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 2000;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        .game-overlay.active {
+            display: block;
+            opacity: 1;
+        }
+
+        .game-frame {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        /* Game Navigation Overlay Buttons */
+        .game-nav-overlay {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            display: none;
+            gap: 15px;
+            z-index: 2001;
+            flex-direction: row;
+        }
+
+        .game-overlay.active ~ .game-nav-overlay {
+            display: flex;
+        }
+
+        .game-nav-btn {
+            padding: 15px 30px;
+            background: rgba(10, 10, 10, 0.95);
+            border: 2px solid #FFD700;
+            border-radius: 10px;
+            color: #FFD700;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+        }
+
+        .game-nav-btn:hover {
             background: rgba(255, 215, 0, 0.2);
             box-shadow: 0 0 25px rgba(255, 215, 0, 0.6);
             transform: translateY(-2px);
@@ -411,6 +415,19 @@
                 padding: 10px 18px;
                 font-size: 0.9rem;
             }
+
+            /* Game navigation overlay mobile */
+            .game-nav-overlay {
+                bottom: 15px;
+                right: 15px;
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .game-nav-btn {
+                padding: 10px 18px;
+                font-size: 0.85rem;
+            }
         }
     </style>
 </head>
@@ -434,50 +451,44 @@
             <div class="carousel" id="carousel">
                 <!-- 1. Blackjack -->
                 <div class="game-card center" data-game="blackjack">
-                    <img src="/games/assets/casino/blackjack.png" alt="Blackjack" class="game-thumbnail" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22320%22 height=%22250%22%3E%3Crect fill=%22%23111%22 width=%22320%22 height=%22250%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 font-family=%22Arial%22 font-size=%2224%22 fill=%22%23FFD700%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22%3E🃏 BLACKJACK%3C/text%3E%3C/svg%3E'">
+                    <img src="/games/assets/casino/blackjack.png" alt="Blackjack" class="game-thumbnail" onclick="launchGame('games/casino/blackjack.html')" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22320%22 height=%22250%22%3E%3Crect fill=%22%23111%22 width=%22320%22 height=%22250%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 font-family=%22Arial%22 font-size=%2224%22 fill=%22%23FFD700%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22%3E🃏 BLACKJACK%3C/text%3E%3C/svg%3E'">
                     <div class="game-title">BLACKJACK</div>
                     <div class="game-description">Beat the dealer in classic 21! Hit, stand, or double down to win big.</div>
-                    <button class="play-button" onclick="launchGame('games/casino/blackjack.html')">PLAY NOW</button>
                 </div>
 
                 <!-- 2. Texas Hold'em -->
                 <div class="game-card" data-game="texas_holdem">
-                    <img src="/games/assets/casino/texas_holdem.png" alt="Texas Hold'em" class="game-thumbnail" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22320%22 height=%22250%22%3E%3Crect fill=%22%230a3d0a%22 width=%22320%22 height=%22250%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 font-family=%22Arial%22 font-size=%2224%22 fill=%22%23FFD700%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22%3E♣️ TEXAS HOLDEM%3C/text%3E%3C/svg%3E'">
+                    <img src="/games/assets/casino/texas_holdem.png" alt="Texas Hold'em" class="game-thumbnail" onclick="launchGame('games/casino/texas_holdem.html')" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22320%22 height=%22250%22%3E%3Crect fill=%22%230a3d0a%22 width=%22320%22 height=%22250%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 font-family=%22Arial%22 font-size=%2224%22 fill=%22%23FFD700%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22%3E♣️ TEXAS HOLDEM%3C/text%3E%3C/svg%3E'">
                     <div class="game-title">TEXAS HOLD'EM</div>
                     <div class="game-description">Go all-in against the house! Master your poker face and claim the pot.</div>
-                    <button class="play-button" onclick="launchGame('games/casino/texas_holdem.html')">PLAY NOW</button>
                 </div>
 
                 <!-- 3. Squario Slots -->
                 <div class="game-card" data-game="squario-slots">
-                    <img src="/games/assets/casino/squario-slots.png" alt="Squario Slots" class="game-thumbnail" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22320%22 height=%22250%22%3E%3Crect fill=%22%238b0000%22 width=%22320%22 height=%22250%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 font-family=%22Arial%22 font-size=%2224%22 fill=%22%23fff%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22%3E🍄 SQUARIO SLOTS%3C/text%3E%3C/svg%3E'">
+                    <img src="/games/assets/casino/squario-slots.png" alt="Squario Slots" class="game-thumbnail" onclick="launchGame('games/casino/squario-slots.html')" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22320%22 height=%22250%22%3E%3Crect fill=%22%238b0000%22 width=%22320%22 height=%22250%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 font-family=%22Arial%22 font-size=%2224%22 fill=%22%23fff%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22%3E🍄 SQUARIO SLOTS%3C/text%3E%3C/svg%3E'">
                     <div class="game-title">SQUARIO SLOTS</div>
                     <div class="game-description">Spin to win with everyone's favorite blocky plumber! Match the mushrooms.</div>
-                    <button class="play-button" onclick="launchGame('games/casino/squario-slots.html')">PLAY NOW</button>
                 </div>
 
                 <!-- 4. Squareman Slots -->
                 <div class="game-card" data-game="squareman-slots">
-                    <img src="/games/assets/casino/squareman-slots.png" alt="Squareman Slots" class="game-thumbnail" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22320%22 height=%22250%22%3E%3Crect fill=%22%23CCCC00%22 width=%22320%22 height=%22250%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 font-family=%22Arial%22 font-size=%2224%22 fill=%22%23000%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22%3E👻 SQUAREMAN SLOTS%3C/text%3E%3C/svg%3E'">
+                    <img src="/games/assets/casino/squareman-slots.png" alt="Squareman Slots" class="game-thumbnail" onclick="launchGame('games/casino/squareman-slots.html')" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22320%22 height=%22250%22%3E%3Crect fill=%22%23CCCC00%22 width=%22320%22 height=%22250%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 font-family=%22Arial%22 font-size=%2224%22 fill=%22%23000%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22%3E👻 SQUAREMAN SLOTS%3C/text%3E%3C/svg%3E'">
                     <div class="game-title">SQUAREMAN SLOTS</div>
                     <div class="game-description">Dot-eating action meets the one-armed bandit! Avoid the ghosts and hit 777.</div>
-                    <button class="play-button" onclick="launchGame('games/casino/squareman-slots.html')">PLAY NOW</button>
                 </div>
 
                 <!-- 5. Squarebird Slots -->
                 <div class="game-card" data-game="squarebird-slots">
-                    <img src="/games/assets/casino/squarebird-slots.png" alt="Squarebird Slots" class="game-thumbnail" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22320%22 height=%22250%22%3E%3Crect fill=%22%23004d00%22 width=%22320%22 height=%22250%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 font-family=%22Arial%22 font-size=%2224%22 fill=%22%23fff%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22%3E🐦 SQUAREBIRD SLOTS%3C/text%3E%3C/svg%3E'">
+                    <img src="/games/assets/casino/squarebird-slots.png" alt="Squarebird Slots" class="game-thumbnail" onclick="launchGame('games/casino/squarebird-slots.html')" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22320%22 height=%22250%22%3E%3Crect fill=%22%23004d00%22 width=%22320%22 height=%22250%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 font-family=%22Arial%22 font-size=%2224%22 fill=%22%23fff%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22%3E🐦 SQUAREBIRD SLOTS%3C/text%3E%3C/svg%3E'">
                     <div class="game-title">SQUAREBIRD SLOTS</div>
                     <div class="game-description">Flap your way to the jackpot! Navigate the pipes and line up the birds.</div>
-                    <button class="play-button" onclick="launchGame('games/casino/squarebird-slots.html')">PLAY NOW</button>
                 </div>
 
                 <!-- 6. GunnerCoin Drop -->
                 <div class="game-card" data-game="gunnercoin-drop">
-                    <img src="/games/assets/casino/gunnercoin-drop.png" alt="GunnerCoin Drop" class="game-thumbnail" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22320%22 height=%22250%22%3E%3Crect fill=%22%234B0082%22 width=%22320%22 height=%22250%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 font-family=%22Arial%22 font-size=%2224%22 fill=%22%23FFD700%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22%3E🪙 COIN DROP%3C/text%3E%3C/svg%3E'">
+                    <img src="/games/assets/casino/gunnercoin-drop.png" alt="GunnerCoin Drop" class="game-thumbnail" onclick="launchGame('games/casino/gunnercoin-drop.html')" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22320%22 height=%22250%22%3E%3Crect fill=%22%234B0082%22 width=%22320%22 height=%22250%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 font-family=%22Arial%22 font-size=%2224%22 fill=%22%23FFD700%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22%3E🪙 COIN DROP%3C/text%3E%3C/svg%3E'">
                     <div class="game-title">GUNNERCOIN DROP</div>
                     <div class="game-description">A physics-based Plinko style game. Drop the coin and watch it bounce!</div>
-                    <button class="play-button" onclick="launchGame('games/casino/gunnercoin-drop.html')">PLAY NOW</button>
                 </div>
 
             </div>
@@ -487,10 +498,6 @@
                 <button class="carousel-button" onclick="rotateCarousel(1)">›</button>
             </div>
             
-            <div class="scroll-hint">
-                <div class="scroll-icon"></div>
-                <span>SCROLL TO BROWSE</span>
-            </div>
         </div>
     </div>
 
@@ -506,10 +513,30 @@
         </a>
     </div>
 
+    <!-- Game Launcher Overlay -->
+    <div class="game-overlay" id="gameOverlay">
+        <iframe class="game-frame" id="gameFrame" src=""></iframe>
+    </div>
+
+    <!-- Navigation buttons that appear over games -->
+    <div class="game-nav-overlay">
+        <button class="game-nav-btn" onclick="closeGame()">
+            <span>←</span>
+            <span>Back to Casino</span>
+        </button>
+        <a href="index.html" class="game-nav-btn">
+            <span>🏠</span>
+            <span>Home</span>
+        </a>
+    </div>
+
     <script>
         let currentIndex = 0;
         let isThrottled = false;
         const scrollCooldown = 600; // Matches transition time
+        
+        const gameOverlay = document.getElementById('gameOverlay');
+        const gameFrame = document.getElementById('gameFrame');
 
         function updateCarousel() {
             const cards = document.querySelectorAll('.game-card');
@@ -545,16 +572,13 @@
             updateCarousel();
         }
 
-        // --- NEW: Scroll Event Listener ---
+        // --- Scroll Event Listener ---
         window.addEventListener('wheel', (e) => {
-            // Prevent default page scrolling behavior (just to be safe, though overflow:hidden handles it)
             e.preventDefault();
 
             if (isThrottled) return;
 
             // Detect scroll direction
-            // DeltaY > 0 means scrolling DOWN (move next)
-            // DeltaY < 0 means scrolling UP (move prev)
             const direction = e.deltaY > 0 ? 1 : -1;
             
             rotateCarousel(direction);
@@ -564,9 +588,9 @@
             setTimeout(() => {
                 isThrottled = false;
             }, scrollCooldown);
-        }, { passive: false }); // passive: false needed to use preventDefault if we wanted to stop page scroll, but overflow hidden does that.
+        }, { passive: false });
 
-        // --- NEW: Touch Swipe Support for Mobile ---
+        // --- Touch Swipe Support for Mobile ---
         let touchStartY = 0;
         let touchEndY = 0;
 
@@ -600,43 +624,17 @@
         }
 
         function launchGame(gameUrl) {
-            // Create fullscreen iframe overlay
-            const overlay = document.createElement('div');
-            overlay.id = 'gameOverlay';
-            overlay.style.cssText = `
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: #000;
-                z-index: 1000;
-                display: flex;
-                flex-direction: column;
-            `;
-            
-            const iframe = document.createElement('iframe');
-            iframe.src = gameUrl;
-            iframe.style.cssText = `
-                width: 100%;
-                height: 100%;
-                border: none;
-            `;
-            
-            overlay.appendChild(iframe);
-            document.body.appendChild(overlay);
-            
-            // Hide main navigation when game is open
-            document.querySelector('.fixed-nav').style.display = 'none';
+            gameFrame.src = gameUrl;
+            gameOverlay.classList.add('active');
+            // Main fixed-nav is hidden automatically because game-overlay is on top
+            // game-nav-overlay is shown via CSS sibling selector
         }
         
         function closeGame() {
-            const overlay = document.getElementById('gameOverlay');
-            if (overlay) {
-                overlay.remove();
-            }
-            // Show navigation again
-            document.querySelector('.fixed-nav').style.display = 'flex';
+            gameOverlay.classList.remove('active');
+            setTimeout(() => {
+                gameFrame.src = '';
+            }, 500);
         }
         
         // Listen for close game message from iframe
@@ -659,6 +657,12 @@
 
         // Keyboard navigation
         document.addEventListener('keydown', (e) => {
+            // If game is open, check for Escape
+            if (gameOverlay.classList.contains('active')) {
+                if (e.key === 'Escape') closeGame();
+                return;
+            }
+
             if (e.key === 'ArrowLeft') rotateCarousel(-1);
             if (e.key === 'ArrowRight') rotateCarousel(1);
             if (e.key === 'ArrowUp') rotateCarousel(-1);
