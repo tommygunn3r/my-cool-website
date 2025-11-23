@@ -365,18 +365,6 @@
 
         .close-button { margin-top: 1.4rem; width: 100%; }
 
-        /* Fixed Navigation */
-        .fixed-nav {
-            position: fixed; bottom: 10px; right: 10px; display: flex; gap: 10px; z-index: 200;
-        }
-        .nav-button {
-            padding: 9px 16px; background: rgba(10, 10, 10, 0.95); border: 2px solid var(--gold);
-            border-radius: 10px; color: var(--cream); font-size: 0.85rem; font-weight: bold; cursor: pointer;
-            text-decoration: none; display: flex; align-items: center; gap: 6px; transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3); font-family: 'Cinzel', serif;
-        }
-        .nav-button:hover { background: rgba(212, 175, 55, 0.2); box-shadow: 0 0 25px rgba(212, 175, 55, 0.6); transform: translateY(-2px); }
-
         /* --- BONUS OVERLAY --- */
         .bonus-overlay {
             position: fixed;
@@ -527,8 +515,6 @@
             .slot-wrapper { max-height: calc(100vh - 130px); }
             .slot-footer { flex-direction: column; align-items: stretch; }
             .win-info { text-align: left; }
-            .fixed-nav { bottom: 8px; right: 8px; flex-direction: column; }
-            .nav-button { padding: 8px 14px; font-size: 0.8rem; }
         }
 
         /* Auto-scale reels by height & phone width */
@@ -578,7 +564,6 @@
     </style>
 </head>
 <body>
-    <!-- Start Screen -->
     <div id="tableSelector">
         <div class="selector-title">SQUARIO SLOTS</div>
         <div class="selector-sub">STACK THE POWER-UPS • CHASE THE JACKPOT</div>
@@ -586,7 +571,6 @@
         <button class="start-button" id="startGame">PLAY NOW</button>
     </div>
 
-    <!-- Main Game -->
     <div id="gameContainer">
         <div class="header">
             <div class="logo">GUNNERSGAMES</div>
@@ -616,8 +600,7 @@
 
                 <div class="slot-grid">
                     <div id="slotReels" class="slot-reels">
-                        <!-- Filled by JS -->
-                    </div>
+                        </div>
                 </div>
 
                 <div class="slot-footer">
@@ -638,7 +621,6 @@
         </div>
     </div>
 
-    <!-- Settings Modal -->
     <div class="modal" id="settingsModal">
         <div class="modal-content">
             <div class="modal-title">SETTINGS</div>
@@ -666,18 +648,7 @@
         </div>
     </div>
 
-    <!-- Fixed Navigation -->
-    <div class="fixed-nav">
-        <a href="#" class="nav-button" onclick="closeGame(); return false;">
-            <span>←</span>
-            <span>Back</span>
-        </a>
-    </div>
-
     <script type="module">
-        function closeGame() { window.location.href = '/index.html'; }
-        window.closeGame = closeGame;
-
         import { db } from '/firebase-config.js';
         import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
         import { collection, addDoc, serverTimestamp, doc, getDoc, setDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
