@@ -378,7 +378,6 @@
     </style>
 </head>
 <body>
-    <!-- Parallax Background -->
     <div class="parallax-container">
         <div class="parallax-layer layer-1"></div>
         <div class="parallax-layer layer-2"></div>
@@ -389,21 +388,53 @@
         </div>
     </div>
 
-    <!-- Main Content -->
     <div class="content">
         <h1 class="title">CASINO GAMES</h1>
         
         <div class="carousel-container">
             <div class="carousel" id="carousel">
-                <!-- Blackjack Card -->
                 <div class="game-card center" data-game="blackjack">
                     <img src="/games/assets/casino/blackjack.png" alt="Blackjack" class="game-thumbnail" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22320%22 height=%22250%22%3E%3Crect fill=%22%23111%22 width=%22320%22 height=%22250%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 font-family=%22Arial%22 font-size=%2224%22 fill=%22%23FFD700%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22%3E🃏 BLACKJACK%3C/text%3E%3C/svg%3E'">
                     <div class="game-title">BLACKJACK</div>
-                    <div class="game-description">Beat the dealer in classic 21! Hit, stand, or double down to win big with your GunnerCoins.</div>
+                    <div class="game-description">Beat the dealer in classic 21! Hit, stand, or double down to win big.</div>
                     <button class="play-button" onclick="launchGame('games/casino/blackjack.html')">PLAY NOW</button>
                 </div>
 
-                <!-- More casino games coming soon - add them here -->
+                <div class="game-card" data-game="texas_holdem">
+                    <img src="/games/assets/casino/texas_holdem.png" alt="Texas Hold'em" class="game-thumbnail" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22320%22 height=%22250%22%3E%3Crect fill=%22%230a3d0a%22 width=%22320%22 height=%22250%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 font-family=%22Arial%22 font-size=%2224%22 fill=%22%23FFD700%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22%3E♣️ TEXAS HOLDEM%3C/text%3E%3C/svg%3E'">
+                    <div class="game-title">TEXAS HOLD'EM</div>
+                    <div class="game-description">Go all-in against the house! Master your poker face and claim the pot.</div>
+                    <button class="play-button" onclick="launchGame('games/casino/texas_holdem.html')">PLAY NOW</button>
+                </div>
+
+                <div class="game-card" data-game="squario-slots">
+                    <img src="/games/assets/casino/squario-slots.png" alt="Squario Slots" class="game-thumbnail" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22320%22 height=%22250%22%3E%3Crect fill=%22%238b0000%22 width=%22320%22 height=%22250%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 font-family=%22Arial%22 font-size=%2224%22 fill=%22%23fff%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22%3E🍄 SQUARIO SLOTS%3C/text%3E%3C/svg%3E'">
+                    <div class="game-title">SQUARIO SLOTS</div>
+                    <div class="game-description">Spin to win with everyone's favorite blocky plumber! Match the mushrooms for the jackpot.</div>
+                    <button class="play-button" onclick="launchGame('games/casino/squario-slots.html')">PLAY NOW</button>
+                </div>
+
+                <div class="game-card" data-game="squareman-slots">
+                    <img src="/games/assets/casino/squareman-slots.png" alt="Squareman Slots" class="game-thumbnail" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22320%22 height=%22250%22%3E%3Crect fill=%22%23CCCC00%22 width=%22320%22 height=%22250%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 font-family=%22Arial%22 font-size=%2224%22 fill=%22%23000%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22%3E👻 SQUAREMAN SLOTS%3C/text%3E%3C/svg%3E'">
+                    <div class="game-title">SQUAREMAN SLOTS</div>
+                    <div class="game-description">Dot-eating action meets the one-armed bandit! Avoid the ghosts and hit 777.</div>
+                    <button class="play-button" onclick="launchGame('games/casino/squareman-slots.html')">PLAY NOW</button>
+                </div>
+
+                <div class="game-card" data-game="squarebird-slots">
+                    <img src="/games/assets/casino/squarebird-slots.png" alt="Squarebird Slots" class="game-thumbnail" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22320%22 height=%22250%22%3E%3Crect fill=%22%23004d00%22 width=%22320%22 height=%22250%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 font-family=%22Arial%22 font-size=%2224%22 fill=%22%23fff%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22%3E🐦 SQUAREBIRD SLOTS%3C/text%3E%3C/svg%3E'">
+                    <div class="game-title">SQUAREBIRD SLOTS</div>
+                    <div class="game-description">Flap your way to the jackpot! Navigate the pipes and line up the birds.</div>
+                    <button class="play-button" onclick="launchGame('games/casino/squarebird-slots.html')">PLAY NOW</button>
+                </div>
+
+                <div class="game-card" data-game="gunnercoin-drop">
+                    <img src="/games/assets/casino/gunnercoin-drop.png" alt="GunnerCoin Drop" class="game-thumbnail" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22320%22 height=%22250%22%3E%3Crect fill=%22%234B0082%22 width=%22320%22 height=%22250%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 font-family=%22Arial%22 font-size=%2224%22 fill=%22%23FFD700%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22%3E🪙 COIN DROP%3C/text%3E%3C/svg%3E'">
+                    <div class="game-title">GUNNERCOIN DROP</div>
+                    <div class="game-description">A physics-based Plinko style game. Drop the coin and watch it bounce to the big multipliers!</div>
+                    <button class="play-button" onclick="launchGame('games/casino/gunnercoin-drop.html')">PLAY NOW</button>
+                </div>
+
             </div>
 
             <div class="carousel-controls">
@@ -413,7 +444,6 @@
         </div>
     </div>
 
-    <!-- Fixed Navigation -->
     <div class="fixed-nav">
         <a href="casino-leaderboard.html" class="nav-button">
             <span>🏆</span>
@@ -427,30 +457,39 @@
 
     <script>
         let currentIndex = 0;
+        
+        // This array isn't strictly necessary for the display since we hardcoded the HTML above, 
+        // but it's good practice to keep it updated in case we move to dynamic loading later.
         const games = [
-            {
-                name: 'Blackjack',
-                file: 'games/casino/blackjack.html',
-                description: 'Beat the dealer in classic 21!'
-            }
-            // Add more games here as they're created
+            { name: 'Blackjack', file: 'games/casino/blackjack.html' },
+            { name: "Texas Hold'em", file: 'games/casino/texas_holdem.html' },
+            { name: 'Squario Slots', file: 'games/casino/squario-slots.html' },
+            { name: 'Squareman Slots', file: 'games/casino/squareman-slots.html' },
+            { name: 'Squarebird Slots', file: 'games/casino/squarebird-slots.html' },
+            { name: 'GunnerCoin Drop', file: 'games/casino/gunnercoin-drop.html' }
         ];
 
         function updateCarousel() {
             const cards = document.querySelectorAll('.game-card');
             cards.forEach((card, index) => {
                 card.className = 'game-card';
-                const position = index - currentIndex;
                 
+                // Calculate relative position handling the wrap-around
+                let position = (index - currentIndex);
+                
+                // Normalize position to find shortest path around the circle
+                if (position < -Math.floor(cards.length / 2)) position += cards.length;
+                if (position > Math.floor(cards.length / 2)) position -= cards.length;
+
                 if (position === 0) {
                     card.classList.add('center');
-                } else if (position === -1 || (position === cards.length - 1 && currentIndex === 0)) {
+                } else if (position === -1) {
                     card.classList.add('left-1');
-                } else if (position === -2 || (position === cards.length - 2 && currentIndex <= 1)) {
+                } else if (position === -2) {
                     card.classList.add('left-2');
-                } else if (position === 1 || (position === -(cards.length - 1) && currentIndex === cards.length - 1)) {
+                } else if (position === 1) {
                     card.classList.add('right-1');
-                } else if (position === 2 || (position === -(cards.length - 2) && currentIndex >= cards.length - 2)) {
+                } else if (position === 2) {
                     card.classList.add('right-2');
                 } else {
                     card.classList.add('hidden');
