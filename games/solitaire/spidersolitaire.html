@@ -6,17 +6,25 @@
     <title>Mom's Spider Solitaire</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* --- Classic Visuals --- */
+        /* --- Visuals --- */
         body {
-            background-color: #1a472a; /* Classic Felt Green */
+            /* Default Fallback Color */
+            background-color: #1a472a; 
+            /* Background Settings */
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed; /* Keeps bg still while dragging if view bounces */
+            transition: background-image 0.5s ease-in-out;
+            
             overscroll-behavior: none;
             user-select: none;
             -webkit-user-select: none;
             font-family: sans-serif;
-            touch-action: none; /* Critical for touch dragging */
+            touch-action: none; 
         }
 
-        /* Card styling - High Contrast & Clean */
+        /* Card styling */
         .card {
             width: 100%;
             aspect-ratio: 2.5/3.5;
@@ -24,7 +32,7 @@
             border-radius: 0.4rem;
             box-shadow: 1px 1px 3px rgba(0,0,0,0.4);
             position: absolute;
-            transition: transform 0.1s; /* Only transform transitions usually */
+            transition: transform 0.1s; 
             display: flex;
             flex-direction: column;
             justify-content: space-between;
@@ -34,9 +42,7 @@
             z-index: 10;
         }
         
-        .card:active {
-            cursor: grabbing;
-        }
+        .card:active { cursor: grabbing; }
 
         @media (min-width: 640px) {
             .card {
@@ -46,15 +52,13 @@
             }
         }
 
+        /* --- CUSTOM CARD BACK ASSET --- */
         .card-face-down {
-            background: repeating-linear-gradient(
-                45deg,
-                #3b82f6,
-                #3b82f6 10px,
-                #2563eb 10px,
-                #2563eb 20px
-            );
-            border: 2px solid white;
+            background-image: url('/games/assets/solitaire/card_back.png');
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-position: center;
+            border: 1px solid #ddd; /* Subtle border for the image */
             cursor: default;
         }
         
@@ -71,13 +75,11 @@
         .card.dragging {
             box-shadow: 0 10px 25px rgba(0,0,0,0.5);
             z-index: 9999 !important;
-            pointer-events: none; /* Essential for elementFromPoint to see through the card */
+            pointer-events: none; 
         }
         
         /* Snap back animation class */
-        .card.snapping {
-            transition: top 0.2s ease-out, left 0.2s ease-out;
-        }
+        .card.snapping { transition: top 0.2s ease-out, left 0.2s ease-out; }
 
         .card.hint-anim {
             animation: wiggle 0.5s ease-in-out;
@@ -104,19 +106,14 @@
             padding: 0.5rem;
         }
         
-        @media (min-width: 768px) {
-             .game-board { gap: 0.75rem; }
-        }
+        @media (min-width: 768px) { .game-board { gap: 0.75rem; } }
 
-        .column {
-            position: relative;
-            min-height: 60vh;
-        }
+        .column { position: relative; min-height: 60vh; }
         
-        /* Dropzone highlight */
         .column.drag-hover {
-            background-color: rgba(255, 255, 255, 0.1);
+            background-color: rgba(255, 255, 255, 0.2);
             border-radius: 0.5rem;
+            box-shadow: inset 0 0 20px rgba(255,255,255,0.3);
         }
 
         /* Top Bar */
@@ -125,30 +122,22 @@
             justify-content: space-between;
             align-items: center;
             padding: 0.5rem 1rem;
-            background-color: rgba(0,0,0,0.25);
+            background-color: rgba(0,0,0,0.4); /* Darker for better contrast on images */
+            backdrop-filter: blur(5px);
             color: white;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
+            border-bottom: 1px solid rgba(255,255,255,0.2);
         }
 
         .modal { background-color: rgba(0, 0, 0, 0.85); }
         
         #confetti-canvas {
             position: fixed;
-            top: 0;
-            left: 0;
-            pointer-events: none;
-            z-index: 100;
+            top: 0; left: 0; pointer-events: none; z-index: 100;
         }
 
-        /* Drag Layer - Cards move here when dragged */
         #drag-layer {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 9000;
+            top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9000;
         }
     </style>
 </head>
@@ -169,8 +158,8 @@
         </div>
         
         <div class="flex flex-col items-center">
-            <div class="text-lg sm:text-2xl font-bold text-green-50" id="scoreDisplay">Score: 500</div>
-            <div class="text-xs sm:text-sm font-medium text-yellow-300" id="highScoreDisplay">Best: 0</div>
+            <div class="text-lg sm:text-2xl font-bold text-white drop-shadow-md" id="scoreDisplay">Score: 500</div>
+            <div class="text-xs sm:text-sm font-medium text-yellow-300 drop-shadow-md" id="highScoreDisplay">Best: 0</div>
         </div>
 
         <div class="flex gap-2 items-center">
@@ -179,10 +168,10 @@
             </button>
             <div class="relative w-16 h-20 sm:w-20 sm:h-28">
                 <div id="stock-pile" onclick="dealStock()" class="card card-face-down absolute top-0 left-0 cursor-pointer hover:brightness-110 flex items-center justify-center">
-                   <div class="absolute inset-0 flex flex-col items-center justify-center bg-black bg-opacity-10">
+                   <div class="absolute inset-0 flex flex-col items-center justify-center bg-black bg-opacity-40 rounded">
                        <span class="text-white font-black text-lg sm:text-xl tracking-wider drop-shadow-md">DEAL</span>
-                       <div class="mt-1 bg-white text-blue-800 font-bold text-xs px-2 py-0.5 rounded-full shadow-sm">
-                           <span id="stock-count">5</span> left
+                       <div class="mt-1 bg-white text-blue-900 font-bold text-xs px-2 py-0.5 rounded-full shadow-sm">
+                           <span id="stock-count">5</span>
                        </div>
                    </div>
                 </div>
@@ -194,7 +183,7 @@
         <div class="game-board h-full pt-2" id="tableau">
             </div>
 
-        <div id="foundations" class="absolute bottom-2 right-2 z-0 flex gap-1 opacity-60 pointer-events-none transform scale-75 origin-bottom-right">
+        <div id="foundations" class="absolute bottom-2 right-2 z-0 flex gap-1 opacity-80 pointer-events-none transform scale-75 origin-bottom-right">
         </div>
     </div>
 
@@ -224,8 +213,18 @@
                         <option value="4">Hard (4 Suits)</option>
                     </select>
                 </div>
-                <button onclick="confirmNewGame()" class="w-full bg-green-600 text-white py-3 rounded-lg font-bold text-lg shadow hover:bg-green-500 mt-4">Start New Game</button>
-                <button onclick="toggleMenu()" class="w-full bg-gray-200 text-gray-800 py-3 rounded-lg font-bold mt-2 hover:bg-gray-300">Resume Game</button>
+                
+                <div>
+                    <label class="block text-gray-700 font-bold mb-2">Table Top:</label>
+                    <select id="themeSelect" class="w-full p-3 border border-gray-300 rounded-lg bg-gray-50 text-lg font-medium">
+                        <option value="green">Classic Green</option>
+                        <option value="red">Royal Red</option>
+                        <option value="blue">Midnight Blue</option>
+                    </select>
+                </div>
+
+                <button onclick="confirmNewGame()" class="w-full bg-green-600 text-white py-3 rounded-lg font-bold text-lg shadow hover:bg-green-500 mt-4">Save & Start New Game</button>
+                <button onclick="saveAndResume()" class="w-full bg-gray-200 text-gray-800 py-3 rounded-lg font-bold mt-2 hover:bg-gray-300">Save & Resume Game</button>
             </div>
         </div>
     </div>
@@ -313,9 +312,18 @@
         const RANKS = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
         const VALUES = { 'A': 1, '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9, '10': 10, 'J': 11, 'Q': 12, 'K': 13 };
         
+        // --- ASSET CONFIGURATION ---
+        const THEMES = {
+            green: '/games/assets/solitaire/greentop.png',
+            red: '/games/assets/solitaire/redtop.png',
+            blue: '/games/assets/solitaire/bluetop.png'
+        };
+
         let state = {
             tableau: [[], [], [], [], [], [], [], [], [], []],
-            stock: [], foundations: 0, history: [], score: 500, highScore: 0, difficulty: 1, selectedCard: null 
+            stock: [], foundations: 0, history: [], score: 500, highScore: 0, 
+            difficulty: 1, selectedCard: null,
+            theme: 'green' // Default theme
         };
 
         // --- Drag State ---
@@ -323,20 +331,30 @@
             active: false,
             startX: 0, startY: 0,
             colIndex: null, cardIndex: null,
-            elStack: [], // The visual elements moving
-            originalRects: [], // To snap back if needed
+            elStack: [], 
+            originalRects: [], 
             offsetX: 0, offsetY: 0,
             hasMoved: false
         };
 
         // --- Init ---
         function init() {
+            // Load Difficulty
             const savedDiff = localStorage.getItem('spider_difficulty');
             if (savedDiff) state.difficulty = parseInt(savedDiff);
             document.getElementById('difficultySelect').value = state.difficulty;
+            
+            // Load Theme
+            const savedTheme = localStorage.getItem('spider_theme');
+            if (savedTheme && THEMES[savedTheme]) state.theme = savedTheme;
+            document.getElementById('themeSelect').value = state.theme;
+            applyTheme(); // Apply visual
+
+            // Load High Score
             const savedHighScore = localStorage.getItem('spider_highscore');
             if (savedHighScore) state.highScore = parseInt(savedHighScore);
             updateHighScoreDisplay();
+
             startNewGame();
             window.addEventListener('resize', renderBoard);
             
@@ -466,41 +484,27 @@
         // --- Drag Input Handling ---
         
         function handleInputStart(e, colIndex, cardIndex) {
-            // Only allow left click or touch
             if (e.type === 'mousedown' && e.button !== 0) return;
-            
             const card = state.tableau[colIndex][cardIndex];
             if (!card.faceUp) return;
-
-            // Stop standard browser drag
-            // e.preventDefault(); // Warning: This might block scrolling on touch, we handle that in logic
-
             const pos = getEventPos(e);
             
-            // Prime the drag, but don't start dragging until moved slightly
-            drag.active = false; // Will set to true on move
+            drag.active = false;
             drag.hasMoved = false;
             drag.startX = pos.x;
             drag.startY = pos.y;
             drag.colIndex = colIndex;
             drag.cardIndex = cardIndex;
             
-            // Store reference to the element logic to see if we CAN drag
-            if (canMoveStack(colIndex, cardIndex)) {
-                // Good to go
-            } else {
-                drag.colIndex = null; // invalid drag target
-            }
+            if (!canMoveStack(colIndex, cardIndex)) drag.colIndex = null;
         }
 
         function handleGlobalMove(e) {
-            if (drag.colIndex === null) return; // No valid drag started
-            
+            if (drag.colIndex === null) return;
             const pos = getEventPos(e);
             const dx = pos.x - drag.startX;
             const dy = pos.y - drag.startY;
 
-            // Threshold to switch from "Click" to "Drag"
             if (!drag.active && (Math.abs(dx) > 5 || Math.abs(dy) > 5)) {
                 drag.active = true;
                 drag.hasMoved = true;
@@ -508,10 +512,8 @@
             }
 
             if (drag.active) {
-                e.preventDefault(); // Stop scrolling now that we are definitely dragging
+                e.preventDefault(); 
                 updateDragVisuals(dx, dy);
-                
-                // Highlight drop zones
                 highlightDropZone(pos.x, pos.y);
             }
         }
@@ -528,16 +530,10 @@
                     success = attemptMove(drag.colIndex, drag.cardIndex, targetCol);
                 }
 
-                if (!success) {
-                    snapBackVisuals();
-                } else {
-                    resetDragState();
-                }
+                if (!success) snapBackVisuals();
+                else resetDragState();
             } else {
-                // It was just a click
-                if (!drag.hasMoved) {
-                    handleCardClick(drag.colIndex, drag.cardIndex);
-                }
+                if (!drag.hasMoved) handleCardClick(drag.colIndex, drag.cardIndex);
                 resetDragState();
             }
         }
@@ -545,21 +541,13 @@
         function startDragVisuals(pos) {
             const dragLayer = document.getElementById('drag-layer');
             const col = document.getElementById('tableau').children[drag.colIndex];
-            
             drag.elStack = [];
             drag.originalRects = [];
 
-            // Gather elements to move
             for (let i = drag.cardIndex; i < state.tableau[drag.colIndex].length; i++) {
                 const cardEl = col.children[i];
                 const rect = cardEl.getBoundingClientRect();
-                
                 drag.originalRects.push({left: rect.left, top: rect.top});
-
-                // Clone for drag (or move actual? Move actual is smoother for complex games)
-                // We will move the ACTUAL elements to fixed position to ensure no visual glitches
-                // But we need to maintain their state in 'tableau' visually as placeholders? 
-                // No, just move them.
                 
                 cardEl.style.position = 'fixed';
                 cardEl.style.left = rect.left + 'px';
@@ -568,27 +556,15 @@
                 cardEl.style.zIndex = 9000 + i;
                 cardEl.classList.add('dragging');
                 
-                dragLayer.appendChild(cardEl); // Move to drag layer
+                dragLayer.appendChild(cardEl);
                 drag.elStack.push(cardEl);
             }
-            
-            // Calculate offset from mouse to top-left of stack
             const topRect = drag.originalRects[0];
             drag.offsetX = pos.x - topRect.left;
             drag.offsetY = pos.y - topRect.top;
         }
 
         function updateDragVisuals(dx, dy) {
-            // We use the initial start pos + delta
-            // Actually simpler: Current Mouse - Offset
-            // We need to loop because we moved them to fixed, but they retain their relative stack positions
-            // by virtue of us calculating their initial fixed positions.
-            // If we move the TOP card, do we move the others relative?
-            
-            // Re-read current mouse pos inside handler is better, but dx/dy works if accurate
-            // Let's use current mouse pos from event which we passed? No, we passed dx,dy.
-            // Let's rely on start + delta.
-            
             drag.elStack.forEach((el, index) => {
                 const original = drag.originalRects[index];
                 el.style.left = (original.left + dx) + 'px';
@@ -597,58 +573,42 @@
         }
 
         function getTargetColumn(x, y) {
-            // Hide drag elements momentarily to peek below
             drag.elStack.forEach(el => el.style.display = 'none');
             const elBelow = document.elementFromPoint(x, y);
             drag.elStack.forEach(el => el.style.display = '');
-
             if (!elBelow) return null;
             
-            // Traverse up to find column or card
             const colEl = elBelow.closest('.column');
-            if (colEl) {
-                return parseInt(colEl.dataset.col);
-            }
-            
-            // If we hit a card (that isn't in our drag stack), find its column
+            if (colEl) return parseInt(colEl.dataset.col);
             const cardEl = elBelow.closest('.card');
             if (cardEl && cardEl.parentElement.classList.contains('column')) {
                 return parseInt(cardEl.parentElement.dataset.col);
             }
-            
             return null;
         }
 
         function highlightDropZone(x, y) {
-            // Remove old highlights
             document.querySelectorAll('.column.drag-hover').forEach(el => el.classList.remove('drag-hover'));
-            
             const targetColIdx = getTargetColumn(x, y);
             if (targetColIdx !== null && targetColIdx !== drag.colIndex) {
                 const col = document.getElementById('tableau').children[targetColIdx];
-                // Visual check if valid?
                 const leadCard = state.tableau[drag.colIndex][drag.cardIndex];
-                if (isMoveValid(leadCard, targetColIdx)) {
-                    col.classList.add('drag-hover');
-                }
+                if (isMoveValid(leadCard, targetColIdx)) col.classList.add('drag-hover');
             }
         }
 
         function snapBackVisuals() {
-            // Animate back to original rects
             let completeCount = 0;
             drag.elStack.forEach((el, index) => {
                 const target = drag.originalRects[index];
                 el.classList.add('snapping');
                 el.style.left = target.left + 'px';
                 el.style.top = target.top + 'px';
-                
-                // Once transition ends, clean up
                 setTimeout(() => {
                     completeCount++;
                     if (completeCount === drag.elStack.length) {
                         resetDragState();
-                        renderBoard(); // Put back in DOM proper
+                        renderBoard(); 
                     }
                 }, 200);
             });
@@ -659,22 +619,17 @@
             drag.colIndex = null;
             drag.cardIndex = null;
             drag.hasMoved = false;
-            // Clear drag layer
-            const dragLayer = document.getElementById('drag-layer');
-            dragLayer.innerHTML = '';
+            document.getElementById('drag-layer').innerHTML = '';
             document.querySelectorAll('.column.drag-hover').forEach(el => el.classList.remove('drag-hover'));
         }
 
         function getEventPos(e) {
-            if (e.touches && e.touches.length > 0) {
-                return { x: e.touches[0].clientX, y: e.touches[0].clientY };
-            } else if (e.changedTouches && e.changedTouches.length > 0) { // for touchend
-                return { x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY };
-            }
+            if (e.touches && e.touches.length > 0) return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+            else if (e.changedTouches && e.changedTouches.length > 0) return { x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY };
             return { x: e.clientX, y: e.clientY };
         }
 
-        // --- Click Handling (Fallback/Selection) ---
+        // --- Click Handling (Fallback) ---
 
         function handleCardClick(colIndex, cardIndex) {
             const col = state.tableau[colIndex];
@@ -767,7 +722,7 @@
             state.tableau.forEach((col, colIndex) => {
                 const colEl = document.createElement('div');
                 colEl.className = 'column';
-                colEl.dataset.col = colIndex; // For Hit Testing
+                colEl.dataset.col = colIndex; 
                 colEl.onclick = (e) => { if(e.target === colEl) handleEmptyColumnClick(colIndex); };
 
                 let overlap = 30;
@@ -797,7 +752,6 @@
                         cardEl.appendChild(topDiv); cardEl.appendChild(centerDiv); cardEl.appendChild(botDiv);
                     }
 
-                    // Attach Drag/Click Start listener
                     cardEl.addEventListener('mousedown', (e) => handleInputStart(e, colIndex, cardIndex));
                     cardEl.addEventListener('touchstart', (e) => handleInputStart(e, colIndex, cardIndex), {passive: false});
 
@@ -818,12 +772,40 @@
             setTimeout(() => { el.style.opacity = '0'; }, 2000);
         }
         function toggleMenu() { document.getElementById('menuModal').classList.toggle('hidden'); }
-        function confirmNewGame() {
-            const select = document.getElementById('difficultySelect');
-            state.difficulty = parseInt(select.value);
-            localStorage.setItem('spider_difficulty', state.difficulty);
-            toggleMenu(); startNewGame();
+        
+        function applyTheme() {
+            const url = THEMES[state.theme];
+            document.body.style.backgroundImage = `url('${url}')`;
         }
+
+        function saveAndResume() {
+            // Just close menu, applying theme if changed, but NOT resetting game
+            const themeSelect = document.getElementById('themeSelect');
+            const newTheme = themeSelect.value;
+            if (newTheme !== state.theme) {
+                state.theme = newTheme;
+                localStorage.setItem('spider_theme', state.theme);
+                applyTheme();
+            }
+            toggleMenu();
+        }
+
+        function confirmNewGame() {
+            // Apply Difficulty
+            const diffSelect = document.getElementById('difficultySelect');
+            state.difficulty = parseInt(diffSelect.value);
+            localStorage.setItem('spider_difficulty', state.difficulty);
+            
+            // Apply Theme
+            const themeSelect = document.getElementById('themeSelect');
+            state.theme = themeSelect.value;
+            localStorage.setItem('spider_theme', state.theme);
+            applyTheme();
+
+            toggleMenu(); 
+            startNewGame();
+        }
+
         function addFoundationGraphic(suit) {
             const fContainer = document.getElementById('foundations');
             const div = document.createElement('div');
@@ -897,6 +879,8 @@
         window.showHint = showHint;
         window.startNewGame = startNewGame;
         window.confirmNewGame = confirmNewGame;
+        window.saveAndResume = saveAndResume;
+        window.handleEmptyColumnClick = handleEmptyColumnClick;
 
         init();
     </script>
