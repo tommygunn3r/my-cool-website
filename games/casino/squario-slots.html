@@ -1,0 +1,962 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GunnersGames – Squario Slots</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --gold: #d4af37;
+            --gold-dark: #b8941f;
+            --gold-light: #f4e5a7;
+            --cream: #f5f3e8;
+            --dark: #1a1410;
+            --red: #8b0000;
+            --green: #0a4a2e;
+            --accent: #ffcc33;
+        }
+
+        body {
+            font-family: 'Cormorant Garamond', serif;
+            overflow: auto;
+            height: 100vh;
+            width: 100vw;
+            margin: 0;
+            padding: 0;
+            background-color: #0a4a2e;
+            background-size: cover;
+            background-position: center;
+            transition: background-image 0.5s ease-in-out;
+        }
+
+        /* --- Start Screen (reusing blackjack style) --- */
+        #tableSelector {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(135deg, var(--dark) 0%, #2a1f1a 100%);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            z-index: 1000; transition: opacity 0.5s, visibility 0.5s;
+        }
+        #tableSelector.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+
+        .selector-title {
+            font-family: 'Cinzel', serif; font-size: 3.2rem; font-weight: 700; color: var(--gold);
+            margin-bottom: 1rem; text-shadow: 0 0 20px rgba(212, 175, 55, 0.5); letter-spacing: 0.1em;
+            text-align: center;
+        }
+
+        .selector-sub {
+            font-family: 'Cinzel', serif; font-size: 1.2rem; color: var(--cream);
+            margin-bottom: 1.5rem; letter-spacing: 0.15em;
+        }
+
+        .loading-text { 
+            color: var(--gold); font-family: 'Cinzel', serif; font-size: 1.2rem;
+            margin-top: 20px; animation: pulse 1.5s infinite; 
+        }
+        @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
+
+        .start-button {
+            font-family: 'Cinzel', serif; font-size: 1.5rem; padding: 1rem 4rem; margin-top: 2rem;
+            background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
+            color: var(--dark); border: none; border-radius: 50px; cursor: pointer; font-weight: 600;
+            letter-spacing: 0.1em; transition: all 0.3s ease; box-shadow: 0 5px 20px rgba(212, 175, 55, 0.4);
+            display: none; /* Hidden until loaded */
+        }
+        .start-button:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(212, 175, 55, 0.6); }
+
+        /* --- Game Layout --- */
+        #gameContainer {
+            width: 100vw; min-height: 100vh; height: auto;
+            display: flex; flex-direction: column; position: relative;
+        }
+
+        .header {
+            display: flex; justify-content: space-between; align-items: center; padding: 1rem 2rem;
+            background: linear-gradient(180deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.6) 100%);
+            border-bottom: 2px solid var(--gold); flex-shrink: 0;
+        }
+        .logo {
+            font-family: 'Cinzel', serif; font-size: 1.4rem; font-weight: 700; color: var(--gold);
+            letter-spacing: 0.15em; text-shadow: 0 0 15px rgba(212, 175, 55, 0.6);
+        }
+
+        .game-title {
+            font-family: 'Cinzel', serif; font-size: 1.2rem; font-weight: 600; color: var(--cream);
+            letter-spacing: 0.15em; text-align: center;
+        }
+
+        .balance { display: flex; align-items: center; gap: 0.5rem; font-size: 1.3rem; color: var(--cream); font-weight: 600; }
+        .coin-icon {
+            width: 30px; height: 30px; background: radial-gradient(circle, var(--gold-light) 0%, var(--gold) 100%);
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            font-weight: 700; color: var(--dark); font-size: 1rem; box-shadow: 0 2px 10px rgba(212, 175, 55, 0.5);
+        }
+
+        .settings-button {
+            background: rgba(0, 0, 0, 0.6); border: 2px solid var(--gold); color: var(--gold);
+            width: 40px; height: 40px; border-radius: 50%; cursor: pointer; font-size: 1.2rem; transition: all 0.3s;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .settings-button:hover { background: rgba(212, 175, 55, 0.2); transform: rotate(90deg); }
+
+        .game-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 1rem 1rem 5rem 1rem;
+            position: relative;
+        }
+
+        /* --- Slot Machine --- */
+        .slot-wrapper {
+            max-width: 950px;
+            margin: 0 auto;
+            margin-top: 1rem;
+            padding: 1rem 1.5rem 1.5rem;
+            background: radial-gradient(circle at top, rgba(255,255,255,0.08), rgba(0,0,0,0.85));
+            border-radius: 25px;
+            border: 2px solid rgba(212, 175, 55, 0.6);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+        }
+
+        .slot-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: .5rem;
+        }
+
+        .slot-status {
+            color: var(--cream);
+            font-size: 1rem;
+        }
+
+        .status-label {
+            color: var(--gold);
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            font-size: 0.95rem;
+        }
+
+        .status-value {
+            font-weight: 600;
+        }
+
+        .free-spin-indicator {
+            padding: 0.3rem 0.8rem;
+            border-radius: 999px;
+            border: 1px solid var(--gold);
+            background: rgba(0,0,0,0.6);
+            color: var(--accent);
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .free-spin-indicator.hidden {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .slot-grid {
+            position: relative;
+            overflow: hidden;
+            border-radius: 18px;
+            border: 2px solid rgba(0,0,0,0.8);
+            background: linear-gradient(180deg, #4fa64a 0%, #26602a 100%);
+            padding: 0.6rem;
+            margin-bottom: 0.8rem;
+        }
+
+        .slot-reels {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 0.4rem;
+        }
+
+        .reel-column {
+            display: grid;
+            grid-template-rows: repeat(3, 1fr);
+            gap: 0.4rem;
+        }
+
+        .slot-symbol {
+            position: relative;
+            background: radial-gradient(circle at top, rgba(255,255,255,0.12), rgba(0,0,0,0.6));
+            border-radius: 12px;
+            border: 2px solid rgba(0,0,0,0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.2rem;
+            overflow: hidden;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.6);
+        }
+
+        .slot-symbol img {
+            max-width: 90%;
+            max-height: 90%;
+            image-rendering: pixelated;
+            transition: transform 0.2s ease;
+        }
+
+        .slot-symbol.spinning img {
+            animation: wiggle 0.4s infinite;
+        }
+
+        @keyframes wiggle {
+            0% { transform: translateY(0); }
+            25% { transform: translateY(-3px); }
+            50% { transform: translateY(0); }
+            75% { transform: translateY(3px); }
+            100% { transform: translateY(0); }
+        }
+
+        .slot-symbol.win {
+            box-shadow: 0 0 20px rgba(255,255,255,0.8), 0 0 35px rgba(255,215,0,0.9);
+            border-color: var(--gold);
+            animation: winPulse 0.6s ease-in-out alternate 4;
+        }
+
+        @keyframes winPulse {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.06); }
+        }
+
+        .slot-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-top: 0.3rem;
+        }
+
+        .betting-area {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .bet-label {
+            color: var(--cream);
+            font-size: 1rem;
+        }
+
+        .bet-input {
+            width: 110px; padding: 0.6rem; font-size: 1rem; font-family: 'Cormorant Garamond', serif;
+            background: rgba(0, 0, 0, 0.6); border: 2px solid var(--gold); border-radius: 8px;
+            color: var(--cream); text-align: center;
+        }
+
+        .game-button {
+            font-family: 'Cinzel', serif; font-size: 1rem; padding: 0.7rem 1.6rem;
+            background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
+            color: var(--dark); border: none; border-radius: 25px; cursor: pointer; font-weight: 600;
+            letter-spacing: 0.05em; transition: all 0.3s ease; box-shadow: 0 3px 15px rgba(212, 175, 55, 0.4);
+            white-space: nowrap;
+        }
+        .game-button:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 5px 20px rgba(212, 175, 55, 0.6); }
+        .game-button:disabled { opacity: 0.35; cursor: not-allowed; filter: grayscale(0.8); }
+
+        .secondary-button {
+            background: rgba(0,0,0,0.8);
+            color: var(--gold);
+            border: 1px solid var(--gold);
+            box-shadow: none;
+            font-size: 0.9rem;
+            padding: 0.5rem 1rem;
+        }
+
+        .secondary-button:hover:not(:disabled) {
+            box-shadow: 0 0 12px rgba(212,175,55,0.5);
+        }
+
+        .win-info {
+            min-width: 180px;
+            text-align: right;
+            color: var(--cream);
+            font-size: 0.95rem;
+        }
+
+        .win-info span {
+            display: block;
+        }
+
+        .message-overlay {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.92); padding: 2rem 4rem; border-radius: 15px;
+            border: 3px solid var(--gold); font-family: 'Cinzel', serif; font-size: 2rem;
+            color: var(--gold); font-weight: 600; letter-spacing: 0.1em;
+            text-shadow: 0 0 20px rgba(212, 175, 55, 0.8); z-index: 100;
+            opacity: 0; animation: fadeIn 0.3s forwards; pointer-events: none;
+            text-align: center;
+        }
+        @keyframes fadeIn { to { opacity: 1; } }
+
+        .message-overlay small {
+            display: block;
+            font-size: 0.8rem;
+            margin-top: 0.4rem;
+            letter-spacing: 0.08em;
+            color: var(--cream);
+        }
+
+        /* --- Modal --- */
+        .modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.8); display: none; align-items: center; justify-content: center; z-index: 200;
+        }
+        .modal.active { display: flex; }
+        .modal-content {
+            background: linear-gradient(135deg, #2a1f1a 0%, var(--dark) 100%); padding: 3rem;
+            border-radius: 20px; border: 3px solid var(--gold); max-width: 500px; width: 90%;
+        }
+        .modal-title {
+            font-family: 'Cinzel', serif; font-size: 2rem; color: var(--gold); margin-bottom: 2rem; letter-spacing: 0.1em;
+        }
+        .setting-row {
+            display: flex; justify-content: space-between; align-items: center; padding: 1rem 0;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.3); color: var(--cream); font-size: 1.1rem;
+        }
+        .toggle {
+            width: 60px; height: 30px; background: rgba(0, 0, 0, 0.5); border: 2px solid var(--gold);
+            border-radius: 15px; position: relative; cursor: pointer; transition: background 0.3s;
+        }
+        .toggle.active { background: var(--gold); }
+        .toggle-slider {
+            width: 22px; height: 22px; background: var(--cream); border-radius: 50%;
+            position: absolute; top: 2px; left: 2px; transition: left 0.3s;
+        }
+        .toggle.active .toggle-slider { left: 32px; }
+
+        .select-input {
+            width: 140px;
+            padding: 0.4rem 0.6rem;
+            background: rgba(0,0,0,0.6);
+            border-radius: 8px;
+            border: 2px solid var(--gold);
+            color: var(--cream);
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1rem;
+        }
+
+        .close-button { margin-top: 2rem; width: 100%; }
+
+        /* Fixed Navigation */
+        .fixed-nav {
+            position: fixed; bottom: 30px; right: 30px; display: flex; gap: 15px; z-index: 200;
+        }
+        .nav-button {
+            padding: 12px 24px; background: rgba(10, 10, 10, 0.95); border: 2px solid var(--gold);
+            border-radius: 10px; color: var(--cream); font-size: 1rem; font-weight: bold; cursor: pointer;
+            text-decoration: none; display: flex; align-items: center; gap: 8px; transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3); font-family: 'Cinzel', serif;
+        }
+        .nav-button:hover { background: rgba(212, 175, 55, 0.2); box-shadow: 0 0 25px rgba(212, 175, 55, 0.6); transform: translateY(-2px); }
+
+        @media (max-width: 768px) {
+            .slot-wrapper { margin-top: 0.5rem; padding: 0.7rem; }
+            .slot-footer { flex-direction: column; align-items: stretch; }
+            .win-info { text-align: left; }
+            .fixed-nav { bottom: 20px; right: 20px; flex-direction: column; }
+            .nav-button { padding: 10px 18px; font-size: 0.9rem; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Start Screen -->
+    <div id="tableSelector">
+        <div class="selector-title">SQUARIO SLOTS</div>
+        <div class="selector-sub">STACK THE POWER-UPS • CHASE THE JACKPOT</div>
+        <div id="loadingMsg" class="loading-text">CONNECTING TO ACCOUNT...</div>
+        <button class="start-button" id="startGame">PLAY NOW</button>
+    </div>
+
+    <!-- Main Game -->
+    <div id="gameContainer">
+        <div class="header">
+            <div class="logo">GUNNERSGAMES</div>
+            <div class="game-title">SQUARIO SPIN ADVENTURE</div>
+            <button class="settings-button" id="settingsBtn">⚙</button>
+            <div class="balance">
+                <div class="coin-icon">G</div>
+                <span id="balance">...</span>
+            </div>
+        </div>
+
+        <div class="game-area">
+            <div class="slot-wrapper">
+                <div class="slot-header-row">
+                    <div class="slot-status">
+                        <span class="status-label">PLAYER:</span>
+                        <span id="playerLabel" class="status-value">LOADING...</span>
+                    </div>
+                    <div id="freeSpinBadge" class="free-spin-indicator hidden">
+                        ⭐ FREE SPINS: <span id="freeSpinCount">0</span>
+                    </div>
+                    <div class="slot-status">
+                        <span class="status-label">LINES:</span>
+                        <span class="status-value">10</span>
+                    </div>
+                </div>
+
+                <div class="slot-grid">
+                    <div id="slotReels" class="slot-reels">
+                        <!-- Filled by JS -->
+                    </div>
+                </div>
+
+                <div class="slot-footer">
+                    <div class="betting-area">
+                        <span class="bet-label">BET PER SPIN</span>
+                        <input type="number" id="betAmount" class="bet-input" value="10" min="1" step="10">
+                        <button class="game-button secondary-button" id="maxBetBtn">MAX BET</button>
+                    </div>
+                    <div>
+                        <button class="game-button" id="spinBtn">SPIN</button>
+                    </div>
+                    <div class="win-info">
+                        <span>LAST WIN: <span id="lastWin">0</span></span>
+                        <span>SESSION TOTAL: <span id="sessionTotal">0</span></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal" id="settingsModal">
+        <div class="modal-content">
+            <div class="modal-title">SETTINGS</div>
+            <div class="setting-row">
+                <span>Sound Effects</span>
+                <div class="toggle active" id="soundToggle"><div class="toggle-slider"></div></div>
+            </div>
+            <div class="setting-row">
+                <span>Animation Speed</span>
+                <select class="select-input" id="speedSelect">
+                    <option value="0.25">Fast</option>
+                    <option value="0.45" selected>Normal</option>
+                    <option value="0.7">Slow</option>
+                </select>
+            </div>
+            <div class="setting-row">
+                <span>Slot Background</span>
+                <select class="select-input" id="tableSelect">
+                    <option value="green">Classic Green</option>
+                    <option value="red">Royal Red</option>
+                    <option value="blue">Midnight Blue</option>
+                </select>
+            </div>
+            <button class="game-button close-button" id="closeSettings">CLOSE</button>
+        </div>
+    </div>
+
+    <!-- Fixed Navigation -->
+    <div class="fixed-nav">
+        <a href="#" class="nav-button" onclick="closeGame(); return false;">
+            <span>←</span>
+            <span>Back to Casino</span>
+        </a>
+    </div>
+
+    <script type="module">
+        // Back to arcade
+        function closeGame() { window.location.href = '/index.html'; }
+        window.closeGame = closeGame;
+
+        // Firebase imports (same pattern as blackjack)
+        import { db } from '/firebase-config.js';
+        import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { collection, addDoc, serverTimestamp, doc, getDoc, setDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        let auth = null;
+        let balance = 0;
+        let soundEnabled = true;
+        let selectedTable = 'green';
+        let playerName = '';
+        let userId = '';
+        let spinning = false;
+        let spinDuration = 0.45;
+        let freeSpinsRemaining = 0;
+        let sessionTotalWin = 0;
+        let lastWinAmount = 0;
+
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+        // --- Symbol & Payline Config ---
+        const REELS = 5;
+        const ROWS = 3;
+
+        const SYMBOLS = ['squario','star','mushroom','coin','block','pipe','powerup'];
+
+        // External PNGs in same directory tree as blackjack
+        const SYMBOL_IMAGES = {
+            squario: '/games/assets/casino/squario_symbol.png',
+            star: '/games/assets/casino/star_symbol.png',
+            mushroom: '/games/assets/casino/mushroom_symbol.png',
+            coin: '/games/assets/casino/coin_symbol.png',
+            block: '/games/assets/casino/block_symbol.png',
+            pipe: '/games/assets/casino/pipe_symbol.png',
+            powerup: '/games/assets/casino/powerup_symbol.png'
+        };
+
+        // Simple 10-payline pattern (row indices for cols 0–4)
+        const PAYLINES = [
+            [1,1,1,1,1], // Middle row
+            [0,0,0,0,0], // Top row
+            [2,2,2,2,2], // Bottom row
+            [0,1,2,1,0],
+            [2,1,0,1,2],
+            [0,1,1,1,0],
+            [2,1,1,1,2],
+            [1,0,1,0,1],
+            [1,2,1,2,1],
+            [0,0,1,2,2]
+        ];
+
+        // Multipliers by symbol & match count (3,4,5)
+        const PAYTABLE = {
+            squario: {3: 10, 4: 40, 5: 150},
+            star:    {3: 8,  4: 25, 5: 100},
+            mushroom:{3: 6,  4: 18, 5: 70},
+            coin:    {3: 4,  4: 12, 5: 40},
+            block:   {3: 3,  4: 8,  5: 25},
+            pipe:    {3: 3,  4: 8,  5: 25}
+            // powerup is scatter only
+        };
+
+        // --- Utility & Visuals ---
+        function playSound(frequency, duration, type = 'sine', volume = 0.35) {
+            if (!soundEnabled) return;
+            if (audioContext.state === 'suspended') audioContext.resume();
+            const o = audioContext.createOscillator();
+            const g = audioContext.createGain();
+            o.connect(g); g.connect(audioContext.destination);
+            o.frequency.value = frequency; o.type = type;
+            g.gain.setValueAtTime(volume, audioContext.currentTime);
+            g.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
+            o.start(audioContext.currentTime); o.stop(audioContext.currentTime + duration);
+        }
+
+        function playSpinStart() {
+            playSound(180, 0.25, 'square', 0.25);
+        }
+
+        function playReelStop() {
+            playSound(280, 0.15, 'square', 0.25);
+        }
+
+        function playWin() {
+            playSound(523.25, 0.18);
+            setTimeout(()=>playSound(659.25,0.18),120);
+            setTimeout(()=>playSound(783.99,0.25),240);
+        }
+
+        function playBigWin() {
+            playSound(400,0.2,'sawtooth',0.4);
+            setTimeout(()=>playSound(500,0.2,'sawtooth',0.4),200);
+            setTimeout(()=>playSound(600,0.3,'sawtooth',0.4),400);
+        }
+
+        function playLose() {
+            playSound(220, 0.2, 'triangle', 0.3);
+            setTimeout(()=>playSound(150,0.25,'triangle',0.25),160);
+        }
+
+        function playBonus() {
+            playSound(880,0.25,'square',0.35);
+            setTimeout(()=>playSound(1046.5,0.25,'square',0.35),220);
+        }
+
+        function showMessage(text, sub = '') {
+            const el = document.createElement('div');
+            el.className = 'message-overlay';
+            el.innerHTML = text + (sub ? `<small>${sub}</small>` : '');
+            document.getElementById('gameContainer').appendChild(el);
+            setTimeout(() => el.remove(), 2000);
+        }
+
+        function applyTableVisuals() {
+            const map = { 'red': 'redtop.png', 'blue': 'bluetop.png', 'green': 'greentop.png' };
+            document.body.style.backgroundImage = `url('/games/assets/casino/${map[selectedTable]}')`;
+        }
+
+        function updateBalanceDisplay() {
+            document.getElementById('balance').textContent = balance.toLocaleString();
+        }
+
+        function updateStatsDisplay() {
+            document.getElementById('lastWin').textContent = lastWinAmount.toLocaleString();
+            document.getElementById('sessionTotal').textContent = sessionTotalWin.toLocaleString();
+        }
+
+        function updateFreeSpinBadge() {
+            const badge = document.getElementById('freeSpinBadge');
+            const countEl = document.getElementById('freeSpinCount');
+            if (freeSpinsRemaining > 0) {
+                badge.classList.remove('hidden');
+                countEl.textContent = freeSpinsRemaining;
+            } else {
+                badge.classList.add('hidden');
+            }
+        }
+
+        async function loadUserBalance() {
+            try {
+                const userDoc = doc(db, 'users', userId);
+                const docSnap = await getDoc(userDoc);
+                if (docSnap.exists()) {
+                    balance = docSnap.data().gunnercoins || 0;
+                } else {
+                    balance = 0;
+                }
+                updateBalanceDisplay();
+            } catch (e) {
+                console.error("Balance Load Error:", e);
+            }
+        }
+
+        function updateBalance(amount) {
+            balance += amount;
+            updateBalanceDisplay();
+            const userDoc = doc(db, 'users', userId);
+            setDoc(userDoc, { gunnercoins: balance }, { merge: true });
+        }
+
+        async function logSpinToFirestore(bet, win, grid, freeSpinUsed) {
+            try {
+                const colRef = collection(db, 'slots_squario');
+                await addDoc(colRef, {
+                    uid: userId,
+                    displayName: playerName,
+                    bet,
+                    win,
+                    balanceAfter: balance,
+                    freeSpinUsed,
+                    grid,
+                    timestamp: serverTimestamp()
+                });
+            } catch (e) {
+                console.warn('Spin log failed:', e);
+            }
+        }
+
+        // --- Slot Grid Management ---
+        let currentGrid = [];
+
+        function initGrid() {
+            currentGrid = [];
+            const reelsContainer = document.getElementById('slotReels');
+            reelsContainer.innerHTML = '';
+            for (let col = 0; col < REELS; col++) {
+                const colEl = document.createElement('div');
+                colEl.className = 'reel-column';
+                currentGrid[col] = [];
+                for (let row = 0; row < ROWS; row++) {
+                    const symbol = getRandomSymbol();
+                    currentGrid[col][row] = symbol;
+                    const symEl = createSymbolElement(symbol, col, row);
+                    colEl.appendChild(symEl);
+                }
+                reelsContainer.appendChild(colEl);
+            }
+        }
+
+        function getRandomSymbol() {
+            // Bias slightly toward low symbols, less Squario/powerup
+            const rand = Math.random();
+            if (rand < 0.18) return 'coin';
+            if (rand < 0.36) return 'block';
+            if (rand < 0.52) return 'pipe';
+            if (rand < 0.68) return 'mushroom';
+            if (rand < 0.82) return 'star';
+            if (rand < 0.94) return 'squario';
+            return 'powerup'; // rare scatter
+        }
+
+        function createSymbolElement(symbol, col, row) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'slot-symbol';
+            wrapper.dataset.col = col;
+            wrapper.dataset.row = row;
+            wrapper.dataset.symbol = symbol;
+
+            const img = document.createElement('img');
+            img.src = SYMBOL_IMAGES[symbol] || '';
+            img.alt = symbol.toUpperCase();
+
+            wrapper.appendChild(img);
+            return wrapper;
+        }
+
+        function updateColumnSymbols(col, symbols, withSpinClass) {
+            const reelsContainer = document.getElementById('slotReels');
+            const colEl = reelsContainer.children[col];
+            for (let row = 0; row < ROWS; row++) {
+                const symEl = colEl.children[row];
+                const img = symEl.querySelector('img');
+                const symbol = symbols[row];
+                currentGrid[col][row] = symbol;
+                symEl.dataset.symbol = symbol;
+                img.src = SYMBOL_IMAGES[symbol] || '';
+                img.alt = symbol.toUpperCase();
+                if (withSpinClass) {
+                    symEl.classList.add('spinning');
+                } else {
+                    symEl.classList.remove('spinning');
+                }
+                symEl.classList.remove('win');
+            }
+        }
+
+        function clearWinHighlights() {
+            const symbols = document.querySelectorAll('.slot-symbol');
+            symbols.forEach(s => s.classList.remove('win'));
+        }
+
+        // --- Spin Logic ---
+        async function handleSpinClick() {
+            if (spinning) return;
+            if (!userId) return;
+
+            const betInput = document.getElementById('betAmount');
+            let bet = parseInt(betInput.value, 10);
+            if (isNaN(bet) || bet < 1) {
+                showMessage('MINIMUM BET IS 1');
+                return;
+            }
+
+            const usingFreeSpin = freeSpinsRemaining > 0;
+
+            if (!usingFreeSpin && bet > balance) {
+                showMessage('INSUFFICIENT FUNDS');
+                return;
+            }
+
+            // Deduct bet only if not in free spin mode
+            if (!usingFreeSpin) {
+                updateBalance(-bet);
+            } else {
+                freeSpinsRemaining--;
+                updateFreeSpinBadge();
+            }
+
+            spinning = true;
+            lastWinAmount = 0;
+            clearWinHighlights();
+            updateStatsDisplay();
+            playSpinStart();
+
+            const reelsContainer = document.getElementById('slotReels');
+            const cols = Array.from(reelsContainer.children);
+
+            // Initial spin visual
+            cols.forEach((colEl, colIndex) => {
+                const newSymbols = [];
+                for (let row = 0; row < ROWS; row++) {
+                    newSymbols[row] = getRandomSymbol();
+                }
+                updateColumnSymbols(colIndex, newSymbols, true);
+            });
+
+            // Stop reels sequentially
+            const duration = spinDuration;
+            await new Promise(resolve => {
+                let colIndex = 0;
+                function stopNext() {
+                    if (colIndex >= REELS) {
+                        resolve();
+                        return;
+                    }
+                    const finalSymbols = [];
+                    for (let row = 0; row < ROWS; row++) {
+                        finalSymbols[row] = getRandomSymbol();
+                    }
+                    updateColumnSymbols(colIndex, finalSymbols, false);
+                    playReelStop();
+                    colIndex++;
+                    setTimeout(stopNext, duration * 250);
+                }
+                setTimeout(stopNext, duration * 250);
+            });
+
+            // Evaluate result
+            const result = evaluateGrid(bet);
+            lastWinAmount = result.totalWin;
+            sessionTotalWin += result.totalWin;
+            updateStatsDisplay();
+
+            if (result.totalWin > 0) {
+                if (result.totalWin >= bet * 20) {
+                    playBigWin();
+                    showMessage('BIG WIN!', `+${result.totalWin.toLocaleString()} G`);
+                } else {
+                    playWin();
+                    showMessage('WIN!', `+${result.totalWin.toLocaleString()} G`);
+                }
+                updateBalance(result.totalWin);
+            } else if (!usingFreeSpin && result.freeSpinsAwarded === 0) {
+                playLose();
+            }
+
+            if (result.freeSpinsAwarded > 0) {
+                freeSpinsRemaining += result.freeSpinsAwarded;
+                updateFreeSpinBadge();
+                playBonus();
+                showMessage('POWER-UP BONUS!', `${result.freeSpinsAwarded} FREE SPINS`);
+            }
+
+            // Log spin (not critical if fails)
+            const simpleGrid = currentGrid.map(col => col.slice());
+            logSpinToFirestore(bet, result.totalWin, simpleGrid, usingFreeSpin);
+
+            spinning = false;
+
+            // Auto-play remaining free spins
+            if (freeSpinsRemaining > 0) {
+                setTimeout(() => {
+                    handleSpinClick();
+                }, 900);
+            }
+        }
+
+        function evaluateGrid(bet) {
+            let totalWin = 0;
+            let freeSpinsAwarded = 0;
+
+            // Tally scatters
+            let scatterCount = 0;
+            for (let c = 0; c < REELS; c++) {
+                for (let r = 0; r < ROWS; r++) {
+                    if (currentGrid[c][r] === 'powerup') scatterCount++;
+                }
+            }
+
+            if (scatterCount >= 3) {
+                freeSpinsAwarded = 8 + (scatterCount - 3) * 2; // 3 = 8FS, 4 = 10FS, 5+ = 12FS
+            }
+
+            // Line wins
+            PAYLINES.forEach(line => {
+                const firstRow = line[0];
+                const firstSymbol = currentGrid[0][firstRow];
+                if (!PAYTABLE[firstSymbol]) return; // skip scatters
+
+                let count = 1;
+                const positions = [{c:0, r:firstRow}];
+
+                for (let c = 1; c < REELS; c++) {
+                    const r = line[c];
+                    const sym = currentGrid[c][r];
+                    if (sym === firstSymbol) {
+                        count++;
+                        positions.push({c,r});
+                    } else {
+                        break;
+                    }
+                }
+
+                if (count >= 3) {
+                    const mult = PAYTABLE[firstSymbol][count] || 0;
+                    if (mult > 0) {
+                        const win = bet * mult;
+                        totalWin += win;
+                        // highlight winning positions
+                        highlightPositions(positions);
+                    }
+                }
+            });
+
+            return { totalWin, freeSpinsAwarded };
+        }
+
+        function highlightPositions(positions) {
+            const reelsContainer = document.getElementById('slotReels');
+            positions.forEach(pos => {
+                const colEl = reelsContainer.children[pos.c];
+                if (!colEl) return;
+                const symEl = colEl.children[pos.r];
+                if (!symEl) return;
+                symEl.classList.add('win');
+            });
+        }
+
+        // --- Init & Auth ---
+        async function initGameSystem() {
+            // Theme preference shared with blackjack
+            const savedTheme = localStorage.getItem('blackjack_theme');
+            if (savedTheme) selectedTable = savedTheme;
+            document.getElementById('tableSelect').value = selectedTable;
+            applyTableVisuals();
+
+            // Auth
+            try {
+                auth = getAuth(db.app);
+                onAuthStateChanged(auth, async (user) => {
+                    if (user) {
+                        userId = user.uid;
+                        playerName = user.displayName || "Player";
+                        document.getElementById('playerLabel').textContent = playerName.toUpperCase();
+
+                        await loadUserBalance();
+                        initGrid();
+
+                        document.getElementById('loadingMsg').style.display = 'none';
+                        document.getElementById('startGame').style.display = 'block';
+                    } else {
+                        window.location.href = '/index.html';
+                    }
+                });
+            } catch (error) {
+                console.warn('Auth Check Failed:', error);
+            }
+        }
+
+        // --- Event Listeners ---
+        document.getElementById('startGame').addEventListener('click', () => {
+            document.getElementById('tableSelector').classList.add('hidden');
+            if (audioContext.state === 'suspended') audioContext.resume();
+        });
+
+        document.getElementById('spinBtn').addEventListener('click', handleSpinClick);
+
+        document.getElementById('maxBetBtn').addEventListener('click', () => {
+            if (balance <= 0) return;
+            const betInput = document.getElementById('betAmount');
+            const maxBet = Math.max(1, Math.floor(balance / 5)); // simple cap
+            betInput.value = maxBet;
+        });
+
+        document.getElementById('settingsBtn').addEventListener('click', () => {
+            document.getElementById('settingsModal').classList.add('active');
+        });
+        document.getElementById('closeSettings').addEventListener('click', () => {
+            document.getElementById('settingsModal').classList.remove('active');
+        });
+
+        document.getElementById('soundToggle').addEventListener('click', function() {
+            this.classList.toggle('active');
+            soundEnabled = this.classList.contains('active');
+        });
+
+        document.getElementById('speedSelect').addEventListener('change', function() {
+            spinDuration = parseFloat(this.value) || 0.45;
+        });
+
+        document.getElementById('tableSelect').addEventListener('change', function() {
+            selectedTable = this.value;
+            localStorage.setItem('blackjack_theme', selectedTable);
+            applyTableVisuals();
+        });
+
+        // Start
+        initGameSystem();
+    </script>
+</body>
+</html>
