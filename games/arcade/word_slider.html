@@ -14,6 +14,7 @@
             background: rgba(255, 255, 255, 0.95); padding: 30px; border-radius: 20px;
             box-shadow: 0 20px 60px rgba(0,0,0,0.5); text-align: center; max-width: 90vw; position: relative;
         }
+        /* Music Player */
         .music-player {
             position: absolute; top: -60px; right: 0; background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(10px);
             padding: 10px 20px; border-radius: 30px; display: flex; align-items: center; gap: 15px; color: white;
@@ -27,13 +28,21 @@
         .bar:nth-child(2) { animation-delay: 0.2s; } .bar:nth-child(3) { animation-delay: 0.4s; }
         .paused .bar { animation-play-state: paused; height: 3px !important; }
         @keyframes equalize { 0% { height: 3px; } 100% { height: 15px; } }
+
         h1 { color: #b21f1f; margin-bottom: 10px; font-size: 2em; text-transform: uppercase; letter-spacing: 2px; }
         .info { color: #666; margin-bottom: 20px; font-size: 0.9em; line-height: 1.5; }
         .highlight-text { color: #d69e2e; font-weight: bold; }
-        .stats { display: flex; justify-content: center; gap: 30px; margin: 20px 0; font-size: 1.1em; color: #555; flex-wrap: wrap; }
-        .stat-item { display: flex; flex-direction: column; gap: 5px; }
+        
+        .stats { display: flex; justify-content: center; gap: 20px; margin: 20px 0; font-size: 1.1em; color: #555; flex-wrap: wrap; }
+        .stat-item { display: flex; flex-direction: column; gap: 5px; min-width: 80px; }
         .stat-label { font-size: 0.8em; color: #888; }
         .stat-value { font-weight: bold; font-size: 1.3em; color: #b21f1f; }
+        
+        /* Timer specific styles */
+        #timer { color: #2d3748; transition: color 0.3s; }
+        #timer.low-time { color: #e53e3e; animation: pulse-red 1s infinite; }
+        @keyframes pulse-red { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+
         .puzzle-grid { display: inline-grid; gap: 8px; margin: 20px 0; padding: 20px; background: #2d3748; border-radius: 10px; position: relative; padding-bottom: 25px; }
         .puzzle-grid::after {
             content: 'LASER ZONE'; position: absolute; bottom: 5px; left: 50%; transform: translateX(-50%);
@@ -53,24 +62,43 @@
         @keyframes dropIn { from { transform: translateY(-50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
         .tile.new-spawn { animation: dropIn 0.4s ease; }
         .tile.found { background: linear-gradient(135deg, #48bb78 0%, #38a169 100%) !important; color: white !important; transform: scale(0.9); transition: transform 0.2s; }
+        
         .buttons { display: flex; gap: 10px; justify-content: center; margin-top: 20px; flex-wrap: wrap; }
         button { padding: 12px 24px; font-size: 1em; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: all 0.3s ease; }
         .new-game-btn { background: #b21f1f; color: white; }
         .new-game-btn:hover { background: #801717; transform: translateY(-2px); }
+        
         .message { margin-top: 15px; padding: 15px; border-radius: 8px; font-weight: bold; display: none; }
         .message.show { display: block; animation: fadeIn 0.3s ease; }
         .message.success { background: #48bb78; color: white; font-size: 1.2em; }
         .message.level-up { background: #fdbb2d; color: #744210; font-size: 1.3em; border: 2px solid #b7791f; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        
         .words-found { margin-top: 20px; padding: 15px; background: #f7fafc; border-radius: 8px; max-height: 150px; overflow-y: auto; }
         .words-found h3 { color: #2d3748; margin-bottom: 10px; font-size: 1.1em; }
         .word-list { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
         .found-word { background: #2d3748; color: #fdbb2d; padding: 5px 12px; border-radius: 5px; font-size: 0.9em; }
         .file-input-section { margin: 20px 0; padding: 15px; background: #edf2f7; border-radius: 8px; border: 2px dashed #cbd5e0; }
+
+        /* GAME OVER OVERLAY */
+        #gameOverOverlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(26, 32, 44, 0.95); border-radius: 20px;
+            display: none; flex-direction: column; justify-content: center; align-items: center;
+            z-index: 100; color: white;
+        }
+        #gameOverOverlay h2 { color: #fdbb2d; font-size: 3em; margin-bottom: 20px; }
+        #gameOverOverlay p { font-size: 1.5em; margin-bottom: 30px; }
     </style>
 </head>
 <body>
     <div class="container">
+        <div id="gameOverOverlay">
+            <h2>TIME'S UP!</h2>
+            <p>Final Score: <span id="finalScore">0</span></p>
+            <button class="new-game-btn" onclick="newGame()">Try Again</button>
+        </div>
+
         <div class="music-player" id="musicPlayer">
             <div class="equalizer paused" id="equalizer"><div class="bar"></div><div class="bar"></div><div class="bar"></div></div>
             <span class="track-info" id="trackInfo">Ready</span>
@@ -80,21 +108,21 @@
         </div>
 
         <h1>Waterfall Slider</h1>
-        <p class="info">Drop letters into the <span class="highlight-text">BOTTOM ROW</span>.<br>New letters spawn at the top!</p>
+        <p class="info">Form words in the <span class="highlight-text">BOTTOM ROW</span> to add time!<br>Don't let the clock run out.</p>
         
         <div class="file-input-section" id="fileSection">
             <div id="loadingMessage" class="message show" style="display: block; background:#2d3748; color:white;">Loading **CSW19.txt** dictionary...</div>
         </div>
 
         <div class="stats">
+            <div class="stat-item"><span class="stat-label">Time</span><span class="stat-value" id="timer">60</span></div>
             <div class="stat-item"><span class="stat-label">Score</span><span class="stat-value" id="score">0</span></div>
             <div class="stat-item"><span class="stat-label">Level</span><span class="stat-value" id="level">1</span></div>
-            <div class="stat-item"><span class="stat-label">Grid Size</span><span class="stat-value" id="gridSize">5x5</span></div>
-            <div class="stat-item"><span class="stat-label">Words Found</span><span class="stat-value" id="wordCount">0</span></div>
+            <div class="stat-item"><span class="stat-label">Grid</span><span class="stat-value" id="gridSize">5x5</span></div>
         </div>
         
         <div class="puzzle-grid" id="puzzleGrid"></div>
-        <div class="buttons"><button class="new-game-btn" onclick="newGame()">New Game</button></div>
+        <div class="buttons"><button class="new-game-btn" onclick="newGame()">Reset Game</button></div>
         <div class="message" id="message"></div>
         <div class="words-found">
             <h3>Extracted Words:</h3>
@@ -206,13 +234,16 @@
 
         function updateTrackDisplay() { document.getElementById('trackInfo').textContent = `Track ${currentTrackIndex + 1}`; }
 
-        window.toggleMusic = toggleMusic;
-        window.nextTrack = nextTrack;
-        window.toggleMute = toggleMute;
+        window.toggleMusic = toggleMusic; window.nextTrack = nextTrack; window.toggleMute = toggleMute;
 
         let dictionary = new Set(), grid = [], emptyPos = { row: 0, col: 0 };
         let score = 0, level = 1, gridSize = 5, targetRow = 4, wordsFound = [], tileSize = 70;
         let availableLetters = [], dictionaryLoaded = false;
+        
+        // --- TIMER VARIABLES ---
+        let timeLeft = 60;
+        let timerInterval = null;
+        let gameActive = false;
 
         const letterWeights = {
             'E': 12, 'A': 9, 'I': 9, 'O': 8, 'N': 6, 'R': 6, 'T': 6, 'L': 4, 'S': 4, 'U': 4,
@@ -228,8 +259,8 @@
                 const words = text.split(/\r?\n/).map(w => w.trim().toUpperCase()).filter(w => w.length >= 3);
                 dictionary = new Set(words); dictionaryLoaded = true;
                 document.getElementById('loadingMessage').style.display = 'none';
-                showMessage(`System Ready!`, 'success');
-                initGame();
+                showMessage(`System Ready! Game On!`, 'success');
+                newGame(); // Start first game
             } catch (error) {
                 const msg = document.getElementById('loadingMessage');
                 msg.textContent = `Error loading dictionary. Upload manually.`;
@@ -249,7 +280,7 @@
                     dictionary = new Set(words); dictionaryLoaded = true;
                     document.getElementById('loadingMessage').style.display = 'none';
                     showMessage(`Dictionary Loaded!`, 'success');
-                    initGame();
+                    newGame();
                 };
                 reader.readAsText(file);
             }
@@ -289,7 +320,9 @@
         }
 
         function moveTile(row, col) {
+            if (!gameActive) return false; // Stop input if game over
             if (!isPlaying && audio.currentTime === 0) toggleMusic();
+            
             const rowDiff = Math.abs(row - emptyPos.row);
             const colDiff = Math.abs(col - emptyPos.col);
             if ((rowDiff === 1 && colDiff === 0) || (rowDiff === 0 && colDiff === 1)) {
@@ -318,15 +351,25 @@
 
         function foundWord(word, rowIndex, startPos, endPos) {
             playSound('clear');
-            const points = calculatePoints(word); score += points; wordsFound.push(word);
+            const points = calculatePoints(word); 
+            score += points; 
+            wordsFound.push(word);
+            
+            // --- ADD TIME BONUS ---
+            const timeBonus = Math.floor(points / 5) + 2; // Formula: 1 sec for every 5 points + 2s base
+            timeLeft += timeBonus;
+            showMessage(`+${timeBonus}s! ${word}!`, 'success');
+
             document.getElementById('score').textContent = score;
             document.getElementById('wordCount').textContent = wordsFound.length;
+            document.getElementById('timer').textContent = timeLeft;
+
             const list = document.getElementById('wordList');
             const span = document.createElement('span');
             span.className = 'found-word'; span.textContent = `${word} (${points})`;
             list.insertBefore(span, list.firstChild);
             if (list.children.length > 10) list.removeChild(list.lastChild);
-            showMessage(`⚡ MATCH: ${word}! +${points} ⚡`, 'success');
+            
             highlightWord(rowIndex, startPos, endPos);
             setTimeout(() => { applyGravity(startPos, endPos); checkLevelUp(); }, 800);
         }
@@ -387,20 +430,58 @@
             setTimeout(() => msg.classList.remove('show'), 2500);
         }
 
+        // --- TIMER LOGIC ---
+        function startTimer() {
+            clearInterval(timerInterval);
+            timeLeft = 60; // Initial Time
+            updateTimerDisplay();
+            gameActive = true;
+            
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                updateTimerDisplay();
+                
+                if (timeLeft <= 0) {
+                    endGame();
+                }
+            }, 1000);
+        }
+
+        function updateTimerDisplay() {
+            const timerEl = document.getElementById('timer');
+            timerEl.textContent = timeLeft;
+            if (timeLeft <= 10) timerEl.classList.add('low-time');
+            else timerEl.classList.remove('low-time');
+        }
+
+        function endGame() {
+            gameActive = false;
+            clearInterval(timerInterval);
+            scoreManager.submitGameResult(score); // Send score to Firebase
+            
+            document.getElementById('gameOverOverlay').style.display = 'flex';
+            document.getElementById('finalScore').textContent = score;
+            
+            if(isPlaying) toggleMusic(); // Stop music on game over
+        }
+
         window.newGame = function() {
             if (!dictionaryLoaded) return;
-            if (score > 0) {
-                scoreManager.submitGameResult(score);
-                if (!confirm('Abandon current session?')) return;
-            }
+            
+            // Reset Logic
+            document.getElementById('gameOverOverlay').style.display = 'none';
             score = 0; level = 1; gridSize = 5; wordsFound = [];
+            
             document.getElementById('score').textContent = score;
             document.getElementById('level').textContent = level;
             document.getElementById('gridSize').textContent = `${gridSize}x${gridSize}`;
             document.getElementById('wordCount').textContent = 0;
-            scoreManager.startSession();
             document.getElementById('wordList').innerHTML = '';
+            
+            scoreManager.startSession();
             initGame();
+            startTimer(); // Start the clock!
+            
             showMessage('Gravity Systems Online...', 'success');
             if(!isPlaying) toggleMusic();
         }
