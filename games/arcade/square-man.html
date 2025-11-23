@@ -5,52 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Square-Man: 8-bit Maze Game</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Tone.js for music and sound effects -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
-    <!-- Firebase/Firestore Imports (Required for canvas environment) -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-        import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-
-     const firebaseConfig = {
-  apiKey: "AIzaSyDjdo3U9qg_h4TKvplsFoZgxVNepAbCpFA",
-  authDomain: "gunners-games.firebaseapp.com",
-  projectId: "gunners-games",
-  storageBucket: "gunners-games.firebasestorage.app",
-  messagingSenderId: "644077315462",
-  appId: "1:644077315462:web:431dd985426f3dbe02f807",
-  measurementId: "G-RWNL900X43"
-};
-
-        let db = null, auth = null, firebaseInitialized = false;
-
-        // Function to initialize Firebase
-        async function initFirebase() {
-            if (!firebaseConfig.apiKey || firebaseConfig.apiKey === "YOUR_API_KEY_HERE") {
-                console.warn("Firebase config is missing. Data persistence will be unavailable.");
-                return;
-            }
-            try {
-                const app = initializeApp(firebaseConfig);
-                db = getFirestore(app);
-                auth = getAuth(app);
-                await signInAnonymously(auth);
-                firebaseInitialized = true;
-                console.log("Firebase initialized and user signed in.");
-                window.userId = auth.currentUser?.uid || crypto.randomUUID();
-            } catch (error) {
-                console.error("Firebase initialization failed:", error);
-            }
-        }
-
-        initFirebase();
-        
-        // Export for use in game script
-        window.firebaseDb = () => db;
-        window.firebaseAuth = () => auth;
-        window.isFirebaseReady = () => firebaseInitialized;
-    </script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
 
@@ -151,23 +106,39 @@
     </div>
 
     <script type="module">
-        // ===== EMBEDDED GAME SCORE MANAGER =====
-        import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-        
-        class GameScoreManager {
-            constructor(gameName, hasScore = true) {
-                this.gameName = gameName;
-                this.hasScore = hasScore;
-                this.sessionStartTime = null;
-                this.playerName = localStorage.getItem('playerName') || this.generatePlayerName();
-            }
+        // ===== UPDATED FIREBASE & SCORE MANAGER =====
+        import { db } from '/firebase-config.js';
+        import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { collection, addDoc, serverTimestamp, doc, setDoc, increment } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
-            generatePlayerName() {
-                const adjectives = ['Swift', 'Mighty', 'Epic', 'Legendary', 'Brave', 'Noble', 'Quick', 'Bold'];
-                const nouns = ['Gamer', 'Player', 'Hero', 'Champion', 'Master', 'Legend', 'Pro', 'Ace'];
-                const name = `${adjectives[Math.floor(Math.random() * adjectives.length)]}${nouns[Math.floor(Math.random() * nouns.length)]}${Math.floor(Math.random() * 999)}`;
-                localStorage.setItem('playerName', name);
-                return name;
+        let auth = null;
+        let currentUser = null;
+
+        // Gatekeeper: Check if logged in
+        async function initGameAuth() {
+            try {
+                auth = getAuth(db.app);
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        console.log("Pilot Identified:", user.displayName);
+                        currentUser = user;
+                        scoreManager.playerName = user.displayName || "Unknown Pilot";
+                    } else {
+                        // Not logged in? Kick back to the portal
+                        window.location.href = '/index.html';
+                    }
+                });
+            } catch (error) {
+                console.error("Auth failed:", error);
+            }
+        }
+
+        // Score Manager
+        class GameScoreManager {
+            constructor(gameName) {
+                this.gameName = gameName;
+                this.sessionStartTime = null;
+                this.playerName = "Loading...";
             }
 
             startSession() {
@@ -179,33 +150,49 @@
                 return Math.floor((Date.now() - this.sessionStartTime) / 1000);
             }
 
-            async submitGameResult(score = 0) {
-                if (!window.isFirebaseReady || !window.isFirebaseReady()) {
-                    console.log('Leaderboard unavailable');
-                    return;
-                }
-                
-                const db = window.firebaseDb();
-                if (!db) return;
+            getElapsedTimeFormatted() {
+                const seconds = this.getElapsedTime();
+                if (seconds < 60) return `${seconds}s`;
+                const mins = Math.floor(seconds / 60);
+                const secs = seconds % 60;
+                return `${mins}m ${secs}s`;
+            }
 
+            async submitGameResult(score = 0) {
+                if (!currentUser) return;
+
+                const timePlayed = this.getElapsedTime();
+                
                 try {
+                    // 1. Public Leaderboard
                     await addDoc(collection(db, 'scores'), {
                         gameName: this.gameName,
                         playerName: this.playerName,
-                        score: this.hasScore ? score : 0,
-                        timePlayed: this.getElapsedTime(),
-                        timestamp: serverTimestamp()
+                        score: score,
+                        timePlayed: timePlayed,
+                        timestamp: serverTimestamp(),
+                        uid: currentUser.uid
                     });
-                    console.log('Score submitted');
+
+                    // 2. Update Career Stats
+                    const userRef = doc(db, 'users', currentUser.uid);
+                    await setDoc(userRef, {
+                        lastActive: serverTimestamp(),
+                        totalArcadeScore: increment(parseInt(score)),
+                        [`gamesPlayed_${this.gameName}`]: increment(1),
+                        totalTimePlayed: increment(timePlayed)
+                    }, { merge: true });
+
+                    console.log('Score submitted & Career updated');
                 } catch (error) {
-                    console.warn('Failed to submit score');
+                    console.warn('Failed to submit score:', error.message);
                 }
             }
         }
-        // ===== END EMBEDDED CODE =====
         
-        // Initialize score manager for Square Man
-        const scoreManager = new GameScoreManager('square_man', true);
+        // Initialize
+        const scoreManager = new GameScoreManager('square_man');
+        initGameAuth();
         
         // --- Game Setup Constants ---
         let lastTimestamp = null; // for time-based movement (60 FPS baseline)
@@ -1037,7 +1024,7 @@
         }
 
         // Mobile touch input logic
-        function handleTouchInput(direction) {
+        window.handleTouchInput = function(direction) {
             if (game && game.isRunning && !game.isPaused) {
                 game.player.nextDirection = direction;
             } else if (game && !game.isRunning) {
