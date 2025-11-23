@@ -13,6 +13,7 @@
             user-select: none;
             -webkit-user-select: none;
             font-family: sans-serif;
+            touch-action: none; /* Critical for touch dragging */
         }
 
         /* Card styling - High Contrast & Clean */
@@ -23,16 +24,20 @@
             border-radius: 0.4rem;
             box-shadow: 1px 1px 3px rgba(0,0,0,0.4);
             position: absolute;
-            transition: transform 0.1s, top 0.2s ease-out, left 0.2s ease-out;
+            transition: transform 0.1s; /* Only transform transitions usually */
             display: flex;
             flex-direction: column;
             justify-content: space-between;
             padding: 0.2rem;
-            cursor: pointer;
+            cursor: grab;
             backface-visibility: hidden;
             z-index: 10;
         }
         
+        .card:active {
+            cursor: grabbing;
+        }
+
         @media (min-width: 640px) {
             .card {
                 border-radius: 0.5rem;
@@ -50,17 +55,28 @@
                 #2563eb 20px
             );
             border: 2px solid white;
+            cursor: default;
         }
         
-        /* Hide content on face down cards */
-        .card-face-down > * {
-            display: none !important;
-        }
+        .card-face-down > * { display: none !important; }
 
+        /* Highlight for click-selection */
         .card.selected {
             transform: translateY(-10px);
             box-shadow: 0 0 0 4px #fbbf24, 0 10px 15px -3px rgba(0, 0, 0, 0.5);
             z-index: 50 !important;
+        }
+        
+        /* State when card is being dragged */
+        .card.dragging {
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            z-index: 9999 !important;
+            pointer-events: none; /* Essential for elementFromPoint to see through the card */
+        }
+        
+        /* Snap back animation class */
+        .card.snapping {
+            transition: top 0.2s ease-out, left 0.2s ease-out;
         }
 
         .card.hint-anim {
@@ -74,7 +90,6 @@
             75% { transform: rotate(5deg); }
         }
 
-        /* Suit Colors */
         .suit-red { color: #dc2626; }
         .suit-black { color: #171717; }
 
@@ -97,6 +112,12 @@
             position: relative;
             min-height: 60vh;
         }
+        
+        /* Dropzone highlight */
+        .column.drag-hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 0.5rem;
+        }
 
         /* Top Bar */
         .top-bar {
@@ -109,12 +130,8 @@
             border-bottom: 1px solid rgba(255,255,255,0.1);
         }
 
-        /* Modal */
-        .modal {
-            background-color: rgba(0, 0, 0, 0.85);
-        }
+        .modal { background-color: rgba(0, 0, 0, 0.85); }
         
-        /* Confetti Canvas */
         #confetti-canvas {
             position: fixed;
             top: 0;
@@ -122,11 +139,24 @@
             pointer-events: none;
             z-index: 100;
         }
+
+        /* Drag Layer - Cards move here when dragged */
+        #drag-layer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 9000;
+        }
     </style>
 </head>
 <body class="h-screen flex flex-col overflow-hidden font-sans text-gray-900">
 
     <canvas id="confetti-canvas"></canvas>
+    
+    <div id="drag-layer"></div>
 
     <div class="top-bar shrink-0 z-20">
         <div class="flex gap-2">
@@ -161,19 +191,17 @@
     </div>
 
     <div class="flex-1 relative w-full overflow-hidden">
-        
         <div class="game-board h-full pt-2" id="tableau">
             </div>
 
         <div id="foundations" class="absolute bottom-2 right-2 z-0 flex gap-1 opacity-60 pointer-events-none transform scale-75 origin-bottom-right">
-            </div>
+        </div>
     </div>
 
     <div id="winModal" class="modal fixed inset-0 hidden flex items-center justify-center z-50">
         <div class="bg-white p-8 rounded-xl shadow-2xl text-center max-w-md mx-4 border-4 border-green-600">
             <h2 class="text-4xl font-bold text-green-700 mb-4">You Won!</h2>
             <p class="text-lg text-gray-700 mb-2">Final Score: <span id="finalScoreDisplay" class="font-bold">0</span></p>
-            
             <button onclick="startNewGame()" class="bg-green-600 text-white px-8 py-3 rounded-lg text-xl font-bold shadow-lg hover:bg-green-500 transform hover:scale-105 transition">
                 Play Again
             </button>
@@ -196,27 +224,16 @@
                         <option value="4">Hard (4 Suits)</option>
                     </select>
                 </div>
-
-                <button onclick="confirmNewGame()" class="w-full bg-green-600 text-white py-3 rounded-lg font-bold text-lg shadow hover:bg-green-500 mt-4">
-                    Start New Game
-                </button>
-                
-                <button onclick="toggleMenu()" class="w-full bg-gray-200 text-gray-800 py-3 rounded-lg font-bold mt-2 hover:bg-gray-300">
-                    Resume Game
-                </button>
+                <button onclick="confirmNewGame()" class="w-full bg-green-600 text-white py-3 rounded-lg font-bold text-lg shadow hover:bg-green-500 mt-4">Start New Game</button>
+                <button onclick="toggleMenu()" class="w-full bg-gray-200 text-gray-800 py-3 rounded-lg font-bold mt-2 hover:bg-gray-300">Resume Game</button>
             </div>
         </div>
     </div>
 
-    <div id="messageToast" class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-black bg-opacity-90 text-white px-6 py-3 rounded-lg pointer-events-none opacity-0 transition-opacity duration-300 z-50 text-center font-bold text-lg shadow-xl border border-gray-600">
-        Message
-    </div>
+    <div id="messageToast" class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-black bg-opacity-90 text-white px-6 py-3 rounded-lg pointer-events-none opacity-0 transition-opacity duration-300 z-50 text-center font-bold text-lg shadow-xl border border-gray-600">Message</div>
 
     <script type="module">
-        // ===== UPDATED: Absolute Path for Config =====
-        // Using /firebase-config.js to find the file in the ROOT directory
         import { db } from '/firebase-config.js';
-        
         import { getAuth, signInAnonymously } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
         import { collection, addDoc, serverTimestamp, doc, setDoc, updateDoc, increment } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
@@ -229,19 +246,15 @@
                     auth = getAuth(db.app);
                     await signInAnonymously(auth);
                     firebaseInitialized = true;
-                    console.log('Firebase initialized successfully from shared config');
-                } else {
-                    console.warn('Firebase config not loaded correctly.');
+                    console.log('Firebase initialized');
                 }
             } catch (error) {
-                console.warn('Firebase init failed (Offline Mode):', error.message);
+                console.warn('Firebase init failed:', error.message);
             }
         }
-
-        // Initialize Firebase (non-blocking)
         initFirebase();
 
-        // GameScoreManager class
+        // --- Score Manager ---
         class GameScoreManager {
             constructor(gameName, hasScore = true) {
                 this.gameName = gameName;
@@ -258,25 +271,17 @@
                 return name;
             }
 
-            startSession() {
-                this.sessionStartTime = Date.now();
-            }
-
+            startSession() { this.sessionStartTime = Date.now(); }
+            
             getElapsedTime() {
                 if (!this.sessionStartTime) return 0;
                 return Math.floor((Date.now() - this.sessionStartTime) / 1000);
             }
 
             async submitGameResult(score = 0) {
-                if (!firebaseInitialized || !db) {
-                    console.log('Leaderboard unavailable - playing offline');
-                    return;
-                }
-
+                if (!firebaseInitialized || !db) return;
                 const timePlayed = this.getElapsedTime();
-                
                 try {
-                    // 1. Record the individual game score
                     await addDoc(collection(db, 'scores'), {
                         gameName: this.gameName,
                         playerName: this.playerName,
@@ -284,8 +289,6 @@
                         timePlayed: timePlayed,
                         timestamp: serverTimestamp()
                     });
-
-                    // 2. Update the User Profile (Total Score)
                     const userRef = doc(db, 'users', this.playerName);
                     await setDoc(userRef, {
                         playerName: this.playerName,
@@ -294,89 +297,67 @@
                         solitaireGamesPlayed: increment(1),
                         totalTimePlayed: increment(timePlayed)
                     }, { merge: true });
-
-                    console.log('Score submitted and user profile updated');
-                } catch (error) {
-                    console.warn('Failed to submit score:', error.message);
-                }
+                } catch (e) { console.warn(e); }
             }
         }
-        // ===== END SCORE MANAGER =====
-
-        // Initialize score manager
         const scoreManager = new GameScoreManager('spider_solitaire', true);
 
-        // --- SVG Assets for Clean Look ---
+        // --- Assets & Constants ---
         const SVG_ICONS = {
             spades: `<svg viewBox="0 0 24 24" fill="currentColor" class="w-full h-full"><path d="M12,2C9,2 7,4.5 7,6.5C7,8.5 9,9.5 9,9.5C9,9.5 4,12.5 4,17C4,20.5 7,22 12,22C17,22 20,20.5 20,17C20,12.5 15,9.5 15,9.5C15,9.5 17,8.5 17,6.5C17,4.5 15,2 12,2M12,19C12,19 11,22 11,22L13,22C13,22 12,19 12,19Z" /></svg>`,
             hearts: `<svg viewBox="0 0 24 24" fill="currentColor" class="w-full h-full"><path d="M12,21.35L10.55,20.03C5.4,15.36 2,12.27 2,8.5C2,5.41 4.42,3 7.5,3C9.24,3 10.91,3.81 12,5.08C13.09,3.81 14.76,3 16.5,3C19.58,3 22,5.41 22,8.5C22,12.27 18.6,15.36 13.45,20.03L12,21.35Z" /></svg>`,
             clubs: `<svg viewBox="0 0 24 24" fill="currentColor" class="w-full h-full"><path d="M12,2C14.2,2 16,3.8 16,6C16,8.2 14.2,10 12,10C9.8,10 8,8.2 8,6C8,3.8 9.8,2 12,2M7,11C9.2,11 11,12.8 11,15C11,16.4 10.3,17.7 9.1,18.4C9.6,18.8 10.8,20.2 11,22H13C13.2,20.2 14.4,18.8 14.9,18.4C13.7,17.7 13,16.4 13,15C13,12.8 14.8,11 17,11C19.2,11 21,12.8 21,15C21,17.2 19.2,19 17,19C16.5,19 16,18.9 15.6,18.7C16.4,19.9 17,21.4 17,22H7C7,21.4 7.6,19.9 8.4,18.7C8,18.9 7.5,19 7,19C4.8,19 3,17.2 3,15C3,12.8 4.8,11 7,11Z" /></svg>`,
             diamonds: `<svg viewBox="0 0 24 24" fill="currentColor" class="w-full h-full"><path d="M19,12L12,22L5,12L12,2" /></svg>`
         };
-
-        // --- Game Constants & State ---
+        const ICONS = { spades: '♠', hearts: '♥', clubs: '♣', diamonds: '♦' };
         const RANKS = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
         const VALUES = { 'A': 1, '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9, '10': 10, 'J': 11, 'Q': 12, 'K': 13 };
         
         let state = {
             tableau: [[], [], [], [], [], [], [], [], [], []],
-            stock: [],
-            foundations: 0, 
-            history: [], 
-            score: 500,
-            highScore: 0,
-            difficulty: 1, 
-            selectedCard: null 
+            stock: [], foundations: 0, history: [], score: 500, highScore: 0, difficulty: 1, selectedCard: null 
         };
 
-        // --- Initialization ---
+        // --- Drag State ---
+        let drag = {
+            active: false,
+            startX: 0, startY: 0,
+            colIndex: null, cardIndex: null,
+            elStack: [], // The visual elements moving
+            originalRects: [], // To snap back if needed
+            offsetX: 0, offsetY: 0,
+            hasMoved: false
+        };
 
+        // --- Init ---
         function init() {
-            // Load difficulty
             const savedDiff = localStorage.getItem('spider_difficulty');
             if (savedDiff) state.difficulty = parseInt(savedDiff);
             document.getElementById('difficultySelect').value = state.difficulty;
-
-            // Load High Score
             const savedHighScore = localStorage.getItem('spider_highscore');
             if (savedHighScore) state.highScore = parseInt(savedHighScore);
             updateHighScoreDisplay();
-
             startNewGame();
             window.addEventListener('resize', renderBoard);
+            
+            // Global Input Listeners for Drag End/Move
+            document.addEventListener('mousemove', handleGlobalMove);
+            document.addEventListener('mouseup', handleGlobalEnd);
+            document.addEventListener('touchmove', handleGlobalMove, {passive: false});
+            document.addEventListener('touchend', handleGlobalEnd, {passive: false});
         }
 
-        function updateHighScoreDisplay() {
-            document.getElementById('highScoreDisplay').textContent = `Best: ${state.highScore}`;
-        }
-
-        function toggleMenu() {
-            const modal = document.getElementById('menuModal');
-            modal.classList.toggle('hidden');
-        }
-
-        function confirmNewGame() {
-            const select = document.getElementById('difficultySelect');
-            state.difficulty = parseInt(select.value);
-            localStorage.setItem('spider_difficulty', state.difficulty);
-            toggleMenu();
-            startNewGame();
-        }
-
+        // --- Core Logic ---
         function startNewGame() {
             document.getElementById('winModal').classList.add('hidden');
             stopConfetti();
-            document.getElementById('foundations').innerHTML = ''; // Clear visuals
-
+            document.getElementById('foundations').innerHTML = '';
             state.score = 500;
             state.history = [];
             state.foundations = 0;
             state.selectedCard = null;
             updateUndoButton();
-            
-            // Start Score Manager Session
             scoreManager.startSession();
-
             createDeck();
             dealInitial();
             renderBoard();
@@ -385,28 +366,15 @@
 
         function createDeck() {
             let deck = [];
-            let suitsToUse = [];
-            if (state.difficulty === 1) suitsToUse = ['spades'];
-            else if (state.difficulty === 2) suitsToUse = ['spades', 'hearts'];
-            else suitsToUse = ['spades', 'hearts', 'clubs', 'diamonds'];
-
+            let suitsToUse = state.difficulty === 1 ? ['spades'] : state.difficulty === 2 ? ['spades', 'hearts'] : ['spades', 'hearts', 'clubs', 'diamonds'];
             const setsPerSuit = 8 / suitsToUse.length;
-
             for (let s of suitsToUse) {
                 for (let i = 0; i < setsPerSuit; i++) {
                     for (let r of RANKS) {
-                        deck.push({
-                            rank: r,
-                            suit: s,
-                            value: VALUES[r],
-                            faceUp: false,
-                            id: Math.random().toString(36).substr(2, 9)
-                        });
+                        deck.push({ rank: r, suit: s, value: VALUES[r], faceUp: false, id: Math.random().toString(36).substr(2, 9) });
                     }
                 }
             }
-
-            // Shuffle
             for (let i = deck.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
                 [deck[i], deck[j]] = [deck[j], deck[i]];
@@ -419,14 +387,11 @@
             for (let i = 0; i < 54; i++) {
                 const col = i % 10;
                 const card = state.stock.pop();
-                // Last card in col logic
                 const isLastForCol = (col < 4 && state.tableau[col].length === 5) || (col >= 4 && state.tableau[col].length === 4);
                 card.faceUp = isLastForCol;
                 state.tableau[col].push(card);
             }
         }
-
-        // --- Logic ---
 
         function saveState() {
             const snapshot = {
@@ -448,21 +413,12 @@
             state.score = prev.score;
             state.foundations = prev.foundations;
             state.selectedCard = null;
-            
-            // Clear foundation visuals and rebuild them based on count
             const fContainer = document.getElementById('foundations');
             fContainer.innerHTML = '';
-            for(let i=0; i<state.foundations; i++) {
-                addFoundationGraphic('spades'); // Placeholder visual
-            }
-
+            for(let i=0; i<state.foundations; i++) addFoundationGraphic('spades');
             renderBoard();
             updateUndoButton();
             updateScore();
-        }
-
-        function updateUndoButton() {
-            document.getElementById('undoBtn').disabled = state.history.length === 0;
         }
 
         function isMoveValid(card, targetColIndex) {
@@ -475,6 +431,7 @@
         function canMoveStack(colIndex, cardIndex) {
             const col = state.tableau[colIndex];
             const card = col[cardIndex];
+            if (!card.faceUp) return false;
             for (let i = cardIndex; i < col.length - 1; i++) {
                 const current = col[i];
                 const next = col[i+1];
@@ -483,10 +440,245 @@
             return true;
         }
 
+        function attemptMove(fromColIdx, fromCardIdx, toColIdx) {
+            if (fromColIdx === toColIdx) return false;
+            const movingStack = state.tableau[fromColIdx].slice(fromCardIdx);
+            const leadCard = movingStack[0];
+            
+            if (isMoveValid(leadCard, toColIdx)) {
+                saveState();
+                state.tableau[fromColIdx].splice(fromCardIdx);
+                state.tableau[toColIdx].push(...movingStack);
+                if (state.tableau[fromColIdx].length > 0) {
+                    const newTop = state.tableau[fromColIdx][state.tableau[fromColIdx].length - 1];
+                    if (!newTop.faceUp) { newTop.faceUp = true; state.score += 10; }
+                }
+                state.score -= 1;
+                state.selectedCard = null;
+                checkCompletedRun(toColIdx);
+                renderBoard();
+                updateScore();
+                return true;
+            }
+            return false;
+        }
+
+        // --- Drag Input Handling ---
+        
+        function handleInputStart(e, colIndex, cardIndex) {
+            // Only allow left click or touch
+            if (e.type === 'mousedown' && e.button !== 0) return;
+            
+            const card = state.tableau[colIndex][cardIndex];
+            if (!card.faceUp) return;
+
+            // Stop standard browser drag
+            // e.preventDefault(); // Warning: This might block scrolling on touch, we handle that in logic
+
+            const pos = getEventPos(e);
+            
+            // Prime the drag, but don't start dragging until moved slightly
+            drag.active = false; // Will set to true on move
+            drag.hasMoved = false;
+            drag.startX = pos.x;
+            drag.startY = pos.y;
+            drag.colIndex = colIndex;
+            drag.cardIndex = cardIndex;
+            
+            // Store reference to the element logic to see if we CAN drag
+            if (canMoveStack(colIndex, cardIndex)) {
+                // Good to go
+            } else {
+                drag.colIndex = null; // invalid drag target
+            }
+        }
+
+        function handleGlobalMove(e) {
+            if (drag.colIndex === null) return; // No valid drag started
+            
+            const pos = getEventPos(e);
+            const dx = pos.x - drag.startX;
+            const dy = pos.y - drag.startY;
+
+            // Threshold to switch from "Click" to "Drag"
+            if (!drag.active && (Math.abs(dx) > 5 || Math.abs(dy) > 5)) {
+                drag.active = true;
+                drag.hasMoved = true;
+                startDragVisuals(pos);
+            }
+
+            if (drag.active) {
+                e.preventDefault(); // Stop scrolling now that we are definitely dragging
+                updateDragVisuals(dx, dy);
+                
+                // Highlight drop zones
+                highlightDropZone(pos.x, pos.y);
+            }
+        }
+
+        function handleGlobalEnd(e) {
+            if (drag.colIndex === null) return;
+
+            if (drag.active) {
+                const pos = getEventPos(e);
+                const targetCol = getTargetColumn(pos.x, pos.y);
+                
+                let success = false;
+                if (targetCol !== null) {
+                    success = attemptMove(drag.colIndex, drag.cardIndex, targetCol);
+                }
+
+                if (!success) {
+                    snapBackVisuals();
+                } else {
+                    resetDragState();
+                }
+            } else {
+                // It was just a click
+                if (!drag.hasMoved) {
+                    handleCardClick(drag.colIndex, drag.cardIndex);
+                }
+                resetDragState();
+            }
+        }
+
+        function startDragVisuals(pos) {
+            const dragLayer = document.getElementById('drag-layer');
+            const col = document.getElementById('tableau').children[drag.colIndex];
+            
+            drag.elStack = [];
+            drag.originalRects = [];
+
+            // Gather elements to move
+            for (let i = drag.cardIndex; i < state.tableau[drag.colIndex].length; i++) {
+                const cardEl = col.children[i];
+                const rect = cardEl.getBoundingClientRect();
+                
+                drag.originalRects.push({left: rect.left, top: rect.top});
+
+                // Clone for drag (or move actual? Move actual is smoother for complex games)
+                // We will move the ACTUAL elements to fixed position to ensure no visual glitches
+                // But we need to maintain their state in 'tableau' visually as placeholders? 
+                // No, just move them.
+                
+                cardEl.style.position = 'fixed';
+                cardEl.style.left = rect.left + 'px';
+                cardEl.style.top = rect.top + 'px';
+                cardEl.style.width = rect.width + 'px';
+                cardEl.style.zIndex = 9000 + i;
+                cardEl.classList.add('dragging');
+                
+                dragLayer.appendChild(cardEl); // Move to drag layer
+                drag.elStack.push(cardEl);
+            }
+            
+            // Calculate offset from mouse to top-left of stack
+            const topRect = drag.originalRects[0];
+            drag.offsetX = pos.x - topRect.left;
+            drag.offsetY = pos.y - topRect.top;
+        }
+
+        function updateDragVisuals(dx, dy) {
+            // We use the initial start pos + delta
+            // Actually simpler: Current Mouse - Offset
+            // We need to loop because we moved them to fixed, but they retain their relative stack positions
+            // by virtue of us calculating their initial fixed positions.
+            // If we move the TOP card, do we move the others relative?
+            
+            // Re-read current mouse pos inside handler is better, but dx/dy works if accurate
+            // Let's use current mouse pos from event which we passed? No, we passed dx,dy.
+            // Let's rely on start + delta.
+            
+            drag.elStack.forEach((el, index) => {
+                const original = drag.originalRects[index];
+                el.style.left = (original.left + dx) + 'px';
+                el.style.top = (original.top + dy) + 'px';
+            });
+        }
+
+        function getTargetColumn(x, y) {
+            // Hide drag elements momentarily to peek below
+            drag.elStack.forEach(el => el.style.display = 'none');
+            const elBelow = document.elementFromPoint(x, y);
+            drag.elStack.forEach(el => el.style.display = '');
+
+            if (!elBelow) return null;
+            
+            // Traverse up to find column or card
+            const colEl = elBelow.closest('.column');
+            if (colEl) {
+                return parseInt(colEl.dataset.col);
+            }
+            
+            // If we hit a card (that isn't in our drag stack), find its column
+            const cardEl = elBelow.closest('.card');
+            if (cardEl && cardEl.parentElement.classList.contains('column')) {
+                return parseInt(cardEl.parentElement.dataset.col);
+            }
+            
+            return null;
+        }
+
+        function highlightDropZone(x, y) {
+            // Remove old highlights
+            document.querySelectorAll('.column.drag-hover').forEach(el => el.classList.remove('drag-hover'));
+            
+            const targetColIdx = getTargetColumn(x, y);
+            if (targetColIdx !== null && targetColIdx !== drag.colIndex) {
+                const col = document.getElementById('tableau').children[targetColIdx];
+                // Visual check if valid?
+                const leadCard = state.tableau[drag.colIndex][drag.cardIndex];
+                if (isMoveValid(leadCard, targetColIdx)) {
+                    col.classList.add('drag-hover');
+                }
+            }
+        }
+
+        function snapBackVisuals() {
+            // Animate back to original rects
+            let completeCount = 0;
+            drag.elStack.forEach((el, index) => {
+                const target = drag.originalRects[index];
+                el.classList.add('snapping');
+                el.style.left = target.left + 'px';
+                el.style.top = target.top + 'px';
+                
+                // Once transition ends, clean up
+                setTimeout(() => {
+                    completeCount++;
+                    if (completeCount === drag.elStack.length) {
+                        resetDragState();
+                        renderBoard(); // Put back in DOM proper
+                    }
+                }, 200);
+            });
+        }
+
+        function resetDragState() {
+            drag.active = false;
+            drag.colIndex = null;
+            drag.cardIndex = null;
+            drag.hasMoved = false;
+            // Clear drag layer
+            const dragLayer = document.getElementById('drag-layer');
+            dragLayer.innerHTML = '';
+            document.querySelectorAll('.column.drag-hover').forEach(el => el.classList.remove('drag-hover'));
+        }
+
+        function getEventPos(e) {
+            if (e.touches && e.touches.length > 0) {
+                return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+            } else if (e.changedTouches && e.changedTouches.length > 0) { // for touchend
+                return { x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY };
+            }
+            return { x: e.clientX, y: e.clientY };
+        }
+
+        // --- Click Handling (Fallback/Selection) ---
+
         function handleCardClick(colIndex, cardIndex) {
             const col = state.tableau[colIndex];
             const card = col[cardIndex];
-
             if (!card.faceUp) return;
 
             if (state.selectedCard && state.selectedCard.colIndex === colIndex && state.selectedCard.cardIndex === cardIndex) {
@@ -513,77 +705,32 @@
             }
         }
 
-        function attemptMove(fromColIdx, fromCardIdx, toColIdx) {
-            if (fromColIdx === toColIdx) return;
-
-            const movingStack = state.tableau[fromColIdx].slice(fromCardIdx);
-            const leadCard = movingStack[0];
-            
-            if (isMoveValid(leadCard, toColIdx)) {
-                saveState();
-                state.tableau[fromColIdx].splice(fromCardIdx);
-                state.tableau[toColIdx].push(...movingStack);
-                
-                if (state.tableau[fromColIdx].length > 0) {
-                    const newTop = state.tableau[fromColIdx][state.tableau[fromColIdx].length - 1];
-                    if (!newTop.faceUp) {
-                        newTop.faceUp = true;
-                        state.score += 10;
-                    }
-                }
-
-                state.score -= 1;
-                state.selectedCard = null;
-                checkCompletedRun(toColIdx);
-                renderBoard();
-                updateScore();
-            } else {
-                showMessage("Invalid Move");
-                state.selectedCard = null;
-                renderBoard();
-            }
-        }
-
         function checkCompletedRun(colIdx) {
             const col = state.tableau[colIdx];
             if (col.length < 13) return;
-
             const last13 = col.slice(col.length - 13);
             if (last13[0].value !== 13) return; 
-            
             let isRun = true;
             const suit = last13[0].suit;
-            
             for (let i = 0; i < 13; i++) {
-                if (last13[i].suit !== suit || last13[i].value !== 13 - i) {
-                    isRun = false;
-                    break;
-                }
+                if (last13[i].suit !== suit || last13[i].value !== 13 - i) { isRun = false; break; }
             }
-
             if (isRun) {
                 col.splice(col.length - 13, 13);
                 state.foundations++;
                 state.score += 100;
                 addFoundationGraphic(suit);
-                
                 if (col.length > 0) {
                     const newTop = col[col.length - 1];
                     newTop.faceUp = true;
                 }
-                
-                // Check WIN Condition
                 if (state.foundations === 8) {
-                    // 1. Update Local High Score
                     if (state.score > state.highScore) {
                         state.highScore = state.score;
                         localStorage.setItem('spider_highscore', state.highScore);
                         updateHighScoreDisplay();
                     }
-                    
-                    // 2. Submit to Leaderboard (External)
                     scoreManager.submitGameResult(state.score);
-
                     setTimeout(() => {
                         document.getElementById('finalScoreDisplay').innerText = `Final Score: ${state.score}`;
                         document.getElementById('winModal').classList.remove('hidden');
@@ -593,21 +740,10 @@
             }
         }
 
-        function addFoundationGraphic(suit) {
-            const fContainer = document.getElementById('foundations');
-            const div = document.createElement('div');
-            div.className = 'w-10 h-14 sm:w-14 sm:h-20 bg-white rounded border-2 border-gray-300 flex items-center justify-center shadow-md ' + getSuitColor(suit);
-            div.innerHTML = `<div class="w-6 h-6 sm:w-8 sm:h-8">${SVG_ICONS[suit]}</div>`;
-            fContainer.appendChild(div);
-        }
-
         function dealStock() {
             if (state.stock.length === 0) return;
             const hasEmpty = state.tableau.some(col => col.length === 0);
-            if (hasEmpty) {
-                showMessage("Cannot deal with empty columns");
-                return;
-            }
+            if (hasEmpty) { showMessage("Cannot deal with empty columns"); return; }
             saveState();
             for (let i = 0; i < 10; i++) {
                 if (state.stock.length > 0) {
@@ -620,30 +756,19 @@
             renderBoard();
         }
 
-        // --- Rendering ---
-
-        function getSuitColor(suit) {
-            return (suit === 'hearts' || suit === 'diamonds') ? 'suit-red' : 'suit-black';
-        }
-
         function renderBoard() {
             const tableauEl = document.getElementById('tableau');
             tableauEl.innerHTML = '';
-
             document.getElementById('stock-count').textContent = Math.floor(state.stock.length / 10);
             const stockEl = document.getElementById('stock-pile');
-            if (state.stock.length === 0) {
-                stockEl.classList.add('opacity-0', 'pointer-events-none');
-            } else {
-                stockEl.classList.remove('opacity-0', 'pointer-events-none');
-            }
+            if (state.stock.length === 0) stockEl.classList.add('opacity-0', 'pointer-events-none');
+            else stockEl.classList.remove('opacity-0', 'pointer-events-none');
 
             state.tableau.forEach((col, colIndex) => {
                 const colEl = document.createElement('div');
                 colEl.className = 'column';
-                colEl.onclick = (e) => {
-                    if(e.target === colEl) handleEmptyColumnClick(colIndex);
-                };
+                colEl.dataset.col = colIndex; // For Hit Testing
+                colEl.onclick = (e) => { if(e.target === colEl) handleEmptyColumnClick(colIndex); };
 
                 let overlap = 30;
                 if (window.innerWidth < 640) overlap = 25;
@@ -663,79 +788,69 @@
                         const topDiv = document.createElement('div');
                         topDiv.className = 'flex flex-col items-center leading-none select-none';
                         topDiv.innerHTML = `<span class="text-lg font-bold">${card.rank}</span><span class="text-xl">${SVG_ICONS[card.suit]}</span>`;
-                        
                         const centerDiv = document.createElement('div');
                         centerDiv.className = 'absolute inset-0 flex items-center justify-center opacity-100 pointer-events-none';
                         centerDiv.innerHTML = `<span class="text-6xl opacity-30">${ICONS[card.suit]}</span>`;
-
                         const botDiv = document.createElement('div');
                         botDiv.className = 'flex flex-col items-center leading-none select-none transform rotate-180';
                         botDiv.innerHTML = `<span class="text-lg font-bold">${card.rank}</span><span class="text-xl">${SVG_ICONS[card.suit]}</span>`;
-
-                        cardEl.appendChild(topDiv);
-                        cardEl.appendChild(centerDiv);
-                        cardEl.appendChild(botDiv);
+                        cardEl.appendChild(topDiv); cardEl.appendChild(centerDiv); cardEl.appendChild(botDiv);
                     }
 
-                    cardEl.onclick = (e) => {
-                        e.stopPropagation();
-                        handleCardClick(colIndex, cardIndex);
-                    };
+                    // Attach Drag/Click Start listener
+                    cardEl.addEventListener('mousedown', (e) => handleInputStart(e, colIndex, cardIndex));
+                    cardEl.addEventListener('touchstart', (e) => handleInputStart(e, colIndex, cardIndex), {passive: false});
 
                     colEl.appendChild(cardEl);
                 });
-
                 tableauEl.appendChild(colEl);
             });
         }
 
-        function updateScore() {
-            document.getElementById('scoreDisplay').innerText = `Score: ${state.score}`;
-        }
-
+        // --- Utils & UI ---
+        function getSuitColor(suit) { return (suit === 'hearts' || suit === 'diamonds') ? 'suit-red' : 'suit-black'; }
+        function updateScore() { document.getElementById('scoreDisplay').innerText = `Score: ${state.score}`; }
+        function updateHighScoreDisplay() { document.getElementById('highScoreDisplay').textContent = `Best: ${state.highScore}`; }
+        function updateUndoButton() { document.getElementById('undoBtn').disabled = state.history.length === 0; }
         function showMessage(msg) {
             const el = document.getElementById('messageToast');
-            el.innerText = msg;
-            el.style.opacity = '1';
-            setTimeout(() => {
-                el.style.opacity = '0';
-            }, 2000);
+            el.innerText = msg; el.style.opacity = '1';
+            setTimeout(() => { el.style.opacity = '0'; }, 2000);
         }
-
+        function toggleMenu() { document.getElementById('menuModal').classList.toggle('hidden'); }
+        function confirmNewGame() {
+            const select = document.getElementById('difficultySelect');
+            state.difficulty = parseInt(select.value);
+            localStorage.setItem('spider_difficulty', state.difficulty);
+            toggleMenu(); startNewGame();
+        }
+        function addFoundationGraphic(suit) {
+            const fContainer = document.getElementById('foundations');
+            const div = document.createElement('div');
+            div.className = 'w-10 h-14 sm:w-14 sm:h-20 bg-white rounded border-2 border-gray-300 flex items-center justify-center shadow-md ' + getSuitColor(suit);
+            div.innerHTML = `<div class="w-6 h-6 sm:w-8 sm:h-8">${SVG_ICONS[suit]}</div>`;
+            fContainer.appendChild(div);
+        }
         function showHint() {
-            let found = false;
             for (let c = 0; c < 10; c++) {
                 if (state.tableau[c].length === 0) continue;
-                
                 let stackStart = state.tableau[c].length - 1;
                 while (stackStart > 0) {
                     const curr = state.tableau[c][stackStart];
                     const prev = state.tableau[c][stackStart - 1];
-                    if (prev.faceUp && prev.suit === curr.suit && prev.value === curr.value + 1) {
-                        stackStart--;
-                    } else {
-                        break;
-                    }
+                    if (prev.faceUp && prev.suit === curr.suit && prev.value === curr.value + 1) stackStart--;
+                    else break;
                 }
-
                 const movingCard = state.tableau[c][stackStart];
-
                 for (let t = 0; t < 10; t++) {
                     if (c === t) continue;
-                    if (state.tableau[t].length === 0) {
-                        animateHint(c, stackStart);
-                        return;
-                    }
+                    if (state.tableau[t].length === 0) { animateHint(c, stackStart); return; }
                     const targetTop = state.tableau[t][state.tableau[t].length - 1];
-                    if (targetTop.value === movingCard.value + 1) {
-                        animateHint(c, stackStart);
-                        return;
-                    }
+                    if (targetTop.value === movingCard.value + 1) { animateHint(c, stackStart); return; }
                 }
             }
             showMessage("No moves found. Try dealing?");
         }
-
         function animateHint(colIdx, cardIdx) {
             const tableau = document.getElementById('tableau');
             const col = tableau.children[colIdx];
@@ -743,42 +858,31 @@
             card.classList.add('hint-anim');
             setTimeout(() => card.classList.remove('hint-anim'), 500);
         }
-
         let confettiInterval;
         function startConfetti() {
             const canvas = document.getElementById('confetti-canvas');
             const ctx = canvas.getContext('2d');
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-
+            canvas.width = window.innerWidth; canvas.height = window.innerHeight;
             const pieces = [];
             const colors = ['#f44336', '#2196f3', '#ffeb3b', '#4caf50', '#ff9800'];
-
             for(let i=0; i<200; i++) {
                 pieces.push({
-                    x: Math.random() * canvas.width,
-                    y: Math.random() * canvas.height - canvas.height,
+                    x: Math.random() * canvas.width, y: Math.random() * canvas.height - canvas.height,
                     color: colors[Math.floor(Math.random() * colors.length)],
-                    size: Math.random() * 10 + 5,
-                    speedY: Math.random() * 5 + 2,
-                    speedX: Math.random() * 2 - 1
+                    size: Math.random() * 10 + 5, speedY: Math.random() * 5 + 2, speedX: Math.random() * 2 - 1
                 });
             }
-
             function animate() {
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 pieces.forEach(p => {
-                    ctx.fillStyle = p.color;
-                    ctx.fillRect(p.x, p.y, p.size, p.size);
-                    p.y += p.speedY;
-                    p.x += p.speedX;
+                    ctx.fillStyle = p.color; ctx.fillRect(p.x, p.y, p.size, p.size);
+                    p.y += p.speedY; p.x += p.speedX;
                     if(p.y > canvas.height) p.y = -20;
                 });
                 confettiInterval = requestAnimationFrame(animate);
             }
             animate();
         }
-        
         function stopConfetti() {
             if (confettiInterval) cancelAnimationFrame(confettiInterval);
             const canvas = document.getElementById('confetti-canvas');
@@ -786,17 +890,13 @@
             ctx.clearRect(0, 0, canvas.width, canvas.height);
         }
 
-        const ICONS = {
-            spades: '♠', hearts: '♥', clubs: '♣', diamonds: '♦'
-        };
-
+        // Globals for buttons
         window.dealStock = dealStock;
         window.toggleMenu = toggleMenu;
         window.undoMove = undoMove;
         window.showHint = showHint;
         window.startNewGame = startNewGame;
         window.confirmNewGame = confirmNewGame;
-        window.handleEmptyColumnClick = handleEmptyColumnClick;
 
         init();
     </script>
