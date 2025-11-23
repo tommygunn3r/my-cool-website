@@ -680,39 +680,25 @@
     <script type="module">
         // Function to close game and return to casino
         function closeGame() {
-            // Send message to parent window to close the iframe
             if (window.parent !== window) {
                 window.parent.postMessage('closeGame', '*');
             } else {
-                // If not in iframe, navigate directly
                 window.location.href = '../../casino.html';
             }
         }
-        
-        // Make closeGame available globally
         window.closeGame = closeGame;
-        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-        import { getFirestore, doc, getDoc, setDoc, updateDoc, increment } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
-        // Firebase configuration for GunnersGames
-        const firebaseConfig = {
-            apiKey: "AIzaSyDUU30zCch_e5MNI_8HM-qy09djEp-S1LI",
-            authDomain: "gunnersgames.firebaseapp.com",
-            projectId: "gunnersgames",
-            storageBucket: "gunnersgames.firebasestorage.app",
-            messagingSenderId: "974623870515",
-            appId: "1:974623870515:web:07872198c93d95ed0b5d52"
-        };
+        import { db } from '/firebase-config.js';
+        import { getAuth, signInAnonymously } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { collection, addDoc, serverTimestamp, doc, getDoc, setDoc, increment } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-
+        let auth = null;
         // Game State
         let deck = [];
         let playerHand = [];
         let dealerHand = [];
         let currentBet = 0;
-        let balance = 5000; // Default starting balance
+        let balance = 5000; 
         let gameActive = false;
         let soundEnabled = true;
         let aiEnabled = false;
@@ -722,124 +708,134 @@
         let playerName = '';
         let userId = '';
 
-        // Initialize player name
+        // Audio Context
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+        // --- INITIALIZATION LOGIC (FIXED) ---
+        async function initGameSystem() {
+            // 1. Initialize Player Locally first (so we have a name)
+            initializePlayer();
+
+            // 2. Initialize Firebase Auth & DB
+            try {
+                if (db) {
+                    auth = getAuth(db.app);
+                    await signInAnonymously(auth);
+                    console.log('Firebase signed in');
+                }
+            } catch (error) {
+                console.warn('Firebase auth issue (playing offline):', error.message);
+            }
+
+            // 3. NOW load the balance (After auth is ready)
+            await initializeBalance();
+
+            // 4. Setup Board
+            setupTable();
+        }
+
         function initializePlayer() {
-            // Get or create player name
             playerName = localStorage.getItem('playerName');
             if (!playerName) {
-                // Generate a random player name
                 playerName = 'Player' + Math.floor(Math.random() * 10000);
                 localStorage.setItem('playerName', playerName);
             }
-            
-            // Use player name as user ID (simplified)
-            userId = playerName;
+            userId = playerName; // Using name as ID for simplicity
         }
 
-        // Initialize GunnerCoins from localStorage
-        function initializeBalance() {
+        async function initializeBalance() {
+            // Load local first for speed
             const savedBalance = localStorage.getItem('gunnercoins');
             if (savedBalance !== null) {
                 balance = parseInt(savedBalance);
             } else {
-                // First time playing
                 balance = 5000;
                 localStorage.setItem('gunnercoins', balance);
             }
-            document.getElementById('balance').textContent = balance;
+            updateBalanceDisplay();
             
-            // Sync with Firebase in background
-            syncBalanceWithFirebase();
-        }
-
-        async function syncBalanceWithFirebase() {
-            try {
-                const userDoc = doc(db, 'users', userId);
-                const docSnap = await getDoc(userDoc);
-                
-                if (docSnap.exists()) {
-                    const firebaseBalance = docSnap.data().gunnercoins || 5000;
-                    // Use Firebase balance if different
-                    if (firebaseBalance !== balance) {
-                        balance = firebaseBalance;
-                        localStorage.setItem('gunnercoins', balance);
-                        document.getElementById('balance').textContent = balance;
+            // Sync with Firebase
+            if (auth && db) {
+                try {
+                    const userDoc = doc(db, 'users', userId);
+                    const docSnap = await getDoc(userDoc);
+                    
+                    if (docSnap.exists()) {
+                        const firebaseBalance = docSnap.data().gunnercoins;
+                        // If Firebase has a different number, trust Firebase (unless it's 0/undefined)
+                        if (firebaseBalance !== undefined && firebaseBalance !== balance) {
+                            console.log(`Syncing balance: Local ${balance} -> Remote ${firebaseBalance}`);
+                            balance = firebaseBalance;
+                            localStorage.setItem('gunnercoins', balance);
+                            updateBalanceDisplay();
+                        }
+                    } else {
+                        // New user in DB
+                        await setDoc(userDoc, {
+                            playerName: playerName,
+                            gunnercoins: balance,
+                            createdAt: serverTimestamp()
+                        });
                     }
-                } else {
-                    // Create new user document
-                    await setDoc(userDoc, {
-                        playerName: playerName,
-                        gunnercoins: balance,
-                        createdAt: new Date()
-                    });
+                } catch (error) {
+                    console.log('Offline mode or permission error:', error.code);
                 }
-            } catch (error) {
-                console.log('Firebase sync:', error);
-                // Continue with localStorage balance
             }
         }
 
-        // Audio Context for sound effects
-        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        function updateBalanceDisplay() {
+            document.getElementById('balance').textContent = balance;
+        }
+
+        function setupTable() {
+            // Set default table background
+            const tableMap = { 'red': 'redtop.png', 'blue': 'bluetop.png', 'green': 'greentop.png' };
+            
+            // Pre-select in settings
+            document.querySelector(`[data-table="${selectedTable}"]`).classList.add('selected');
+            document.getElementById('gameContainer').style.backgroundImage = `url('../assets/casino/${tableMap[selectedTable]}')`;
+            
+            deck = createDeck();
+            initializeAIPlayers();
+        }
+
+        // --- GAME LOGIC ---
 
         function playSound(frequency, duration, type = 'sine') {
             if (!soundEnabled) return;
-            
-            // Fix: ensure audio context is running (fixes chrome autoplay policy)
-            if (audioContext.state === 'suspended') {
-                audioContext.resume();
-            }
+            if (audioContext.state === 'suspended') audioContext.resume();
 
             const oscillator = audioContext.createOscillator();
             const gainNode = audioContext.createGain();
-            
             oscillator.connect(gainNode);
             gainNode.connect(audioContext.destination);
-            
             oscillator.frequency.value = frequency;
             oscillator.type = type;
-            
             gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
             gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
-            
             oscillator.start(audioContext.currentTime);
             oscillator.stop(audioContext.currentTime + duration);
         }
 
-        function playCardSound() {
-            playSound(200, 0.1, 'square');
+        function playCardSound() { playSound(200, 0.1, 'square'); }
+        function playWinSound() { 
+            playSound(523.25, 0.2); setTimeout(() => playSound(659.25, 0.2), 100); setTimeout(() => playSound(783.99, 0.3), 200); 
         }
+        function playLoseSound() { playSound(329.63, 0.2); setTimeout(() => playSound(261.63, 0.3), 100); }
+        function playChipSound() { playSound(440, 0.15, 'triangle'); }
 
-        function playWinSound() {
-            playSound(523.25, 0.2);
-            setTimeout(() => playSound(659.25, 0.2), 100);
-            setTimeout(() => playSound(783.99, 0.3), 200);
-        }
-
-        function playLoseSound() {
-            playSound(329.63, 0.2);
-            setTimeout(() => playSound(261.63, 0.3), 100);
-        }
-
-        function playChipSound() {
-            playSound(440, 0.15, 'triangle');
-        }
-
-        // Initialize deck
         function createDeck() {
             const suits = ['♥', '♦', '♣', '♠'];
             const values = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
-            const deck = [];
-            
-            for (let i = 0; i < 6; i++) { // 6 decks
+            const newDeck = [];
+            for (let i = 0; i < 6; i++) { 
                 for (let suit of suits) {
                     for (let value of values) {
-                        deck.push({ suit, value });
+                        newDeck.push({ suit, value });
                     }
                 }
             }
-            
-            return shuffle(deck);
+            return shuffle(newDeck);
         }
 
         function shuffle(array) {
@@ -859,27 +855,21 @@
         function calculateScore(hand) {
             let score = 0;
             let aces = 0;
-            
             for (let card of hand) {
                 score += getCardValue(card);
                 if (card.value === 'A') aces++;
             }
-            
             while (score > 21 && aces > 0) {
                 score -= 10;
                 aces--;
             }
-            
             return score;
         }
 
         function createCardElement(card, faceDown = false) {
             const cardEl = document.createElement('div');
             cardEl.className = `card ${faceDown ? '' : 'flipped'}`;
-            
             const suitClass = (card.suit === '♥' || card.suit === '♦') ? 'hearts' : 'clubs';
-            
-            // Ensure card_back.png path is correct relative to game file location
             cardEl.innerHTML = `
                 <div class="card-back" style="background-image: url('../assets/casino/card_back.png');"></div>
                 <div class="card-front">
@@ -888,28 +878,22 @@
                     <div class="card-value ${suitClass}">${card.value}</div>
                 </div>
             `;
-            
             return cardEl;
         }
 
         function dealCard(hand, element, faceDown = false) {
             const card = deck.pop();
             hand.push(card);
-            
             const cardEl = createCardElement(card, faceDown);
             element.appendChild(cardEl);
-            
             playCardSound();
-            
             return card;
         }
 
         function updateScores() {
             const playerScore = calculateScore(playerHand);
             const dealerScore = calculateScore(dealerHand);
-            
             document.getElementById('playerScore').textContent = `Score: ${playerScore}`;
-            
             if (gameActive) {
                 document.getElementById('dealerScore').textContent = 'Score: ?';
             } else {
@@ -922,48 +906,38 @@
             overlay.className = 'message-overlay';
             overlay.textContent = text;
             document.getElementById('gameContainer').appendChild(overlay);
-            
             setTimeout(() => overlay.remove(), 2000);
         }
 
-        // FIX: Removed async/await to prevent UI blocking
+        // Safe Update Balance - Updates Local immediately, Fire-and-forget Remote
         function updateBalance(amount) {
             balance += amount;
-            document.getElementById('balance').textContent = balance;
-            
-            // Save to localStorage immediately
+            updateBalanceDisplay();
             localStorage.setItem('gunnercoins', balance);
             
-            // Update Firebase in background (Fire and Forget)
-            const userDoc = doc(db, 'users', userId);
-            setDoc(userDoc, {
-                playerName: playerName,
-                gunnercoins: balance,
-                lastPlayed: new Date()
-            }, { merge: true }).catch(err => console.error("Firebase save failed:", err));
+            if (db) {
+                const userDoc = doc(db, 'users', userId);
+                setDoc(userDoc, {
+                    playerName: playerName,
+                    gunnercoins: balance,
+                    lastPlayed: serverTimestamp()
+                }, { merge: true }).catch(e => console.log('Bg sync failed', e));
+            }
         }
 
         function initializeAIPlayers() {
             const aiContainer = document.getElementById('aiPlayers');
             aiContainer.innerHTML = '';
             aiPlayers = [];
-            
             if (!aiEnabled) {
                 aiContainer.style.display = 'none';
                 return;
             }
-            
             aiContainer.style.display = 'flex';
-            
             const names = ['Alex', 'Jordan', 'Sam'];
             for (let i = 0; i < 3; i++) {
-                const ai = {
-                    name: names[i],
-                    hand: [],
-                    bet: Math.floor(Math.random() * 50) + 10
-                };
+                const ai = { name: names[i], hand: [], bet: Math.floor(Math.random() * 50) + 10 };
                 aiPlayers.push(ai);
-                
                 const aiEl = document.createElement('div');
                 aiEl.className = 'ai-player';
                 aiEl.innerHTML = `
@@ -980,8 +954,6 @@
                 ai.hand = [];
                 const handEl = document.getElementById(`ai-hand-${index}`);
                 handEl.innerHTML = '';
-                
-                // Deal 2 cards
                 for (let i = 0; i < 2; i++) {
                     const card = deck.pop();
                     ai.hand.push(card);
@@ -989,8 +961,6 @@
                     cardEl.className = 'ai-card';
                     handEl.appendChild(cardEl);
                 }
-                
-                // AI logic: hit until 17+
                 while (calculateScore(ai.hand) < 17) {
                     const card = deck.pop();
                     ai.hand.push(card);
@@ -998,62 +968,32 @@
                     cardEl.className = 'ai-card';
                     handEl.appendChild(cardEl);
                 }
-                
                 const score = calculateScore(ai.hand);
                 document.getElementById(`ai-score-${index}`).textContent = score > 21 ? 'BUST' : score;
-                
                 document.querySelector(`#aiPlayers .ai-player:nth-child(${index + 1})`).classList.add('active');
             });
         }
 
         async function startRound() {
-            // FIX: Resume audio context if suspended
-            if (audioContext.state === 'suspended') {
-                audioContext.resume();
-            }
+            if (audioContext.state === 'suspended') audioContext.resume();
 
             const betAmount = parseInt(document.getElementById('betAmount').value);
-            
-            if (betAmount > balance) {
-                showMessage('INSUFFICIENT FUNDS');
-                return;
-            }
-            
-            if (betAmount < 1) {
-                showMessage('MINIMUM BET IS 1');
-                return;
-            }
+            if (betAmount > balance) { showMessage('INSUFFICIENT FUNDS'); return; }
+            if (betAmount < 1) { showMessage('MINIMUM BET IS 1'); return; }
             
             currentBet = betAmount;
-            
-            // Update balance immediately
-            balance -= currentBet;
-            document.getElementById('balance').textContent = balance;
-            localStorage.setItem('gunnercoins', balance);
-            
-            // Update Firebase in background
-            const userDoc = doc(db, 'users', userId);
-            setDoc(userDoc, {
-                playerName: playerName,
-                gunnercoins: balance,
-                lastPlayed: new Date()
-            }, { merge: true }).catch(err => console.log('Firebase update:', err));
+            updateBalance(-currentBet); // Deduct immediately
             
             playChipSound();
             
-            // Reset
             playerHand = [];
             dealerHand = [];
             document.getElementById('playerHand').innerHTML = '';
             document.getElementById('dealerHand').innerHTML = '';
             
-            if (deck.length < 52) {
-                deck = createDeck();
-            }
-            
+            if (deck.length < 52) deck = createDeck();
             gameActive = true;
             
-            // Deal initial cards
             dealCard(playerHand, document.getElementById('playerHand'));
             dealCard(dealerHand, document.getElementById('dealerHand'));
             
@@ -1061,21 +1001,13 @@
                 dealCard(playerHand, document.getElementById('playerHand'));
                 dealCard(dealerHand, document.getElementById('dealerHand'), true);
                 updateScores();
-                
-                // Check for blackjack
-                if (calculateScore(playerHand) === 21) {
-                    stand();
-                } else {
-                    enableGameButtons();
-                }
+                if (calculateScore(playerHand) === 21) stand();
+                else enableGameButtons();
             }, 300);
             
             document.getElementById('placeBet').disabled = true;
             document.getElementById('betAmount').disabled = true;
-            
-            if (aiEnabled) {
-                playAI();
-            }
+            if (aiEnabled) playAI();
         }
 
         function enableGameButtons() {
@@ -1093,30 +1025,20 @@
         function hit() {
             dealCard(playerHand, document.getElementById('playerHand'));
             updateScores();
-            
-            if (calculateScore(playerHand) > 21) {
-                bust();
-            }
-            
+            if (calculateScore(playerHand) > 21) bust();
             document.getElementById('doubleBtn').disabled = true;
         }
 
         function stand() {
             gameActive = false;
             disableGameButtons();
-            
-            // Reveal dealer's card
             const dealerCards = document.getElementById('dealerHand').children;
-            dealerCards[1].classList.add('flipped');
-            
-            setTimeout(() => {
-                dealerPlay();
-            }, 500);
+            if (dealerCards[1]) dealerCards[1].classList.add('flipped');
+            setTimeout(() => dealerPlay(), 500);
         }
 
         function dealerPlay() {
             const dealerScore = calculateScore(dealerHand);
-            
             if (dealerScore < 17) {
                 setTimeout(() => {
                     dealCard(dealerHand, document.getElementById('dealerHand'));
@@ -1128,11 +1050,9 @@
             }
         }
 
-        // FIX: Removed async/await from balance updates to prevent UI freezing
         function determineWinner() {
             const playerScore = calculateScore(playerHand);
             const dealerScore = calculateScore(dealerHand);
-            
             updateScores();
             
             if (dealerScore > 21) {
@@ -1148,10 +1068,9 @@
                 playLoseSound();
             } else {
                 showMessage('PUSH');
-                updateBalance(currentBet);
+                updateBalance(currentBet); // Return bet
                 playChipSound();
             }
-            
             resetRound();
         }
 
@@ -1161,31 +1080,18 @@
             updateScores();
             showMessage('BUST!');
             playLoseSound();
-            
-            setTimeout(() => {
-                resetRound();
-            }, 1500);
+            setTimeout(() => resetRound(), 1500);
         }
 
         function doubleDown() {
-            if (balance < currentBet) {
-                showMessage('INSUFFICIENT FUNDS');
-                return;
-            }
-            
-            // No await here
+            if (balance < currentBet) { showMessage('INSUFFICIENT FUNDS'); return; }
             updateBalance(-currentBet);
             currentBet *= 2;
             playChipSound();
-            
             dealCard(playerHand, document.getElementById('playerHand'));
             updateScores();
-            
-            if (calculateScore(playerHand) > 21) {
-                bust();
-            } else {
-                stand();
-            }
+            if (calculateScore(playerHand) > 21) bust();
+            else stand();
         }
 
         function resetRound() {
@@ -1194,19 +1100,17 @@
                 document.getElementById('dealerHand').innerHTML = '';
                 document.getElementById('playerScore').textContent = '';
                 document.getElementById('dealerScore').textContent = '';
-                
                 document.getElementById('placeBet').disabled = false;
                 document.getElementById('betAmount').disabled = false;
-                
                 gameActive = false;
                 currentBet = 0;
-                
                 if (aiEnabled) {
                     document.querySelectorAll('.ai-player').forEach(el => el.classList.remove('active'));
                 }
             }, 2000);
         }
 
+        // --- EVENT LISTENERS ---
         document.querySelectorAll('.table-option').forEach(option => {
             option.addEventListener('click', function() {
                 document.querySelectorAll('.table-option').forEach(opt => opt.classList.remove('selected'));
@@ -1216,79 +1120,44 @@
         });
 
         document.getElementById('startGame').addEventListener('click', () => {
-            const tableMap = {
-                'red': 'redtop.png',
-                'blue': 'bluetop.png',
-                'green': 'greentop.png'
-            };
-            
-            document.getElementById('gameContainer').style.backgroundImage = 
-                `url('../assets/casino/${tableMap[selectedTable]}')`;
-            
+            const tableMap = { 'red': 'redtop.png', 'blue': 'bluetop.png', 'green': 'greentop.png' };
+            document.getElementById('gameContainer').style.backgroundImage = `url('../assets/casino/${tableMap[selectedTable]}')`;
             document.getElementById('tableSelector').classList.add('hidden');
-            deck = createDeck();
-            initializeAIPlayers();
-
-            // Init audio logic on user gesture
-            if (audioContext.state === 'suspended') {
-                audioContext.resume();
-            }
+            if (audioContext.state === 'suspended') audioContext.resume();
         });
 
         document.getElementById('placeBet').addEventListener('click', startRound);
         document.getElementById('hitBtn').addEventListener('click', hit);
         document.getElementById('standBtn').addEventListener('click', stand);
         document.getElementById('doubleBtn').addEventListener('click', doubleDown);
-
-        document.getElementById('settingsBtn').addEventListener('click', () => {
-            document.getElementById('settingsModal').classList.add('active');
-        });
-
-        document.getElementById('closeSettings').addEventListener('click', () => {
-            document.getElementById('settingsModal').classList.remove('active');
-        });
-
+        document.getElementById('settingsBtn').addEventListener('click', () => document.getElementById('settingsModal').classList.add('active'));
+        document.getElementById('closeSettings').addEventListener('click', () => document.getElementById('settingsModal').classList.remove('active'));
+        
         document.getElementById('soundToggle').addEventListener('click', function() {
             this.classList.toggle('active');
             soundEnabled = this.classList.contains('active');
         });
-
         document.getElementById('aiToggle').addEventListener('click', function() {
             this.classList.toggle('active');
             aiEnabled = this.classList.contains('active');
             initializeAIPlayers();
         });
-
-        document.getElementById('speedSelect').addEventListener('change', function() {
-            animationSpeed = parseFloat(this.value);
-        });
-
+        document.getElementById('speedSelect').addEventListener('change', function() { animationSpeed = parseFloat(this.value); });
         document.getElementById('tableSelect').addEventListener('change', function() {
             selectedTable = this.value;
-            const tableMap = {
-                'red': 'redtop.png',
-                'blue': 'bluetop.png',
-                'green': 'greentop.png'
-            };
-            document.getElementById('gameContainer').style.backgroundImage = 
-                `url('../assets/casino/${tableMap[selectedTable]}')`;
+            const tableMap = { 'red': 'redtop.png', 'blue': 'bluetop.png', 'green': 'greentop.png' };
+            document.getElementById('gameContainer').style.backgroundImage = `url('../assets/casino/${tableMap[selectedTable]}')`;
             playChipSound();
         });
 
-        // Set default table background for preview
+        // Visual setup for table selector
         document.querySelector('[data-table="red"]').style.backgroundImage = "url('../assets/casino/redtop.png')";
         document.querySelector('[data-table="blue"]').style.backgroundImage = "url('../assets/casino/bluetop.png')";
         document.querySelector('[data-table="green"]').style.backgroundImage = "url('../assets/casino/greentop.png')";
-        document.querySelector('[data-table="green"]').classList.add('selected');
-        
-        document.getElementById('gameContainer').style.backgroundImage = 
-            "url('../assets/casino/greentop.png')";
-        
-        initializePlayer();
-        initializeBalance();
-        
-        deck = createDeck();
-        initializeAIPlayers();
+
+        // KICKSTART THE GAME SYSTEM
+        initGameSystem();
+
     </script>
 </body>
 </html>
