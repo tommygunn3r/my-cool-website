@@ -16,8 +16,10 @@
             font-family: 'Rajdhani', sans-serif;
             background: #000;
             color: #fff;
-            overflow-x: hidden;
-            min-height: 100vh;
+            /* Lock the screen height to viewport */
+            height: 100vh;
+            width: 100vw;
+            overflow: hidden; 
         }
 
         /* Parallax Background */
@@ -28,7 +30,7 @@
             width: 100%;
             height: 100%;
             z-index: -1;
-            overflow: hidden;
+            pointer-events: none;
         }
 
         .parallax-layer {
@@ -68,26 +70,9 @@
             animation: float 20s infinite ease-in-out;
         }
 
-        .neon-shape:nth-child(1) {
-            background: rgba(255, 215, 0, 0.3);
-            top: 20%;
-            left: 10%;
-            animation-delay: 0s;
-        }
-
-        .neon-shape:nth-child(2) {
-            background: rgba(255, 20, 147, 0.3);
-            top: 60%;
-            right: 15%;
-            animation-delay: 7s;
-        }
-
-        .neon-shape:nth-child(3) {
-            background: rgba(0, 255, 255, 0.3);
-            bottom: 15%;
-            left: 50%;
-            animation-delay: 14s;
-        }
+        .neon-shape:nth-child(1) { background: rgba(255, 215, 0, 0.3); top: 20%; left: 10%; animation-delay: 0s; }
+        .neon-shape:nth-child(2) { background: rgba(255, 20, 147, 0.3); top: 60%; right: 15%; animation-delay: 7s; }
+        .neon-shape:nth-child(3) { background: rgba(0, 255, 255, 0.3); bottom: 15%; left: 50%; animation-delay: 14s; }
 
         @keyframes float {
             0%, 100% { transform: translate(0, 0); }
@@ -95,12 +80,17 @@
             66% { transform: translate(-50px, 50px); }
         }
 
-        /* Content */
+        /* Content Container - Flexbox for centering */
         .content {
             position: relative;
             z-index: 1;
-            padding: 60px 20px 120px;
-            min-height: 100vh;
+            height: 100vh;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
         }
 
         .title {
@@ -108,7 +98,8 @@
             font-size: 3.5rem;
             font-weight: 900;
             text-align: center;
-            margin-bottom: 60px;
+            margin-bottom: 40px; /* Reduced margin */
+            margin-top: -60px; /* Pull up slightly */
             background: linear-gradient(135deg, #FFD700, #FFA500, #FFD700);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
@@ -125,10 +116,10 @@
 
         /* Carousel */
         .carousel-container {
+            width: 100%;
             max-width: 1400px;
-            margin: 0 auto;
+            height: 500px; /* Fixed height for the perspective container */
             position: relative;
-            height: 500px;
             perspective: 2000px;
         }
 
@@ -280,6 +271,53 @@
             background: rgba(255, 215, 0, 0.4);
             box-shadow: 0 0 20px rgba(255, 215, 0, 0.6);
         }
+        
+        /* Scroll Indicator */
+        .scroll-hint {
+            position: absolute;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: rgba(255, 215, 0, 0.6);
+            font-size: 0.9rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            animation: bounce 2s infinite;
+        }
+        
+        .scroll-icon {
+            width: 20px;
+            height: 30px;
+            border: 2px solid rgba(255, 215, 0, 0.6);
+            border-radius: 10px;
+            position: relative;
+        }
+        
+        .scroll-icon::before {
+            content: '';
+            position: absolute;
+            top: 5px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 4px;
+            height: 6px;
+            background: rgba(255, 215, 0, 0.6);
+            border-radius: 2px;
+            animation: scroll 1.5s infinite;
+        }
+        
+        @keyframes scroll {
+            0% { top: 5px; opacity: 1; }
+            100% { top: 15px; opacity: 0; }
+        }
+        
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translate(-50%, 0); }
+            40% { transform: translate(-50%, -10px); }
+            60% { transform: translate(-50%, -5px); }
+        }
 
         /* Fixed Navigation */
         .fixed-nav {
@@ -318,7 +356,7 @@
         @media (max-width: 1024px) {
             .title {
                 font-size: 2.5rem;
-                margin-bottom: 40px;
+                margin-top: -40px;
             }
 
             .carousel-container {
@@ -340,7 +378,6 @@
         @media (max-width: 768px) {
             .title {
                 font-size: 2rem;
-                margin-bottom: 30px;
             }
 
             .carousel-container {
@@ -378,6 +415,7 @@
     </style>
 </head>
 <body>
+    <!-- Parallax Background -->
     <div class="parallax-container">
         <div class="parallax-layer layer-1"></div>
         <div class="parallax-layer layer-2"></div>
@@ -388,11 +426,13 @@
         </div>
     </div>
 
+    <!-- Main Content -->
     <div class="content">
         <h1 class="title">CASINO GAMES</h1>
         
         <div class="carousel-container">
             <div class="carousel" id="carousel">
+                <!-- 1. Blackjack -->
                 <div class="game-card center" data-game="blackjack">
                     <img src="/games/assets/casino/blackjack.png" alt="Blackjack" class="game-thumbnail" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22320%22 height=%22250%22%3E%3Crect fill=%22%23111%22 width=%22320%22 height=%22250%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 font-family=%22Arial%22 font-size=%2224%22 fill=%22%23FFD700%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22%3E🃏 BLACKJACK%3C/text%3E%3C/svg%3E'">
                     <div class="game-title">BLACKJACK</div>
@@ -400,6 +440,7 @@
                     <button class="play-button" onclick="launchGame('games/casino/blackjack.html')">PLAY NOW</button>
                 </div>
 
+                <!-- 2. Texas Hold'em -->
                 <div class="game-card" data-game="texas_holdem">
                     <img src="/games/assets/casino/texas_holdem.png" alt="Texas Hold'em" class="game-thumbnail" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22320%22 height=%22250%22%3E%3Crect fill=%22%230a3d0a%22 width=%22320%22 height=%22250%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 font-family=%22Arial%22 font-size=%2224%22 fill=%22%23FFD700%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22%3E♣️ TEXAS HOLDEM%3C/text%3E%3C/svg%3E'">
                     <div class="game-title">TEXAS HOLD'EM</div>
@@ -407,13 +448,15 @@
                     <button class="play-button" onclick="launchGame('games/casino/texas_holdem.html')">PLAY NOW</button>
                 </div>
 
+                <!-- 3. Squario Slots -->
                 <div class="game-card" data-game="squario-slots">
                     <img src="/games/assets/casino/squario-slots.png" alt="Squario Slots" class="game-thumbnail" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22320%22 height=%22250%22%3E%3Crect fill=%22%238b0000%22 width=%22320%22 height=%22250%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 font-family=%22Arial%22 font-size=%2224%22 fill=%22%23fff%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22%3E🍄 SQUARIO SLOTS%3C/text%3E%3C/svg%3E'">
                     <div class="game-title">SQUARIO SLOTS</div>
-                    <div class="game-description">Spin to win with everyone's favorite blocky plumber! Match the mushrooms for the jackpot.</div>
+                    <div class="game-description">Spin to win with everyone's favorite blocky plumber! Match the mushrooms.</div>
                     <button class="play-button" onclick="launchGame('games/casino/squario-slots.html')">PLAY NOW</button>
                 </div>
 
+                <!-- 4. Squareman Slots -->
                 <div class="game-card" data-game="squareman-slots">
                     <img src="/games/assets/casino/squareman-slots.png" alt="Squareman Slots" class="game-thumbnail" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22320%22 height=%22250%22%3E%3Crect fill=%22%23CCCC00%22 width=%22320%22 height=%22250%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 font-family=%22Arial%22 font-size=%2224%22 fill=%22%23000%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22%3E👻 SQUAREMAN SLOTS%3C/text%3E%3C/svg%3E'">
                     <div class="game-title">SQUAREMAN SLOTS</div>
@@ -421,6 +464,7 @@
                     <button class="play-button" onclick="launchGame('games/casino/squareman-slots.html')">PLAY NOW</button>
                 </div>
 
+                <!-- 5. Squarebird Slots -->
                 <div class="game-card" data-game="squarebird-slots">
                     <img src="/games/assets/casino/squarebird-slots.png" alt="Squarebird Slots" class="game-thumbnail" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22320%22 height=%22250%22%3E%3Crect fill=%22%23004d00%22 width=%22320%22 height=%22250%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 font-family=%22Arial%22 font-size=%2224%22 fill=%22%23fff%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22%3E🐦 SQUAREBIRD SLOTS%3C/text%3E%3C/svg%3E'">
                     <div class="game-title">SQUAREBIRD SLOTS</div>
@@ -428,10 +472,11 @@
                     <button class="play-button" onclick="launchGame('games/casino/squarebird-slots.html')">PLAY NOW</button>
                 </div>
 
+                <!-- 6. GunnerCoin Drop -->
                 <div class="game-card" data-game="gunnercoin-drop">
                     <img src="/games/assets/casino/gunnercoin-drop.png" alt="GunnerCoin Drop" class="game-thumbnail" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22320%22 height=%22250%22%3E%3Crect fill=%22%234B0082%22 width=%22320%22 height=%22250%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 font-family=%22Arial%22 font-size=%2224%22 fill=%22%23FFD700%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22%3E🪙 COIN DROP%3C/text%3E%3C/svg%3E'">
                     <div class="game-title">GUNNERCOIN DROP</div>
-                    <div class="game-description">A physics-based Plinko style game. Drop the coin and watch it bounce to the big multipliers!</div>
+                    <div class="game-description">A physics-based Plinko style game. Drop the coin and watch it bounce!</div>
                     <button class="play-button" onclick="launchGame('games/casino/gunnercoin-drop.html')">PLAY NOW</button>
                 </div>
 
@@ -441,9 +486,15 @@
                 <button class="carousel-button" onclick="rotateCarousel(-1)">‹</button>
                 <button class="carousel-button" onclick="rotateCarousel(1)">›</button>
             </div>
+            
+            <div class="scroll-hint">
+                <div class="scroll-icon"></div>
+                <span>SCROLL TO BROWSE</span>
+            </div>
         </div>
     </div>
 
+    <!-- Fixed Navigation -->
     <div class="fixed-nav">
         <a href="casino-leaderboard.html" class="nav-button">
             <span>🏆</span>
@@ -457,17 +508,8 @@
 
     <script>
         let currentIndex = 0;
-        
-        // This array isn't strictly necessary for the display since we hardcoded the HTML above, 
-        // but it's good practice to keep it updated in case we move to dynamic loading later.
-        const games = [
-            { name: 'Blackjack', file: 'games/casino/blackjack.html' },
-            { name: "Texas Hold'em", file: 'games/casino/texas_holdem.html' },
-            { name: 'Squario Slots', file: 'games/casino/squario-slots.html' },
-            { name: 'Squareman Slots', file: 'games/casino/squareman-slots.html' },
-            { name: 'Squarebird Slots', file: 'games/casino/squarebird-slots.html' },
-            { name: 'GunnerCoin Drop', file: 'games/casino/gunnercoin-drop.html' }
-        ];
+        let isThrottled = false;
+        const scrollCooldown = 600; // Matches transition time
 
         function updateCarousel() {
             const cards = document.querySelectorAll('.game-card');
@@ -501,6 +543,60 @@
             const cards = document.querySelectorAll('.game-card');
             currentIndex = (currentIndex + direction + cards.length) % cards.length;
             updateCarousel();
+        }
+
+        // --- NEW: Scroll Event Listener ---
+        window.addEventListener('wheel', (e) => {
+            // Prevent default page scrolling behavior (just to be safe, though overflow:hidden handles it)
+            e.preventDefault();
+
+            if (isThrottled) return;
+
+            // Detect scroll direction
+            // DeltaY > 0 means scrolling DOWN (move next)
+            // DeltaY < 0 means scrolling UP (move prev)
+            const direction = e.deltaY > 0 ? 1 : -1;
+            
+            rotateCarousel(direction);
+
+            // Set cooldown
+            isThrottled = true;
+            setTimeout(() => {
+                isThrottled = false;
+            }, scrollCooldown);
+        }, { passive: false }); // passive: false needed to use preventDefault if we wanted to stop page scroll, but overflow hidden does that.
+
+        // --- NEW: Touch Swipe Support for Mobile ---
+        let touchStartY = 0;
+        let touchEndY = 0;
+
+        document.addEventListener('touchstart', e => {
+            touchStartY = e.changedTouches[0].screenY;
+        }, { passive: false });
+
+        document.addEventListener('touchend', e => {
+            touchEndY = e.changedTouches[0].screenY;
+            handleSwipe();
+        }, { passive: false });
+
+        function handleSwipe() {
+            if (isThrottled) return;
+
+            const swipeThreshold = 50;
+            if (touchStartY - touchEndY > swipeThreshold) {
+                // Swiped Up -> Next
+                rotateCarousel(1);
+                throttle();
+            } else if (touchEndY - touchStartY > swipeThreshold) {
+                // Swiped Down -> Prev
+                rotateCarousel(-1);
+                throttle();
+            }
+        }
+        
+        function throttle() {
+            isThrottled = true;
+            setTimeout(() => { isThrottled = false; }, scrollCooldown);
         }
 
         function launchGame(gameUrl) {
@@ -565,6 +661,8 @@
         document.addEventListener('keydown', (e) => {
             if (e.key === 'ArrowLeft') rotateCarousel(-1);
             if (e.key === 'ArrowRight') rotateCarousel(1);
+            if (e.key === 'ArrowUp') rotateCarousel(-1);
+            if (e.key === 'ArrowDown') rotateCarousel(1);
             if (e.key === 'Enter') {
                 const centerCard = document.querySelector('.game-card.center');
                 if (centerCard) {
