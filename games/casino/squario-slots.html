@@ -521,6 +521,8 @@
             margin-top: 0.6rem;
         }
 
+        @keyframes fadeIn { to { opacity: 1; } }
+
         @media (max-width: 768px) {
             .slot-wrapper { max-height: calc(100vh - 130px); }
             .slot-footer { flex-direction: column; align-items: stretch; }
@@ -957,8 +959,9 @@
                 }
             }
 
+            // NEW: fixed 3 free spins if 3+ scatters
             if (scatterCount >= 3) {
-                freeSpinsAwarded = 8 + (scatterCount - 3) * 2;
+                freeSpinsAwarded = 3;
             }
 
             PAYLINES.forEach(line => {
@@ -1210,18 +1213,18 @@
                 playLose();
             }
 
-            if (result.freeSpinsAwarded > 0) {
+            // Log spin
+            const simpleGrid = currentGrid.map(col => col.slice());
+            logSpinToFirestore(bet, result.totalWin, simpleGrid, usingFreeSpin);
+
+            // BONUS has priority over free spins
+            if (result.squarioCount >= 3) {
+                setTimeout(() => launchBonusGame(result.squarioCount, bet), 600);
+            } else if (result.freeSpinsAwarded > 0) {
                 freeSpinsRemaining += result.freeSpinsAwarded;
                 updateFreeSpinBadge();
                 playBonusOpen();
                 showMessage('POWER-UP FREE SPINS!', `+${result.freeSpinsAwarded} FREE SPINS`);
-            }
-
-            const simpleGrid = currentGrid.map(col => col.slice());
-            logSpinToFirestore(bet, result.totalWin, simpleGrid, usingFreeSpin);
-
-            if (result.squarioCount >= 3) {
-                setTimeout(() => launchBonusGame(result.squarioCount, bet), 600);
             }
 
             spinning = false;
