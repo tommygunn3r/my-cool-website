@@ -670,7 +670,6 @@
         </div>
     </div>
 
-    <!-- Fixed Navigation -->
     <div class="fixed-nav">
         <a href="#" class="nav-button" onclick="closeGame(); return false;">
             <span>←</span>
@@ -786,6 +785,11 @@
         function playSound(frequency, duration, type = 'sine') {
             if (!soundEnabled) return;
             
+            // Fix: ensure audio context is running (fixes chrome autoplay policy)
+            if (audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+
             const oscillator = audioContext.createOscillator();
             const gainNode = audioContext.createGain();
             
@@ -875,6 +879,7 @@
             
             const suitClass = (card.suit === '♥' || card.suit === '♦') ? 'hearts' : 'clubs';
             
+            // Ensure card_back.png path is correct relative to game file location
             cardEl.innerHTML = `
                 <div class="card-back" style="background-image: url('../assets/casino/card_back.png');"></div>
                 <div class="card-front">
@@ -921,24 +926,21 @@
             setTimeout(() => overlay.remove(), 2000);
         }
 
-        async function updateBalance(amount) {
+        // FIX: Removed async/await to prevent UI blocking
+        function updateBalance(amount) {
             balance += amount;
             document.getElementById('balance').textContent = balance;
             
             // Save to localStorage immediately
             localStorage.setItem('gunnercoins', balance);
             
-            // Update Firebase in background
-            try {
-                const userDoc = doc(db, 'users', userId);
-                await setDoc(userDoc, {
-                    playerName: playerName,
-                    gunnercoins: balance,
-                    lastPlayed: new Date()
-                }, { merge: true });
-            } catch (error) {
-                console.log('Firebase update:', error);
-            }
+            // Update Firebase in background (Fire and Forget)
+            const userDoc = doc(db, 'users', userId);
+            setDoc(userDoc, {
+                playerName: playerName,
+                gunnercoins: balance,
+                lastPlayed: new Date()
+            }, { merge: true }).catch(err => console.error("Firebase save failed:", err));
         }
 
         function initializeAIPlayers() {
@@ -1005,6 +1007,11 @@
         }
 
         async function startRound() {
+            // FIX: Resume audio context if suspended
+            if (audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
+
             const betAmount = parseInt(document.getElementById('betAmount').value);
             
             if (betAmount > balance) {
@@ -1025,18 +1032,12 @@
             localStorage.setItem('gunnercoins', balance);
             
             // Update Firebase in background
-            try {
-                const userDoc = doc(db, 'users', userId);
-                setDoc(userDoc, {
-                    playerName: playerName,
-                    gunnercoins: balance,
-                    lastPlayed: new Date()
-                }, { merge: true }).catch(err => 
-                    console.log('Firebase update:', err)
-                );
-            } catch (error) {
-                console.log('Firebase error:', error);
-            }
+            const userDoc = doc(db, 'users', userId);
+            setDoc(userDoc, {
+                playerName: playerName,
+                gunnercoins: balance,
+                lastPlayed: new Date()
+            }, { merge: true }).catch(err => console.log('Firebase update:', err));
             
             playChipSound();
             
@@ -1080,7 +1081,7 @@
         function enableGameButtons() {
             document.getElementById('hitBtn').disabled = false;
             document.getElementById('standBtn').disabled = false;
-            document.getElementById('doubleBtn').disabled = balance < currentBet; // Disable if insufficient funds
+            document.getElementById('doubleBtn').disabled = balance < currentBet;
         }
 
         function disableGameButtons() {
@@ -1127,7 +1128,8 @@
             }
         }
 
-        async function determineWinner() {
+        // FIX: Removed async/await from balance updates to prevent UI freezing
+        function determineWinner() {
             const playerScore = calculateScore(playerHand);
             const dealerScore = calculateScore(dealerHand);
             
@@ -1135,25 +1137,25 @@
             
             if (dealerScore > 21) {
                 showMessage('DEALER BUSTS - YOU WIN!');
-                await updateBalance(currentBet * 2);
+                updateBalance(currentBet * 2);
                 playWinSound();
             } else if (playerScore > dealerScore) {
                 showMessage('YOU WIN!');
-                await updateBalance(currentBet * 2);
+                updateBalance(currentBet * 2);
                 playWinSound();
             } else if (playerScore < dealerScore) {
                 showMessage('DEALER WINS');
                 playLoseSound();
             } else {
                 showMessage('PUSH');
-                await updateBalance(currentBet);
+                updateBalance(currentBet);
                 playChipSound();
             }
             
             resetRound();
         }
 
-        async function bust() {
+        function bust() {
             gameActive = false;
             disableGameButtons();
             updateScores();
@@ -1165,13 +1167,14 @@
             }, 1500);
         }
 
-        async function doubleDown() {
+        function doubleDown() {
             if (balance < currentBet) {
                 showMessage('INSUFFICIENT FUNDS');
                 return;
             }
             
-            await updateBalance(-currentBet);
+            // No await here
+            updateBalance(-currentBet);
             currentBet *= 2;
             playChipSound();
             
@@ -1186,28 +1189,24 @@
         }
 
         function resetRound() {
-            // Clear cards after a short delay so player can see final result
             setTimeout(() => {
                 document.getElementById('playerHand').innerHTML = '';
                 document.getElementById('dealerHand').innerHTML = '';
                 document.getElementById('playerScore').textContent = '';
                 document.getElementById('dealerScore').textContent = '';
                 
-                // Re-enable betting controls
                 document.getElementById('placeBet').disabled = false;
                 document.getElementById('betAmount').disabled = false;
                 
-                // Reset game state
                 gameActive = false;
                 currentBet = 0;
                 
                 if (aiEnabled) {
                     document.querySelectorAll('.ai-player').forEach(el => el.classList.remove('active'));
                 }
-            }, 2000); // Wait 2 seconds before clearing
+            }, 2000);
         }
 
-        // Table selection
         document.querySelectorAll('.table-option').forEach(option => {
             option.addEventListener('click', function() {
                 document.querySelectorAll('.table-option').forEach(opt => opt.classList.remove('selected'));
@@ -1229,15 +1228,18 @@
             document.getElementById('tableSelector').classList.add('hidden');
             deck = createDeck();
             initializeAIPlayers();
+
+            // Init audio logic on user gesture
+            if (audioContext.state === 'suspended') {
+                audioContext.resume();
+            }
         });
 
-        // Event listeners
         document.getElementById('placeBet').addEventListener('click', startRound);
         document.getElementById('hitBtn').addEventListener('click', hit);
         document.getElementById('standBtn').addEventListener('click', stand);
         document.getElementById('doubleBtn').addEventListener('click', doubleDown);
 
-        // Settings
         document.getElementById('settingsBtn').addEventListener('click', () => {
             document.getElementById('settingsModal').classList.add('active');
         });
@@ -1279,15 +1281,12 @@
         document.querySelector('[data-table="green"]').style.backgroundImage = "url('../assets/casino/greentop.png')";
         document.querySelector('[data-table="green"]').classList.add('selected');
         
-        // Initialize game with green table
         document.getElementById('gameContainer').style.backgroundImage = 
             "url('../assets/casino/greentop.png')";
         
-        // Initialize player and balance
         initializePlayer();
         initializeBalance();
         
-        // Initialize game
         deck = createDeck();
         initializeAIPlayers();
     </script>
