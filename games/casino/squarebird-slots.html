@@ -488,7 +488,7 @@
         const REELS = 5;
         const ROWS = 3;
 
-        const SYMBOLS = ['squarebird','egg','nest','cloud','pipe','coin','birdpower'];
+        // SYMBOLS definition removed because it was unused and causing reference errors.
 
         // External PNGs in same directory tree as blackjack
         const SYMBOL_IMAGES = {
@@ -529,7 +529,7 @@
         // --- Utility & Visuals ---
         function playSound(frequency, duration, type = 'sine', volume = 0.35) {
             if (!soundEnabled) return;
-            if (audioContext.state === 'suspended') audioContext.resume();
+            if (audioContext.state === 'suspended') audioContext.resume().catch(e => console.log('Audio resume failed', e));
             const o = audioContext.createOscillator();
             const g = audioContext.createGain();
             o.connect(g); g.connect(audioContext.destination);
