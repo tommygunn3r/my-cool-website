@@ -32,7 +32,7 @@
             user-select: none;
         }
 
-        /* --- Start Screen (Identical to Blackjack) --- */
+        /* --- Start Screen --- */
         #tableSelector {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: linear-gradient(135deg, var(--dark) 0%, #2a1f1a 100%);
@@ -286,33 +286,27 @@
             <div class="pot-display" id="potDisplay">POT: 0</div>
             
             <div class="community-area" id="communityCards">
-                <!-- Flop, Turn, River go here -->
-            </div>
+                </div>
 
-            <!-- Seats -->
-            <div class="seat" id="seat-2"> <!-- Top AI -->
-                <div class="seat-action" id="action-2">CHECK</div>
+            <div class="seat" id="seat-2"> <div class="seat-action" id="action-2">CHECK</div>
                 <div class="seat-name"><span>Alex</span><span class="seat-chips">1000</span></div>
                 <div class="seat-hand" id="hand-2"></div>
                 <div class="dealer-button" id="btn-2" style="display:none;">D</div>
             </div>
             
-            <div class="seat" id="seat-1"> <!-- Left AI -->
-                <div class="seat-action" id="action-1">CHECK</div>
+            <div class="seat" id="seat-1"> <div class="seat-action" id="action-1">CHECK</div>
                 <div class="seat-name"><span>Sam</span><span class="seat-chips">1000</span></div>
                 <div class="seat-hand" id="hand-1"></div>
                 <div class="dealer-button" id="btn-1" style="display:none;">D</div>
             </div>
 
-            <div class="seat" id="seat-3"> <!-- Right AI -->
-                <div class="seat-action" id="action-3">CHECK</div>
+            <div class="seat" id="seat-3"> <div class="seat-action" id="action-3">CHECK</div>
                 <div class="seat-name"><span>Jordan</span><span class="seat-chips">1000</span></div>
                 <div class="seat-hand" id="hand-3"></div>
                 <div class="dealer-button" id="btn-3" style="display:none;">D</div>
             </div>
 
-            <div class="seat" id="seat-0"> <!-- Player -->
-                <div class="seat-action" id="action-0">CHECK</div>
+            <div class="seat" id="seat-0"> <div class="seat-action" id="action-0">CHECK</div>
                 <div class="seat-name"><span id="playerNameDisplay">PLAYER</span><span class="seat-chips" id="playerChipsDisplay">1000</span></div>
                 <div class="seat-hand" id="hand-0"></div>
                 <div class="dealer-button" id="btn-0" style="display:none;">D</div>
@@ -333,7 +327,6 @@
         </div>
     </div>
 
-    <!-- Settings Modal -->
     <div class="modal" id="settingsModal">
         <div class="modal-content">
             <div class="modal-title">SETTINGS</div>
@@ -395,9 +388,9 @@
         let lastAggressor = -1; // Who made the last raise?
         let players = [
             { id: 0, name: 'Player', chips: 0, hand: [], folded: false, currentBet: 0, isAI: false },
-            { id: 1, name: 'Sam', chips: 2000, hand: [], folded: false, currentBet: 0, isAI: true },
-            { id: 2, name: 'Alex', chips: 2000, hand: [], folded: false, currentBet: 0, isAI: true },
-            { id: 3, name: 'Jordan', chips: 2000, hand: [], folded: false, currentBet: 0, isAI: true }
+            { id: 1, name: 'Rockettam', chips: 2000, hand: [], folded: false, currentBet: 0, isAI: true },
+            { id: 2, name: 'Matt', chips: 2000, hand: [], folded: false, currentBet: 0, isAI: true },
+            { id: 3, name: 'Jmactastic', chips: 2000, hand: [], folded: false, currentBet: 0, isAI: true }
         ];
         const SB = 10;
         const BB = 20;
@@ -444,7 +437,7 @@
                     if(globalBalance >= 2000) {
                         updateGlobalBalance(-2000);
                         players[0].chips = 2000;
-                        updateUI();
+                        updatePlayerUI(0); // FIXED: Was updateUI() which caused the error
                         document.getElementById('loadingMsg').style.display = 'none';
                         document.getElementById('startGame').style.display = 'block';
                     } else {
@@ -883,19 +876,9 @@
             
             // Sync Human Chips to Global Balance if Human
             if(id === 0) {
-                // Calculate profit/loss for session? 
-                // We just sync the chip stack diff?
-                // Actually, let's just save the chip stack as the new balance + what they had before? 
-                // Simpler: The "Chips" ARE the global balance subset.
-                // We deducted 2000 at start. So p.chips is their "Table Money".
-                // We won't auto-withdraw to global until they leave?
-                // Or we update global instantly.
-                // Let's update global to match "Chips + (Balance - InitialBuyIn)".
-                // Too complex. Let's just say Chips = Balance for this game logic.
-                // But we deducted 2000. So update global balance to reflect winnings.
-                // Let's simplified: We updated globalBalance -= 2000 at start.
-                // When they win pot, we don't add to global yet?
-                // Let's add pot to p.chips.
+                // We deducted 2000 at start. 
+                // Any winnings in p.chips are table money.
+                // We don't auto-sync back unless they leave or we implement a 'cash out' button.
             }
             
             setTimeout(startNewHand, 4000);
