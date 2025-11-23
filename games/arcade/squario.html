@@ -6,94 +6,38 @@
     <title>Squario</title>
     <script src="levels.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        body {
-            overflow: hidden;
-            background: #5c94fc;
-            font-family: Arial, sans-serif;
-        }
-        canvas {
-            display: block;
-            background: #5c94fc;
-            width: 100vw;
-            height: 100vh;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { overflow: hidden; background: #5c94fc; font-family: Arial, sans-serif; }
+        canvas { display: block; background: #5c94fc; width: 100vw; height: 100vh; }
         #ui {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            color: white;
-            font-size: 24px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-            z-index: 10;
+            position: absolute; top: 20px; left: 20px; color: white; font-size: 24px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5); z-index: 10;
         }
         #title {
-            position: absolute;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            color: white;
-            font-size: 36px;
-            font-weight: bold;
-            text-shadow: 3px 3px 6px rgba(0,0,0,0.7);
-            z-index: 10;
-            font-family: 'Arial Black', Impact, sans-serif;
+            position: absolute; top: 20px; left: 50%; transform: translateX(-50%);
+            color: white; font-size: 36px; font-weight: bold; text-shadow: 3px 3px 6px rgba(0,0,0,0.7);
+            z-index: 10; font-family: 'Arial Black', Impact, sans-serif;
         }
         #gameOver {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(0,0,0,0.8);
-            color: white;
-            padding: 40px;
-            border-radius: 10px;
-            text-align: center;
-            display: none;
-            z-index: 20;
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.8); color: white; padding: 40px; border-radius: 10px;
+            text-align: center; display: none; z-index: 20;
         }
         #gameOver button {
-            margin-top: 20px;
-            padding: 10px 30px;
-            font-size: 18px;
-            cursor: pointer;
-            background: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 5px;
+            margin-top: 20px; padding: 10px 30px; font-size: 18px; cursor: pointer;
+            background: #4CAF50; color: white; border: none; border-radius: 5px;
         }
-        #gameOver button:hover {
-            background: #45a049;
-        }
+        #gameOver button:hover { background: #45a049; }
         
         #startScreen {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: flex-start; 
-            z-index: 30;
-            color: white;
-            overflow-y: auto; 
-            padding: 40px 20px; 
-            box-sizing: border-box; 
+            display: flex; flex-direction: column; align-items: center; justify-content: flex-start; 
+            z-index: 30; color: white; overflow-y: auto; padding: 40px 20px; box-sizing: border-box; 
         }
         #startScreen h1 {
-            font-size: 72px;
-            margin-bottom: 20px;
-            font-family: 'Arial Black', Impact, sans-serif;
-            text-shadow: 4px 4px 8px rgba(0,0,0,0.5);
-            animation: bounce 1s infinite;
-            text-align: center; 
+            font-size: 72px; margin-bottom: 20px; font-family: 'Arial Black', Impact, sans-serif;
+            text-shadow: 4px 4px 8px rgba(0,0,0,0.5); animation: bounce 1s infinite; text-align: center; 
         }
         
         @keyframes bounce {
@@ -101,109 +45,39 @@
             50% { transform: translateY(-10px); }
         }
         #startScreen .instructions {
-            background: rgba(0,0,0,0.5);
-            padding: 30px;
-            border-radius: 15px;
-            margin: 20px;
-            max-width: 600px;
+            background: rgba(0,0,0,0.5); padding: 30px; border-radius: 15px;
+            margin: 20px; max-width: 600px;
         }
-        #startScreen .instructions h2 {
-            margin-bottom: 15px;
-            font-size: 28px;
-        }
-        #startScreen .instructions p {
-            margin: 10px 0;
-            font-size: 18px;
-            line-height: 1.6;
-        }
-        #startScreen .controls {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin-top: 15px;
-        }
-        #startScreen .control-item {
-            background: rgba(255,255,255,0.1);
-            padding: 10px;
-            border-radius: 5px;
-        }
+        #startScreen .instructions h2 { margin-bottom: 15px; font-size: 28px; }
+        #startScreen .instructions p { margin: 10px 0; font-size: 18px; line-height: 1.6; }
+        #startScreen .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
+        #startScreen .control-item { background: rgba(255,255,255,0.1); padding: 10px; border-radius: 5px; }
         #startScreen button {
-            margin-top: 30px;
-            padding: 15px 50px;
-            font-size: 28px;
-            cursor: pointer;
-            background: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 10px;
-            font-weight: bold;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-            transition: transform 0.2s;
+            margin-top: 30px; padding: 15px 50px; font-size: 28px; cursor: pointer;
+            background: #4CAF50; color: white; border: none; border-radius: 10px;
+            font-weight: bold; box-shadow: 0 5px 15px rgba(0,0,0,0.3); transition: transform 0.2s;
             margin-bottom: 20px; 
         }
-        #startScreen button:hover {
-            background: #45a049;
-            transform: scale(1.05);
-        }
+        #startScreen button:hover { background: #45a049; transform: scale(1.05); }
 
         #mobile-controls {
-            position: absolute;
-            bottom: 20px;
-            left: 20px;
-            right: 20px;
-            display: none; /* Hide by default */
-            justify-content: space-between;
-            align-items: flex-end;
-            z-index: 50;
-            -webkit-user-select: none; 
-            user-select: none;
-            pointer-events: none; 
+            position: absolute; bottom: 20px; left: 20px; right: 20px;
+            display: none; justify-content: space-between; align-items: flex-end;
+            z-index: 50; user-select: none; pointer-events: none; 
         }
-
-        #dpad {
-            display: flex;
-            pointer-events: auto; 
-        }
-
-        #action-buttons {
-            display: flex;
-            pointer-events: auto; 
-        }
-
+        #dpad, #action-buttons { display: flex; pointer-events: auto; }
         #mobile-controls button {
-            width: 70px;
-            height: 70px;
-            background: rgba(255, 255, 255, 0.3);
-            border: 2px solid rgba(255, 255, 255, 0.5);
-            border-radius: 50%;
-            margin: 0 10px;
-            font-size: 36px;
-            color: white;
-            -webkit-tap-highlight-color: transparent; 
+            width: 70px; height: 70px; background: rgba(255, 255, 255, 0.3);
+            border: 2px solid rgba(255, 255, 255, 0.5); border-radius: 50%; margin: 0 10px;
+            font-size: 36px; color: white; -webkit-tap-highlight-color: transparent; 
         }
-
-        #dpad #down-btn {
-            width: 60px; 
-            height: 60px;
-            align-self: center; 
-        }
-
-        #action-buttons button {
-            width: 80px;
-            height: 80px;
-        }
-        #action-buttons #run-btn {
-            width: 70px;
-            height: 70px;
-            align-self: center;
-        }
+        #dpad #down-btn { width: 60px; height: 60px; align-self: center; }
+        #action-buttons button { width: 80px; height: 80px; }
+        #action-buttons #run-btn { width: 70px; height: 70px; align-self: center; }
 
         @media (max-width: 800px), (hover: none) and (pointer: coarse) {
-            #mobile-controls {
-                display: flex;
-            }
+            #mobile-controls { display: flex; }
         }
-
     </style>
 </head>
 <body>
@@ -212,7 +86,6 @@
         <div class="instructions">
             <h2>How to Play</h2>
             <p><strong>Objective:</strong> Reach the flagpole at the end of the level!</p>
-            
             <div class="controls">
                 <div class="control-item">⬅️➡️ Move Left/Right</div>
                 <div class="control-item">⬆️ or SPACE Jump</div>
@@ -220,7 +93,6 @@
                 <div class="control-item">A/D Move (Alt)</div>
                 <div class="control-item">SHIFT Run</div>
             </div>
-            
             <p style="margin-top: 20px;"><strong>Tips:</strong></p>
             <p>• Hit ❓ blocks from below for power-ups!</p>
             <p>• Collect 50 Coins for an Extra Life!</p> <p>• Jump on 🐢 enemies to defeat them</p>
@@ -259,59 +131,39 @@
     </div>
 
     <script type="module">
-        // ===== EMBEDDED FIREBASE CONFIGURATION AND SCORE MANAGER =====
-        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-        import { getAuth, signInAnonymously } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
-        import { getFirestore, collection, addDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+        // ===== UPDATED FIREBASE & SCORE MANAGER =====
+        import { db } from '/firebase-config.js';
+        import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { collection, addDoc, serverTimestamp, doc, setDoc, increment } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
-        // Firebase configuration - You need to replace this with your actual Firebase config
-        // Get this from your Firebase Console > Project Settings > General > Your apps
-        const firebaseConfig = {
-  apiKey: "AIzaSyDjdo3U9qg_h4TKvplsFoZgxVNepAbCpFA",
-  authDomain: "gunners-games.firebaseapp.com",
-  projectId: "gunners-games",
-  storageBucket: "gunners-games.firebasestorage.app",
-  messagingSenderId: "644077315462",
-  appId: "1:644077315462:web:431dd985426f3dbe02f807",
-  measurementId: "G-RWNL900X43"
-};
-
-        // Initialize Firebase
-        let db = null;
         let auth = null;
-        let firebaseInitialized = false;
+        let currentUser = null;
 
-        async function initFirebase() {
+        // Gatekeeper: Check if logged in
+        async function initGameAuth() {
             try {
-                const app = initializeApp(firebaseConfig);
-                db = getFirestore(app);
-                auth = getAuth(app);
-                await signInAnonymously(auth);
-                firebaseInitialized = true;
-                console.log('Firebase initialized successfully');
+                auth = getAuth(db.app);
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        console.log("Pilot Identified:", user.displayName);
+                        currentUser = user;
+                        scoreManager.playerName = user.displayName || "Unknown Pilot";
+                    } else {
+                        // Not logged in? Kick back to the portal
+                        window.location.href = '/index.html';
+                    }
+                });
             } catch (error) {
-                console.warn('Firebase not available, game will work without leaderboard:', error.message);
+                console.error("Auth failed:", error);
             }
         }
 
-        // Initialize Firebase (non-blocking)
-        initFirebase();
-
-        // Embedded GameScoreManager class
+        // Score Manager
         class GameScoreManager {
-            constructor(gameName, hasScore = true) {
+            constructor(gameName) {
                 this.gameName = gameName;
-                this.hasScore = hasScore;
                 this.sessionStartTime = null;
-                this.playerName = localStorage.getItem('playerName') || this.generatePlayerName();
-            }
-
-            generatePlayerName() {
-                const adjectives = ['Swift', 'Mighty', 'Epic', 'Legendary', 'Brave', 'Noble', 'Quick', 'Bold'];
-                const nouns = ['Gamer', 'Player', 'Hero', 'Champion', 'Master', 'Legend', 'Pro', 'Ace'];
-                const name = `${adjectives[Math.floor(Math.random() * adjectives.length)]}${nouns[Math.floor(Math.random() * nouns.length)]}${Math.floor(Math.random() * 999)}`;
-                localStorage.setItem('playerName', name);
-                return name;
+                this.playerName = "Loading...";
             }
 
             startSession() {
@@ -332,32 +184,42 @@
             }
 
             async submitGameResult(score = 0) {
-                if (!firebaseInitialized || !db) {
-                    console.log('Leaderboard unavailable - playing offline');
-                    return;
-                }
+                if (!currentUser) return;
 
                 const timePlayed = this.getElapsedTime();
                 
                 try {
+                    // 1. Public Leaderboard
                     await addDoc(collection(db, 'scores'), {
                         gameName: this.gameName,
                         playerName: this.playerName,
-                        score: this.hasScore ? score : 0,
+                        score: score,
                         timePlayed: timePlayed,
-                        timestamp: serverTimestamp()
+                        timestamp: serverTimestamp(),
+                        uid: currentUser.uid
                     });
-                    console.log('Score submitted to leaderboard');
+
+                    // 2. Update Career Stats
+                    const userRef = doc(db, 'users', currentUser.uid);
+                    await setDoc(userRef, {
+                        lastActive: serverTimestamp(),
+                        totalArcadeScore: increment(parseInt(score)),
+                        [`gamesPlayed_${this.gameName}`]: increment(1),
+                        totalTimePlayed: increment(timePlayed)
+                    }, { merge: true });
+
+                    console.log('Score submitted & Career updated');
                 } catch (error) {
                     console.warn('Failed to submit score:', error.message);
                 }
             }
         }
-        // ===== END EMBEDDED CODE =====
         
-        // Initialize score manager for squario
-        const scoreManager = new GameScoreManager('squario', true);
+        // Initialize
+        const scoreManager = new GameScoreManager('squario');
+        initGameAuth();
 
+        // ===== GAME LOGIC =====
         const canvas = document.getElementById('game');
         const ctx = canvas.getContext('2d');
         let timerInterval = null;
@@ -381,79 +243,39 @@
         };
 
         const music = new Audio('music/theme.mp3');
-        music.loop = true;
-        music.volume = 0.2; 
+        music.loop = true; music.volume = 0.2; 
 
-        function playSound(soundName) {
-            if (sounds[soundName]) {
-                sounds[soundName].currentTime = 0;
-                sounds[soundName].play().catch(e => console.log('Audio play failed:', e));
+        function playSound(name) {
+            if (sounds[name]) {
+                sounds[name].currentTime = 0;
+                sounds[name].play().catch(e => console.log('Audio error:', e));
             }
         }
 
-        function startMusic() {
-            music.play().catch(e => console.log('Music play failed:', e));
-        }
-
-        function stopMusic() {
-            music.pause();
-            music.currentTime = 0;
-        }
+        function startMusic() { music.play().catch(e => console.log('Music error:', e)); }
+        function stopMusic() { music.pause(); music.currentTime = 0; }
 
         // Game state
         let gameState = {
-            camera: 0,
-            cameraY: 0, 
-            score: 0,
-            coins: 0, // ADDED COIN TRACKER
-            highScore: 0,
-            lives: 3,
-            time: 300,
-            currentLevelIndex: 0, 
-            currentRoom: 'main',
-            powerUp: false,
-            gameRunning: false,
-            levelComplete: false,
-            returnX: 0, 
-            returnY: 0  
+            camera: 0, cameraY: 0, score: 0, coins: 0, highScore: 0, lives: 3,
+            time: 300, currentLevelIndex: 0, currentRoom: 'main', powerUp: false,
+            gameRunning: false, levelComplete: false, returnX: 0, returnY: 0  
         };
 
-        function startGame() {
+        window.startGame = function() {
             document.getElementById('startScreen').style.display = 'none';
-            gameState.score = 0;
-            gameState.coins = 0; // Reset coins
-            gameState.lives = 3;
+            gameState.score = 0; gameState.coins = 0; gameState.lives = 3;
             lastTime = 0; 
             scoreManager.startSession();
             loadLevel(0); 
         }
-        window.startGame = startGame;
 
         const player = {
-            x: 100,
-            y: 400,
-            width: 32,
-            height: 32,
-            baseWidth: 32,
-            baseHeight: 32,
-            powerWidth: 40,
-            powerHeight: 40,
-            vx: 0,
-            vy: 0,
-            speed: 300,       
-            runSpeed: 480,    
-            jumpPower: 900,   
-            gravity: 2500,    
-            onGround: false,
-            facingRight: true,
-            dying: false,
-            coyoteTime: 0.1,  
-            coyoteTimeCounter: 0,
-            jumpKeyHeld: false, 
-            jumpCount: 0,
-            invincible: false,      
-            invincibleTimer: 0,
-            pipeLock: false 
+            x: 100, y: 400, width: 32, height: 32, baseWidth: 32, baseHeight: 32,
+            powerWidth: 40, powerHeight: 40, vx: 0, vy: 0, speed: 300, runSpeed: 480,    
+            jumpPower: 900, gravity: 2500, onGround: false, facingRight: true, dying: false,
+            coyoteTime: 0.1, coyoteTimeCounter: 0, jumpKeyHeld: false, jumpCount: 0,
+            invincible: false, invincibleTimer: 0, pipeLock: false 
         };
 
         const keys = {};
@@ -463,77 +285,39 @@
         });
         window.addEventListener('keyup', e => keys[e.code] = false);
         
-        const leftBtn = document.getElementById('left-btn');
-        const rightBtn = document.getElementById('right-btn');
-        const downBtn = document.getElementById('down-btn');
-        const jumpBtn = document.getElementById('jump-btn');
-        const runBtn = document.getElementById('run-btn');
-
-        function virtualKeyDown(keyCode) {
-            keys[keyCode] = true;
-        }
-
-        function virtualKeyUp(keyCode) {
-            keys[keyCode] = false;
-        }
-
+        // Touch Controls
         const controls = [
-            { el: leftBtn, key: 'KeyA' },
-            { el: rightBtn, key: 'KeyD' },
-            { el: downBtn, key: 'KeyS' },
-            { el: jumpBtn, key: 'Space' },
-            { el: runBtn, key: 'ShiftLeft' }
+            { el: document.getElementById('left-btn'), key: 'KeyA' },
+            { el: document.getElementById('right-btn'), key: 'KeyD' },
+            { el: document.getElementById('down-btn'), key: 'KeyS' },
+            { el: document.getElementById('jump-btn'), key: 'Space' },
+            { el: document.getElementById('run-btn'), key: 'ShiftLeft' }
         ];
 
-        controls.forEach(control => {
-            if (control.el) {
-                control.el.addEventListener('touchstart', (e) => {
-                    e.preventDefault();
-                    virtualKeyDown(control.key);
-                }, { passive: false });
-                
-                control.el.addEventListener('touchend', (e) => {
-                    e.preventDefault();
-                    virtualKeyUp(control.key);
-                }, { passive: false });
-                
-                control.el.addEventListener('contextmenu', (e) => e.preventDefault()); 
+        controls.forEach(c => {
+            if (c.el) {
+                c.el.addEventListener('touchstart', e => { e.preventDefault(); keys[c.key]=true; }, {passive:false});
+                c.el.addEventListener('touchend', e => { e.preventDefault(); keys[c.key]=false; }, {passive:false});
             }
         });
 
         let liveLevelData = {};
 
         function loadLevel(levelIndex) {
-            if (levelIndex >= levelTemplates.length) {
-                console.error("Level index out of bounds:", levelIndex);
-                return;
-            }
-
+            if (levelIndex >= levelTemplates.length) { console.error("Level index out of bounds:", levelIndex); return; }
             const template = levelTemplates[levelIndex];
             liveLevelData.main = JSON.parse(JSON.stringify(template.main));
             liveLevelData.bonus = JSON.parse(JSON.stringify(template.bonus));
             
             gameState.currentLevelIndex = levelIndex;
             gameState.currentRoom = 'main';
-            gameState.camera = 0;
-            gameState.cameraY = 0; 
-            gameState.time = 300; 
-            gameState.powerUp = false; 
-            gameState.gameRunning = true;
+            gameState.camera = 0; gameState.cameraY = 0; gameState.time = 300; 
+            gameState.powerUp = false; gameState.gameRunning = true;
 
-            player.x = 100;
-            player.y = 400;
-            player.vx = 0;
-            player.vy = 0;
-            player.dying = false;
-            player.width = player.baseWidth;
-            player.height = player.baseHeight;
-            player.coyoteTimeCounter = 0;
-            player.jumpKeyHeld = false; 
-            player.jumpCount = 0;
-            player.invincible = false;
-            player.invincibleTimer = 0;
-            player.pipeLock = false; 
+            player.x = 100; player.y = 400; player.vx = 0; player.vy = 0; player.dying = false;
+            player.width = player.baseWidth; player.height = player.baseHeight;
+            player.coyoteTimeCounter = 0; player.jumpKeyHeld = false; player.jumpCount = 0;
+            player.invincible = false; player.invincibleTimer = 0; player.pipeLock = false; 
             
             document.getElementById('gameOver').style.display = 'none';
             document.getElementById('startScreen').style.display = 'none';
@@ -549,26 +333,17 @@
             timerInterval = setInterval(() => {
                 if (gameState.gameRunning) {
                     gameState.time--;
-                    if (gameState.time <= 0) {
-                        gameState.time = 0;
-                        playerDeath();
-                    }
+                    if (gameState.time <= 0) { gameState.time = 0; playerDeath(); }
                 }
             }, 1000);
         }
 
-        function getCurrentRoom() {
-            return liveLevelData[gameState.currentRoom];
-        }
+        function getCurrentRoom() { return liveLevelData[gameState.currentRoom]; }
 
         function drawPlayer() {
-            if (player.invincible && Math.floor(player.invincibleTimer * 10) % 2 !== 0) {
-                return;
-            }
-
+            if (player.invincible && Math.floor(player.invincibleTimer * 10) % 2 !== 0) return;
             ctx.fillStyle = gameState.powerUp ? '#FFD700' : '#FF0000';
             ctx.fillRect(player.x - gameState.camera, player.y - gameState.cameraY, player.width, player.height); 
-            
             ctx.fillStyle = '#FFFFFF';
             const eyeOffset = player.facingRight ? 8 : -8;
             ctx.fillRect(player.x - gameState.camera + 10 + eyeOffset, player.y - gameState.cameraY + 10, 6, 6); 
@@ -576,87 +351,53 @@
 
         function drawRoom() {
             const room = getCurrentRoom();
-            
-            if (gameState.currentRoom === 'main') {
-                ctx.fillStyle = '#8B4513';
-            } else {
-                ctx.fillStyle = '#787878';
-            }
-            
             room.platforms.forEach(p => {
-                if(p.type === 'moving') ctx.fillStyle = '#6082B6'; 
-                else if(gameState.currentRoom === 'main') ctx.fillStyle = '#8B4513';
-                else ctx.fillStyle = '#787878';
-
+                ctx.fillStyle = p.type === 'moving' ? '#6082B6' : (gameState.currentRoom === 'main' ? '#8B4513' : '#787878');
                 ctx.fillRect(p.x - gameState.camera, p.y - gameState.cameraY, p.width, p.height); 
             });
 
             room.blocks.forEach(b => {
-                if (b.hit) {
-                    ctx.fillStyle = '#A0A0A0';
-                    ctx.fillRect(b.x - gameState.camera, b.y - gameState.cameraY, b.width, b.height); 
-                } else if (b.type === 'powerup') {
-                    ctx.fillStyle = '#FF8C00';
-                    ctx.fillRect(b.x - gameState.camera, b.y - gameState.cameraY, b.width, b.height); 
-                    ctx.fillStyle = '#FFF';
-                    ctx.font = '30px Arial';
-                    ctx.fillText('P', b.x - gameState.camera + 10, b.y - gameState.cameraY + 32); 
+                if (b.hit) { ctx.fillStyle = '#A0A0A0'; ctx.fillRect(b.x - gameState.camera, b.y - gameState.cameraY, b.width, b.height); } 
+                else if (b.type === 'powerup') {
+                    ctx.fillStyle = '#FF8C00'; ctx.fillRect(b.x - gameState.camera, b.y - gameState.cameraY, b.width, b.height); 
+                    ctx.fillStyle = '#FFF'; ctx.font = '30px Arial'; ctx.fillText('P', b.x - gameState.camera + 10, b.y - gameState.cameraY + 32); 
                 } else { 
-                    ctx.fillStyle = '#FFD700';
-                    ctx.fillRect(b.x - gameState.camera, b.y - gameState.cameraY, b.width, b.height); 
-                    ctx.fillStyle = '#FFF';
-                    ctx.font = '30px Arial';
-                    ctx.fillText('?', b.x - gameState.camera + 10, b.y - gameState.cameraY + 32); 
+                    ctx.fillStyle = '#FFD700'; ctx.fillRect(b.x - gameState.camera, b.y - gameState.cameraY, b.width, b.height); 
+                    ctx.fillStyle = '#FFF'; ctx.font = '30px Arial'; ctx.fillText('?', b.x - gameState.camera + 10, b.y - gameState.cameraY + 32); 
                 }
             });
 
             ctx.fillStyle = '#00AA00';
             room.pipes.forEach(p => {
                 ctx.fillRect(p.x - gameState.camera, p.y - gameState.cameraY, p.width, p.height); 
-                ctx.fillStyle = '#006600';
-                ctx.fillRect(p.x - gameState.camera, p.y - gameState.cameraY, p.width, 10); 
+                ctx.fillStyle = '#006600'; ctx.fillRect(p.x - gameState.camera, p.y - gameState.cameraY, p.width, 10); 
             });
 
             room.enemies.forEach(e => {
                 if(e.type === 'bullet') {
-                    ctx.fillStyle = '#333'; 
-                    ctx.beginPath();
+                    ctx.fillStyle = '#333'; ctx.beginPath();
                     ctx.arc(e.x - gameState.camera + e.width/2, e.y - gameState.cameraY + e.height/2, e.width/2, 0, Math.PI*2);
                     ctx.fill();
-                    ctx.fillStyle = 'white';
-                    ctx.fillRect(e.x - gameState.camera + 4, e.y - gameState.cameraY + 4, 6, 6);
+                    ctx.fillStyle = 'white'; ctx.fillRect(e.x - gameState.camera + 4, e.y - gameState.cameraY + 4, 6, 6);
                 } else {
-                    ctx.fillStyle = '#228B22';
-                    ctx.fillRect(e.x - gameState.camera, e.y - gameState.cameraY, e.width, e.height); 
-                    ctx.fillStyle = '#FFD700';
-                    ctx.fillRect(e.x - gameState.camera + 5, e.y - gameState.cameraY + 5, e.width - 10, e.height - 10); 
+                    ctx.fillStyle = '#228B22'; ctx.fillRect(e.x - gameState.camera, e.y - gameState.cameraY, e.width, e.height); 
+                    ctx.fillStyle = '#FFD700'; ctx.fillRect(e.x - gameState.camera + 5, e.y - gameState.cameraY + 5, e.width - 10, e.height - 10); 
                 }
             });
 
             ctx.fillStyle = '#000000';
-            room.gaps.forEach(g => {
-                ctx.fillRect(g.x - gameState.camera, 550 - gameState.cameraY, g.width, 50); 
-            });
+            room.gaps.forEach(g => { ctx.fillRect(g.x - gameState.camera, 550 - gameState.cameraY, g.width, 50); });
 
             ctx.fillStyle = '#CD853F';
             room.stairs.forEach(s => {
                 for (let i = 0; i < s.steps; i++) {
-                    const stepHeight = 30;
-                    const stepWidth = 40;
-                    ctx.fillRect(
-                        s.x + (i * stepWidth) - gameState.camera,
-                        (550 - (i + 1) * stepHeight) - gameState.cameraY, 
-                        stepWidth,
-                        (i + 1) * stepHeight
-                    );
+                    ctx.fillRect(s.x + (i * 40) - gameState.camera, (550 - (i + 1) * 30) - gameState.cameraY, 40, (i + 1) * 30);
                 }
             });
 
             if (room.flagpole) {
-                ctx.fillStyle = '#444444';
-                ctx.fillRect(room.flagpole.x - gameState.camera, room.flagpole.y - gameState.cameraY, 10, room.flagpole.height); 
-                ctx.fillStyle = '#FF0000';
-                ctx.fillRect(room.flagpole.x - gameState.camera + 10, room.flagpole.y - gameState.cameraY, 40, 30); 
+                ctx.fillStyle = '#444444'; ctx.fillRect(room.flagpole.x - gameState.camera, room.flagpole.y - gameState.cameraY, 10, room.flagpole.height); 
+                ctx.fillStyle = '#FF0000'; ctx.fillRect(room.flagpole.x - gameState.camera + 10, room.flagpole.y - gameState.cameraY, 40, 30); 
             }
         }
 
@@ -666,133 +407,66 @@
             const room = getCurrentRoom();
 
             if (player.dying) {
-                player.vy += player.gravity * dt;
-                player.y += player.vy * dt;
+                player.vy += player.gravity * dt; player.y += player.vy * dt;
                 if (player.y > canvas.height + 500 + gameState.cameraY) { 
-                    player.dying = false;
-                    gameState.lives--;
-                    if (gameState.lives <= 0) {
-                        endGame(false);
-                    } else {
-                        loadLevel(gameState.currentLevelIndex);
-                    }
+                    player.dying = false; gameState.lives--;
+                    if (gameState.lives <= 0) endGame(false); else loadLevel(gameState.currentLevelIndex);
                 }
                 return; 
             }
 
-            if (player.invincible) {
-                player.invincibleTimer -= dt;
-                if (player.invincibleTimer <= 0) player.invincible = false;
-            }
-            if (player.pipeCooldown > 0) player.pipeCooldown -= dt;
+            if (player.invincible) { player.invincibleTimer -= dt; if (player.invincibleTimer <= 0) player.invincible = false; }
             
-            if (gameState.powerUp) {
-                player.width = player.powerWidth;
-                player.height = player.powerHeight;
-            } else {
-                player.width = player.baseWidth;
-                player.height = player.baseHeight;
-            }
+            player.width = gameState.powerUp ? player.powerWidth : player.baseWidth;
+            player.height = gameState.powerUp ? player.powerHeight : player.baseHeight;
 
             const isRunning = keys['ShiftLeft'] || keys['ShiftRight'];
             const currentSpeed = isRunning ? player.runSpeed : player.speed;
             
-            if (keys['ArrowLeft'] || keys['KeyA']) {
-                player.vx = -currentSpeed;
-                player.facingRight = false;
-            } else if (keys['ArrowRight'] || keys['KeyD']) { 
-                player.vx = currentSpeed;
-                player.facingRight = true;
-            } else {
-                player.vx = 0;
-            }
+            if (keys['ArrowLeft'] || keys['KeyA']) { player.vx = -currentSpeed; player.facingRight = false; }
+            else if (keys['ArrowRight'] || keys['KeyD']) { player.vx = currentSpeed; player.facingRight = true; }
+            else player.vx = 0;
 
-            if (player.onGround) {
-                player.coyoteTimeCounter = player.coyoteTime;
-            } else {
-                player.coyoteTimeCounter -= dt;
-            }
+            player.coyoteTimeCounter = player.onGround ? player.coyoteTime : player.coyoteTimeCounter - dt;
 
             const jumpKeyActive = (keys['Space'] || keys['ArrowUp'] || keys['KeyW']);
             if (jumpKeyActive && !player.jumpKeyHeld) { 
                 player.jumpKeyHeld = true;
                 if (player.onGround || player.coyoteTimeCounter > 0) { 
-                    player.vy = -player.jumpPower;
-                    player.onGround = false;
-                    player.coyoteTimeCounter = 0;
-                    playSound('jump');
-                    player.jumpCount = 1;
+                    player.vy = -player.jumpPower; player.onGround = false; player.coyoteTimeCounter = 0; playSound('jump'); player.jumpCount = 1;
                 } else if (gameState.powerUp && player.jumpCount < 2) { 
-                    player.vy = -player.jumpPower; 
-                    playSound('jump');
-                    player.jumpCount = 2;
+                    player.vy = -player.jumpPower; playSound('jump'); player.jumpCount = 2;
                 }
             }
             if (!jumpKeyActive) player.jumpKeyHeld = false;
 
-            player.vy += player.gravity * dt;
-            player.y += player.vy * dt;
-            player.x += player.vx * dt;
+            player.vy += player.gravity * dt; player.y += player.vy * dt; player.x += player.vx * dt;
 
             room.platforms.forEach(p => {
                 if (p.type === 'moving') {
-                    p.x += p.vx * dt;
-                    p.y += p.vy * dt;
-                    if (p.x < p.minX || p.x > p.maxX) p.vx *= -1;
-                    if (p.y < p.minY || p.y > p.maxY) p.vy *= -1;
+                    p.x += p.vx * dt; p.y += p.vy * dt;
+                    if (p.x < p.minX || p.x > p.maxX) p.vx *= -1; if (p.y < p.minY || p.y > p.maxY) p.vy *= -1;
                 }
             });
 
             player.onGround = false;
-            room.platforms.forEach(p => {
-                if (player.x + player.width > p.x && player.x < p.x + p.width) {
-                    if (player.y + player.height > p.y && player.y + player.height < p.y + 40 && player.vy > 0) {
-                        player.y = p.y - player.height;
-                        player.vy = 0;
-                        player.onGround = true;
-                        player.jumpCount = 0;
-                        if (p.type === 'moving') {
-                            player.x += p.vx * dt;
-                            player.y += p.vy * dt;
-                        }
-                    }
-                }
-            });
-
-            room.blocks.forEach(b => {
-                if (player.x + player.width > b.x && player.x < b.x + b.width) {
-                    if (player.y + player.height > b.y && player.y + player.height < b.y + 40 && player.vy > 0) {
-                        player.y = b.y - player.height;
-                        player.vy = 0;
-                        player.onGround = true;
-                        player.jumpCount = 0;
-                    }
-                }
-            });
-
-            room.pipes.forEach(p => {
-                if (player.x + player.width > p.x && player.x < p.x + p.width) {
-                    if (player.y + player.height > p.y && player.y + player.height < p.y + 40 && player.vy > 0) {
-                        player.y = p.y - player.height;
-                        player.vy = 0;
-                        player.onGround = true;
-                        player.jumpCount = 0;
+            
+            // Collisions
+            [...room.platforms, ...room.blocks, ...room.pipes].forEach(obj => {
+                if (player.x + player.width > obj.x && player.x < obj.x + obj.width) {
+                    if (player.y + player.height > obj.y && player.y + player.height < obj.y + 40 && player.vy > 0) {
+                        player.y = obj.y - player.height; player.vy = 0; player.onGround = true; player.jumpCount = 0;
+                        if (obj.type === 'moving') { player.x += obj.vx * dt; player.y += obj.vy * dt; }
                     }
                 }
             });
 
             room.stairs.forEach(s => {
                 for (let i = 0; i < s.steps; i++) {
-                    const stepHeight = 30;
-                    const stepWidth = 40;
-                    const stepX = s.x + (i * stepWidth);
-                    const stepY = 550 - (i + 1) * stepHeight;
-                    if (player.x + player.width > stepX && player.x < stepX + stepWidth) {
+                    const stepX = s.x + (i * 40); const stepY = 550 - (i + 1) * 30;
+                    if (player.x + player.width > stepX && player.x < stepX + 40) {
                         if (player.y + player.height > stepY && player.y + player.height < stepY + 40 && player.vy > 0) {
-                            player.y = stepY - player.height;
-                            player.vy = 0;
-                            player.onGround = true;
-                            player.jumpCount = 0; 
+                            player.y = stepY - player.height; player.vy = 0; player.onGround = true; player.jumpCount = 0; 
                         }
                     }
                 }
@@ -801,24 +475,11 @@
             room.blocks.forEach(b => {
                 if (!b.hit && player.x + player.width > b.x && player.x < b.x + b.width) {
                     if (player.y < b.y + b.height && player.y > b.y && player.vy < 0) {
-                        player.vy = 0;
-                        player.y = b.y + b.height;
-                        b.hit = true;
-                        gameState.score += 100;
-                        
-                        if (b.type === 'powerup') {
-                            gameState.powerUp = true;
-                            playSound('powerup');
-                        } else { 
-                            playSound('coin');
-                            // <<< --- COIN AND LIFE LOGIC --- >>>
-                            gameState.coins++;
-                            if(gameState.coins >= 50) {
-                                gameState.lives++;
-                                gameState.coins = 0;
-                                playSound('flagpole'); // Play positive sound for 1up
-                            }
-                            // <<< --- END LOGIC --- >>>
+                        player.vy = 0; player.y = b.y + b.height; b.hit = true; gameState.score += 100;
+                        if (b.type === 'powerup') { gameState.powerUp = true; playSound('powerup'); } 
+                        else { 
+                            playSound('coin'); gameState.coins++;
+                            if(gameState.coins >= 50) { gameState.lives++; gameState.coins = 0; playSound('flagpole'); }
                         }
                     }
                 }
@@ -830,84 +491,46 @@
             room.pipes.forEach(p => {
                 if (player.x + player.width > p.x && player.x < p.x + p.width &&
                     player.y + player.height >= p.y && player.y + player.height <= p.y + 10) {
-                    
                     if (downKeyActive && !player.pipeLock) { 
-                        playSound('pipe');
-                        player.pipeLock = true; 
-                        
+                        playSound('pipe'); player.pipeLock = true; 
                         if (p.dest === 'bonus') {
-                            gameState.returnX = p.exitX;
-                            gameState.returnY = p.exitY;
-                            gameState.currentRoom = 'bonus';
-                            player.x = 100; 
-                            player.y = 400;
-                            gameState.camera = 0;
-                            gameState.cameraY = 0;
+                            gameState.returnX = p.exitX; gameState.returnY = p.exitY; gameState.currentRoom = 'bonus';
+                            player.x = 100; player.y = 400; gameState.camera = 0; gameState.cameraY = 0;
                         } else if (p.dest === 'main') {
-                            gameState.currentRoom = 'main';
-                            player.x = gameState.returnX; 
-                            player.y = gameState.returnY; 
-                            gameState.camera = Math.max(0, player.x - 400); 
-                            gameState.cameraY = 0;
+                            gameState.currentRoom = 'main'; player.x = gameState.returnX; player.y = gameState.returnY; 
+                            gameState.camera = Math.max(0, player.x - 400); gameState.cameraY = 0;
                         }
                     }
                 }
             });
 
             room.enemies.forEach(e => {
-                if (e.type === 'bullet') {
+                if (e.type === 'bullet') e.x += (e.vx * 60) * dt;
+                else {
                     e.x += (e.vx * 60) * dt;
-                } else {
-                    e.x += (e.vx * 60) * dt;
-                    let hitPipe = false;
-                    room.pipes.forEach(p => {
-                        if (e.x + e.width > p.x && e.x < p.x + p.width &&
-                            e.y + e.height > p.y && e.y < p.y + p.height) hitPipe = true;
-                    });
+                    let hitPipe = room.pipes.some(p => e.x + e.width > p.x && e.x < p.x + p.width && e.y + e.height > p.y && e.y < p.y + p.height);
                     if (hitPipe) { e.vx *= -1; e.x += (e.vx * 60) * dt * 2; }
-                    
-                    let onPlatform = false;
-                    room.platforms.forEach(p => {
-                        if (e.x + e.width > p.x && e.x < p.x + p.width &&
-                            e.y + e.height >= p.y && e.y + e.height <= p.y + 20) onPlatform = true;
-                    });
+                    let onPlatform = room.platforms.some(p => e.x + e.width > p.x && e.x < p.x + p.width && e.y + e.height >= p.y && e.y + e.height <= p.y + 20);
                     if (!onPlatform || e.x < 0 || e.x > 5000) e.vx *= -1;
                 }
 
-                if (player.x + player.width > e.x && player.x < e.x + e.width &&
-                    player.y + player.height > e.y && player.y < e.y + e.height) {
-                    
+                if (player.x + player.width > e.x && player.x < e.x + e.width && player.y + player.height > e.y && player.y < e.y + e.height) {
                     if (player.vy > 0 && player.y + player.height - e.y < 40 && e.type !== 'bullet') {
-                        playSound('stomp');
-                        e.x = -1000; 
-                        player.vy = -400; 
-                        gameState.score += 200;
+                        playSound('stomp'); e.x = -1000; player.vy = -400; gameState.score += 200;
                     } else if (!player.invincible) { 
-                        if (!gameState.powerUp) {
-                            playerDeath();
-                        } else {
-                            playSound('hit');
-                            gameState.powerUp = false;
-                            player.width = player.baseWidth;
-                            player.height = player.baseHeight;
-                            player.invincible = true; 
-                            player.invincibleTimer = 1.5; 
-                        }
+                        if (!gameState.powerUp) playerDeath();
+                        else { playSound('hit'); gameState.powerUp = false; player.invincible = true; player.invincibleTimer = 1.5; }
                     }
                 }
             });
 
             room.gaps.forEach(g => {
-                if (player.x + player.width > g.x && player.x < g.x + g.width && player.y > 550) {
-                    playerDeath();
-                }
+                if (player.x + player.width > g.x && player.x < g.x + g.width && player.y > 550) playerDeath();
             });
 
             if (room.flagpole) {
-                if (player.x + player.width > room.flagpole.x && player.x < room.flagpole.x + 50 &&
-                    player.y < room.flagpole.y + room.flagpole.height) {
-                    playSound('flagpole');
-                    winLevel(); 
+                if (player.x + player.width > room.flagpole.x && player.x < room.flagpole.x + 50 && player.y < room.flagpole.y + room.flagpole.height) {
+                    playSound('flagpole'); winLevel(); 
                 }
             }
 
@@ -918,108 +541,73 @@
             if (canvas.height < 600) {
                 let targetCamY = player.y - (canvas.height / 2);
                 gameState.cameraY = Math.max(0, targetCamY);
-            } else {
-                gameState.cameraY = 0;
-            }
+            } else { gameState.cameraY = 0; }
 
             if (player.y > 700 && !player.dying) playerDeath();
 
-            // Update UI
             document.getElementById('score').textContent = gameState.score;
-            document.getElementById('coins').textContent = gameState.coins; // Update Coin UI
+            document.getElementById('coins').textContent = gameState.coins;
             document.getElementById('lives').textContent = gameState.lives;
             document.getElementById('time').textContent = Math.ceil(gameState.time);
             document.getElementById('highScore').textContent = gameState.highScore; 
         }
 
         function winLevel() {
-            gameState.gameRunning = false;
-            stopMusic();
-            let timeBonus = Math.ceil(gameState.time) * 10;
-            gameState.score += timeBonus;
-            
+            gameState.gameRunning = false; stopMusic();
+            let timeBonus = Math.ceil(gameState.time) * 10; gameState.score += timeBonus;
             let nextLevelIndex = gameState.currentLevelIndex + 1;
-            if (nextLevelIndex < levelTemplates.length) {
-                setTimeout(() => {
-                    loadLevel(nextLevelIndex);
-                }, 2000); 
-            } else {
-                endGame(true); 
-            }
+            if (nextLevelIndex < levelTemplates.length) setTimeout(() => loadLevel(nextLevelIndex), 2000); 
+            else endGame(true); 
         }
 
         function playerDeath() {
             if (player.dying) return; 
-            gameState.gameRunning = false; 
-            player.dying = true;
-            player.vy = -900; 
-            playSound('death');
-            stopMusic();
-            setTimeout(() => { gameState.gameRunning = true; }, 50);
+            gameState.gameRunning = false; player.dying = true; player.vy = -900; 
+            playSound('death'); stopMusic(); setTimeout(() => gameState.gameRunning = true, 50);
         }
 
         function endGame(won) {
-            gameState.gameRunning = false;
-            stopMusic();
+            gameState.gameRunning = false; stopMusic();
             if (timerInterval) clearInterval(timerInterval); 
             
-            // Submit score
             scoreManager.submitGameResult(gameState.score);
             
             const endDiv = document.getElementById('gameOver');
-            const endMessage = document.getElementById('endMessage');
-            const finalScoreEl = document.getElementById('finalScore');
-            const highScoreEl = document.getElementById('currentHighScore'); 
-            
-            if (won) endMessage.textContent = 'Game Complete!';
-            else endMessage.textContent = 'Game Over!';
+            document.getElementById('endMessage').textContent = won ? 'Game Complete!' : 'Game Over!';
             
             const playTime = scoreManager.getElapsedTimeFormatted();
-            finalScoreEl.textContent = `Final Score: ${gameState.score} | Time: ${playTime}`;
+            document.getElementById('finalScore').textContent = `Final Score: ${gameState.score} | Time: ${playTime}`;
             
             if (gameState.score > gameState.highScore) {
                 gameState.highScore = gameState.score;
                 localStorage.setItem('squarioHighScore', gameState.highScore);
-                highScoreEl.textContent = `New High Score: ${gameState.highScore}!`;
-                highScoreEl.style.color = '#FFD700'; 
+                document.getElementById('currentHighScore').textContent = `New High Score: ${gameState.highScore}!`;
+                document.getElementById('currentHighScore').style.color = '#FFD700'; 
             } else {
-                highScoreEl.textContent = `High Score: ${gameState.highScore}`;
-                highScoreEl.style.color = 'white'; 
+                document.getElementById('currentHighScore').textContent = `High Score: ${gameState.highScore}`;
+                document.getElementById('currentHighScore').style.color = 'white'; 
             }
-            
             endDiv.style.display = 'block';
         }
 
-        function restartGame() {
-            gameState.score = 0;
-            gameState.lives = 3;
-            lastTime = 0; 
-            loadLevel(0);
+        window.restartGame = function() {
+            gameState.score = 0; gameState.lives = 3; lastTime = 0; loadLevel(0);
         }
-        window.restartGame = restartGame;
 
         function drawParallaxBackground() {
-            const groundY = 550; 
-            ctx.fillStyle = '#0a6c03'; 
-            const backHillWidth = 600;
-            const backScroll = (gameState.camera * 0.3) % backHillWidth;
+            const groundY = 550; ctx.fillStyle = '#0a6c03'; 
+            const backHillWidth = 600; const backScroll = (gameState.camera * 0.3) % backHillWidth;
             for (let i = -1; i < (canvas.width / backHillWidth) + 2; i++) {
-                ctx.beginPath();
-                ctx.arc(i * backHillWidth - backScroll + (backHillWidth / 2), groundY - gameState.cameraY, backHillWidth / 2, Math.PI, 0); 
-                ctx.fill();
+                ctx.beginPath(); ctx.arc(i * backHillWidth - backScroll + (backHillWidth / 2), groundY - gameState.cameraY, backHillWidth / 2, Math.PI, 0); ctx.fill();
             }
             ctx.fillStyle = '#1a9c04'; 
-            const frontHillWidth = 450;
-            const frontScroll = (gameState.camera * 0.5) % frontHillWidth;
+            const frontHillWidth = 450; const frontScroll = (gameState.camera * 0.5) % frontHillWidth;
             for (let i = -1; i < (canvas.width / frontHillWidth) + 2; i++) {
-                ctx.beginPath();
-                ctx.arc(i * frontHillWidth - frontScroll + (frontHillWidth / 2), (groundY + 20) - gameState.cameraY, frontHillWidth / 2, Math.PI, 0); 
-                ctx.fill();
+                ctx.beginPath(); ctx.arc(i * frontHillWidth - frontScroll + (frontHillWidth / 2), (groundY + 20) - gameState.cameraY, frontHillWidth / 2, Math.PI, 0); ctx.fill();
             }
         }
 
         let lastTime = 0;
-
         function gameLoop(timestamp) {
             if (!lastTime) lastTime = timestamp;
             const dt = (timestamp - lastTime) / 1000;
@@ -1027,22 +615,18 @@
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
             if (liveLevelData.main && gameState.currentRoom === 'main') {
-                ctx.fillStyle = '#5c94fc';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = '#5c94fc'; ctx.fillRect(0, 0, canvas.width, canvas.height);
                 drawParallaxBackground();
                 ctx.fillStyle = 'rgba(255, 255, 250, 0.8)';
                 const cloudScroll = (gameState.camera * 0.2) % 1000; 
                 for (let i = 0; i < 5; i++) {
                     const cloudX = (i * 300 - cloudScroll);
-                    ctx.beginPath();
-                    ctx.arc(cloudX, 100 + i * 40 - gameState.cameraY * 0.5, 30, 0, Math.PI * 2); 
+                    ctx.beginPath(); ctx.arc(cloudX, 100 + i * 40 - gameState.cameraY * 0.5, 30, 0, Math.PI * 2); 
                     ctx.arc(cloudX + 25, 100 + i * 40 - gameState.cameraY * 0.5, 35, 0, Math.PI * 2);
-                    ctx.arc(cloudX + 50, 100 + i * 40 - gameState.cameraY * 0.5, 30, 0, Math.PI * 2);
-                    ctx.fill();
+                    ctx.arc(cloudX + 50, 100 + i * 40 - gameState.cameraY * 0.5, 30, 0, Math.PI * 2); ctx.fill();
                 }
             } else if (liveLevelData.bonus && gameState.currentRoom === 'bonus') {
-                ctx.fillStyle = '#6b4423';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = '#6b4423'; ctx.fillRect(0, 0, canvas.width, canvas.height);
                 ctx.fillStyle = '#4a2f18';
                 const rockScroll = (gameState.camera * 0.2) % 200;
                 for(let i = 0; i < (canvas.width / 100) + 2; i++) {
@@ -1052,15 +636,10 @@
                     ctx.fillRect(rockX + 30, 500 - gameState.cameraY * 0.5, 70, 70); 
                 }
             } else {
-                ctx.fillStyle = '#5c94fc';
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                ctx.fillStyle = '#5c94fc'; ctx.fillRect(0, 0, canvas.width, canvas.height);
             }
             
-            if (liveLevelData.main) {
-                drawRoom();
-                drawPlayer();
-                update(dt); 
-            }
+            if (liveLevelData.main) { drawRoom(); drawPlayer(); update(dt); }
             requestAnimationFrame(gameLoop);
         }
         gameLoop(0);
