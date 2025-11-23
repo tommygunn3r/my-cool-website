@@ -14,6 +14,7 @@
             background: rgba(255, 255, 255, 0.95); padding: 30px; border-radius: 20px;
             box-shadow: 0 20px 60px rgba(0,0,0,0.5); text-align: center; max-width: 90vw; position: relative;
         }
+        
         /* Music Player */
         .music-player {
             position: absolute; top: -60px; right: 0; background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(10px);
@@ -38,7 +39,6 @@
         .stat-label { font-size: 0.8em; color: #888; }
         .stat-value { font-weight: bold; font-size: 1.3em; color: #b21f1f; }
         
-        /* Timer specific styles */
         #timer { color: #2d3748; transition: color 0.3s; }
         #timer.low-time { color: #e53e3e; animation: pulse-red 1s infinite; }
         @keyframes pulse-red { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
@@ -78,7 +78,22 @@
         .words-found h3 { color: #2d3748; margin-bottom: 10px; font-size: 1.1em; }
         .word-list { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
         .found-word { background: #2d3748; color: #fdbb2d; padding: 5px 12px; border-radius: 5px; font-size: 0.9em; }
-        .file-input-section { margin: 20px 0; padding: 15px; background: #edf2f7; border-radius: 8px; border: 2px dashed #cbd5e0; }
+        
+        /* FIX: Ensure this is visible and distinct */
+        .file-input-section { 
+            margin: 20px 0; 
+            padding: 15px; 
+            background: #edf2f7; 
+            border-radius: 8px; 
+            border: 2px dashed #cbd5e0;
+            display: block; /* Ensure visibility */
+        }
+        
+        #dictionaryFile {
+            margin-top: 10px;
+            padding: 10px;
+            width: 100%;
+        }
 
         /* GAME OVER OVERLAY */
         #gameOverOverlay {
@@ -111,7 +126,13 @@
         <p class="info">Form words in the <span class="highlight-text">BOTTOM ROW</span> to add time!<br>Don't let the clock run out.</p>
         
         <div class="file-input-section" id="fileSection">
-            <div id="loadingMessage" class="message show" style="display: block; background:#2d3748; color:white;">Loading Dictionary...</div>
+            <div id="loadingMessage" class="message show" style="display: block; background:#2d3748; color:white;">Initializing Game System...</div>
+            <div id="manualControls" style="display:none; margin-top:10px;">
+                <p style="color:#2d3748; margin-bottom:5px;">Dictionary file (CSW19.txt) missing?</p>
+                <input type="file" id="dictionaryFile" accept=".txt">
+                <br><br>
+                <button class="new-game-btn" onclick="startFallbackMode()">Play Offline (Limited Words)</button>
+            </div>
         </div>
 
         <div class="stats">
@@ -239,11 +260,7 @@
         let dictionary = new Set(), grid = [], emptyPos = { row: 0, col: 0 };
         let score = 0, level = 1, gridSize = 5, targetRow = 4, wordsFound = [], tileSize = 70;
         let availableLetters = [], dictionaryLoaded = false;
-        
-        // --- TIMER VARIABLES ---
-        let timeLeft = 60;
-        let timerInterval = null;
-        let gameActive = false;
+        let timeLeft = 60, timerInterval = null, gameActive = false;
 
         const letterWeights = {
             'E': 12, 'A': 9, 'I': 9, 'O': 8, 'N': 6, 'R': 6, 'T': 6, 'L': 4, 'S': 4, 'U': 4,
@@ -251,50 +268,55 @@
             'Y': 2, 'K': 1, 'J': 1, 'X': 1, 'Q': 1, 'Z': 1
         };
 
-        // --- MULTI-SOURCE DICTIONARY LOADER ---
-        const DICTIONARY_SOURCES = [
-            'CSW19.txt', // 1. Local File (Preferred)
-            'https://raw.githubusercontent.com/dolph/dictionary/master/enable1.txt', // 2. Public GitHub CDN
-            'https://raw.githubusercontent.com/dwyl/english-words/master/words_alpha.txt' // 3. Backup CDN
-        ];
-        
-        // Small internal dictionary to GUARANTEE the game starts even offline
-        const EMERGENCY_DICTIONARY = [
-            "THE", "AND", "FOR", "ARE", "BUT", "NOT", "YOU", "ALL", "ANY", "CAN", "HAD", "HAS", "HIM", "HIS", "HOW", "INK", "MAN", "NEW", "NOW", "OLD", "ONE", "OUT", "PUT", "RUN", "SAY", "SHE", "SIT", "THE", "TOO", "TRY", "USE", "WAS", "WAY", "WHO", "WIN", "YES", "YET", "GAME", "PLAY", "WORD", "TIME", "SLID", "TILES", "GRID", "RUSH", "PUSH", "PULL", "DROP", "FALL", "BACK", "BEST", "COOL", "DOWN", "EASY", "FAST", "FIND", "FIVE", "FOUR", "FREE", "FULL", "GIVE", "GOOD", "HARD", "HAVE", "HERE", "HIGH", "HOME", "INTO", "JUST", "KEEP", "KIND", "KNOW", "LAST", "LEFT", "LIKE", "LINE", "LONG", "LOOK", "LOST", "LOVE", "MADE", "MAKE", "MANY", "MIND", "MORE", "MOST", "MOVE", "MUCH", "MUST", "NAME", "NEAR", "NEXT", "NICE", "ONLY", "OPEN", "OVER", "PART", "PAST", "QUIT", "REAL", "REST", "ROOM", "SAID", "SAME", "SEEM", "SIDE", "SOME", "SOON", "STAY", "STOP", "SUCH", "SURE", "TAKE", "TELL", "THAN", "THAT", "THEM", "THEN", "THEY", "THIS", "TOLD", "TOOK", "TURN", "VERY", "WALK", "WANT", "WELL", "WENT", "WERE", "WHAT", "WHEN", "WILL", "WITH", "WORK", "YOUR"
+        // EMERGENCY FALLBACK
+        const FALLBACK_WORDS = [
+            "THE","AND","FOR","ARE","BUT","NOT","YOU","ALL","ANY","CAN","HAD","HAS","HIM","HIS","HOW","INK","MAN","NEW","NOW","OLD","ONE","OUT","PUT","RUN","SAY","SHE","SIT","TOO","TRY","USE","WAS","WAY","WHO","WIN","YES","YET","GAME","PLAY","WORD","TIME","SLID","TILES","GRID","RUSH","PUSH","PULL","DROP","FALL","BACK","BEST","COOL","DOWN","EASY","FAST","FIND","FIVE","FOUR","FREE","FULL","GIVE","GOOD","HARD","HAVE","HERE","HIGH","HOME","INTO","JUST","KEEP","KIND","KNOW","LAST","LEFT","LIKE","LINE","LONG","LOOK","LOST","LOVE","MADE","MAKE","MANY","MIND","MORE","MOST","MOVE","MUCH","MUST","NAME","NEAR","NEXT","NICE","ONLY","OPEN","OVER","PART","PAST","QUIT","REAL","REST","ROOM","SAID","SAME","SEEM","SIDE","SOME","SOON","STAY","STOP","SUCH","SURE","TAKE","TELL","THAN","THAT","THEM","THEN","THEY","THIS","TOLD","TOOK","TURN","VERY","WALK","WANT","WELL","WENT","WERE","WHAT","WHEN","WILL","WITH","WORK","YOUR"
         ];
 
         async function loadDictionary() {
-            const loadingMsg = document.getElementById('loadingMessage');
-            
-            for (const source of DICTIONARY_SOURCES) {
+            try {
+                // Try GitHub CDN first (More reliable than local file which might be missing)
+                const response = await fetch('https://raw.githubusercontent.com/dolph/dictionary/master/enable1.txt');
+                
+                if (!response.ok) {
+                    throw new Error("CDN Failed, trying local...");
+                }
+                const text = await response.text();
+                const words = text.split(/\r?\n/).map(w => w.trim().toUpperCase()).filter(w => w.length >= 3);
+                dictionary = new Set(words); 
+                finishLoading(true);
+
+            } catch (error) {
+                console.log("CDN Failed, trying local CSW19.txt");
                 try {
-                    loadingMsg.textContent = `Attempting to load: ${source}...`;
-                    const response = await fetch(source);
-                    if (response.ok) {
-                        const text = await response.text();
-                        const words = text.split(/\r?\n/).map(w => w.trim().toUpperCase()).filter(w => w.length >= 3);
-                        dictionary = new Set(words);
-                        finishLoading(true);
-                        return;
-                    }
+                    const res = await fetch('CSW19.txt');
+                    if (!res.ok) throw new Error("Local file not found");
+                    const text = await res.text();
+                    const words = text.split(/\r?\n/).map(w => w.trim().toUpperCase()).filter(w => w.length >= 3);
+                    dictionary = new Set(words);
+                    finishLoading(true);
                 } catch (e) {
-                    console.warn(`Failed to load ${source}`);
+                    console.warn("All dictionaries failed. Showing manual controls.");
+                    document.getElementById('loadingMessage').textContent = "Dictionary Missing!";
+                    document.getElementById('loadingMessage').style.background = "#e53e3e";
+                    document.getElementById('manualControls').style.display = "block";
+                    document.getElementById('dictionaryFile').addEventListener('change', handleManualUpload);
                 }
             }
-
-            // If all else fails, use emergency list
-            console.warn("Using emergency fallback dictionary.");
-            dictionary = new Set(EMERGENCY_DICTIONARY);
-            finishLoading(false);
         }
 
         function finishLoading(success) {
             dictionaryLoaded = true;
-            document.getElementById('loadingMessage').style.display = 'none';
-            const msg = success ? "System Ready! Game On!" : "Loaded Offline Mode";
-            showMessage(msg, 'success');
+            document.getElementById('fileSection').style.display = 'none';
+            showMessage(success ? `System Ready! Game On!` : `Loaded Fallback Mode`, 'success');
             newGame();
         }
+
+        // Explicitly export this for the button to call
+        window.startFallbackMode = function() {
+            dictionary = new Set(FALLBACK_WORDS);
+            finishLoading(false);
+        };
 
         function handleManualUpload(e) {
             const file = e.target.files[0];
@@ -303,10 +325,8 @@
                 reader.onload = function(event) {
                     const text = event.target.result;
                     const words = text.split(/\r?\n/).map(w => w.trim().toUpperCase()).filter(w => w.length >= 3);
-                    dictionary = new Set(words); dictionaryLoaded = true;
-                    document.getElementById('loadingMessage').style.display = 'none';
-                    showMessage(`Dictionary Loaded!`, 'success');
-                    newGame();
+                    dictionary = new Set(words); 
+                    finishLoading(true);
                 };
                 reader.readAsText(file);
             }
@@ -346,9 +366,8 @@
         }
 
         function moveTile(row, col) {
-            if (!gameActive) return false; // Stop input if game over
+            if (!gameActive) return false;
             if (!isPlaying && audio.currentTime === 0) toggleMusic();
-            
             const rowDiff = Math.abs(row - emptyPos.row);
             const colDiff = Math.abs(col - emptyPos.col);
             if ((rowDiff === 1 && colDiff === 0) || (rowDiff === 0 && colDiff === 1)) {
@@ -377,25 +396,17 @@
 
         function foundWord(word, rowIndex, startPos, endPos) {
             playSound('clear');
-            const points = calculatePoints(word); 
-            score += points; 
-            wordsFound.push(word);
-            
-            // --- ADD TIME BONUS ---
-            const timeBonus = Math.floor(points / 5) + 2; // Formula: 1 sec for every 5 points + 2s base
-            timeLeft += timeBonus;
+            const points = calculatePoints(word); score += points; wordsFound.push(word);
+            const timeBonus = Math.floor(points / 5) + 2; timeLeft += timeBonus;
             showMessage(`+${timeBonus}s! ${word}!`, 'success');
-
             document.getElementById('score').textContent = score;
             document.getElementById('wordCount').textContent = wordsFound.length;
             document.getElementById('timer').textContent = timeLeft;
-
             const list = document.getElementById('wordList');
             const span = document.createElement('span');
             span.className = 'found-word'; span.textContent = `${word} (${points})`;
             list.insertBefore(span, list.firstChild);
             if (list.children.length > 10) list.removeChild(list.lastChild);
-            
             highlightWord(rowIndex, startPos, endPos);
             setTimeout(() => { applyGravity(startPos, endPos); checkLevelUp(); }, 800);
         }
@@ -456,58 +467,37 @@
             setTimeout(() => msg.classList.remove('show'), 2500);
         }
 
-        // --- TIMER LOGIC ---
         function startTimer() {
-            clearInterval(timerInterval);
-            timeLeft = 60; // Initial Time
-            updateTimerDisplay();
-            gameActive = true;
-            
+            clearInterval(timerInterval); timeLeft = 60; updateTimerDisplay(); gameActive = true;
             timerInterval = setInterval(() => {
-                timeLeft--;
-                updateTimerDisplay();
-                
-                if (timeLeft <= 0) {
-                    endGame();
-                }
+                timeLeft--; updateTimerDisplay();
+                if (timeLeft <= 0) endGame();
             }, 1000);
         }
 
         function updateTimerDisplay() {
-            const timerEl = document.getElementById('timer');
-            timerEl.textContent = timeLeft;
-            if (timeLeft <= 10) timerEl.classList.add('low-time');
-            else timerEl.classList.remove('low-time');
+            const timerEl = document.getElementById('timer'); timerEl.textContent = timeLeft;
+            if (timeLeft <= 10) timerEl.classList.add('low-time'); else timerEl.classList.remove('low-time');
         }
 
         function endGame() {
-            gameActive = false;
-            clearInterval(timerInterval);
-            scoreManager.submitGameResult(score); // Send score to Firebase
-            
+            gameActive = false; clearInterval(timerInterval);
+            scoreManager.submitGameResult(score);
             document.getElementById('gameOverOverlay').style.display = 'flex';
             document.getElementById('finalScore').textContent = score;
-            
-            if(isPlaying) toggleMusic(); // Stop music on game over
+            if(isPlaying) toggleMusic();
         }
 
         window.newGame = function() {
             if (!dictionaryLoaded) return;
-            
-            // Reset Logic
             document.getElementById('gameOverOverlay').style.display = 'none';
             score = 0; level = 1; gridSize = 5; wordsFound = [];
-            
             document.getElementById('score').textContent = score;
             document.getElementById('level').textContent = level;
             document.getElementById('gridSize').textContent = `${gridSize}x${gridSize}`;
             document.getElementById('wordCount').textContent = 0;
             document.getElementById('wordList').innerHTML = '';
-            
-            scoreManager.startSession();
-            initGame();
-            startTimer(); // Start the clock!
-            
+            scoreManager.startSession(); initGame(); startTimer();
             showMessage('Gravity Systems Online...', 'success');
             if(!isPlaying) toggleMusic();
         }
