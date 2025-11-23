@@ -6,357 +6,61 @@
     <title>Casino Leaderboard - Gunner's Games</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Rajdhani', sans-serif;
-            background: #000;
-            color: #fff;
-            overflow-x: hidden;
-            min-height: 100vh;
-        }
-
-        /* Parallax Background */
-        .parallax-container {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1;
-            overflow: hidden;
-        }
-
-        .parallax-layer {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-        }
-
-        .layer-1 {
-            background: radial-gradient(circle at 20% 50%, rgba(138, 43, 226, 0.1) 0%, transparent 50%),
-                        radial-gradient(circle at 80% 50%, rgba(255, 20, 147, 0.1) 0%, transparent 50%);
-        }
-
-        .layer-2 {
-            background: radial-gradient(circle at 50% 50%, rgba(0, 255, 255, 0.05) 0%, transparent 50%);
-            animation: pulse 8s ease-in-out infinite;
-        }
-
-        .layer-3 {
-            background: 
-                linear-gradient(45deg, transparent 48%, rgba(255, 215, 0, 0.1) 49%, rgba(255, 215, 0, 0.1) 51%, transparent 52%),
-                linear-gradient(-45deg, transparent 48%, rgba(255, 20, 147, 0.1) 49%, rgba(255, 20, 147, 0.1) 51%, transparent 52%);
-            background-size: 100px 100px;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 0.3; }
-            50% { opacity: 0.6; }
-        }
-
-        .neon-shape {
-            position: absolute;
-            width: 200px;
-            height: 200px;
-            border-radius: 50%;
-            filter: blur(80px);
-            animation: float 20s infinite ease-in-out;
-        }
-
-        .neon-shape:nth-child(1) {
-            background: rgba(255, 215, 0, 0.3);
-            top: 20%;
-            left: 10%;
-            animation-delay: 0s;
-        }
-
-        .neon-shape:nth-child(2) {
-            background: rgba(255, 20, 147, 0.3);
-            top: 60%;
-            right: 15%;
-            animation-delay: 7s;
-        }
-
-        .neon-shape:nth-child(3) {
-            background: rgba(0, 255, 255, 0.3);
-            bottom: 15%;
-            left: 50%;
-            animation-delay: 14s;
-        }
-
-        @keyframes float {
-            0%, 100% { transform: translate(0, 0); }
-            33% { transform: translate(50px, -50px); }
-            66% { transform: translate(-50px, 50px); }
-        }
-
-        /* Content */
-        .content {
-            position: relative;
-            z-index: 1;
-            padding: 60px 20px 120px;
-            min-height: 100vh;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .title {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 3.5rem;
-            font-weight: 900;
-            text-align: center;
-            margin-bottom: 20px;
-            background: linear-gradient(135deg, #FFD700, #FFA500, #FFD700);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            text-shadow: 0 0 30px rgba(255, 215, 0, 0.5);
-            letter-spacing: 4px;
-            animation: glow 2s ease-in-out infinite alternate;
-        }
-
-        @keyframes glow {
-            from { filter: drop-shadow(0 0 5px rgba(255, 215, 0, 0.5)); }
-            to { filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0.8)); }
-        }
-
-        .subtitle {
-            text-align: center;
-            font-size: 1.5rem;
-            color: #FFD700;
-            margin-bottom: 40px;
-            font-family: 'Orbitron', sans-serif;
-            letter-spacing: 2px;
-        }
-
-        .info-text {
-            text-align: center;
-            color: #aaa;
-            margin-bottom: 30px;
-            font-size: 1.1rem;
-        }
-
-        /* Leaderboard Container */
-        .leaderboard-container {
-            background: rgba(10, 10, 10, 0.9);
-            border: 2px solid #FFD700;
-            border-radius: 15px;
-            padding: 30px;
-            box-shadow: 0 10px 40px rgba(255, 215, 0, 0.3);
-            margin-bottom: 30px;
-        }
-
-        .leaderboard-header {
-            display: grid;
-            grid-template-columns: 80px 1fr 150px;
-            gap: 20px;
-            padding: 15px 20px;
-            border-bottom: 2px solid rgba(255, 215, 0, 0.5);
-            font-family: 'Orbitron', sans-serif;
-            font-weight: 700;
-            font-size: 1.1rem;
-            color: #FFD700;
-            margin-bottom: 10px;
-        }
-
-        .leaderboard-row {
-            display: grid;
-            grid-template-columns: 80px 1fr 150px;
-            gap: 20px;
-            padding: 15px 20px;
-            background: rgba(255, 215, 0, 0.05);
-            border-radius: 8px;
-            margin-bottom: 8px;
-            transition: all 0.3s;
-            align-items: center;
-        }
-
-        .leaderboard-row:hover {
-            background: rgba(255, 215, 0, 0.15);
-            transform: translateX(5px);
-        }
-
-        .rank {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: #FFD700;
-            text-align: center;
-        }
-
-        .rank.top-1 {
-            color: #FFD700;
-            text-shadow: 0 0 10px rgba(255, 215, 0, 0.8);
-            font-size: 2rem;
-        }
-
-        .rank.top-2 {
-            color: #C0C0C0;
-            text-shadow: 0 0 10px rgba(192, 192, 192, 0.8);
-            font-size: 1.8rem;
-        }
-
-        .rank.top-3 {
-            color: #CD7F32;
-            text-shadow: 0 0 10px rgba(205, 127, 50, 0.8);
-            font-size: 1.7rem;
-        }
-
-        .player-name {
-            font-size: 1.3rem;
-            font-weight: 600;
-            color: #fff;
-        }
-
-        .coins {
-            display: flex;
-            align-items: center;
-            justify-content: flex-end;
-            gap: 10px;
-            font-family: 'Orbitron', sans-serif;
-            font-size: 1.4rem;
-            font-weight: 700;
-            color: #FFD700;
-        }
-
-        .coin-icon {
-            width: 30px;
-            height: 30px;
-            background: radial-gradient(circle, #FFF4A3 0%, #FFD700 100%);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            color: #000;
-            font-size: 1.1rem;
-            box-shadow: 0 2px 10px rgba(255, 215, 0, 0.5);
-        }
-
-        .loading {
-            text-align: center;
-            font-size: 1.5rem;
-            color: #FFD700;
-            padding: 40px;
-            font-family: 'Orbitron', sans-serif;
-        }
-
-        .loading::after {
-            content: '...';
-            animation: dots 1.5s steps(4, end) infinite;
-        }
-
-        @keyframes dots {
-            0%, 20% { content: '.'; }
-            40% { content: '..'; }
-            60%, 100% { content: '...'; }
-        }
-
-        .no-data {
-            text-align: center;
-            font-size: 1.3rem;
-            color: #aaa;
-            padding: 40px;
-        }
-
-        /* Fixed Navigation */
-        .fixed-nav {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            display: flex;
-            gap: 15px;
-            z-index: 100;
-        }
-
-        .nav-button {
-            padding: 12px 24px;
-            background: rgba(10, 10, 10, 0.95);
-            border: 2px solid #FFD700;
-            border-radius: 10px;
-            color: #fff;
-            font-size: 1rem;
-            font-weight: bold;
-            cursor: pointer;
-            text-decoration: none;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
-        }
-
-        .nav-button:hover {
-            background: rgba(255, 215, 0, 0.2);
-            box-shadow: 0 0 25px rgba(255, 215, 0, 0.6);
-            transform: translateY(-2px);
-        }
-
-        /* Mobile Responsive */
+        /* [Previous CSS remains exactly the same] */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Rajdhani', sans-serif; background: #000; color: #fff; overflow-x: hidden; min-height: 100vh; }
+        .parallax-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; overflow: hidden; }
+        .parallax-layer { position: absolute; width: 100%; height: 100%; }
+        .layer-1 { background: radial-gradient(circle at 20% 50%, rgba(138, 43, 226, 0.1) 0%, transparent 50%), radial-gradient(circle at 80% 50%, rgba(255, 20, 147, 0.1) 0%, transparent 50%); }
+        .layer-2 { background: radial-gradient(circle at 50% 50%, rgba(0, 255, 255, 0.05) 0%, transparent 50%); animation: pulse 8s ease-in-out infinite; }
+        .layer-3 { background: linear-gradient(45deg, transparent 48%, rgba(255, 215, 0, 0.1) 49%, rgba(255, 215, 0, 0.1) 51%, transparent 52%), linear-gradient(-45deg, transparent 48%, rgba(255, 20, 147, 0.1) 49%, rgba(255, 20, 147, 0.1) 51%, transparent 52%); background-size: 100px 100px; }
+        @keyframes pulse { 0%, 100% { opacity: 0.3; } 50% { opacity: 0.6; } }
+        .neon-shape { position: absolute; width: 200px; height: 200px; border-radius: 50%; filter: blur(80px); animation: float 20s infinite ease-in-out; }
+        .neon-shape:nth-child(1) { background: rgba(255, 215, 0, 0.3); top: 20%; left: 10%; animation-delay: 0s; }
+        .neon-shape:nth-child(2) { background: rgba(255, 20, 147, 0.3); top: 60%; right: 15%; animation-delay: 7s; }
+        .neon-shape:nth-child(3) { background: rgba(0, 255, 255, 0.3); bottom: 15%; left: 50%; animation-delay: 14s; }
+        @keyframes float { 0%, 100% { transform: translate(0, 0); } 33% { transform: translate(50px, -50px); } 66% { transform: translate(-50px, 50px); } }
+        .content { position: relative; z-index: 1; padding: 60px 20px 120px; min-height: 100vh; max-width: 1200px; margin: 0 auto; }
+        .title { font-family: 'Orbitron', sans-serif; font-size: 3.5rem; font-weight: 900; text-align: center; margin-bottom: 20px; background: linear-gradient(135deg, #FFD700, #FFA500, #FFD700); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; text-shadow: 0 0 30px rgba(255, 215, 0, 0.5); letter-spacing: 4px; animation: glow 2s ease-in-out infinite alternate; }
+        @keyframes glow { from { filter: drop-shadow(0 0 5px rgba(255, 215, 0, 0.5)); } to { filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0.8)); } }
+        .subtitle { text-align: center; font-size: 1.5rem; color: #FFD700; margin-bottom: 40px; font-family: 'Orbitron', sans-serif; letter-spacing: 2px; }
+        .info-text { text-align: center; color: #aaa; margin-bottom: 30px; font-size: 1.1rem; }
+        .leaderboard-container { background: rgba(10, 10, 10, 0.9); border: 2px solid #FFD700; border-radius: 15px; padding: 30px; box-shadow: 0 10px 40px rgba(255, 215, 0, 0.3); margin-bottom: 30px; }
+        .leaderboard-header { display: grid; grid-template-columns: 80px 1fr 150px; gap: 20px; padding: 15px 20px; border-bottom: 2px solid rgba(255, 215, 0, 0.5); font-family: 'Orbitron', sans-serif; font-weight: 700; font-size: 1.1rem; color: #FFD700; margin-bottom: 10px; }
+        .leaderboard-row { display: grid; grid-template-columns: 80px 1fr 150px; gap: 20px; padding: 15px 20px; background: rgba(255, 215, 0, 0.05); border-radius: 8px; margin-bottom: 8px; transition: all 0.3s; align-items: center; }
+        .leaderboard-row:hover { background: rgba(255, 215, 0, 0.15); transform: translateX(5px); }
+        .rank { font-family: 'Orbitron', sans-serif; font-size: 1.5rem; font-weight: 700; color: #FFD700; text-align: center; }
+        .rank.top-1 { color: #FFD700; text-shadow: 0 0 10px rgba(255, 215, 0, 0.8); font-size: 2rem; }
+        .rank.top-2 { color: #C0C0C0; text-shadow: 0 0 10px rgba(192, 192, 192, 0.8); font-size: 1.8rem; }
+        .rank.top-3 { color: #CD7F32; text-shadow: 0 0 10px rgba(205, 127, 50, 0.8); font-size: 1.7rem; }
+        .player-name { font-size: 1.3rem; font-weight: 600; color: #fff; }
+        .coins { display: flex; align-items: center; justify-content: flex-end; gap: 10px; font-family: 'Orbitron', sans-serif; font-size: 1.4rem; font-weight: 700; color: #FFD700; }
+        .coin-icon { width: 30px; height: 30px; background: radial-gradient(circle, #FFF4A3 0%, #FFD700 100%); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; color: #000; font-size: 1.1rem; box-shadow: 0 2px 10px rgba(255, 215, 0, 0.5); }
+        .loading { text-align: center; font-size: 1.5rem; color: #FFD700; padding: 40px; font-family: 'Orbitron', sans-serif; }
+        .loading::after { content: '...'; animation: dots 1.5s steps(4, end) infinite; }
+        @keyframes dots { 0%, 20% { content: '.'; } 40% { content: '..'; } 60%, 100% { content: '...'; } }
+        .no-data { text-align: center; font-size: 1.3rem; color: #aaa; padding: 40px; }
+        .fixed-nav { position: fixed; bottom: 30px; right: 30px; display: flex; gap: 15px; z-index: 100; }
+        .nav-button { padding: 12px 24px; background: rgba(10, 10, 10, 0.95); border: 2px solid #FFD700; border-radius: 10px; color: #fff; font-size: 1rem; font-weight: bold; cursor: pointer; text-decoration: none; display: flex; align-items: center; gap: 8px; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3); }
+        .nav-button:hover { background: rgba(255, 215, 0, 0.2); box-shadow: 0 0 25px rgba(255, 215, 0, 0.6); transform: translateY(-2px); }
         @media (max-width: 768px) {
-            .title {
-                font-size: 2rem;
-                margin-bottom: 15px;
-            }
-
-            .subtitle {
-                font-size: 1.2rem;
-                margin-bottom: 30px;
-            }
-
-            .leaderboard-container {
-                padding: 20px 15px;
-            }
-
-            .leaderboard-header,
-            .leaderboard-row {
-                grid-template-columns: 60px 1fr 120px;
-                gap: 10px;
-                padding: 12px 10px;
-            }
-
-            .rank {
-                font-size: 1.2rem;
-            }
-
+            .title { font-size: 2rem; margin-bottom: 15px; }
+            .subtitle { font-size: 1.2rem; margin-bottom: 30px; }
+            .leaderboard-container { padding: 20px 15px; }
+            .leaderboard-header, .leaderboard-row { grid-template-columns: 60px 1fr 120px; gap: 10px; padding: 12px 10px; }
+            .rank { font-size: 1.2rem; }
             .rank.top-1 { font-size: 1.5rem; }
             .rank.top-2 { font-size: 1.4rem; }
             .rank.top-3 { font-size: 1.3rem; }
-
-            .player-name {
-                font-size: 1.1rem;
-            }
-
-            .coins {
-                font-size: 1.1rem;
-            }
-
-            .coin-icon {
-                width: 25px;
-                height: 25px;
-                font-size: 0.9rem;
-            }
-
-            .fixed-nav {
-                bottom: 20px;
-                right: 20px;
-                flex-direction: column;
-            }
-
-            .nav-button {
-                padding: 10px 18px;
-                font-size: 0.9rem;
-            }
+            .player-name { font-size: 1.1rem; }
+            .coins { font-size: 1.1rem; }
+            .coin-icon { width: 25px; height: 25px; font-size: 0.9rem; }
+            .fixed-nav { bottom: 20px; right: 20px; flex-direction: column; }
+            .nav-button { padding: 10px 18px; font-size: 0.9rem; }
         }
     </style>
 </head>
 <body>
-    <!-- Parallax Background -->
     <div class="parallax-container">
         <div class="parallax-layer layer-1"></div>
         <div class="parallax-layer layer-2"></div>
@@ -367,7 +71,6 @@
         </div>
     </div>
 
-    <!-- Main Content -->
     <div class="content">
         <h1 class="title">CASINO LEADERBOARD</h1>
         <div class="subtitle">🎰 RICHEST PLAYERS 🎰</div>
@@ -385,7 +88,6 @@
         </div>
     </div>
 
-    <!-- Fixed Navigation -->
     <div class="fixed-nav">
         <a href="casino.html" class="nav-button">
             <span>←</span>
@@ -398,21 +100,9 @@
     </div>
 
     <script type="module">
-        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-        import { getFirestore, collection, query, orderBy, limit, getDocs } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
-
-        // Firebase configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyDUU30zCch_e5MNI_8HM-qy09djEp-S1LI",
-            authDomain: "gunnersgames.firebaseapp.com",
-            projectId: "gunnersgames",
-            storageBucket: "gunnersgames.firebasestorage.app",
-            messagingSenderId: "974623870515",
-            appId: "1:974623870515:web:07872198c93d95ed0b5d52"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
+        // UPDATED: Now importing from your shared config file
+        import { db } from './firebase-config.js';
+        import { collection, query, orderBy, limit, getDocs } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
         async function loadLeaderboard() {
             const contentDiv = document.getElementById('leaderboardContent');
@@ -470,18 +160,16 @@
             }
         }
 
-        // Parallax effect on mouse move
+        // Parallax effect
         document.addEventListener('mousemove', (e) => {
             const x = e.clientX / window.innerWidth;
             const y = e.clientY / window.innerHeight;
-
-            document.querySelector('.layer-2').style.transform = 
-                `translate(${x * 20}px, ${y * 20}px)`;
-            document.querySelector('.layer-3').style.transform = 
-                `translate(${x * 40}px, ${y * 40}px)`;
+            const layer2 = document.querySelector('.layer-2');
+            const layer3 = document.querySelector('.layer-3');
+            if(layer2) layer2.style.transform = `translate(${x * 20}px, ${y * 20}px)`;
+            if(layer3) layer3.style.transform = `translate(${x * 40}px, ${y * 40}px)`;
         });
 
-        // Load leaderboard on page load
         loadLeaderboard();
     </script>
 </body>
