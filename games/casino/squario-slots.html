@@ -124,6 +124,7 @@
 
         /* --- Slot Machine --- */
         .slot-wrapper {
+            position: relative; /* Anchor for handle */
             max-width: 950px;
             margin: 0 auto;
             padding: 0.6rem 0.8rem 1rem;
@@ -131,12 +132,82 @@
             border-radius: 25px;
             border: 2px solid rgba(212, 175, 55, 0.6);
             box-shadow: 0 10px 40px rgba(0,0,0,0.8);
-            max-height: calc(100vh - 130px); /* header + nav area */
+            max-height: calc(100vh - 130px);
             display: flex;
             flex-direction: column;
             justify-content: flex-start;
         }
 
+        /* --- The Pull Handle --- */
+        .slot-handle {
+            position: absolute;
+            right: -55px;
+            top: 15%;
+            width: 40px;
+            height: 250px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            z-index: 50;
+        }
+
+        .handle-knob {
+            width: 48px; height: 48px;
+            background: radial-gradient(circle at 30% 30%, #ff4d4d, #8b0000);
+            border-radius: 50%;
+            box-shadow: 0 5px 10px rgba(0,0,0,0.6);
+            position: relative;
+            z-index: 2;
+            transition: transform 0.1s;
+        }
+
+        .handle-arm {
+            width: 14px; height: 140px;
+            background: linear-gradient(90deg, #999, #eee, #999);
+            margin-top: -10px;
+            border-radius: 6px;
+            position: relative;
+            z-index: 1;
+            box-shadow: inset 0 0 5px rgba(0,0,0,0.5);
+            transform-origin: bottom center;
+        }
+
+        .handle-base {
+            width: 34px; height: 80px;
+            background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
+            border-radius: 6px;
+            margin-top: -15px;
+            box-shadow: -4px 4px 10px rgba(0,0,0,0.6), inset 0 0 5px rgba(255,255,255,0.3);
+            border: 1px solid var(--dark);
+        }
+
+        /* Handle Animation Classes */
+        .slot-handle.pulled .handle-knob {
+            animation: knobDown 0.5s ease-in-out;
+        }
+        .slot-handle.pulled .handle-arm {
+            animation: armDown 0.5s ease-in-out;
+        }
+
+        @keyframes knobDown {
+            0% { transform: translateY(0); }
+            50% { transform: translateY(120px); }
+            100% { transform: translateY(0); }
+        }
+
+        @keyframes armDown {
+            0% { transform: scaleY(1); }
+            50% { transform: scaleY(0.1) translateY(600px); } 
+            100% { transform: scaleY(1); }
+        }
+
+        /* Hide handle on small screens */
+        @media (max-width: 1050px) {
+            .slot-handle { display: none; }
+        }
+
+        /* --- Header & Grid --- */
         .slot-header-row {
             display: flex;
             justify-content: space-between;
@@ -245,13 +316,49 @@
             100% { transform: scale(1.06); }
         }
 
-        .slot-footer {
+        /* --- NEW STATS BAR --- */
+        .slot-stats-bar {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            gap: 0.6rem;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            border-radius: 12px;
+            padding: 0.6rem 1.2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .stats-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 100px;
+        }
+
+        .stats-label {
+            font-family: 'Cinzel', serif;
+            font-size: 0.7rem;
+            color: var(--gold);
+            letter-spacing: 0.1em;
+            margin-bottom: 0.2rem;
+        }
+
+        .stats-value {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.1rem;
+            color: var(--cream);
+            font-weight: 700;
+        }
+
+        /* --- Footer --- */
+        .slot-footer {
+            display: flex;
+            justify-content: center; /* Centered now that stats are moved */
+            align-items: center;
+            gap: 2rem;
             flex-wrap: wrap;
             margin-top: 0.3rem;
+            position: relative;
         }
 
         .betting-area {
@@ -272,7 +379,7 @@
         }
 
         .game-button {
-            font-family: 'Cinzel', serif; font-size: 0.9rem; padding: 0.6rem 1.4rem;
+            font-family: 'Cinzel', serif; font-size: 0.9rem; padding: 0.6rem 2rem;
             background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
             color: var(--dark); border: none; border-radius: 22px; cursor: pointer; font-weight: 600;
             letter-spacing: 0.05em; transition: all 0.3s ease; box-shadow: 0 3px 15px rgba(212, 175, 55, 0.4);
@@ -292,17 +399,6 @@
 
         .secondary-button:hover:not(:disabled) {
             box-shadow: 0 0 12px rgba(212,175,55,0.5);
-        }
-
-        .win-info {
-            min-width: 150px;
-            text-align: right;
-            color: var(--cream);
-            font-size: 0.85rem;
-        }
-
-        .win-info span {
-            display: block;
         }
 
         .message-overlay {
@@ -514,7 +610,6 @@
         @media (max-width: 768px) {
             .slot-wrapper { max-height: calc(100vh - 130px); }
             .slot-footer { flex-direction: column; align-items: stretch; }
-            .win-info { text-align: left; }
         }
 
         /* Auto-scale reels by height & phone width */
@@ -584,6 +679,12 @@
 
         <div class="game-area">
             <div class="slot-wrapper">
+                <div class="slot-handle" id="slotHandle">
+                    <div class="handle-knob"></div>
+                    <div class="handle-arm"></div>
+                    <div class="handle-base"></div>
+                </div>
+
                 <div class="slot-header-row">
                     <div class="slot-status">
                         <span class="status-label">PLAYER:</span>
@@ -603,6 +704,17 @@
                         </div>
                 </div>
 
+                <div class="slot-stats-bar">
+                    <div class="stats-item">
+                        <span class="stats-label">LAST WIN</span>
+                        <span class="stats-value" id="lastWin">0</span>
+                    </div>
+                    <div class="stats-item">
+                        <span class="stats-label">SESSION TOTAL</span>
+                        <span class="stats-value" id="sessionTotal">0</span>
+                    </div>
+                </div>
+
                 <div class="slot-footer">
                     <div class="betting-area">
                         <span class="bet-label">BET</span>
@@ -611,10 +723,6 @@
                     </div>
                     <div>
                         <button class="game-button" id="spinBtn">SPIN</button>
-                    </div>
-                    <div class="win-info">
-                        <span>LAST WIN: <span id="lastWin">0</span></span>
-                        <span>SESSION TOTAL: <span id="sessionTotal">0</span></span>
                     </div>
                 </div>
             </div>
@@ -1104,6 +1212,11 @@
         async function handleSpinClick() {
             if (spinning || bonusActive || !userId) return;
 
+            // Animate Handle
+            const handle = document.getElementById('slotHandle');
+            handle.classList.add('pulled');
+            setTimeout(() => handle.classList.remove('pulled'), 600);
+
             const betInput = document.getElementById('betAmount');
             let bet = parseInt(betInput.value, 10);
             if (isNaN(bet) || bet < 1) {
@@ -1238,7 +1351,9 @@
             if (audioContext.state === 'suspended') audioContext.resume();
         });
 
+        // Event listeners for Spin Button AND Handle
         document.getElementById('spinBtn').addEventListener('click', handleSpinClick);
+        document.getElementById('slotHandle').addEventListener('click', handleSpinClick);
 
         document.getElementById('maxBetBtn').addEventListener('click', () => {
             if (balance <= 0) return;
