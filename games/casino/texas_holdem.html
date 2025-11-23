@@ -236,18 +236,6 @@
         .close-button { margin-top: 2rem; width: 100%; }
         select { background: rgba(0,0,0,0.5); color: var(--gold); border: 1px solid var(--gold); padding: 5px; }
 
-        /* Fixed Navigation */
-        .fixed-nav {
-            position: fixed; bottom: 30px; right: 30px; display: flex; gap: 15px; z-index: 200;
-        }
-        .nav-button {
-            padding: 12px 24px; background: rgba(10, 10, 10, 0.95); border: 2px solid var(--gold);
-            border-radius: 10px; color: var(--cream); font-size: 1rem; font-weight: bold; cursor: pointer;
-            text-decoration: none; display: flex; align-items: center; gap: 8px; transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3); font-family: 'Cinzel', serif;
-        }
-        .nav-button:hover { background: rgba(212, 175, 55, 0.2); box-shadow: 0 0 25px rgba(212, 175, 55, 0.6); transform: translateY(-2px); }
-
         /* Responsive */
         @media (max-width: 768px) {
             .community-area { min-width: 300px; gap: 5px; padding: 10px; }
@@ -255,7 +243,6 @@
             .seat { width: 120px; }
             .seat-hand { height: 70px; }
             .controls { flex-direction: column; padding: 1rem 0.5rem; }
-            .fixed-nav { bottom: 20px; right: 20px; }
             #seat-0 { bottom: 25%; } /* Move player up to make room for controls */
             #seat-1 { left: 5px; top: 100px; }
             #seat-3 { right: 5px; top: 100px; }
@@ -289,19 +276,19 @@
                 </div>
 
             <div class="seat" id="seat-2"> <div class="seat-action" id="action-2">CHECK</div>
-                <div class="seat-name"><span>Alex</span><span class="seat-chips">1000</span></div>
+                <div class="seat-name"><span>Lars_Eh</span><span class="seat-chips">1000</span></div>
                 <div class="seat-hand" id="hand-2"></div>
                 <div class="dealer-button" id="btn-2" style="display:none;">D</div>
             </div>
             
             <div class="seat" id="seat-1"> <div class="seat-action" id="action-1">CHECK</div>
-                <div class="seat-name"><span>Sam</span><span class="seat-chips">1000</span></div>
+                <div class="seat-name"><span>Matt</span><span class="seat-chips">1000</span></div>
                 <div class="seat-hand" id="hand-1"></div>
                 <div class="dealer-button" id="btn-1" style="display:none;">D</div>
             </div>
 
             <div class="seat" id="seat-3"> <div class="seat-action" id="action-3">CHECK</div>
-                <div class="seat-name"><span>Jordan</span><span class="seat-chips">1000</span></div>
+                <div class="seat-name"><span>Becca</span><span class="seat-chips">1000</span></div>
                 <div class="seat-hand" id="hand-3"></div>
                 <div class="dealer-button" id="btn-3" style="display:none;">D</div>
             </div>
@@ -354,13 +341,6 @@
         </div>
     </div>
 
-    <div class="fixed-nav">
-        <a href="#" class="nav-button" onclick="window.location.href='/index.html'; return false;">
-            <span>←</span>
-            <span>Back to Casino</span>
-        </a>
-    </div>
-
     <script type="module">
         import { db } from '/firebase-config.js';
         import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
@@ -388,9 +368,9 @@
         let lastAggressor = -1; // Who made the last raise?
         let players = [
             { id: 0, name: 'Player', chips: 0, hand: [], folded: false, currentBet: 0, isAI: false },
-            { id: 1, name: 'Rockettam', chips: 2000, hand: [], folded: false, currentBet: 0, isAI: true },
-            { id: 2, name: 'Matt', chips: 2000, hand: [], folded: false, currentBet: 0, isAI: true },
-            { id: 3, name: 'Jmactastic', chips: 2000, hand: [], folded: false, currentBet: 0, isAI: true }
+            { id: 1, name: 'Matt', chips: 2000, hand: [], folded: false, currentBet: 0, isAI: true },
+            { id: 2, name: 'Lars_Eh', chips: 2000, hand: [], folded: false, currentBet: 0, isAI: true },
+            { id: 3, name: 'Becca', chips: 2000, hand: [], folded: false, currentBet: 0, isAI: true }
         ];
         const SB = 10;
         const BB = 20;
