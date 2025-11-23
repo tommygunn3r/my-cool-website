@@ -111,7 +111,7 @@
         <p class="info">Form words in the <span class="highlight-text">BOTTOM ROW</span> to add time!<br>Don't let the clock run out.</p>
         
         <div class="file-input-section" id="fileSection">
-            <div id="loadingMessage" class="message show" style="display: block; background:#2d3748; color:white;">Loading **CSW19.txt** dictionary...</div>
+            <div id="loadingMessage" class="message show" style="display: block; background:#2d3748; color:white;">Loading Dictionary...</div>
         </div>
 
         <div class="stats">
@@ -251,23 +251,49 @@
             'Y': 2, 'K': 1, 'J': 1, 'X': 1, 'Q': 1, 'Z': 1
         };
 
+        // --- MULTI-SOURCE DICTIONARY LOADER ---
+        const DICTIONARY_SOURCES = [
+            'CSW19.txt', // 1. Local File (Preferred)
+            'https://raw.githubusercontent.com/dolph/dictionary/master/enable1.txt', // 2. Public GitHub CDN
+            'https://raw.githubusercontent.com/dwyl/english-words/master/words_alpha.txt' // 3. Backup CDN
+        ];
+        
+        // Small internal dictionary to GUARANTEE the game starts even offline
+        const EMERGENCY_DICTIONARY = [
+            "THE", "AND", "FOR", "ARE", "BUT", "NOT", "YOU", "ALL", "ANY", "CAN", "HAD", "HAS", "HIM", "HIS", "HOW", "INK", "MAN", "NEW", "NOW", "OLD", "ONE", "OUT", "PUT", "RUN", "SAY", "SHE", "SIT", "THE", "TOO", "TRY", "USE", "WAS", "WAY", "WHO", "WIN", "YES", "YET", "GAME", "PLAY", "WORD", "TIME", "SLID", "TILES", "GRID", "RUSH", "PUSH", "PULL", "DROP", "FALL", "BACK", "BEST", "COOL", "DOWN", "EASY", "FAST", "FIND", "FIVE", "FOUR", "FREE", "FULL", "GIVE", "GOOD", "HARD", "HAVE", "HERE", "HIGH", "HOME", "INTO", "JUST", "KEEP", "KIND", "KNOW", "LAST", "LEFT", "LIKE", "LINE", "LONG", "LOOK", "LOST", "LOVE", "MADE", "MAKE", "MANY", "MIND", "MORE", "MOST", "MOVE", "MUCH", "MUST", "NAME", "NEAR", "NEXT", "NICE", "ONLY", "OPEN", "OVER", "PART", "PAST", "QUIT", "REAL", "REST", "ROOM", "SAID", "SAME", "SEEM", "SIDE", "SOME", "SOON", "STAY", "STOP", "SUCH", "SURE", "TAKE", "TELL", "THAN", "THAT", "THEM", "THEN", "THEY", "THIS", "TOLD", "TOOK", "TURN", "VERY", "WALK", "WANT", "WELL", "WENT", "WERE", "WHAT", "WHEN", "WILL", "WITH", "WORK", "YOUR"
+        ];
+
         async function loadDictionary() {
-            try {
-                const response = await fetch('CSW19.txt');
-                if (!response.ok) throw new Error(`Status: ${response.status}`);
-                const text = await response.text();
-                const words = text.split(/\r?\n/).map(w => w.trim().toUpperCase()).filter(w => w.length >= 3);
-                dictionary = new Set(words); dictionaryLoaded = true;
-                document.getElementById('loadingMessage').style.display = 'none';
-                showMessage(`System Ready! Game On!`, 'success');
-                newGame(); // Start first game
-            } catch (error) {
-                const msg = document.getElementById('loadingMessage');
-                msg.textContent = `Error loading dictionary. Upload manually.`;
-                msg.style.background = '#f56565';
-                document.getElementById('fileSection').innerHTML += `<input type="file" id="dictionaryFile" accept=".txt" style="margin-top:10px;">`;
-                document.getElementById('dictionaryFile').addEventListener('change', handleManualUpload);
+            const loadingMsg = document.getElementById('loadingMessage');
+            
+            for (const source of DICTIONARY_SOURCES) {
+                try {
+                    loadingMsg.textContent = `Attempting to load: ${source}...`;
+                    const response = await fetch(source);
+                    if (response.ok) {
+                        const text = await response.text();
+                        const words = text.split(/\r?\n/).map(w => w.trim().toUpperCase()).filter(w => w.length >= 3);
+                        dictionary = new Set(words);
+                        finishLoading(true);
+                        return;
+                    }
+                } catch (e) {
+                    console.warn(`Failed to load ${source}`);
+                }
             }
+
+            // If all else fails, use emergency list
+            console.warn("Using emergency fallback dictionary.");
+            dictionary = new Set(EMERGENCY_DICTIONARY);
+            finishLoading(false);
+        }
+
+        function finishLoading(success) {
+            dictionaryLoaded = true;
+            document.getElementById('loadingMessage').style.display = 'none';
+            const msg = success ? "System Ready! Game On!" : "Loaded Offline Mode";
+            showMessage(msg, 'success');
+            newGame();
         }
 
         function handleManualUpload(e) {
