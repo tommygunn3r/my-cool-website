@@ -25,6 +25,11 @@
             width: 100vw;
             margin: 0;
             padding: 0;
+            /* Default Background - Green */
+            background-color: #0a4a2e;
+            background-size: cover;
+            background-position: center;
+            transition: background-image 0.5s ease-in-out;
         }
 
         /* --- Start Screen --- */
@@ -38,51 +43,34 @@
 
         .selector-title {
             font-family: 'Cinzel', serif; font-size: 3.5rem; font-weight: 700; color: var(--gold);
-            margin-bottom: 2rem; text-shadow: 0 0 20px rgba(212, 175, 55, 0.5); letter-spacing: 0.1em;
+            margin-bottom: 1rem; text-shadow: 0 0 20px rgba(212, 175, 55, 0.5); letter-spacing: 0.1em;
             text-align: center;
         }
 
-        .loading-text { color: var(--gold); font-family: 'Cinzel', serif; margin-top: 20px; animation: pulse 1.5s infinite; }
+        .loading-text { 
+            color: var(--gold); font-family: 'Cinzel', serif; font-size: 1.2rem;
+            margin-top: 20px; animation: pulse 1.5s infinite; 
+        }
         @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
 
-        .table-options { display: flex; gap: 2rem; margin-bottom: 3rem; flex-wrap: wrap; justify-content: center; }
-        .table-option {
-            width: 200px; height: 120px; border: 3px solid var(--gold); border-radius: 15px;
-            cursor: pointer; transition: all 0.3s ease; position: relative; overflow: hidden;
-            background-size: cover; background-position: center;
-        }
-        .table-option::after {
-            content: ''; position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0, 0, 0, 0.4); transition: background 0.3s;
-        }
-        .table-option:hover { transform: scale(1.05); box-shadow: 0 10px 40px rgba(212, 175, 55, 0.6); }
-        .table-option:hover::after { background: rgba(0, 0, 0, 0.2); }
-        .table-option.selected { border-color: var(--gold-light); box-shadow: 0 0 30px rgba(212, 175, 55, 0.8); }
-        
-        .table-label {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1;
-            font-family: 'Cinzel', serif; font-size: 1.5rem; color: var(--gold); font-weight: 600;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8); width: 100%; text-align: center;
-        }
-
         .start-button {
-            font-family: 'Cinzel', serif; font-size: 1.5rem; padding: 1rem 3rem;
+            font-family: 'Cinzel', serif; font-size: 1.5rem; padding: 1rem 4rem; margin-top: 2rem;
             background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
             color: var(--dark); border: none; border-radius: 50px; cursor: pointer; font-weight: 600;
             letter-spacing: 0.1em; transition: all 0.3s ease; box-shadow: 0 5px 20px rgba(212, 175, 55, 0.4);
+            display: none; /* Hidden until loaded */
         }
         .start-button:hover { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(212, 175, 55, 0.6); }
-        .start-button:active { transform: translateY(0); }
 
         /* --- Game Interface --- */
         #gameContainer {
-            width: 100vw; min-height: 100vh; height: auto; background-size: cover; background-position: center;
+            width: 100vw; min-height: 100vh; height: auto;
             display: flex; flex-direction: column; position: relative;
         }
 
         .header {
             display: flex; justify-content: space-between; align-items: center; padding: 1rem 2rem;
-            background: linear-gradient(180deg, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.4) 100%);
+            background: linear-gradient(180deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.6) 100%);
             border-bottom: 2px solid var(--gold); flex-shrink: 0;
         }
         .logo {
@@ -225,22 +213,11 @@
 </head>
 <body>
     <div id="tableSelector">
-        <div class="selector-title">SELECT YOUR TABLE</div>
+        <div class="selector-title">BLACKJACK</div>
         
         <div id="loadingMsg" class="loading-text">CONNECTING TO ACCOUNT...</div>
 
-        <div class="table-options" id="tableOptions" style="display: none;">
-            <div class="table-option" data-table="red">
-                <div class="table-label">Red Felt</div>
-            </div>
-            <div class="table-option" data-table="blue">
-                <div class="table-label">Blue Felt</div>
-            </div>
-            <div class="table-option" data-table="green">
-                <div class="table-label">Green Felt</div>
-            </div>
-        </div>
-        <button class="start-button" id="startGame" style="display: none;">START GAME</button>
+        <button class="start-button" id="startGame">PLAY NOW</button>
     </div>
 
     <div id="gameContainer">
@@ -302,9 +279,9 @@
             <div class="setting-row">
                 <span>Table Felt</span>
                 <select class="bet-input" id="tableSelect" style="width: 120px;">
-                    <option value="red">Red</option>
-                    <option value="blue">Blue</option>
-                    <option value="green" selected>Green</option>
+                    <option value="green">Classic Green</option>
+                    <option value="red">Royal Red</option>
+                    <option value="blue">Midnight Blue</option>
                 </select>
             </div>
             <button class="game-button close-button" id="closeSettings">CLOSE</button>
@@ -332,74 +309,67 @@
         let currentBet = 0, balance = 0;
         let gameActive = false;
         let soundEnabled = true, aiEnabled = false;
-        let selectedTable = 'green';
+        let selectedTable = 'green'; // DEFAULT IS GREEN
         let aiPlayers = [];
         let playerName = '';
         let userId = '';
 
         const audioContext = new (window.AudioContext || window.webkitAudioContext)();
 
-        // --- GATEKEEPER INIT ---
+        // --- INITIALIZATION ---
         async function initGameSystem() {
-            // 1. Check Auth
+            // Load Preference First
+            const savedTheme = localStorage.getItem('blackjack_theme');
+            if (savedTheme) selectedTable = savedTheme;
+            document.getElementById('tableSelect').value = selectedTable;
+            applyTableVisuals();
+
+            // Auth Check
             try {
                 auth = getAuth(db.app);
                 onAuthStateChanged(auth, async (user) => {
                     if (user) {
-                        // LOGGED IN
                         userId = user.uid;
-                        playerName = user.displayName || "Pilot";
+                        playerName = user.displayName || "Player";
                         document.getElementById('playerLabel').textContent = playerName.toUpperCase();
                         
-                        // Load Balance
                         await loadUserBalance();
                         
-                        // Reveal Controls
                         document.getElementById('loadingMsg').style.display = 'none';
-                        document.getElementById('tableOptions').style.display = 'flex';
                         document.getElementById('startGame').style.display = 'block';
                     } else {
-                        // NOT LOGGED IN -> Kick to Portal
                         window.location.href = '/index.html';
                     }
                 });
             } catch (error) {
                 console.warn('Auth Check Failed:', error);
             }
-            
-            setupTableVisuals();
         }
 
         async function loadUserBalance() {
             try {
                 const userDoc = doc(db, 'users', userId);
                 const docSnap = await getDoc(userDoc);
-                
                 if (docSnap.exists()) {
                     balance = docSnap.data().gunnercoins || 0;
                 } else {
-                    balance = 0; // Fallback, though account should exist
+                    balance = 0;
                 }
                 document.getElementById('balance').textContent = balance.toLocaleString();
-            } catch (e) {
-                console.error("Balance Load Error:", e);
-            }
+            } catch (e) { console.error("Balance Load Error:", e); }
         }
 
         function updateBalance(amount) {
             balance += amount;
             document.getElementById('balance').textContent = balance.toLocaleString();
-            
-            // Sync to DB (Fire and Forget)
             const userDoc = doc(db, 'users', userId);
             setDoc(userDoc, { gunnercoins: balance }, { merge: true });
         }
 
-        function setupTableVisuals() {
-            document.querySelector('[data-table="red"]').style.backgroundImage = "url('../assets/casino/redtop.png')";
-            document.querySelector('[data-table="blue"]').style.backgroundImage = "url('../assets/casino/bluetop.png')";
-            document.querySelector('[data-table="green"]').style.backgroundImage = "url('../assets/casino/greentop.png')";
-            document.querySelector('[data-table="green"]').classList.add('selected');
+        function applyTableVisuals() {
+            const map = { 'red': 'redtop.png', 'blue': 'bluetop.png', 'green': 'greentop.png' };
+            // Note: Assuming assets are in /games/assets/casino/
+            document.body.style.backgroundImage = `url('/games/assets/casino/${map[selectedTable]}')`;
         }
 
         // --- GAME ENGINE ---
@@ -445,8 +415,9 @@
             const el = document.createElement('div');
             el.className = `card ${faceDown?'':'flipped'}`;
             const cls = (c.suit==='♥'||c.suit==='♦') ? 'hearts' : 'clubs';
+            // NOTE: Path updated to /games/assets/casino/ for consistency
             el.innerHTML = `
-                <div class="card-back" style="background-image: url('../assets/casino/card_back.png');"></div>
+                <div class="card-back" style="background-image: url('/games/assets/casino/card_back.png');"></div>
                 <div class="card-front">
                     <div class="card-value ${cls}">${c.value}</div>
                     <div class="card-suit ${cls}">${c.suit}</div>
@@ -492,7 +463,6 @@
                 ai.hand = [];
                 const el = document.getElementById(`ai-hand-${idx}`); el.innerHTML = '';
                 for(let i=0;i<2;i++) { deck.pop(); ai.hand.push({}); el.innerHTML += '<div class="ai-card"></div>'; }
-                // AI visual only
                 const score = Math.floor(Math.random() * 5) + 17; 
                 document.getElementById(`ai-score-${idx}`).textContent = score > 21 ? 'BUST' : score;
             });
@@ -604,16 +574,7 @@
         }
 
         // --- LISTENERS ---
-        document.querySelectorAll('.table-option').forEach(opt => {
-            opt.addEventListener('click', function() {
-                document.querySelectorAll('.table-option').forEach(o => o.classList.remove('selected'));
-                this.classList.add('selected'); selectedTable = this.dataset.table;
-            });
-        });
-
         document.getElementById('startGame').addEventListener('click', () => {
-            const map = { 'red': 'redtop.png', 'blue': 'bluetop.png', 'green': 'greentop.png' };
-            document.getElementById('gameContainer').style.backgroundImage = `url('../assets/casino/${map[selectedTable]}')`;
             document.getElementById('tableSelector').classList.add('hidden');
             if(audioContext.state==='suspended') audioContext.resume();
         });
@@ -627,10 +588,13 @@
         document.getElementById('closeSettings').addEventListener('click', () => document.getElementById('settingsModal').classList.remove('active'));
         document.getElementById('soundToggle').addEventListener('click', function() { this.classList.toggle('active'); soundEnabled = this.classList.contains('active'); });
         document.getElementById('aiToggle').addEventListener('click', function() { this.classList.toggle('active'); aiEnabled = this.classList.contains('active'); initializeAIPlayers(); });
+        
+        // --- THEME CHANGER ---
         document.getElementById('tableSelect').addEventListener('change', function() {
             selectedTable = this.value;
-            const map = { 'red': 'redtop.png', 'blue': 'bluetop.png', 'green': 'greentop.png' };
-            document.getElementById('gameContainer').style.backgroundImage = `url('../assets/casino/${map[selectedTable]}')`;
+            localStorage.setItem('blackjack_theme', selectedTable); // Save Preference
+            applyTableVisuals();
+            playChipSound();
         });
 
         initGameSystem();
