@@ -46,7 +46,7 @@
         .puzzle-grid { 
             display: inline-grid; gap: 8px; margin: 20px 0; padding: 20px; 
             background: #2d3748; border-radius: 10px; position: relative; padding-bottom: 25px; 
-            min-height: 300px; /* Force height so it shows even if empty */
+            min-height: 300px; 
         }
         .puzzle-grid::after {
             content: 'LASER ZONE'; position: absolute; bottom: 5px; left: 50%; transform: translateX(-50%);
@@ -57,6 +57,9 @@
             font-size: 2em; font-weight: bold; color: #e2e8f0; cursor: pointer; transition: all 0.2s ease;
             box-shadow: 0 4px 6px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center;
         }
+        /* Locked state for when animations are playing */
+        .tile.locked { cursor: not-allowed; opacity: 0.8; }
+
         .tile.laser-active {
             background: linear-gradient(135deg, #ecc94b 0%, #d69e2e 100%); color: #744210;
             border: 2px solid #ffeb3b; box-shadow: 0 0 15px rgba(236, 201, 75, 0.4);
@@ -83,7 +86,6 @@
         .word-list { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
         .found-word { background: #2d3748; color: #fdbb2d; padding: 5px 12px; border-radius: 5px; font-size: 0.9em; }
         
-        /* File input hidden by default, shown only if ALL automatic methods fail */
         .file-input-section { 
             margin: 20px 0; padding: 15px; background: #edf2f7; border-radius: 8px; 
             border: 2px dashed #cbd5e0; display: none; 
@@ -157,7 +159,6 @@
                 auth = getAuth(db.app);
                 onAuthStateChanged(auth, (user) => {
                     if (user) {
-                        console.log("Pilot Identified:", user.displayName);
                         currentUser = user;
                         scoreManager.playerName = user.displayName || "Unknown Pilot";
                     } else {
@@ -196,9 +197,7 @@
                         [`gamesPlayed_${this.gameName}`]: increment(1),
                         totalTimePlayed: increment(timePlayed)
                     }, { merge: true });
-                } catch (error) {
-                    console.warn('Failed to submit score:', error.message);
-                }
+                } catch (error) {}
             }
         }
 
@@ -248,6 +247,7 @@
         let score = 0, level = 1, gridSize = 5, targetRow = 4, wordsFound = [], tileSize = 70;
         let availableLetters = [], dictionaryLoaded = false;
         let timeLeft = 60, timerInterval = null, gameActive = false;
+        let isProcessing = false; // LOCK MECHANISM
 
         const letterWeights = {
             'E': 12, 'A': 9, 'I': 9, 'O': 8, 'N': 6, 'R': 6, 'T': 6, 'L': 4, 'S': 4, 'U': 4,
@@ -255,42 +255,32 @@
             'Y': 2, 'K': 1, 'J': 1, 'X': 1, 'Q': 1, 'Z': 1
         };
 
-        // --- EMERGENCY FALLBACK DICTIONARY ---
-        // Used if both local file and GitHub CDN fail
         const FALLBACK_WORDS = [
             "THE","AND","FOR","ARE","BUT","NOT","YOU","ALL","ANY","CAN","HAD","HAS","HIM","HIS","HOW","INK","MAN","NEW","NOW","OLD","ONE","OUT","PUT","RUN","SAY","SHE","SIT","TOO","TRY","USE","WAS","WAY","WHO","WIN","YES","YET","GAME","PLAY","WORD","TIME","SLID","TILES","GRID","RUSH","PUSH","PULL","DROP","FALL","BACK","BEST","COOL","DOWN","EASY","FAST","FIND","FIVE","FOUR","FREE","FULL","GIVE","GOOD","HARD","HAVE","HERE","HIGH","HOME","INTO","JUST","KEEP","KIND","KNOW","LAST","LEFT","LIKE","LINE","LONG","LOOK","LOST","LOVE","MADE","MAKE","MANY","MIND","MORE","MOST","MOVE","MUCH","MUST","NAME","NEAR","NEXT","NICE","ONLY","OPEN","OVER","PART","PAST","QUIT","REAL","REST","ROOM","SAID","SAME","SEEM","SIDE","SOME","SOON","STAY","STOP","SUCH","SURE","TAKE","TELL","THAN","THAT","THEM","THEN","THEY","THIS","TOLD","TOOK","TURN","VERY","WALK","WANT","WELL","WENT","WERE","WHAT","WHEN","WILL","WITH","WORK","YOUR"
         ];
 
         async function loadDictionary() {
             const loadingMsg = document.getElementById('loadingMessage');
-            
             try {
-                // 1. Try Local File
                 loadingMsg.textContent = "Loading CSW19.txt...";
                 const res = await fetch('CSW19.txt');
                 if (!res.ok) throw new Error("Local file missing");
                 const text = await res.text();
                 processDictionary(text);
                 return;
-            } catch (e) {
-                console.warn("Local dictionary failed, trying CDN...");
-            }
+            } catch (e) { console.warn("Local dict failed, trying CDN..."); }
 
             try {
-                // 2. Try GitHub CDN
                 loadingMsg.textContent = "Downloading Dictionary...";
                 const response = await fetch('https://raw.githubusercontent.com/dolph/dictionary/master/enable1.txt');
                 if (!response.ok) throw new Error("CDN failed");
                 const text = await response.text();
                 processDictionary(text);
                 return;
-            } catch (e) {
-                console.warn("CDN failed, using emergency fallback.");
-            }
+            } catch (e) { console.warn("CDN failed, using emergency fallback."); }
 
-            // 3. Use Emergency List (Guaranteed Success)
             dictionary = new Set(FALLBACK_WORDS);
-            finishLoading(false); // False = Offline mode
+            finishLoading(false);
         }
 
         function processDictionary(text) {
@@ -300,20 +290,12 @@
         }
 
         function finishLoading(onlineMode) {
-            console.log("finishLoading called, onlineMode:", onlineMode);
             dictionaryLoaded = true;
             document.getElementById('loadingMessage').style.display = 'none';
+            document.getElementById('fileSection').style.display = 'none';
             const msg = onlineMode ? "System Ready! Game On!" : "Loaded Offline Mode";
             showMessage(msg, 'success');
-            
-            // Force Game Start immediately
-            score = 0; level = 1; gridSize = 5; wordsFound = [];
-            scoreManager.startSession();
-            console.log("About to call initGame");
-            initGame(); 
-            console.log("About to call startTimer");
-            startTimer(); 
-            console.log("Timer started, gameActive:", gameActive, "timeLeft:", timeLeft);
+            newGame();
         }
 
         function handleManualUpload(e) {
@@ -322,7 +304,6 @@
                 const reader = new FileReader();
                 reader.onload = function(event) {
                     processDictionary(event.target.result);
-                    document.getElementById('fileSection').style.display = 'none';
                 };
                 reader.readAsText(file);
             }
@@ -343,9 +324,7 @@
         }
 
         function initGame() {
-            // Ensure grid size is valid before starting
             gridSize = gridSize || 5;
-            
             targetRow = gridSize - 1; grid = []; availableLetters = createLetterPool();
             const totalTiles = gridSize * gridSize;
             for (let i = 0; i < gridSize; i++) {
@@ -365,11 +344,8 @@
         }
 
         function moveTile(row, col) {
-            console.log("moveTile called, gameActive:", gameActive, "row:", row, "col:", col);
-            if (!gameActive) {
-                console.log("Game not active, returning");
-                return false;
-            }
+            if (!gameActive || isProcessing) return false; // LOCKED when processing a word
+            
             if (!isPlaying && audio.currentTime === 0) toggleMusic();
             const rowDiff = Math.abs(row - emptyPos.row);
             const colDiff = Math.abs(col - emptyPos.col);
@@ -391,13 +367,17 @@
                 for (let end = start + 3; end <= str.length; end++) {
                     const substring = str.substring(start, end);
                     if (substring.includes(' ')) continue;
-                    if (dictionary.has(substring)) { foundWord(substring, rowIndex, start, end - 1); return true; }
+                    if (dictionary.has(substring)) { 
+                        foundWord(substring, rowIndex, start, end - 1); 
+                        return true; 
+                    }
                 }
             }
             return false;
         }
 
         function foundWord(word, rowIndex, startPos, endPos) {
+            isProcessing = true; // LOCK CONTROLS
             playSound('clear');
             const points = calculatePoints(word); score += points; wordsFound.push(word);
             const timeBonus = Math.floor(points / 5) + 2; timeLeft += timeBonus;
@@ -405,13 +385,21 @@
             document.getElementById('score').textContent = score;
             document.getElementById('wordCount').textContent = wordsFound.length;
             document.getElementById('timer').textContent = timeLeft;
+            
             const list = document.getElementById('wordList');
             const span = document.createElement('span');
             span.className = 'found-word'; span.textContent = `${word} (${points})`;
             list.insertBefore(span, list.firstChild);
             if (list.children.length > 10) list.removeChild(list.lastChild);
+            
             highlightWord(rowIndex, startPos, endPos);
-            setTimeout(() => { applyGravity(startPos, endPos); checkLevelUp(); }, 800);
+            
+            // Wait for visual cue, then drop
+            setTimeout(() => { 
+                applyGravity(startPos, endPos); 
+                checkLevelUp(); 
+                isProcessing = false; // UNLOCK
+            }, 800);
         }
 
         function highlightWord(rowIndex, startPos, endPos) {
@@ -440,6 +428,8 @@
                     if (grid[i][j] === '') className += ' empty';
                     if (i === targetRow && grid[i][j] !== '') className += ' laser-active';
                     if (isGravityUpdate && i === 0) className += ' new-spawn';
+                    if (isProcessing) className += ' locked'; // Visual cue
+                    
                     tile.className = className; tile.textContent = grid[i][j];
                     tile.style.width = `${tileSize}px`; tile.style.height = `${tileSize}px`;
                     tile.style.fontSize = `${tileSize * 0.4}px`;
@@ -459,7 +449,10 @@
                 gridSize = Math.min(5 + (level - 1), 9);
                 document.getElementById('level').textContent = level;
                 document.getElementById('gridSize').textContent = `${gridSize}x${gridSize}`;
-                if (gridSize > oldSize) { showMessage(`🚀 GRID EXPANDED! 🚀`, 'level-up'); setTimeout(() => initGame(), 2000); }
+                if (gridSize > oldSize) { 
+                    showMessage(`🚀 GRID EXPANDED! 🚀`, 'level-up'); 
+                    setTimeout(() => initGame(), 2000); 
+                }
                 else showMessage(`⭐ Level ${level}! ⭐`, 'level-up');
             }
         }
@@ -471,15 +464,9 @@
         }
 
         function startTimer() {
-            console.log("startTimer called");
-            clearInterval(timerInterval); 
-            timeLeft = 60; 
-            updateTimerDisplay(); 
-            gameActive = true;
-            console.log("Set gameActive to true, timeLeft:", timeLeft);
+            clearInterval(timerInterval); timeLeft = 60; updateTimerDisplay(); gameActive = true;
             timerInterval = setInterval(() => {
-                timeLeft--; 
-                updateTimerDisplay();
+                timeLeft--; updateTimerDisplay();
                 if (timeLeft <= 0) endGame();
             }, 1000);
         }
@@ -506,12 +493,12 @@
             document.getElementById('gridSize').textContent = `${gridSize}x${gridSize}`;
             document.getElementById('wordCount').textContent = 0;
             document.getElementById('wordList').innerHTML = '';
+            isProcessing = false;
             scoreManager.startSession(); initGame(); startTimer();
             showMessage('Gravity Systems Online...', 'success');
             if(!isPlaying) toggleMusic();
         }
 
-        // Kickoff
         loadDictionary();
     </script>
 </body>
