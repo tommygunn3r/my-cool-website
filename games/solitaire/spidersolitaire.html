@@ -213,9 +213,10 @@
     </div>
 
     <script type="module">
-        // ===== UPDATED: FIREBASE CONFIG AND SCORE MANAGER =====
-        // Now importing from your central config file to keep things clean
-        import { db } from './firebase-config.js';
+        // ===== UPDATED: Absolute Path for Config =====
+        // Using /firebase-config.js to find the file in the ROOT directory
+        import { db } from '/firebase-config.js';
+        
         import { getAuth, signInAnonymously } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
         import { collection, addDoc, serverTimestamp, doc, setDoc, updateDoc, increment } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
@@ -225,7 +226,6 @@
         async function initFirebase() {
             try {
                 if (db) {
-                    // We can extract the 'app' from the Firestore instance to init Auth!
                     auth = getAuth(db.app);
                     await signInAnonymously(auth);
                     firebaseInitialized = true;
@@ -276,7 +276,7 @@
                 const timePlayed = this.getElapsedTime();
                 
                 try {
-                    // 1. Record the individual game score (For the "High Scores" leaderboard)
+                    // 1. Record the individual game score
                     await addDoc(collection(db, 'scores'), {
                         gameName: this.gameName,
                         playerName: this.playerName,
@@ -285,19 +285,13 @@
                         timestamp: serverTimestamp()
                     });
 
-                    // 2. Update the User Profile (For future "Total Score" features)
-                    // This creates or updates a document in 'users' collection with this player's stats
+                    // 2. Update the User Profile (Total Score)
                     const userRef = doc(db, 'users', this.playerName);
-                    
-                    // We use setDoc with {merge: true} to create if it doesn't exist, or update if it does
                     await setDoc(userRef, {
                         playerName: this.playerName,
                         lastActive: serverTimestamp(),
-                        // Add to total solitaire score
                         totalSolitaireScore: increment(this.hasScore ? score : 0),
-                        // Increment games played
                         solitaireGamesPlayed: increment(1),
-                        // Track total time played across all games
                         totalTimePlayed: increment(timePlayed)
                     }, { merge: true });
 
