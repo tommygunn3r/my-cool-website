@@ -1,4 +1,423 @@
-<script type="module">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>GunnerCoin Drop</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Same vibe as Blackjack -->
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:wght@300;400;600&display=swap" rel="stylesheet">
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --gold: #d4af37;
+            --gold-dark: #b8941f;
+            --gold-light: #f4e5a7;
+            --cream: #f5f3e8;
+            --dark: #0b0907;
+            --accent: #2b1242;
+        }
+
+        body {
+            font-family: 'Cormorant Garamond', serif;
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+            background-color: #000;
+            background-image: url('/games/assets/casino/background.png');
+            background-size: cover;
+            background-position: center;
+            color: var(--cream);
+        }
+
+        #loadingOverlay {
+            position: fixed; inset: 0;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            background: radial-gradient(circle at top, #311844 0%, #050308 60%, #000 100%);
+            z-index: 1000;
+        }
+        #loadingTitle {
+            font-family: 'Cinzel', serif;
+            font-size: 3rem;
+            letter-spacing: 0.16em;
+            color: var(--gold);
+            text-shadow: 0 0 18px rgba(0,0,0,0.9);
+            margin-bottom: 1rem;
+        }
+        #loadingLogo {
+            width: clamp(220px, 40vw, 420px);
+            height: auto;
+            margin-bottom: 1.5rem;
+        }
+        #loadingMsg {
+            color: var(--gold-light);
+            font-size: 1.1rem;
+            letter-spacing: 0.08em;
+            margin-bottom: 1.5rem;
+            animation: pulse 1.6s infinite;
+        }
+        #startGameBtn {
+            font-family: 'Cinzel', serif;
+            font-size: 1.3rem;
+            padding: 0.8rem 3rem;
+            border-radius: 999px;
+            border: none;
+            cursor: pointer;
+            background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
+            color: #000;
+            letter-spacing: 0.14em;
+            box-shadow: 0 0 25px rgba(212,175,55,0.6);
+            display: none;
+        }
+        #startGameBtn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 35px rgba(212,175,55,0.9);
+        }
+        @keyframes pulse {
+            0% { opacity: 0.4; }
+            50% { opacity: 1; }
+            100% { opacity: 0.4; }
+        }
+
+        #gameShell {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        .header {
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.6rem 1.2rem;
+            background: linear-gradient(180deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.65) 100%);
+            border-bottom: 2px solid rgba(212,175,55,0.7);
+        }
+        .logo {
+            display: flex; align-items: center; gap: 0.7rem;
+        }
+        .logo-main {
+            font-family: 'Cinzel', serif;
+            letter-spacing: 0.18em;
+            font-size: 1.1rem;
+            color: var(--gold);
+        }
+        .logo-sub {
+            font-size: 0.9rem;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            color: var(--gold-light);
+            opacity: 0.9;
+        }
+        .balance {
+            display: flex; align-items: center; gap: 0.45rem;
+            font-size: 1.1rem;
+        }
+        .coin-icon {
+            width: 28px; height: 28px;
+            border-radius: 50%;
+            background: radial-gradient(circle, var(--gold-light) 0%, var(--gold) 60%, var(--gold-dark) 100%);
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700; color: #000;
+            box-shadow: 0 0 10px rgba(212,175,55,0.7);
+            font-size: 1rem;
+        }
+        #balanceText {
+            font-weight: 600;
+            letter-spacing: 0.1em;
+        }
+
+        .settings-button {
+            background: rgba(0, 0, 0, 0.6);
+            border: 2px solid var(--gold);
+            color: var(--gold);
+            width: 40px; height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.1rem;
+            transition: all 0.3s;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .settings-button:hover { background: rgba(212,175,55,0.15); transform: rotate(90deg); }
+
+        .main-row {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+
+        #gameCanvasContainer {
+            position: relative;
+            flex: 1;
+            min-height: 0;
+            overflow: hidden;
+        }
+
+        #gameCanvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at top, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.95) 40%, #000 100%);
+        }
+
+        .controls {
+            flex-shrink: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.6rem 0.8rem;
+            background: linear-gradient(0deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.6) 100%);
+            border-top: 2px solid rgba(212,175,55,0.7);
+            flex-wrap: wrap;
+        }
+        .info-pill {
+            padding: 0.3rem 0.8rem;
+            border-radius: 999px;
+            border: 1px solid rgba(212,175,55,0.5);
+            background: rgba(0,0,0,0.7);
+            font-size: 0.85rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+        .game-button {
+            font-family: 'Cinzel', serif;
+            font-size: 0.95rem;
+            padding: 0.55rem 1.4rem;
+            border-radius: 999px;
+            border: none;
+            cursor: pointer;
+            background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
+            color: #000;
+            letter-spacing: 0.12em;
+            box-shadow: 0 0 16px rgba(212,175,55,0.6);
+        }
+        .game-button:disabled {
+            opacity: 0.35;
+            cursor: not-allowed;
+            filter: grayscale(0.8);
+            box-shadow: none;
+        }
+
+        .fixed-nav {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+            z-index: 200;
+        }
+        .nav-button {
+            padding: 10px 18px;
+            background: rgba(10, 10, 10, 0.95);
+            border: 2px solid var(--gold);
+            border-radius: 10px;
+            color: var(--cream);
+            font-size: 0.9rem;
+            font-weight: bold;
+            cursor: pointer;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
+            font-family: 'Cinzel', serif;
+        }
+        .nav-button:hover {
+            background: rgba(212, 175, 55, 0.2);
+            box-shadow: 0 0 25px rgba(212, 175, 55, 0.6);
+            transform: translateY(-2px);
+        }
+
+        .message-overlay {
+            position: absolute;
+            left: 50%; top: 18%;
+            transform: translateX(-50%);
+            background: radial-gradient(circle, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.9) 60%);
+            border-radius: 999px;
+            border: 3px solid var(--gold);
+            padding: 0.7rem 2.5rem;
+            z-index: 50;
+            font-family: 'Cinzel', serif;
+            font-size: 1.1rem;
+            color: var(--gold-light);
+            letter-spacing: 0.16em;
+            text-align: center;
+            white-space: nowrap;
+            animation: overlayPop 0.4s ease-out, overlayFade 1.6s ease-out 0.6s forwards;
+        }
+        @keyframes overlayPop {
+            0% { transform: translateX(-50%) scale(0.6); opacity: 0; }
+            100% { transform: translateX(-50%) scale(1); opacity: 1; }
+        }
+        @keyframes overlayFade {
+            to { opacity: 0; transform: translateX(-50%) translateY(-10px) scale(0.95); }
+        }
+
+        .bonus-banner {
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.98) 60%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            z-index: 150;
+            animation: bonusFadeIn 0.35s ease-out;
+        }
+        .bonus-banner img {
+            max-width: 85%;
+            height: auto;
+            margin-bottom: 0.8rem;
+        }
+        .bonus-text {
+            font-family: 'Cinzel', serif;
+            letter-spacing: 0.18em;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            color: var(--gold-light);
+        }
+        @keyframes bonusFadeIn {
+            from { opacity: 0; transform: scale(1.04); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        #settingsModal {
+            position: fixed; inset: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 200;
+        }
+        #settingsModal.active { display: flex; }
+        .modal-content {
+            background: linear-gradient(135deg, #2a1f1a 0%, var(--dark) 100%);
+            padding: 2rem 2.4rem;
+            border-radius: 20px;
+            border: 3px solid var(--gold);
+            max-width: 460px;
+            width: 90%;
+        }
+        .modal-title {
+            font-family: 'Cinzel', serif;
+            font-size: 1.6rem;
+            color: var(--gold);
+            margin-bottom: 1.4rem;
+            letter-spacing: 0.14em;
+        }
+        .setting-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.6rem 0;
+            border-bottom: 1px solid rgba(212,175,55,0.3);
+            font-size: 1rem;
+        }
+        .toggle {
+            width: 56px; height: 28px;
+            background: rgba(0,0,0,0.5);
+            border: 2px solid var(--gold);
+            border-radius: 999px;
+            position: relative;
+            cursor: pointer;
+            transition: background 0.25s;
+        }
+        .toggle-slider {
+            width: 22px; height: 22px;
+            border-radius: 50%;
+            background: var(--cream);
+            position: absolute;
+            top: 2px; left: 2px;
+            transition: left 0.25s;
+        }
+        .toggle.active { background: var(--gold); }
+        .toggle.active .toggle-slider { left: 30px; }
+
+        .close-button {
+            margin-top: 1.4rem;
+            width: 100%;
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                padding: 0.4rem 0.7rem;
+            }
+            .logo-main { font-size: 0.95rem; }
+            .logo-sub { display: none; }
+            .nav-button { padding: 8px 14px; font-size: 0.8rem; }
+        }
+    </style>
+</head>
+<body>
+    <div id="loadingOverlay">
+        <div id="loadingTitle">GUNNERCOIN DROP</div>
+        <img id="loadingLogo" src="/games/assets/casino/gunnercoin_drop_logo.png" alt="GunnerCoin Drop Logo">
+        <div id="loadingMsg">CONNECTING TO ACCOUNT...</div>
+        <button id="startGameBtn">PLAY</button>
+    </div>
+
+    <div id="gameShell">
+        <div class="header">
+            <div class="logo">
+                <div class="logo-main">GUNNERSGAMES</div>
+                <div class="logo-sub">GUNNERCOIN DROP</div>
+            </div>
+            <button class="settings-button" id="settingsBtn">⚙</button>
+            <div class="balance">
+                <div class="coin-icon">G</div>
+                <span id="balanceText">...</span>
+            </div>
+        </div>
+
+        <div class="main-row">
+            <div id="gameCanvasContainer">
+                <canvas id="gameCanvas"></canvas>
+                <!-- overlays injected here -->
+            </div>
+            <div class="controls">
+                <div class="info-pill">Drop Cost: 1 GunnerCoin</div>
+                <div class="info-pill">Payouts: x1 / x2 / x5 / x10</div>
+                <div class="info-pill">Hit x10 twice in a row → COIN BREAKER BONUS</div>
+                <button id="dropButton" class="game-button">DROP</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="fixed-nav">
+        <a href="#" class="nav-button" onclick="closeGame(); return false;">
+            <span>←</span>
+            <span>Back to Casino</span>
+        </a>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal">
+        <div class="modal-content">
+            <div class="modal-title">SETTINGS</div>
+            <div class="setting-row">
+                <span>Sound Effects</span>
+                <div class="toggle active" id="soundToggle"><div class="toggle-slider"></div></div>
+            </div>
+            <div class="setting-row">
+                <span>Coin Trail Particles</span>
+                <div class="toggle active" id="particleToggle"><div class="toggle-slider"></div></div>
+            </div>
+            <div class="setting-row">
+                <span>Show Drop Hint</span>
+                <div class="toggle active" id="hintToggle"><div class="toggle-slider"></div></div>
+            </div>
+            <button class="game-button close-button" id="closeSettings">CLOSE</button>
+        </div>
+    </div>
+
+    <script type="module">
         function closeGame() { window.location.href = '/index.html'; }
         window.closeGame = closeGame;
 
@@ -125,32 +544,27 @@
         let width = 0;
         let height = 0;
 
-        let gameState = 'idle'; 
+        let gameState = 'idle'; // 'idle', 'dropping', 'bonus_intro', 'bonus_active', 'bonus_cleanup'
         let mainCoin = null;
         let coins = [];
         let pegGrid = [];
-        
-        // SCROLLING LOGIC
-        // A repeating pattern that loops well
-        const prizePattern = [10, 5, 2, 1, 2, 5]; 
-        let scrollPos = 0;
-        const scrollSpeed = 1.2; // Speed of movement (Left to Right)
-        let boxWidth = 0;
-        let patternTotalWidth = 0;
-
+        let prizeBoxes = [];
         let hoverCoinX = null;
         let hoverEnabled = true;
         let lastMultiplier = 0;
         let lastHitWasX10 = false;
 
         const gravity = 0.38;
-        const pegRadius = 8;
-        const coinRadius = 22; 
+        const pegRadius = 8;          // was 11 – smaller peg for easier flow
+        const coinRadius = 22;
         const dropZoneHeightRatio = 0.15;
         let dropZoneHeightPx = 0;
 
         const prizeBoxHeight = 80;
         let prizeTrackY = 0;
+
+        let prizeOffset = 0;
+        let prizeSpeed = 1.4;
 
         let particles = [];
 
@@ -181,47 +595,59 @@
         boxImgMap[5].src = '/games/assets/casino/box_x5.png';
         boxImgMap[10].src = '/games/assets/casino/box_x10.png';
 
+        const bonusBannerImg = new Image();
+        bonusBannerImg.src = '/games/assets/casino/coinbreaker_bonus.png';
+
         function resizeCanvas() {
             const rect = gameContainer.getBoundingClientRect();
-            if (rect.width === 0 || rect.height === 0) return;
-            
             canvas.width = rect.width;
             canvas.height = rect.height;
             width = rect.width;
             height = rect.height;
             dropZoneHeightPx = height * dropZoneHeightRatio;
             prizeTrackY = height - prizeBoxHeight - 10;
-            
-            // Calculate Box Sizing
-            // We want roughly 5 visible boxes
-            boxWidth = width / 5;
-            patternTotalWidth = boxWidth * prizePattern.length;
-            
             setupPegGrid();
+            setupPrizeBoxes();
         }
 
-        // Grid logic prevents edge drops
+        // UPDATED: Wider peg spacing so coin can fall
         function setupPegGrid() {
             pegGrid = [];
-            let idealSpacing = 85; 
-            let cols = Math.round(width / idealSpacing);
-            if (cols < 3) cols = 3;
-            const spacingX = width / cols; 
-            
-            const startY = dropZoneHeightPx + 60;
-            const availableHeight = prizeTrackY - startY;
-            const rows = Math.floor(availableHeight / 75); 
+
+            const spacingX = 90;   // wider columns
+            const spacingY = 90;   // wider rows
+            let cols = Math.floor(width / spacingX) - 1;
+            if (cols < 3) cols = 3;    // safety for small screens
+
+            const rows = 7;
+            const startY = dropZoneHeightPx + 80; // push first row lower
 
             for (let r = 0; r < rows; r++) {
-                const y = startY + r * 75;
-                for (let c = 0; c <= cols; c++) {
-                    let x = c * spacingX;
+                const y = startY + r * spacingY;
+                for (let c = 0; c < cols; c++) {
+                    let x = (c + 1) * spacingX;
+
+                    // stagger every other row (classic Plinko layout)
                     if (r % 2 === 1) x += spacingX / 2;
-                    // Allow pins at x=0 and x=width
-                    if (x >= -10 && x <= width + 10) {
-                        pegGrid.push({ x, y });
-                    }
+
+                    pegGrid.push({ x, y });
                 }
+            }
+        }
+
+        function setupPrizeBoxes() {
+            const multipliers = [1,2,5,10];
+            const boxWidth = Math.min(180, width / (multipliers.length + 0.5));
+            const gap = (width - boxWidth * multipliers.length) / (multipliers.length + 1);
+            prizeBoxes = [];
+            let x = gap;
+            for (let m of multipliers) {
+                prizeBoxes.push({
+                    baseX: x,
+                    width: boxWidth,
+                    multiplier: m
+                });
+                x += boxWidth + gap;
             }
         }
 
@@ -265,8 +691,7 @@
                 return;
             }
             updateBalance(-1);
-            let dropX = Math.max(coinRadius + 2, Math.min(width - coinRadius - 2, x));
-            mainCoin = createCoin(dropX, dropZoneHeightPx + 10, 2);
+            mainCoin = createCoin(x, dropZoneHeightPx + 10, 2);
             gameState = 'dropping';
             playDropSound();
             lastMultiplier = 0;
@@ -280,14 +705,14 @@
             coin.y += coin.vy;
             coin.spinning += 0.18;
 
-            // Wall Bouncing
+            // Edge collision – slightly softer rebound
             if (coin.x < coin.radius) {
                 coin.x = coin.radius;
-                coin.vx *= -0.5;
+                coin.vx *= -0.35;
             }
             if (coin.x > width - coin.radius) {
                 coin.x = width - coin.radius;
-                coin.vx *= -0.5;
+                coin.vx *= -0.35;
             }
 
             // Peg collisions
@@ -296,7 +721,7 @@
                 const dy = coin.y - peg.y;
                 const dist = Math.sqrt(dx*dx + dy*dy);
                 const minDist = coin.radius + pegRadius;
-                if (dist < minDist) {
+                if (dist > 0 && dist < minDist) {
                     const nx = dx / dist;
                     const ny = dy / dist;
                     const overlap = minDist - dist;
@@ -305,50 +730,45 @@
                     const dot = coin.vx * nx + coin.vy * ny;
                     coin.vx -= 2 * dot * nx;
                     coin.vy -= 2 * dot * ny;
-                    coin.vx *= 0.8; 
-                    coin.vy *= 0.8; 
+                    // Softer damping so it doesn't stall
+                    coin.vx *= 0.92;
+                    coin.vy *= 0.92;
                     playPegHitSound();
                     addParticles(coin.x, coin.y, 6, 'gold');
                 }
             }
 
-            // Prize collision (Dynamic Scrolling)
+            // Prize line
             if (coin.y + coin.radius >= prizeTrackY) {
-                const mult = getPrizeUnderCoin(coin.x);
-                if (mult !== null) {
+                const box = getPrizeBoxUnderCoin(coin.x);
+                if (box) {
                     coin.landed = true;
-                    coin.prize = mult;
-                    handlePrizeResult(mult, isMini);
+                    coin.prize = box.multiplier;
+                    handlePrizeResult(box.multiplier, isMini);
                 } else {
                     coin.landed = true;
                     coin.prize = 0;
                 }
             }
-            
+
+            // Fell off bottom (no prize)
             if (coin.y - coin.radius > height + 50) {
                 coin.landed = true;
                 coin.prize = 0;
             }
         }
 
-        // CALCULATE WIN BASED ON SCROLL POSITION
-        function getPrizeUnderCoin(x) {
-            if (boxWidth <= 0) return 0;
-            
-            // Because boxes scroll Right, we subtract scrollPos from the coin's X
-            // to find its relative position in the pattern.
-            // We use modulo to handle the infinite repeat.
-            
-            let relativeX = (x - scrollPos) % patternTotalWidth;
-            if (relativeX < 0) relativeX += patternTotalWidth;
-            
-            let index = Math.floor(relativeX / boxWidth);
-            
-            // Safety clamp
-            if (index < 0) index = 0;
-            if (index >= prizePattern.length) index = 0;
-            
-            return prizePattern[index];
+        function getPrizeBoxUnderCoin(x) {
+            const trackPhase = Math.sin(performance.now() / 900) * 50;
+            let idx = 0;
+            for (let box of prizeBoxes) {
+                const bx = box.baseX + trackPhase;
+                if (x >= bx && x <= bx + box.width) {
+                    return { ...box, x: bx, index: idx };
+                }
+                idx++;
+            }
+            return null;
         }
 
         function handlePrizeResult(multiplier, isMini) {
@@ -392,20 +812,25 @@
             const overlay = document.createElement('div');
             overlay.className = 'bonus-banner';
             overlay.id = 'bonusBannerOverlay';
+
             const img = document.createElement('img');
             img.src = '/games/assets/casino/coinbreaker_bonus.png';
             overlay.appendChild(img);
+
             const txt = document.createElement('div');
             txt.className = 'bonus-text';
             txt.textContent = 'TAP / CLICK TO SMASH THE GIANT COIN';
             overlay.appendChild(txt);
+
             gameContainer.appendChild(overlay);
             bonus.bannerShown = true;
+
             setTimeout(() => {
                 overlay.style.opacity = '0';
                 overlay.style.transition = 'opacity 0.4s';
                 setTimeout(() => overlay.remove(), 420);
             }, 1400);
+
             setTimeout(() => {
                 gameState = 'bonus_active';
             }, 500);
@@ -481,7 +906,6 @@
                 ctx.fillRect(0, 0, width, dropZoneHeightPx);
             }
 
-            // Draw Pegs
             for (let peg of pegGrid) {
                 if (pegImg.complete && pegImg.naturalWidth > 0) {
                     const s = pegRadius*2;
@@ -494,49 +918,29 @@
                 }
             }
 
-            // DRAW SCROLLING PRIZE BOXES
-            if (boxWidth > 0) {
-                // Determine starting offset for drawing
-                // The logical pattern moves right, so we offset draw position by scrollPos % totalWidth
-                let effectiveScroll = scrollPos % patternTotalWidth;
-                
-                // We need to draw enough boxes to cover the screen width
-                // Starting from just off-screen left to ensure seamlessness
-                
-                // Index shift caused by scrolling
-                let startIndex = Math.floor(-effectiveScroll / boxWidth); 
-                // Draw extra boxes to cover width
-                let boxesToDraw = Math.ceil(width / boxWidth) + 2; 
+            const trackPhase = Math.sin(performance.now() / 900) * 50;
+            prizeOffset = trackPhase;
 
-                for (let i = -2; i < boxesToDraw; i++) {
-                    let drawX = (i * boxWidth) + effectiveScroll;
-                    
-                    // Logic to find which prize corresponds to this box slot
-                    // We handle negative modulo indices manually
-                    let patternIndex = (i % prizePattern.length);
-                    if (patternIndex < 0) patternIndex += prizePattern.length;
-                    
-                    let multiplier = prizePattern[patternIndex];
-                    let img = boxImgMap[multiplier];
-
-                    if (img.complete && img.naturalWidth > 0) {
-                        ctx.drawImage(img, drawX, prizeTrackY, boxWidth, prizeBoxHeight);
-                    } else {
-                        ctx.fillStyle = 'rgba(30,30,30,0.9)';
-                        ctx.fillRect(drawX, prizeTrackY, boxWidth, prizeBoxHeight);
-                        ctx.strokeStyle = (multiplier === 10) ? 'gold' : '#888';
-                        ctx.lineWidth = 2;
-                        ctx.strokeRect(drawX+1, prizeTrackY+1, boxWidth-2, prizeBoxHeight-2);
-                        ctx.fillStyle = '#fff';
-                        ctx.font = 'bold 24px Cinzel, serif';
-                        ctx.textAlign = 'center';
-                        ctx.textBaseline = 'middle';
-                        ctx.fillText('x'+multiplier, drawX + boxWidth/2, prizeTrackY + prizeBoxHeight/2);
-                    }
+            for (let box of prizeBoxes) {
+                const img = boxImgMap[box.multiplier];
+                const x = box.baseX + prizeOffset;
+                const y = prizeTrackY;
+                if (img.complete && img.naturalWidth > 0) {
+                    ctx.drawImage(img, x, y, box.width, prizeBoxHeight);
+                } else {
+                    ctx.fillStyle = 'rgba(30,30,30,0.9)';
+                    ctx.fillRect(x, y, box.width, prizeBoxHeight);
+                    ctx.strokeStyle = (box.multiplier === 10) ? 'gold' : '#888';
+                    ctx.lineWidth = 3;
+                    ctx.strokeRect(x+2, y+2, box.width-4, prizeBoxHeight-4);
+                    ctx.fillStyle = '#fff';
+                    ctx.font = 'bold 24px Cinzel, serif';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText('x'+box.multiplier, x + box.width/2, y + prizeBoxHeight/2);
                 }
             }
 
-            // Draw Hover Coin
             if (hoverCoinX !== null && hoverEnabled && gameState === 'idle') {
                 const y = dropZoneHeightPx * 0.5;
                 const size = coinRadius * 2.2;
@@ -628,10 +1032,6 @@
             requestAnimationFrame(loop);
 
             if (width === 0 || height === 0) return;
-
-            // Increment scroll
-            scrollPos += scrollSpeed;
-            if (scrollPos > patternTotalWidth) scrollPos -= patternTotalWidth;
 
             if (gameState === 'dropping') {
                 if (mainCoin && !mainCoin.landed) {
@@ -733,3 +1133,5 @@
         loop();
         initAuth();
     </script>
+</body>
+</html>
