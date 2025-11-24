@@ -98,35 +98,38 @@
             display: flex; align-items: center; justify-content: center;
         }
 
-        /* --- The Game Area (Flex Center) --- */
+        /* --- The Game Area (Centerpiece) --- */
         .game-area {
             flex: 1; /* Take all remaining height */
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 10px;
+            padding: 1vh 1vw;
             overflow: hidden;
             width: 100%;
+            position: relative;
         }
 
         .slot-wrapper {
-            /* This box holds the machine. It CANNOT exceed the game-area size. */
             width: 100%;
-            max-width: 800px;
-            height: 100%; /* Fill vertical space */
-            max-height: 100%;
+            /* Reduced Width to keep aspect ratio tighter */
+            max-width: 700px; 
+            
+            /* Flex column to stack header/grid/footer */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 0.5rem;
             
             background: radial-gradient(circle at top, rgba(255,255,255,0.08), rgba(0,0,0,0.85));
             border-radius: 20px;
             border: 2px solid rgba(212, 175, 55, 0.6);
             box-shadow: 0 10px 40px rgba(0,0,0,0.8);
             padding: 0.8rem;
-            
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between; /* Distribute items top to bottom */
-            gap: 0.5rem;
             position: relative;
+            
+            /* Prevent wrapper from exceeding screen height minus header */
+            max-height: calc(100vh - 70px); 
         }
 
         /* --- Top Info Row --- */
@@ -141,7 +144,7 @@
         }
         .free-spin-indicator.hidden { opacity: 0; visibility: hidden; }
 
-        /* --- THE GRID (The layout fix) --- */
+        /* --- THE GRID FIX --- */
         .slot-grid {
             position: relative;
             border-radius: 14px;
@@ -149,9 +152,11 @@
             background: linear-gradient(180deg, #4fa64a 0%, #26602a 100%);
             padding: 0.4rem;
             
-            /* FLEX PROPERTIES TO PREVENT OVERFLOW */
-            flex: 1; /* Take remaining space */
-            min-height: 0; /* ALLOW SHRINKING - Crucial for preventing huge symbols */
+            /* STRICT HEIGHT CONTROL */
+            height: auto; 
+            max-height: 50vh; /* Hard cap: Grid never exceeds 50% screen height */
+            min-height: 140px;
+            
             display: flex;
             flex-direction: column;
         }
@@ -160,7 +165,7 @@
             display: grid;
             grid-template-columns: repeat(5, 1fr);
             gap: 0.2rem;
-            height: 100%;
+            height: 100%; /* Fill the capped container */
             width: 100%;
         }
 
@@ -182,14 +187,14 @@
             overflow: hidden;
             box-shadow: inset 0 0 5px rgba(0,0,0,0.6);
             width: 100%;
-            height: 100%;
+            height: 100%; /* Fill grid cell */
             padding: 2px;
         }
 
         .slot-symbol img {
             width: 100%;
             height: 100%;
-            object-fit: contain; /* Ensures image fits inside cell regardless of aspect ratio */
+            object-fit: contain; /* Shrinks images to fit exactly */
             image-rendering: pixelated;
         }
 
@@ -302,10 +307,14 @@
         .bonus-block.revealing { animation: none; }
         @keyframes blockIdle { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
 
-        /* --- ULTRA RESPONSIVE FIXES --- */
+        /* --- RESPONSIVE ADJUSTMENTS --- */
         
         /* Short screens (Landscape Mobile) */
-        @media (max-height: 500px) {
+        @media (max-height: 600px) {
+            .slot-grid {
+                /* STRICTER CAP for landscape mobile */
+                max-height: 40vh; 
+            }
             .header { height: 40px; padding: 0 0.5rem; }
             .logo { font-size: 0.9rem; }
             .game-title { display: none; }
@@ -316,7 +325,7 @@
             .slot-footer { margin-top: 0; gap: 0.5rem; }
             .game-button { padding: 0.3rem 0.8rem; font-size: 0.8rem; }
             
-            /* Hide lines/player label on extremely short screens to save space */
+            /* Hide extra info rows on very small screens */
             .slot-header-row { display: none; } 
         }
         
