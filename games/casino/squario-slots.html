@@ -124,17 +124,42 @@
 
         /* --- Slot Machine --- */
         .slot-wrapper {
-            max-width: 1100px;
+            max-width: 1200px;
             margin: 0 auto;
             padding: 0.6rem 0.8rem 0.6rem;
             background: radial-gradient(circle at top, rgba(255,255,255,0.08), rgba(0,0,0,0.85));
             border-radius: 25px;
             border: 2px solid rgba(212, 175, 55, 0.6);
             box-shadow: 0 10px 40px rgba(0,0,0,0.8);
-            max-height: calc(100vh - 130px);
+            max-height: calc(100vh - 100px);
             display: flex;
             flex-direction: column;
             justify-content: flex-start;
+        }
+
+        .slot-content {
+            display: flex;
+            gap: 1.5rem;
+            align-items: center;
+            justify-content: center;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        .slot-left {
+            flex: 0 1 auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .slot-right {
+            flex: 0 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            align-items: center;
+            justify-content: center;
+            min-width: 200px;
         }
 
         .slot-header-row {
@@ -188,9 +213,9 @@
             border: 2px solid rgba(0,0,0,0.8);
             background: linear-gradient(180deg, #4fa64a 0%, #26602a 100%);
             padding: 0.4rem;
-            margin-bottom: 0.4rem;
-            transform-origin: top center;
-            transform: scale(1);
+            transform-origin: center;
+            max-width: 650px;
+            width: 100%;
         }
 
         .slot-reels {
@@ -240,28 +265,20 @@
             100% { transform: translateY(0); opacity: 1; }
         }
 
-        .slot-footer {
-            display: flex;
-            justify-content: center;
-            align-items: stretch;
-            gap: 1rem;
-            padding: 0 0.3rem;
-        }
-
         .betting-area {
             display: flex;
             flex-direction: column;
             align-items: stretch;
-            gap: 0.5rem;
-            padding: 0.8rem;
+            gap: 0.8rem;
+            padding: 1.2rem;
             background: rgba(0,0,0,0.4);
             border-radius: 12px;
             border: 2px solid rgba(212, 175, 55, 0.3);
-            min-width: 140px;
+            width: 100%;
         }
 
         .bet-label {
-            font-size: 1rem;
+            font-size: 1.1rem;
             color: var(--gold);
             font-weight: 600;
             letter-spacing: 0.1em;
@@ -270,25 +287,72 @@
 
         .bet-input {
             width: 100%;
-            padding: 0.5rem;
+            padding: 0.6rem;
             background: rgba(0,0,0,0.7);
             border: 2px solid var(--gold);
             color: var(--cream);
-            font-size: 1.1rem;
+            font-size: 1.2rem;
             border-radius: 8px;
             text-align: center;
             font-weight: 600;
         }
 
-        .spin-button-container {
+        .lever-container {
             display: flex;
+            flex-direction: column;
             align-items: center;
+            gap: 0.5rem;
+            padding: 1rem;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .lever-handle {
+            width: 12px;
+            height: 80px;
+            background: linear-gradient(90deg, #8b4513 0%, #a0522d 50%, #8b4513 100%);
+            border-radius: 6px;
+            position: relative;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.5);
+            transition: transform 0.15s ease, height 0.15s ease;
+        }
+
+        .lever-handle::before {
+            content: '';
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 40px;
+            height: 40px;
+            background: radial-gradient(circle, #ff4444 0%, #cc0000 100%);
+            border-radius: 50%;
+            border: 3px solid var(--gold);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.6), inset 0 2px 5px rgba(255,255,255,0.3);
+        }
+
+        .lever-handle.pulled {
+            transform: translateY(30px);
+            height: 60px;
+        }
+
+        .lever-base {
+            width: 50px;
+            height: 20px;
+            background: linear-gradient(180deg, #2a1f1a 0%, #1a1410 100%);
+            border-radius: 10px;
+            border: 2px solid var(--gold-dark);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.7);
+        }
+
+        .spin-button-container {
+            width: 100%;
         }
 
         #spinBtn {
-            padding: 2rem 3rem;
-            font-size: 1.8rem;
-            min-width: 180px;
+            padding: 1.2rem 2rem;
+            font-size: 1.5rem;
+            width: 100%;
         }
 
         .game-button {
@@ -314,8 +378,8 @@
         .secondary-button {
             background: linear-gradient(135deg, rgba(212, 175, 55, 0.2) 0%, rgba(184, 148, 31, 0.2) 100%);
             border: 2px solid var(--gold);
-            padding: 0.5rem 1rem;
-            font-size: 0.9rem;
+            padding: 0.6rem 1rem;
+            font-size: 0.95rem;
             width: 100%;
         }
 
@@ -589,42 +653,54 @@
 
         @keyframes fadeIn { to { opacity: 1; } }
 
-        @media (max-width: 768px) {
-            .slot-wrapper { 
-                max-height: calc(100vh - 130px); 
-                max-width: 100%;
+        @media (max-width: 1024px) {
+            .slot-content {
+                flex-direction: column;
+                gap: 1rem;
             }
-            .slot-footer { 
-                flex-direction: column; 
-                align-items: stretch; 
-                gap: 0.8rem; 
-            }
-            #spinBtn {
-                padding: 1.5rem 2rem;
-                font-size: 1.5rem;
+            .slot-right {
+                flex-direction: row;
                 min-width: auto;
                 width: 100%;
+                justify-content: space-around;
+            }
+            .lever-container {
+                order: 2;
             }
             .betting-area {
-                min-width: auto;
+                order: 1;
+                max-width: 300px;
+            }
+            .spin-button-container {
+                order: 3;
+                max-width: 200px;
             }
         }
 
-        /* Auto-scale reels by height & phone width */
-        @media (max-height: 850px) {
-            .slot-grid { transform: scale(0.9); }
-        }
-        @media (max-height: 750px) {
-            .slot-grid { transform: scale(0.82); }
-        }
-        @media (max-height: 650px) {
-            .slot-grid { transform: scale(0.74); }
-        }
-        @media (max-height: 560px) {
-            .slot-grid { transform: scale(0.66); }
-        }
-        @media (max-height: 480px) {
-            .slot-grid { transform: scale(0.58); }
+        @media (max-width: 768px) {
+            .slot-wrapper { 
+                max-height: calc(100vh - 100px); 
+                max-width: 100%;
+            }
+            .slot-content {
+                flex-direction: column;
+            }
+            .slot-right {
+                flex-direction: column;
+                width: 100%;
+                max-width: 400px;
+            }
+            .betting-area,
+            .spin-button-container {
+                max-width: none;
+            }
+            #spinBtn {
+                padding: 1.2rem 2rem;
+                font-size: 1.3rem;
+            }
+            .lever-handle {
+                height: 60px;
+            }
         }
 
         @media (max-width: 768px) {
@@ -688,20 +764,30 @@
                     </div>
                 </div>
 
-                <div class="slot-grid">
-                    <div id="slotReels" class="slot-reels">
-                        <!-- Filled by JS -->
+                <div class="slot-content">
+                    <div class="slot-left">
+                        <div class="slot-grid">
+                            <div id="slotReels" class="slot-reels">
+                                <!-- Filled by JS -->
+                            </div>
+                        </div>
                     </div>
-                </div>
 
-                <div class="slot-footer">
-                    <div class="betting-area">
-                        <span class="bet-label">BET AMOUNT</span>
-                        <input type="number" id="betAmount" class="bet-input" value="10" min="1" max="100" step="10">
-                        <button class="game-button secondary-button" id="maxBetBtn">MAX BET</button>
-                    </div>
-                    <div class="spin-button-container">
-                        <button class="game-button" id="spinBtn">SPIN</button>
+                    <div class="slot-right">
+                        <div class="betting-area">
+                            <span class="bet-label">BET AMOUNT</span>
+                            <input type="number" id="betAmount" class="bet-input" value="10" min="1" max="100" step="10">
+                            <button class="game-button secondary-button" id="maxBetBtn">MAX BET</button>
+                        </div>
+
+                        <div class="lever-container" id="leverContainer">
+                            <div class="lever-handle" id="leverHandle"></div>
+                            <div class="lever-base"></div>
+                        </div>
+
+                        <div class="spin-button-container">
+                            <button class="game-button" id="spinBtn">SPIN</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1351,6 +1437,20 @@
         });
 
         document.getElementById('spinBtn').addEventListener('click', handleSpinClick);
+
+        // Lever interaction
+        document.getElementById('leverContainer').addEventListener('click', function() {
+            if (spinning || bonusActive || !userId) return;
+            
+            const lever = document.getElementById('leverHandle');
+            lever.classList.add('pulled');
+            
+            setTimeout(() => {
+                lever.classList.remove('pulled');
+            }, 200);
+            
+            handleSpinClick();
+        });
 
         document.getElementById('maxBetBtn').addEventListener('click', () => {
             if (balance <= 0) return;
