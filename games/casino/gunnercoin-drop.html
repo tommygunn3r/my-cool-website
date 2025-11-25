@@ -560,11 +560,13 @@
         const dropZoneHeightRatio = 0.15;
         let dropZoneHeightPx = 0;
 
-        const prizeBoxHeight = 80;
+        const prizeBoxHeight = 60; // Reduced from 80 to match 25% shrink
         let prizeTrackY = 0;
 
         let prizeOffset = 0;
         let prizeSpeed = 1.4;
+        let prizeScrollDirection = -1; // -1 = left, 1 = right
+        let prizeScrollSpeed = 2; // pixels per frame
 
         let particles = [];
 
@@ -636,19 +638,29 @@
         }
 
         function setupPrizeBoxes() {
-            const multipliers = [1,2,5,10];
-            const boxWidth = Math.min(180, width / (multipliers.length + 0.5));
-            const gap = (width - boxWidth * multipliers.length) / (multipliers.length + 1);
+            // Symmetric pattern: x1, x2, x5, x10, x10, x5, x2, x1
+            const multipliers = [1, 2, 5, 10, 10, 5, 2, 1];
+            
+            // Shrink boxes by 25%
+            const boxWidth = Math.min(135, width / (multipliers.length + 1)) * 0.75;
+            
+            // Gap should be at least 2x coin diameter (coinRadius * 2 * 2 = ~88px)
+            const minGap = coinRadius * 4; // Extra spacing for difficulty
+            
             prizeBoxes = [];
-            let x = gap;
+            let x = 0;
+            
             for (let m of multipliers) {
                 prizeBoxes.push({
                     baseX: x,
                     width: boxWidth,
                     multiplier: m
                 });
-                x += boxWidth + gap;
+                x += boxWidth + minGap;
             }
+            
+            // Store total width for wrapping
+            prizeBoxes.totalWidth = x - minGap; // Don't count last gap
         }
 
         function addMessage(txt) {
@@ -695,6 +707,9 @@
             gameState = 'dropping';
             playDropSound();
             lastMultiplier = 0;
+            
+            // Switch scroll direction on each drop
+            prizeScrollDirection *= -1;
         }
 
         function updateCoinPhysics(coin, isMini = false) {
@@ -759,14 +774,18 @@
         }
 
         function getPrizeBoxUnderCoin(x) {
-            const trackPhase = Math.sin(performance.now() / 900) * 50;
+            const totalWidth = prizeBoxes.totalWidth || (prizeBoxes[prizeBoxes.length-1].baseX + prizeBoxes[prizeBoxes.length-1].width);
+            
+            // Check boxes in multiple passes to handle wrapping
             let idx = 0;
-            for (let box of prizeBoxes) {
-                const bx = box.baseX + trackPhase;
-                if (x >= bx && x <= bx + box.width) {
-                    return { ...box, x: bx, index: idx };
+            for (let pass = -1; pass <= 1; pass++) {
+                for (let box of prizeBoxes) {
+                    const bx = box.baseX + prizeOffset + (pass * totalWidth);
+                    if (x >= bx && x <= bx + box.width) {
+                        return { ...box, x: bx, index: idx };
+                    }
+                    idx++;
                 }
-                idx++;
             }
             return null;
         }
@@ -918,26 +937,48 @@
                 }
             }
 
-            const trackPhase = Math.sin(performance.now() / 900) * 50;
-            prizeOffset = trackPhase;
 
-            for (let box of prizeBoxes) {
-                const img = boxImgMap[box.multiplier];
-                const x = box.baseX + prizeOffset;
-                const y = prizeTrackY;
-                if (img.complete && img.naturalWidth > 0) {
-                    ctx.drawImage(img, x, y, box.width, prizeBoxHeight);
-                } else {
-                    ctx.fillStyle = 'rgba(30,30,30,0.9)';
-                    ctx.fillRect(x, y, box.width, prizeBoxHeight);
-                    ctx.strokeStyle = (box.multiplier === 10) ? 'gold' : '#888';
-                    ctx.lineWidth = 3;
-                    ctx.strokeRect(x+2, y+2, box.width-4, prizeBoxHeight-4);
-                    ctx.fillStyle = '#fff';
-                    ctx.font = 'bold 24px Cinzel, serif';
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
-                    ctx.fillText('x'+box.multiplier, x + box.width/2, y + prizeBoxHeight/2);
+            // Update prize box scrolling
+            prizeOffset += prizeScrollSpeed * prizeScrollDirection;
+            
+            // Wrap around when scrolling
+            const totalWidth = prizeBoxes.totalWidth || (prizeBoxes[prizeBoxes.length-1].baseX + prizeBoxes[prizeBoxes.length-1].width);
+            if (prizeScrollDirection < 0) {
+                // Scrolling left
+                if (prizeOffset < -totalWidth) {
+                    prizeOffset += totalWidth;
+                }
+            } else {
+                // Scrolling right
+                if (prizeOffset > width) {
+                    prizeOffset -= totalWidth;
+                }
+            }
+
+            // Draw boxes multiple times to create seamless loop
+            for (let pass = -1; pass <= 1; pass++) {
+                for (let box of prizeBoxes) {
+                    const img = boxImgMap[box.multiplier];
+                    const x = box.baseX + prizeOffset + (pass * totalWidth);
+                    const y = prizeTrackY;
+                    
+                    // Only draw if visible on screen
+                    if (x + box.width < 0 || x > width) continue;
+                    
+                    if (img.complete && img.naturalWidth > 0) {
+                        ctx.drawImage(img, x, y, box.width, prizeBoxHeight);
+                    } else {
+                        ctx.fillStyle = 'rgba(30,30,30,0.9)';
+                        ctx.fillRect(x, y, box.width, prizeBoxHeight);
+                        ctx.strokeStyle = (box.multiplier === 10) ? 'gold' : '#888';
+                        ctx.lineWidth = 3;
+                        ctx.strokeRect(x+2, y+2, box.width-4, prizeBoxHeight-4);
+                        ctx.fillStyle = '#fff';
+                        ctx.font = 'bold 24px Cinzel, serif';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText('x'+box.multiplier, x + box.width/2, y + prizeBoxHeight/2);
+                    }
                 }
             }
 
