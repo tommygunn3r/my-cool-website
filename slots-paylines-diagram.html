@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Squario Slots - Payline Diagram</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #1a1410 0%, #2a1f1a 100%);
+            color: #f5f3e8;
+            padding: 2rem;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: #d4af37;
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            text-shadow: 0 0 20px rgba(212, 175, 55, 0.5);
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #f4e5a7;
+            margin-bottom: 3rem;
+            font-size: 1.2rem;
+        }
+
+        .payline-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .payline-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(212, 175, 55, 0.4);
+            border-radius: 15px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .payline-card:hover {
+            border-color: #d4af37;
+            box-shadow: 0 5px 20px rgba(212, 175, 55, 0.3);
+            transform: translateY(-5px);
+        }
+
+        .payline-title {
+            color: #d4af37;
+            font-size: 1.3rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        .grid-visual {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            margin-bottom: 1rem;
+            background: linear-gradient(180deg, #4fa64a 0%, #26602a 100%);
+            padding: 12px;
+            border-radius: 10px;
+            border: 2px solid rgba(0, 0, 0, 0.5);
+        }
+
+        .cell {
+            aspect-ratio: 1;
+            background: rgba(0, 0, 0, 0.4);
+            border: 2px solid rgba(0, 0, 0, 0.6);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .cell.active {
+            background: radial-gradient(circle, rgba(255, 215, 0, 0.5), rgba(255, 165, 0, 0.3));
+            border-color: #d4af37;
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.6);
+        }
+
+        .cell-number {
+            font-size: 0.9rem;
+            font-weight: bold;
+            color: #d4af37;
+        }
+
+        .pattern-code {
+            text-align: center;
+            font-family: 'Courier New', monospace;
+            color: #f4e5a7;
+            font-size: 0.9rem;
+            padding: 0.5rem;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 5px;
+        }
+
+        .legend {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(212, 175, 55, 0.4);
+            border-radius: 15px;
+            padding: 2rem;
+            margin-top: 2rem;
+        }
+
+        .legend h2 {
+            color: #d4af37;
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+        }
+
+        .legend-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .legend-row {
+            width: 60px;
+            height: 25px;
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .row-0 {
+            background: linear-gradient(135deg, #ff6b6b, #c92a2a);
+            color: white;
+        }
+
+        .row-1 {
+            background: linear-gradient(135deg, #51cf66, #2f9e44);
+            color: white;
+        }
+
+        .row-2 {
+            background: linear-gradient(135deg, #4dabf7, #1971c2);
+            color: white;
+        }
+
+        .visual-demo {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid rgba(212, 175, 55, 0.4);
+            border-radius: 15px;
+            padding: 2rem;
+            margin-top: 2rem;
+        }
+
+        .visual-demo h2 {
+            color: #d4af37;
+            margin-bottom: 1.5rem;
+            font-size: 1.5rem;
+            text-align: center;
+        }
+
+        .demo-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            max-width: 600px;
+            margin: 0 auto 2rem;
+            background: linear-gradient(180deg, #4fa64a 0%, #26602a 100%);
+            padding: 15px;
+            border-radius: 10px;
+            border: 2px solid rgba(0, 0, 0, 0.5);
+        }
+
+        .demo-cell {
+            aspect-ratio: 1;
+            background: rgba(0, 0, 0, 0.4);
+            border: 2px solid rgba(0, 0, 0, 0.6);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+            position: relative;
+        }
+
+        .row-label {
+            position: absolute;
+            left: -30px;
+            font-size: 0.9rem;
+            color: #d4af37;
+            font-weight: bold;
+        }
+
+        .col-label {
+            text-align: center;
+            color: #d4af37;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .label-row {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            max-width: 600px;
+            margin: 0 auto 0.5rem;
+            padding: 0 15px;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 1.8rem;
+            }
+
+            .payline-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .legend-content {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎰 SQUARIO SLOTS PAYLINES 🎰</h1>
+        <div class="subtitle">10 Ways to Win • Match 3+ Symbols Left to Right</div>
+
+        <div class="visual-demo">
+            <h2>Understanding the Grid</h2>
+            <div class="label-row">
+                <div class="col-label">Reel 1</div>
+                <div class="col-label">Reel 2</div>
+                <div class="col-label">Reel 3</div>
+                <div class="col-label">Reel 4</div>
+                <div class="col-label">Reel 5</div>
+            </div>
+            <div class="demo-grid" style="position: relative; margin-left: 40px;">
+                <div class="demo-cell"><span class="row-label">Row 0</span>🟥</div>
+                <div class="demo-cell">🟥</div>
+                <div class="demo-cell">🟥</div>
+                <div class="demo-cell">🟥</div>
+                <div class="demo-cell">🟥</div>
+                
+                <div class="demo-cell"><span class="row-label">Row 1</span>🟩</div>
+                <div class="demo-cell">🟩</div>
+                <div class="demo-cell">🟩</div>
+                <div class="demo-cell">🟩</div>
+                <div class="demo-cell">🟩</div>
+                
+                <div class="demo-cell"><span class="row-label">Row 2</span>🟦</div>
+                <div class="demo-cell">🟦</div>
+                <div class="demo-cell">🟦</div>
+                <div class="demo-cell">🟦</div>
+                <div class="demo-cell">🟦</div>
+            </div>
+        </div>
+
+        <div class="payline-grid">
+            <!-- Payline 1 -->
+            <div class="payline-card">
+                <div class="payline-title">LINE 1: Middle Row</div>
+                <div class="grid-visual">
+                    <div class="cell"></div>
+                    <div class="cell"></div>
+                    <div class="cell"></div>
+                    <div class="cell"></div>
+                    <div class="cell"></div>
+                    
+                    <div class="cell active"><span class="cell-number">1</span></div>
+                    <div class="cell active"><span class="cell-number">2</span></div>
+                    <div class="cell active"><span class="cell-number">3</span></div>
+                    <div class="cell active"><span class="cell-number">4</span></div>
+                    <div class="cell active"><span class="cell-number">5</span></div>
+                    
+                    <div class="cell"></div>
+                    <div class="cell"></div>
+                    <div class="cell"></div>
+                    <div class="cell"></div>
+                    <div class="cell"></div>
+                </div>
+                <div class="pattern-code">[1,1,1,1,1] - Straight across middle</div>
+            </div>
+
+            <!-- Payline 2 -->
+            <div class="payline-card">
+                <div class="payline-title">LINE 2: Top Row</div>
+                <div class="grid-visual">
+                    <div class="cell active"><span class="cell-number">1</span></div>
+                    <div class="cell active"><span class="cell-number">2</span></div>
+                    <div class="cell active"><span class="cell-number">3</span></div>
+                    <div class="cell active"><span class="cell-number">4</span></div>
+                    <div class="cell active"><span class="cell-number">5</span></div>
+                    
+                    <div class="cell"></div>
+                    <div class="cell"></div>
+                    <div class="cell"></div>
+                    <div class="cell"></div>
+                    <div class="cell"></div>
+                    
+                    <div class="cell"></div>
+                    <div class="cell"></div>
+                    <div class="cell"></div>
+                    <div class="cell"></div>
+                    <div class="cell"></div>
+                </div>
+                <div class="pattern-code">[0,0,0,0,0] - Straight across top</div>
+            </div>
+
+            <!-- Payline 3 -->
+            <div class="payline-card">
+                <div class="payline-title">LINE 3: Bottom Row</div>
+                <div class="grid-visual">
+                    <div class="cell"></div>
+                    <div class="cell"></div>
+                    <div class="cell"></div>
+                    <div class="cell"></div>
+                    <div class="cell"></div>
+                    
+                    <div class="cell"></div>
+                    <div class="cell"></div>
+                    <div class="cell"></div>
+                    <div class="cell"></div>
+                    <div class="cell"></div>
+                    
+                    <div class="cell active"><span class="cell-number">1</span></div>
+                    <div class="cell active"><span class="cell-number">2</span></div>
+                    <div class="cell active"><span class="cell-number">3</span></div>
+                    <div class="cell active"><span class="cell-number">4</span></div>
+                    <div class="cell active"><span class="cell-number">5</span></div>
+                </div>
+                <div class="pattern-code">[2,2,2,2,2] - Straight across bottom</div>
+            </div>
+
+            <!-- Payline 4 -->
+            <div class="payline-card">
+                <div class="payline-title">LINE 4: V Shape</div>
+                <div class="grid-visual">
+                    <div class="cell active"><span class="cell-number">1</span></div>
+                    <div class="cell"></div>
+                    <div class="cell"></div>
+                    <div class="cell"></div>
+                    <div class="cell active"><span class="cell-number">5</span></div>
+                    
+                    <div class="cell"></div>
+                    <div class="cell active"><span class="cell-number">2</span></div>
+                    <div class="cell"></div>
+                    <div class="cell active"><span class="cell-number">4</span></div>
+                    <div class="cell"></div>
+                    
+                    <div class="cell"></div>
+                    <div class="cell"></div>
+                    <div class="cell active"><span class="cell-number">3</span></div>
+                    <div class="cell"></div>
+                    <div class="cell"></div>
+                </div>
+                <div class="pattern-code">[0,1,2,1,0] - V pattern (down then up)</div>
+            </div>
+
+            <!-- Payline 5 -->
+            <div class="payline-card">
+                <div class="payline-title">LINE 5: Inverted V</div>
+                <div class="grid-visual">
+                    <div class="cell"></div>
+                    <div class="cell"></div>
+                    <div class="cell active"><span class="cell-number">3</span></div>
+                    <div class="cell"></div>
+                    <div class="cell"></div>
+                    
+                    <div class="cell"></div>
+                    <div class="cell active"><span class="cell-number">2</span></div>
+                    <div class="cell"></div>
+                    <div class="cell active"><span class="cell-number">4</span></div>
+                    <div class="cell"></div>
+                    
+                    <div class="cell active"><span class="cell-number">1</span></div>
+                    <div class="cell"></div>
+                    <div class="cell"></div>
+                    <div class="cell"></div>
+                    <div class="cell active"><span class="cell-number">5</span></div>
+                </div>
+                <div class="pattern-code">[2,1,0,1,2] - Inverted V (up then down)</div>
+            </div>
+
+            <!-- Payline 6 -->
+            <div class="payline-card">
+                <div class="payline-title">LINE 6: W Shape (Low)</div>
+                <div class="grid-visual">
+                    <div class="cell active"><span class="cell-number">1</span></div>
+                    <div class="cell"></div>
+                    <div class="cell"></div>
+                    <div class="cell"></div>
+                    <div class="cell active"><span class="cell-number">5</span></div>
+                    
+                    <div class="cell"></div>
+                    <div class="cell active"><span class="cell-number">2</span></div>
+                    <div class="cell active"><span class="cell-number">3</span></div>
+                    <div class="cell active"><span class="cell-number">4</span></div>
+                    <div class="cell"></div>
+                    
+                    <div class="cell"></div>
+                    <div class="cell"></div>
+                    <div class="cell"></div>
+                    <div class="cell"></div>
+                    <div class="cell"></div>
+                </div>
+                <div class="pattern-code">[0,1,1,1,0] - Top corners, middle center</div>
+            </div>
+
+            <!-- Payline 7 -->
+            <div class="payline-card">
+                <div class="payline-title">LINE 7: M Shape (High)</div>
+                <div class="grid-visual">
+                    <div class="cell"></div>
+                    <div class="cell"></div>
+                    <div class="cell"></div>
+                    <div class="cell"></div>
+                    <div class="cell"></div>
+                    
+                    <div class="cell"></div>
+                    <div class="cell active"><span class="cell-number">2</span></div>
+                    <div class="cell active"><span class="cell-number">3</span></div>
+                    <div class="cell active"><span class="cell-number">4</span></div>
+                    <div class="cell"></div>
+                    
+                    <div class="cell active"><span class="cell-number">1</span></div>
+                    <div class="cell"></div>
+                    <div class="cell"></div>
+                    <div class="cell"></div>
+                    <div class="cell active"><span class="cell-number">5</span></div>
+                </div>
+                <div class="pattern-code">[2,1,1,1,2] - Bottom corners, middle center</div>
+            </div>
+
+            <!-- Payline 8 -->
+            <div class="payline-card">
+                <div class="payline-title">LINE 8: Up Steps</div>
+                <div class="grid-visual">
+                    <div class="cell"></div>
+                    <div class="cell"></div>
+                    <div class="cell active"><span class="cell-number">3</span></div>
+                    <div class="cell"></div>
+                    <div class="cell"></div>
+                    
+                    <div class="cell active"><span class="cell-number">1</span></div>
+                    <div class="cell"></div>
+                    <div class="cell"></div>
+                    <div class="cell active"><span class="cell-number">4</span></div>
+                    <div class="cell"></div>
+                    
+                    <div class="cell"></div>
+                    <div class="cell active"><span class="cell-number">2</span></div>
+                    <div class="cell"></div>
+                    <div class="cell"></div>
+                    <div class="cell active"><span class="cell-number">5</span></div>
+                </div>
+                <div class="pattern-code">[1,0,1,0,1] - Zigzag up pattern</div>
+            </div>
+
+            <!-- Payline 9 -->
+            <div class="payline-card">
+                <div class="payline-title">LINE 9: Down Steps</div>
+                <div class="grid-visual">
+                    <div class="cell"></div>
+                    <div class="cell active"><span class="cell-number">2</span></div>
+                    <div class="cell"></div>
+                    <div class="cell"></div>
+                    <div class="cell active"><span class="cell-number">5</span></div>
+                    
+                    <div class="cell active"><span class="cell-number">1</span></div>
+                    <div class="cell"></div>
+                    <div class="cell active"><span class="cell-number">3</span></div>
+                    <div class="cell"></div>
+                    <div class="cell"></div>
+                    
+                    <div class="cell"></div>
+                    <div class="cell"></div>
+                    <div class="cell"></div>
+                    <div class="cell active"><span class="cell-number">4</span></div>
+                    <div class="cell"></div>
+                </div>
+                <div class="pattern-code">[1,2,1,2,1] - Zigzag down pattern</div>
+            </div>
+
+            <!-- Payline 10 -->
+            <div class="payline-card">
+                <div class="payline-title">LINE 10: L Shape</div>
+                <div class="grid-visual">
+                    <div class="cell active"><span class="cell-number">1</span></div>
+                    <div class="cell active"><span class="cell-number">2</span></div>
+                    <div class="cell"></div>
+                    <div class="cell"></div>
+                    <div class="cell"></div>
+                    
+                    <div class="cell"></div>
+                    <div class="cell"></div>
+                    <div class="cell active"><span class="cell-number">3</span></div>
+                    <div class="cell"></div>
+                    <div class="cell"></div>
+                    
+                    <div class="cell"></div>
+                    <div class="cell"></div>
+                    <div class="cell"></div>
+                    <div class="cell active"><span class="cell-number">4</span></div>
+                    <div class="cell active"><span class="cell-number">5</span></div>
+                </div>
+                <div class="pattern-code">[0,0,1,2,2] - Top-left to bottom-right</div>
+            </div>
+        </div>
+
+        <div class="legend">
+            <h2>📋 How Paylines Work</h2>
+            <div class="legend-content">
+                <div class="legend-item">
+                    <div class="legend-row row-0">ROW 0</div>
+                    <span>Top row of the slot grid</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-row row-1">ROW 1</div>
+                    <span>Middle row of the slot grid</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-row row-2">ROW 2</div>
+                    <span>Bottom row of the slot grid</span>
+                </div>
+            </div>
+            <p style="margin-top: 1.5rem; line-height: 1.6;">
+                <strong>💡 Win Condition:</strong> Match 3 or more of the same symbol consecutively from left to right along any payline. 
+                Each payline is checked independently, so you can win on multiple lines in a single spin!
+            </p>
+            <p style="margin-top: 1rem; line-height: 1.6;">
+                <strong>🎯 Example:</strong> If LINE 1 (middle row) shows [🍄 🍄 🍄 ⭐ 💰], you win for matching 3 mushrooms! 
+                The star and coin don't break the win because they come after the 3-match.
+            </p>
+        </div>
+    </div>
+</body>
+</html>
