@@ -125,7 +125,8 @@
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            min-height: 80px;
+            min-height: 60px;
+            max-height: 100px;
         }
 
         .foundation-pile.filled, .stock-pile.filled, .waste-pile.filled {
@@ -202,7 +203,7 @@
 
     <div class="flex-1 flex flex-col overflow-hidden">
         <!-- Top area: Stock, Waste, Foundations -->
-        <div class="shrink-0 px-4 py-3">
+        <div class="shrink-0 px-4 py-1">
             <div class="max-w-900px mx-auto grid grid-cols-7 gap-2 sm:gap-3">
                 <!-- Stock Pile -->
                 <div class="stock-pile" id="stockPile" onclick="drawFromStock()">
