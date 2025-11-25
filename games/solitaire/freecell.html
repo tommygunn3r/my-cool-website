@@ -1,0 +1,1195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>FreeCell Solitaire</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:wght@300;400;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* --- Visuals --- */
+        :root {
+            --gold: #d4af37;
+            --gold-dark: #b8941f;
+            --gold-light: #f4e5a7;
+            --dark: #1a1410;
+        }
+
+        body {
+            background-color: #1a472a; 
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            transition: background-image 0.5s ease-in-out;
+            
+            overscroll-behavior: none;
+            user-select: none;
+            -webkit-user-select: none;
+            font-family: 'Cormorant Garamond', serif;
+            touch-action: none; 
+        }
+
+        /* Card styling */
+        .card {
+            width: 100%;
+            aspect-ratio: 2.5/3.5;
+            background-color: white;
+            border-radius: 0.4rem;
+            box-shadow: 1px 1px 3px rgba(0,0,0,0.4);
+            position: absolute;
+            transition: transform 0.1s; 
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 0.3rem; 
+            cursor: grab;
+            backface-visibility: hidden;
+            z-index: 10;
+            font-family: 'Cinzel', serif; 
+            font-weight: 700;
+        }
+        
+        .card:active { cursor: grabbing; }
+
+        @media (min-width: 640px) {
+            .card {
+                border-radius: 0.5rem;
+                padding: 0.4rem;
+                box-shadow: 2px 2px 5px rgba(0,0,0,0.4);
+            }
+        }
+
+        .card.selected {
+            transform: translateY(-10px);
+            box-shadow: 0 0 0 3px var(--gold), 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+            z-index: 50 !important;
+        }
+        
+        .card.dragging {
+            box-shadow: 0 15px 35px rgba(0,0,0,0.6);
+            z-index: 9999 !important;
+            pointer-events: none; 
+        }
+        
+        .card.snapping { transition: top 0.2s ease-out, left 0.2s ease-out; }
+        .card.hint-anim { animation: wiggle 0.5s ease-in-out; z-index: 60 !important; }
+
+        @keyframes wiggle {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(-5deg); }
+            75% { transform: rotate(5deg); }
+        }
+
+        /* Suit Colors */
+        .suit-red { color: #dc143c; }
+        .suit-black { color: #000000; }
+
+        /* Layout */
+        .top-area {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 0.4rem;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 0.5rem;
+        }
+
+        .tableau-area {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 0.4rem;
+            width: 100%;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 0.5rem;
+        }
+        @media (min-width: 768px) { 
+            .tableau-area { gap: 0.75rem; } 
+            .top-area { gap: 0.75rem; }
+        }
+
+        .column { position: relative; min-height: 50vh; }
+        
+        .column.drag-hover, .foundation-pile.drag-hover, .free-cell.drag-hover {
+            background-color: rgba(212, 175, 55, 0.2);
+            border-radius: 0.5rem;
+            box-shadow: inset 0 0 20px rgba(212, 175, 55, 0.3);
+        }
+
+        .foundation-pile, .free-cell {
+            position: relative;
+            aspect-ratio: 2.5/3.5;
+            border: 2px dashed rgba(212, 175, 55, 0.4);
+            border-radius: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            min-height: 80px;
+        }
+
+        .foundation-pile.filled, .free-cell.filled {
+            border-style: solid;
+            border-color: var(--gold);
+        }
+
+        /* Top Bar */
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.8rem 1.5rem;
+            background: linear-gradient(180deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.7) 100%);
+            border-bottom: 2px solid var(--gold);
+            color: var(--gold);
+            font-family: 'Cinzel', serif;
+        }
+
+        /* Buttons */
+        .game-btn {
+            font-family: 'Cinzel', serif;
+            background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
+            color: var(--dark);
+            border: none;
+            font-weight: 700;
+            box-shadow: 0 3px 10px rgba(212, 175, 55, 0.3);
+            transition: all 0.2s;
+        }
+        .game-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(212, 175, 55, 0.5);
+        }
+        
+        /* Modal */
+        .modal { background-color: rgba(0, 0, 0, 0.85); }
+        .modal-content {
+            background: linear-gradient(135deg, #2a1f1a 0%, var(--dark) 100%);
+            border: 3px solid var(--gold);
+            color: #f5f3e8;
+        }
+
+        #confetti-canvas { position: fixed; top: 0; left: 0; pointer-events: none; z-index: 100; }
+        #drag-layer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 9000; }
+        
+        .redeal-btn {
+            font-family: 'Cinzel', serif;
+            background: linear-gradient(135deg, #8b4513 0%, #654321 100%);
+            color: white;
+            border: none;
+            font-weight: 700;
+            box-shadow: 0 3px 10px rgba(139, 69, 19, 0.3);
+            transition: all 0.2s;
+        }
+        .redeal-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(139, 69, 19, 0.5);
+        }
+        .redeal-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body class="h-screen flex flex-col overflow-hidden font-sans text-gray-900">
+
+    <canvas id="confetti-canvas"></canvas>
+    
+    <div id="drag-layer"></div>
+
+    <div class="top-bar shrink-0 z-20">
+        <div class="flex gap-2">
+            <button onclick="toggleMenu()" class="game-btn px-3 py-2 sm:px-4 sm:py-2 rounded text-sm sm:text-base">
+                MENU
+            </button>
+            <button onclick="undoMove()" id="undoBtn" class="bg-gray-700 text-white border border-gray-600 px-3 py-2 sm:px-4 sm:py-2 rounded font-bold hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base font-cinzel">
+                UNDO
+            </button>
+            <button onclick="redealTableau()" id="redealBtn" class="redeal-btn px-3 py-2 sm:px-4 sm:py-2 rounded text-sm sm:text-base hidden">
+                REDEAL
+            </button>
+        </div>
+        
+        <div class="flex flex-col items-center">
+            <div class="text-xl sm:text-2xl font-bold text-gold drop-shadow-md" style="color: var(--gold);" id="moveCounter">Moves: 0</div>
+            <div class="text-xs sm:text-sm font-medium text-yellow-200" id="gameMode">FreeCell</div>
+        </div>
+
+        <div class="flex gap-2 items-center">
+             <button onclick="showHint()" class="bg-blue-800 text-white border border-blue-600 px-3 py-2 sm:px-4 sm:py-2 rounded font-bold hover:bg-blue-700 text-sm sm:text-base font-cinzel">
+                HINT
+            </button>
+        </div>
+    </div>
+
+    <div class="flex-1 flex flex-col overflow-hidden">
+        <!-- Top area: Free Cells and Foundations -->
+        <div class="shrink-0 px-4 py-3">
+            <div class="top-area">
+                <!-- 4 Free Cells -->
+                <div class="free-cell" id="freecell-0">
+                    <div class="text-2xl text-gold opacity-30">□</div>
+                </div>
+                <div class="free-cell" id="freecell-1">
+                    <div class="text-2xl text-gold opacity-30">□</div>
+                </div>
+                <div class="free-cell" id="freecell-2">
+                    <div class="text-2xl text-gold opacity-30">□</div>
+                </div>
+                <div class="free-cell" id="freecell-3">
+                    <div class="text-2xl text-gold opacity-30">□</div>
+                </div>
+                
+                <!-- 4 Foundation Piles -->
+                <div class="foundation-pile" id="foundation-0" data-suit="hearts">
+                    <div class="text-3xl suit-red opacity-30">♥</div>
+                </div>
+                <div class="foundation-pile" id="foundation-1" data-suit="diamonds">
+                    <div class="text-3xl suit-red opacity-30">♦</div>
+                </div>
+                <div class="foundation-pile" id="foundation-2" data-suit="clubs">
+                    <div class="text-3xl suit-black opacity-30">♣</div>
+                </div>
+                <div class="foundation-pile" id="foundation-3" data-suit="spades">
+                    <div class="text-3xl suit-black opacity-30">♠</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tableau Area -->
+        <div class="flex-1 relative w-full overflow-hidden">
+            <div class="tableau-area h-full pt-2" id="tableau">
+            </div>
+        </div>
+    </div>
+
+    <div id="winModal" class="modal fixed inset-0 hidden flex items-center justify-center z-50">
+        <div class="modal-content p-8 rounded-xl shadow-2xl text-center max-w-md mx-4">
+            <h2 class="text-4xl font-bold mb-4" style="color: var(--gold); font-family: 'Cinzel', serif;">YOU WON!</h2>
+            <p class="text-lg mb-2" style="color: #f5f3e8;">Moves: <span id="finalMoveDisplay" class="font-bold text-gold" style="color: var(--gold);">0</span></p>
+            <p class="text-sm mb-6" style="color: #f5f3e8;">Time: <span id="finalTimeDisplay" class="font-bold">0:00</span></p>
+            <button onclick="startNewGame()" class="game-btn px-8 py-3 rounded-full text-xl shadow-lg hover:scale-105 transition">
+                PLAY AGAIN
+            </button>
+        </div>
+    </div>
+
+    <div id="menuModal" class="modal fixed inset-0 hidden flex items-center justify-center z-50">
+        <div class="modal-content p-6 rounded-xl shadow-2xl max-w-sm w-full mx-4">
+            <div class="flex justify-between items-center mb-6 border-b border-gray-600 pb-2">
+                <h2 class="text-2xl font-bold" style="color: var(--gold); font-family: 'Cinzel', serif;">SETTINGS</h2>
+                <button onclick="toggleMenu()" class="text-gray-400 hover:text-white text-3xl">&times;</button>
+            </div>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-semibold mb-2" style="color: var(--gold);">Game Mode</label>
+                    <select id="gameModeSelect" class="w-full bg-gray-800 border border-gray-600 rounded px-3 py-2 text-white">
+                        <option value="freecell">FreeCell (Classic)</option>
+                        <option value="cruel">Cruel (With Redeals)</option>
+                    </select>
+                    <p class="text-xs text-gray-400 mt-1">Cruel mode allows redealing the tableau when stuck</p>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold mb-2" style="color: var(--gold);">Theme</label>
+                    <select id="themeSelect" class="w-full bg-gray-800 border border-gray-600 rounded px-3 py-2 text-white">
+                        <option value="green">Classic Green</option>
+                        <option value="red">Royal Red</option>
+                        <option value="blue">Ocean Blue</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="flex gap-3 mt-6">
+                <button onclick="saveAndResume()" class="flex-1 bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded">
+                    SAVE & RESUME
+                </button>
+                <button onclick="confirmNewGame()" class="flex-1 game-btn py-2 px-4 rounded">
+                    NEW GAME
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="messageToast" class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-black bg-opacity-90 text-gold border border-gold px-6 py-4 rounded-lg pointer-events-none opacity-0 transition-opacity duration-300 z-50 text-center font-bold text-xl shadow-xl font-cinzel" style="color: var(--gold); border-color: var(--gold);">Message</div>
+
+    <script type="module">
+        import { db } from '/firebase-config.js';
+        import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { collection, addDoc, serverTimestamp, doc, setDoc, increment } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        let auth = null;
+        let currentUser = null;
+
+        // Gatekeeper: Check if logged in
+        async function initGameAuth() {
+            try {
+                auth = getAuth(db.app);
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        console.log("Player Identified:", user.displayName);
+                        currentUser = user;
+                        scoreManager.playerName = user.displayName || "Unknown Player";
+                    } else {
+                        // Not logged in? Kick back to the portal
+                        window.location.href = '/index.html';
+                    }
+                });
+            } catch (error) {
+                console.error("Auth failed:", error);
+            }
+        }
+        initGameAuth();
+
+        // --- Score Manager ---
+        class GameScoreManager {
+            constructor(gameName) {
+                this.gameName = gameName;
+                this.sessionStartTime = null;
+                this.playerName = "Loading...";
+            }
+
+            startSession() {
+                this.sessionStartTime = Date.now();
+            }
+
+            getElapsedTime() {
+                if (!this.sessionStartTime) return 0;
+                return Math.floor((Date.now() - this.sessionStartTime) / 1000);
+            }
+
+            getElapsedTimeFormatted() {
+                const seconds = this.getElapsedTime();
+                if (seconds < 60) return `0:${seconds.toString().padStart(2, '0')}`;
+                const mins = Math.floor(seconds / 60);
+                const secs = seconds % 60;
+                return `${mins}:${secs.toString().padStart(2, '0')}`;
+            }
+
+            async submitGameResult(moves = 0) {
+                if (!currentUser) return;
+
+                const timePlayed = this.getElapsedTime();
+                // For FreeCell, lower moves = better score
+                const score = Math.max(0, 1000 - moves);
+                
+                try {
+                    // Public Leaderboard
+                    await addDoc(collection(db, 'scores'), {
+                        gameName: this.gameName,
+                        playerName: this.playerName,
+                        score: score,
+                        moves: moves,
+                        timePlayed: timePlayed,
+                        timestamp: serverTimestamp(),
+                        uid: currentUser.uid
+                    });
+
+                    console.log(`✅ Score submitted: ${score} (${moves} moves) for ${this.gameName}`);
+                } catch (error) {
+                    console.error("Score submission failed:", error);
+                }
+            }
+        }
+        const scoreManager = new GameScoreManager('FreeCell Solitaire');
+
+        // --- Assets & Constants ---
+        const ICONS = { spades: '♠', hearts: '♥', clubs: '♣', diamonds: '♦' };
+        const SUITS = ['hearts', 'diamonds', 'clubs', 'spades'];
+        const RANKS = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+        const VALUES = { 'A': 1, '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9, '10': 10, 'J': 11, 'Q': 12, 'K': 13 };
+        
+        const THEMES = {
+            green: '/games/assets/solitaire/greentop.png',
+            red: '/games/assets/solitaire/redtop.png',
+            blue: '/games/assets/solitaire/bluetop.png'
+        };
+
+        let state = {
+            tableau: [[], [], [], [], [], [], [], []],
+            freeCells: [null, null, null, null],
+            foundations: [[], [], [], []],
+            history: [],
+            moves: 0,
+            gameMode: 'freecell', // 'freecell' or 'cruel'
+            redealsRemaining: 0,
+            selectedCard: null,
+            theme: 'green'
+        };
+
+        let drag = {
+            active: false,
+            startX: 0, startY: 0,
+            sourceType: null, // 'tableau', 'freecell'
+            sourceIndex: null,
+            cardIndex: null,
+            elStack: [],
+            originalRects: [],
+            offsetX: 0, offsetY: 0,
+            hasMoved: false
+        };
+
+        function init() {
+            loadPreferences();
+            applyTheme();
+            startNewGame();
+            setupDragListeners();
+        }
+
+        function loadPreferences() {
+            state.gameMode = localStorage.getItem('freecell_gameMode') || 'freecell';
+            state.theme = localStorage.getItem('freecell_theme') || 'green';
+            updateGameModeDisplay();
+        }
+
+        function updateGameModeDisplay() {
+            const modeName = state.gameMode === 'cruel' ? 'Cruel' : 'FreeCell';
+            document.getElementById('gameMode').textContent = modeName;
+            document.getElementById('redealBtn').classList.toggle('hidden', state.gameMode !== 'cruel');
+        }
+
+        function startNewGame() {
+            scoreManager.startSession();
+            state.tableau = [[], [], [], [], [], [], [], []];
+            state.freeCells = [null, null, null, null];
+            state.foundations = [[], [], [], []];
+            state.history = [];
+            state.moves = 0;
+            state.selectedCard = null;
+            state.redealsRemaining = (state.gameMode === 'cruel') ? 999 : 0; // Unlimited redeals in Cruel
+
+            stopConfetti();
+            document.getElementById('winModal').classList.add('hidden');
+            
+            dealNewGame();
+            updateMoveCounter();
+            updateUndoButton();
+            updateRedealButton();
+        }
+
+        function dealNewGame() {
+            // Create deck
+            const deck = [];
+            for (let suit of SUITS) {
+                for (let rank of RANKS) {
+                    deck.push({ suit, rank, value: VALUES[rank], faceUp: true });
+                }
+            }
+            
+            // Shuffle
+            for (let i = deck.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [deck[i], deck[j]] = [deck[j], deck[i]];
+            }
+
+            // Deal to tableau (all cards face up)
+            // First 4 columns get 7 cards, last 4 get 6 cards
+            let deckIndex = 0;
+            for (let col = 0; col < 8; col++) {
+                const cardsInCol = col < 4 ? 7 : 6;
+                for (let i = 0; i < cardsInCol; i++) {
+                    state.tableau[col].push(deck[deckIndex++]);
+                }
+            }
+            
+            renderBoard();
+        }
+
+        function renderBoard() {
+            renderTableau();
+            renderFreeCells();
+            renderFoundations();
+        }
+
+        function renderTableau() {
+            const tableauEl = document.getElementById('tableau');
+            tableauEl.innerHTML = '';
+
+            state.tableau.forEach((col, colIndex) => {
+                const colEl = document.createElement('div');
+                colEl.className = 'column';
+                colEl.dataset.col = colIndex;
+                colEl.onclick = (e) => { if(e.target === colEl) handleEmptyColumnClick(colIndex); };
+
+                let overlap = 25;
+                if (window.innerWidth < 640) overlap = 20;
+
+                col.forEach((card, cardIndex) => {
+                    const cardEl = createCardElement(card, cardIndex * overlap);
+                    cardEl.dataset.source = 'tableau';
+                    cardEl.dataset.sourceIndex = colIndex;
+                    cardEl.dataset.cardIndex = cardIndex;
+
+                    if (state.selectedCard && 
+                        state.selectedCard.sourceType === 'tableau' && 
+                        state.selectedCard.sourceIndex === colIndex && 
+                        state.selectedCard.cardIndex === cardIndex) {
+                        cardEl.classList.add('selected');
+                    }
+
+                    cardEl.addEventListener('mousedown', (e) => handleInputStart(e, 'tableau', colIndex, cardIndex));
+                    cardEl.addEventListener('touchstart', (e) => handleInputStart(e, 'tableau', colIndex, cardIndex), {passive: false});
+
+                    colEl.appendChild(cardEl);
+                });
+                tableauEl.appendChild(colEl);
+            });
+        }
+
+        function renderFreeCells() {
+            for (let i = 0; i < 4; i++) {
+                const cellEl = document.getElementById(`freecell-${i}`);
+                cellEl.innerHTML = '';
+
+                if (state.freeCells[i] === null) {
+                    cellEl.classList.remove('filled');
+                    cellEl.innerHTML = '<div class="text-2xl text-gold opacity-30">□</div>';
+                } else {
+                    cellEl.classList.add('filled');
+                    const card = state.freeCells[i];
+                    const cardEl = createCardElement(card, 0);
+                    cardEl.style.position = 'relative';
+                    cardEl.dataset.source = 'freecell';
+                    cardEl.dataset.sourceIndex = i;
+
+                    if (state.selectedCard && state.selectedCard.sourceType === 'freecell' && state.selectedCard.sourceIndex === i) {
+                        cardEl.classList.add('selected');
+                    }
+
+                    cardEl.addEventListener('mousedown', (e) => handleInputStart(e, 'freecell', i, 0));
+                    cardEl.addEventListener('touchstart', (e) => handleInputStart(e, 'freecell', i, 0), {passive: false});
+
+                    cellEl.appendChild(cardEl);
+                }
+            }
+        }
+
+        function renderFoundations() {
+            for (let i = 0; i < 4; i++) {
+                const foundEl = document.getElementById(`foundation-${i}`);
+                foundEl.innerHTML = '';
+
+                if (state.foundations[i].length === 0) {
+                    foundEl.classList.remove('filled');
+                    const suit = foundEl.dataset.suit;
+                    foundEl.innerHTML = `<div class="text-3xl ${getSuitColor(suit)} opacity-30">${ICONS[suit]}</div>`;
+                } else {
+                    foundEl.classList.add('filled');
+                    const topCard = state.foundations[i][state.foundations[i].length - 1];
+                    const cardEl = createCardElement(topCard, 0);
+                    cardEl.style.position = 'relative';
+                    foundEl.appendChild(cardEl);
+                }
+            }
+        }
+
+        function createCardElement(card, topOffset) {
+            const cardEl = document.createElement('div');
+            cardEl.className = `card ${getSuitColor(card.suit)}`;
+            cardEl.style.top = `${topOffset}px`;
+
+            const topDiv = document.createElement('div');
+            topDiv.className = 'flex flex-col items-center leading-none select-none';
+            topDiv.innerHTML = `<span class="text-xl font-bold">${card.rank}</span>`;
+            
+            const centerDiv = document.createElement('div');
+            centerDiv.className = 'absolute inset-0 flex items-center justify-center pointer-events-none';
+            centerDiv.innerHTML = `<span class="text-6xl">${ICONS[card.suit]}</span>`;
+            
+            const botDiv = document.createElement('div');
+            botDiv.className = 'flex flex-col items-center leading-none select-none transform rotate-180';
+            botDiv.innerHTML = `<span class="text-xl font-bold">${card.rank}</span>`;
+            
+            cardEl.appendChild(topDiv);
+            cardEl.appendChild(centerDiv);
+            cardEl.appendChild(botDiv);
+
+            return cardEl;
+        }
+
+        // --- Drag & Drop System ---
+        function setupDragListeners() {
+            document.addEventListener('mousemove', handleInputMove);
+            document.addEventListener('touchmove', handleInputMove, {passive: false});
+            document.addEventListener('mouseup', handleInputEnd);
+            document.addEventListener('touchend', handleInputEnd);
+        }
+
+        function handleInputStart(e, sourceType, sourceIndex, cardIndex) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+            drag.active = true;
+            drag.startX = clientX;
+            drag.startY = clientY;
+            drag.sourceType = sourceType;
+            drag.sourceIndex = sourceIndex;
+            drag.cardIndex = cardIndex;
+            drag.hasMoved = false;
+
+            const cardElements = getCardElements(sourceType, sourceIndex, cardIndex);
+
+            drag.elStack = cardElements;
+            drag.originalRects = cardElements.map(el => el.getBoundingClientRect());
+
+            const firstRect = drag.originalRects[0];
+            drag.offsetX = clientX - firstRect.left;
+            drag.offsetY = clientY - firstRect.top;
+        }
+
+        function handleInputMove(e) {
+            if (!drag.active) return;
+            e.preventDefault();
+
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+            const deltaX = Math.abs(clientX - drag.startX);
+            const deltaY = Math.abs(clientY - drag.startY);
+
+            if (!drag.hasMoved && (deltaX > 3 || deltaY > 3)) {
+                drag.hasMoved = true;
+                startDragging();
+            }
+
+            if (drag.hasMoved) {
+                updateDragPosition(clientX, clientY);
+                updateDropHighlight(clientX, clientY);
+            }
+        }
+
+        function handleInputEnd(e) {
+            if (!drag.active) return;
+
+            if (!drag.hasMoved) {
+                // Click without drag - select card
+                selectCard(drag.sourceType, drag.sourceIndex, drag.cardIndex);
+                drag.active = false;
+                return;
+            }
+
+            const clientX = e.changedTouches ? e.changedTouches[0].clientX : e.clientX;
+            const clientY = e.changedTouches ? e.changedTouches[0].clientY : e.clientY;
+
+            const dropTarget = findDropTarget(clientX, clientY);
+            
+            if (dropTarget) {
+                tryMove(drag.sourceType, drag.sourceIndex, drag.cardIndex, dropTarget.type, dropTarget.index);
+            }
+
+            endDragging();
+            clearDropHighlights();
+            drag.active = false;
+        }
+
+        function startDragging() {
+            const dragLayer = document.getElementById('drag-layer');
+            
+            drag.elStack.forEach((el, i) => {
+                const rect = drag.originalRects[i];
+                const clone = el.cloneNode(true);
+                clone.classList.add('dragging');
+                clone.style.position = 'fixed';
+                clone.style.width = `${rect.width}px`;
+                clone.style.height = `${rect.height}px`;
+                clone.style.left = `${rect.left}px`;
+                clone.style.top = `${rect.top}px`;
+                clone.style.zIndex = 9000 + i;
+                dragLayer.appendChild(clone);
+                el.style.opacity = '0.3';
+            });
+        }
+
+        function updateDragPosition(clientX, clientY) {
+            const dragLayer = document.getElementById('drag-layer');
+            const clones = Array.from(dragLayer.children);
+            
+            clones.forEach((clone, i) => {
+                clone.style.left = `${clientX - drag.offsetX}px`;
+                clone.style.top = `${clientY - drag.offsetY + (i * 25)}px`;
+            });
+        }
+
+        function endDragging() {
+            const dragLayer = document.getElementById('drag-layer');
+            dragLayer.innerHTML = '';
+            drag.elStack.forEach(el => el.style.opacity = '1');
+        }
+
+        function updateDropHighlight(x, y) {
+            clearDropHighlights();
+            const target = findDropTarget(x, y);
+            if (target) {
+                const el = getDropTargetElement(target);
+                if (el) el.classList.add('drag-hover');
+            }
+        }
+
+        function clearDropHighlights() {
+            document.querySelectorAll('.drag-hover').forEach(el => el.classList.remove('drag-hover'));
+        }
+
+        function findDropTarget(x, y) {
+            const el = document.elementFromPoint(x, y);
+            if (!el) return null;
+
+            // Check tableau
+            const colEl = el.closest('.column');
+            if (colEl) {
+                return { type: 'tableau', index: parseInt(colEl.dataset.col) };
+            }
+
+            // Check foundation
+            const foundEl = el.closest('.foundation-pile');
+            if (foundEl) {
+                const id = foundEl.id;
+                const index = parseInt(id.split('-')[1]);
+                return { type: 'foundation', index };
+            }
+
+            // Check free cell
+            const cellEl = el.closest('.free-cell');
+            if (cellEl) {
+                const id = cellEl.id;
+                const index = parseInt(id.split('-')[1]);
+                return { type: 'freecell', index };
+            }
+
+            return null;
+        }
+
+        function getDropTargetElement(target) {
+            if (target.type === 'tableau') {
+                return document.querySelector(`.column[data-col="${target.index}"]`);
+            } else if (target.type === 'foundation') {
+                return document.getElementById(`foundation-${target.index}`);
+            } else if (target.type === 'freecell') {
+                return document.getElementById(`freecell-${target.index}`);
+            }
+            return null;
+        }
+
+        // --- Game Logic ---
+        function getCard(sourceType, sourceIndex, cardIndex) {
+            if (sourceType === 'tableau') {
+                return state.tableau[sourceIndex][cardIndex];
+            } else if (sourceType === 'freecell') {
+                return state.freeCells[sourceIndex];
+            }
+            return null;
+        }
+
+        function getCardsToDrag(sourceType, sourceIndex, cardIndex) {
+            if (sourceType === 'tableau') {
+                return state.tableau[sourceIndex].slice(cardIndex);
+            } else if (sourceType === 'freecell') {
+                return [state.freeCells[sourceIndex]];
+            }
+            return [];
+        }
+
+        function getCardElements(sourceType, sourceIndex, cardIndex) {
+            if (sourceType === 'tableau') {
+                const col = document.querySelector(`.column[data-col="${sourceIndex}"]`);
+                const allCards = Array.from(col.querySelectorAll('.card'));
+                return allCards.slice(cardIndex);
+            } else if (sourceType === 'freecell') {
+                const cell = document.getElementById(`freecell-${sourceIndex}`);
+                return [cell.querySelector('.card')];
+            }
+            return [];
+        }
+
+        function getMaxMovableCards() {
+            // Calculate max cards that can be moved at once based on free cells and empty columns
+            const emptyFreeCells = state.freeCells.filter(c => c === null).length;
+            const emptyColumns = state.tableau.filter(col => col.length === 0).length;
+            return (emptyFreeCells + 1) * Math.pow(2, emptyColumns);
+        }
+
+        function isValidTableauSequence(cards) {
+            // Check if cards form a valid descending alternating-color sequence
+            for (let i = 0; i < cards.length - 1; i++) {
+                const curr = cards[i];
+                const next = cards[i + 1];
+                if (isRed(curr.suit) === isRed(next.suit)) return false; // Must alternate colors
+                if (curr.value !== next.value + 1) return false; // Must be descending
+            }
+            return true;
+        }
+
+        function isRed(suit) {
+            return suit === 'hearts' || suit === 'diamonds';
+        }
+
+        function canMoveToTableau(cards, targetCol) {
+            const targetPile = state.tableau[targetCol];
+            const movingCard = cards[0];
+
+            // Check if sequence is valid
+            if (!isValidTableauSequence(cards)) return false;
+
+            // Check if we have enough free cells/columns to move this many cards
+            const maxMovable = getMaxMovableCards();
+            if (cards.length > maxMovable) return false;
+
+            if (targetPile.length === 0) {
+                return true; // Any card can go to empty column
+            }
+
+            const targetCard = targetPile[targetPile.length - 1];
+            if (isRed(movingCard.suit) === isRed(targetCard.suit)) return false;
+            if (movingCard.value !== targetCard.value - 1) return false;
+
+            return true;
+        }
+
+        function canMoveToFoundation(card, foundIndex) {
+            const foundPile = state.foundations[foundIndex];
+            const foundSuit = ['hearts', 'diamonds', 'clubs', 'spades'][foundIndex];
+
+            if (card.suit !== foundSuit) return false;
+
+            if (foundPile.length === 0) {
+                return card.value === 1; // Must be Ace
+            }
+
+            const topCard = foundPile[foundPile.length - 1];
+            return card.value === topCard.value + 1;
+        }
+
+        function tryMove(fromType, fromIndex, cardIndex, toType, toIndex) {
+            const cards = getCardsToDrag(fromType, fromIndex, cardIndex);
+            if (cards.length === 0) return;
+
+            let valid = false;
+
+            if (toType === 'tableau') {
+                valid = canMoveToTableau(cards, toIndex);
+                if (valid) {
+                    removeCards(fromType, fromIndex, cardIndex);
+                    state.tableau[toIndex].push(...cards);
+                    state.moves++;
+                }
+            } else if (toType === 'foundation' && cards.length === 1) {
+                valid = canMoveToFoundation(cards[0], toIndex);
+                if (valid) {
+                    removeCards(fromType, fromIndex, cardIndex);
+                    state.foundations[toIndex].push(cards[0]);
+                    state.moves++;
+                }
+            } else if (toType === 'freecell' && cards.length === 1) {
+                if (state.freeCells[toIndex] === null) {
+                    removeCards(fromType, fromIndex, cardIndex);
+                    state.freeCells[toIndex] = cards[0];
+                    state.moves++;
+                    valid = true;
+                }
+            }
+
+            if (valid) {
+                updateMoveCounter();
+                renderBoard();
+                checkWin();
+            }
+        }
+
+        function removeCards(sourceType, sourceIndex, cardIndex) {
+            if (sourceType === 'tableau') {
+                state.tableau[sourceIndex].splice(cardIndex);
+            } else if (sourceType === 'freecell') {
+                state.freeCells[sourceIndex] = null;
+            }
+        }
+
+        function selectCard(sourceType, sourceIndex, cardIndex) {
+            const card = getCard(sourceType, sourceIndex, cardIndex);
+            if (!card) return;
+
+            // If clicking same card, deselect
+            if (state.selectedCard && 
+                state.selectedCard.sourceType === sourceType &&
+                state.selectedCard.sourceIndex === sourceIndex &&
+                (sourceType === 'freecell' || state.selectedCard.cardIndex === cardIndex)) {
+                state.selectedCard = null;
+                renderBoard();
+                return;
+            }
+
+            // If card is selected, try auto-move to foundation
+            if (state.selectedCard) {
+                const cards = getCardsToDrag(state.selectedCard.sourceType, state.selectedCard.sourceIndex, state.selectedCard.cardIndex);
+                
+                // Try foundation first (auto-move on double-click)
+                if (cards.length === 1) {
+                    for (let i = 0; i < 4; i++) {
+                        if (canMoveToFoundation(cards[0], i)) {
+                            tryMove(state.selectedCard.sourceType, state.selectedCard.sourceIndex, state.selectedCard.cardIndex, 'foundation', i);
+                            state.selectedCard = null;
+                            return;
+                        }
+                    }
+                }
+
+                state.selectedCard = null;
+                renderBoard();
+                return;
+            }
+
+            // Select new card
+            if (sourceType === 'freecell') {
+                state.selectedCard = { sourceType, sourceIndex, cardIndex: 0 };
+            } else {
+                state.selectedCard = { sourceType, sourceIndex, cardIndex };
+            }
+            renderBoard();
+        }
+
+        function handleEmptyColumnClick(colIndex) {
+            if (!state.selectedCard) return;
+
+            const cards = getCardsToDrag(state.selectedCard.sourceType, state.selectedCard.sourceIndex, state.selectedCard.cardIndex);
+            if (canMoveToTableau(cards, colIndex)) {
+                tryMove(state.selectedCard.sourceType, state.selectedCard.sourceIndex, state.selectedCard.cardIndex, 'tableau', colIndex);
+            }
+            state.selectedCard = null;
+        }
+
+        function redealTableau() {
+            if (state.gameMode !== 'cruel' || state.redealsRemaining <= 0) return;
+
+            // Collect all cards from tableau
+            const allCards = [];
+            for (let col of state.tableau) {
+                allCards.push(...col);
+            }
+
+            // Shuffle
+            for (let i = allCards.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [allCards[i], allCards[j]] = [allCards[j], allCards[i]];
+            }
+
+            // Redistribute
+            state.tableau = [[], [], [], [], [], [], [], []];
+            let cardIndex = 0;
+            for (let col = 0; col < 8; col++) {
+                const cardsInCol = col < 4 ? 7 : 6;
+                for (let i = 0; i < cardsInCol && cardIndex < allCards.length; i++) {
+                    state.tableau[col].push(allCards[cardIndex++]);
+                }
+            }
+
+            state.moves += 5; // Penalty for redeal
+            updateMoveCounter();
+            renderBoard();
+            showMessage("Tableau redealt!");
+        }
+
+        function checkWin() {
+            const allFoundationsFilled = state.foundations.every(pile => pile.length === 13);
+            if (allFoundationsFilled) {
+                document.getElementById('finalMoveDisplay').textContent = state.moves;
+                document.getElementById('finalTimeDisplay').textContent = scoreManager.getElapsedTimeFormatted();
+                document.getElementById('winModal').classList.remove('hidden');
+                startConfetti();
+                scoreManager.submitGameResult(state.moves);
+            }
+        }
+
+        // --- Utils & UI ---
+        function getSuitColor(suit) { 
+            return (suit === 'hearts' || suit === 'diamonds') ? 'suit-red' : 'suit-black'; 
+        }
+
+        function updateMoveCounter() { 
+            document.getElementById('moveCounter').innerText = `Moves: ${state.moves}`; 
+        }
+
+        function updateUndoButton() { 
+            document.getElementById('undoBtn').disabled = state.history.length === 0; 
+        }
+
+        function updateRedealButton() {
+            const btn = document.getElementById('redealBtn');
+            if (state.gameMode === 'cruel') {
+                btn.disabled = false;
+            } else {
+                btn.disabled = true;
+            }
+        }
+
+        function undoMove() {
+            // TODO: Implement undo system
+            showMessage("Undo coming soon!");
+        }
+
+        function showMessage(msg) {
+            const el = document.getElementById('messageToast');
+            el.innerText = msg;
+            el.style.opacity = '1';
+            setTimeout(() => { el.style.opacity = '0'; }, 2000);
+        }
+
+        function toggleMenu() { 
+            document.getElementById('menuModal').classList.toggle('hidden'); 
+        }
+        
+        function applyTheme() {
+            const url = THEMES[state.theme];
+            document.body.style.backgroundImage = `url('${url}')`;
+        }
+
+        function saveAndResume() {
+            const gameModeSelect = document.getElementById('gameModeSelect');
+            state.gameMode = gameModeSelect.value;
+            localStorage.setItem('freecell_gameMode', state.gameMode);
+            updateGameModeDisplay();
+            updateRedealButton();
+
+            const themeSelect = document.getElementById('themeSelect');
+            const newTheme = themeSelect.value;
+            if (newTheme !== state.theme) {
+                state.theme = newTheme;
+                localStorage.setItem('freecell_theme', state.theme);
+                applyTheme();
+            }
+            toggleMenu();
+        }
+
+        function confirmNewGame() {
+            const gameModeSelect = document.getElementById('gameModeSelect');
+            state.gameMode = gameModeSelect.value;
+            localStorage.setItem('freecell_gameMode', state.gameMode);
+            updateGameModeDisplay();
+            
+            const themeSelect = document.getElementById('themeSelect');
+            state.theme = themeSelect.value;
+            localStorage.setItem('freecell_theme', state.theme);
+            applyTheme();
+
+            toggleMenu(); 
+            startNewGame();
+        }
+
+        function showHint() {
+            // Check for auto-moves to foundation
+            for (let col = 0; col < 8; col++) {
+                if (state.tableau[col].length === 0) continue;
+                const card = state.tableau[col][state.tableau[col].length - 1];
+                for (let i = 0; i < 4; i++) {
+                    if (canMoveToFoundation(card, i)) {
+                        animateHint('tableau', col, state.tableau[col].length - 1);
+                        return;
+                    }
+                }
+            }
+
+            // Check free cells
+            for (let i = 0; i < 4; i++) {
+                if (state.freeCells[i] === null) continue;
+                for (let j = 0; j < 4; j++) {
+                    if (canMoveToFoundation(state.freeCells[i], j)) {
+                        animateHint('freecell', i);
+                        return;
+                    }
+                }
+            }
+
+            // Check for tableau moves
+            for (let col = 0; col < 8; col++) {
+                if (state.tableau[col].length === 0) continue;
+                
+                const len = state.tableau[col].length;
+                for (let cardIdx = len - 1; cardIdx >= 0; cardIdx--) {
+                    const cards = state.tableau[col].slice(cardIdx);
+                    if (!isValidTableauSequence(cards)) continue;
+
+                    for (let targetCol = 0; targetCol < 8; targetCol++) {
+                        if (targetCol === col) continue;
+                        if (canMoveToTableau(cards, targetCol)) {
+                            animateHint('tableau', col, cardIdx);
+                            return;
+                        }
+                    }
+                }
+            }
+
+            showMessage("No obvious moves found!");
+        }
+
+        function animateHint(sourceType, sourceIndex, cardIdx) {
+            if (sourceType === 'freecell') {
+                const cell = document.getElementById(`freecell-${sourceIndex}`);
+                const card = cell.querySelector('.card');
+                if (card) {
+                    card.classList.add('hint-anim');
+                    setTimeout(() => card.classList.remove('hint-anim'), 500);
+                }
+            } else if (sourceType === 'tableau') {
+                const tableau = document.getElementById('tableau');
+                const col = tableau.children[sourceIndex];
+                const card = col.children[cardIdx];
+                if (card) {
+                    card.classList.add('hint-anim');
+                    setTimeout(() => card.classList.remove('hint-anim'), 500);
+                }
+            }
+        }
+
+        let confettiInterval;
+        function startConfetti() {
+            const canvas = document.getElementById('confetti-canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            const pieces = [];
+            const colors = ['#d4af37', '#f4e5a7', '#ffffff', '#b8941f'];
+            for(let i=0; i<200; i++) {
+                pieces.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height - canvas.height,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    size: Math.random() * 8 + 4,
+                    speedY: Math.random() * 5 + 2,
+                    speedX: Math.random() * 2 - 1
+                });
+            }
+            function animate() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                pieces.forEach(p => {
+                    ctx.fillStyle = p.color;
+                    ctx.fillRect(p.x, p.y, p.size, p.size);
+                    p.y += p.speedY;
+                    p.x += p.speedX;
+                    if(p.y > canvas.height) p.y = -20;
+                });
+                confettiInterval = requestAnimationFrame(animate);
+            }
+            animate();
+        }
+
+        function stopConfetti() {
+            if (confettiInterval) cancelAnimationFrame(confettiInterval);
+            const canvas = document.getElementById('confetti-canvas');
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+
+        window.toggleMenu = toggleMenu;
+        window.undoMove = undoMove;
+        window.showHint = showHint;
+        window.startNewGame = startNewGame;
+        window.confirmNewGame = confirmNewGame;
+        window.saveAndResume = saveAndResume;
+        window.handleEmptyColumnClick = handleEmptyColumnClick;
+        window.redealTableau = redealTableau;
+
+        init();
+    </script>
+</body>
+</html>
