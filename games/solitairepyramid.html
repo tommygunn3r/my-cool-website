@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pyramid Solitaire - GunnersGames</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Georgia', serif;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            color: #d4af37;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 10px;
+            overflow-x: hidden;
+        }
+
+        .game-header {
+            text-align: center;
+            margin: 15px 0;
+        }
+
+        .game-header h1 {
+            font-size: 2.5em;
+            color: #d4af37;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            margin-bottom: 5px;
+        }
+
+        .stats {
+            display: flex;
+            gap: 30px;
+            justify-content: center;
+            margin: 10px 0;
+            font-size: 1.1em;
+        }
+
+        .stat {
+            background: rgba(212, 175, 55, 0.1);
+            padding: 8px 20px;
+            border-radius: 8px;
+            border: 1px solid rgba(212, 175, 55, 0.3);
+        }
+
+        .game-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            width: 100%;
+            max-width: 900px;
+        }
+
+        .pyramid-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            margin: 20px 0;
+        }
+
+        .pyramid-row {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+        }
+
+        .controls {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            justify-content: center;
+            margin: 10px 0;
+        }
+
+        .deck-area {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .card {
+            width: 70px;
+            height: 98px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+
+        .card.face-up {
+            background: white;
+            border: 2px solid #d4af37;
+        }
+
+        .card.face-down {
+            background: linear-gradient(135deg, #8b4513 0%, #654321 100%);
+            border: 2px solid #d4af37;
+            cursor: pointer;
+        }
+
+        .card.face-down::after {
+            content: '♠';
+            color: #d4af37;
+            font-size: 2em;
+        }
+
+        .card.red {
+            color: #dc143c;
+        }
+
+        .card.black {
+            color: #000;
+        }
+
+        .card.selected {
+            transform: translateY(-10px);
+            box-shadow: 0 8px 16px rgba(212, 175, 55, 0.6), 0 0 20px rgba(212, 175, 55, 0.4);
+            border-color: #ffd700;
+        }
+
+        .card.covered {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .card:hover:not(.covered):not(.empty-slot) {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 12px rgba(212, 175, 55, 0.4);
+        }
+
+        .empty-slot {
+            background: rgba(212, 175, 55, 0.1);
+            border: 2px dashed rgba(212, 175, 55, 0.3);
+            cursor: default;
+        }
+
+        .stock-pile, .waste-pile {
+            width: 70px;
+            height: 98px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .stock-pile {
+            background: linear-gradient(135deg, #8b4513 0%, #654321 100%);
+            border: 2px solid #d4af37;
+            cursor: pointer;
+        }
+
+        .stock-pile.empty {
+            background: rgba(212, 175, 55, 0.1);
+            border: 2px dashed rgba(212, 175, 55, 0.3);
+            cursor: default;
+        }
+
+        .stock-pile::after {
+            content: '♠';
+            color: #d4af37;
+            font-size: 2em;
+        }
+
+        .stock-pile.empty::after {
+            content: '';
+        }
+
+        .waste-pile {
+            background: rgba(212, 175, 55, 0.1);
+            border: 2px dashed rgba(212, 175, 55, 0.3);
+        }
+
+        button {
+            background: linear-gradient(135deg, #d4af37 0%, #f4d03f 100%);
+            color: #1a1a1a;
+            border: none;
+            padding: 12px 30px;
+            font-size: 1.1em;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.4);
+            background: linear-gradient(135deg, #f4d03f 0%, #d4af37 100%);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .message {
+            font-size: 1.2em;
+            margin: 10px 0;
+            padding: 10px 20px;
+            border-radius: 8px;
+            background: rgba(212, 175, 55, 0.1);
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            min-height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .help-text {
+            text-align: center;
+            font-size: 0.9em;
+            color: rgba(212, 175, 55, 0.7);
+            margin-top: 10px;
+            max-width: 600px;
+        }
+
+        canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        @media (max-width: 768px) {
+            .card {
+                width: 50px;
+                height: 70px;
+                font-size: 1.2em;
+            }
+
+            .stock-pile, .waste-pile {
+                width: 50px;
+                height: 70px;
+            }
+
+            .game-header h1 {
+                font-size: 2em;
+            }
+
+            .stats {
+                gap: 15px;
+                font-size: 1em;
+            }
+
+            .pyramid-row {
+                gap: 5px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="confetti"></canvas>
+
+    <div class="game-header">
+        <h1>⚜ Pyramid Solitaire ⚜</h1>
+        <div class="stats">
+            <div class="stat">Score: <span id="score">0</span></div>
+            <div class="stat">Moves: <span id="moves">0</span></div>
+            <div class="stat">Remaining: <span id="remaining">28</span></div>
+        </div>
+    </div>
+
+    <div class="game-container">
+        <div class="message" id="message">Match pairs that add up to 13! Kings = 13 can be removed alone.</div>
+
+        <div class="pyramid-container" id="pyramid"></div>
+
+        <div class="deck-area">
+            <div class="stock-pile" id="stock" title="Draw card"></div>
+            <div class="waste-pile" id="waste"></div>
+        </div>
+
+        <div class="controls">
+            <button onclick="newGame()">New Game</button>
+        </div>
+
+        <div class="help-text">
+            Click pairs of cards that add up to 13 (Ace=1, Jack=11, Queen=12, King=13).
+            Kings can be removed alone. Only uncovered cards can be selected.
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js';
+        import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js';
+        import { getFirestore, collection, addDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBt0yyyappGK-79wy5HYwtLTkbbrStYUMg",
+            authDomain: "gunnersgames-7e241.firebaseapp.com",
+            projectId: "gunnersgames-7e241",
+            storageBucket: "gunnersgames-7e241.firebasestorage.app",
+            messagingSenderId: "890505816287",
+            appId: "1:890505816287:web:713620eafd7b37b76c7c8b"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        let currentUser = null;
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                currentUser = user;
+            } else {
+                window.location.href = '/index.html';
+            }
+        });
+
+        // Game state
+        let pyramid = [];
+        let stock = [];
+        let waste = null;
+        let selectedCard = null;
+        let score = 0;
+        let moves = 0;
+        let gameStartTime = Date.now();
+
+        const suits = ['♠', '♥', '♦', '♣'];
+        const ranks = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+        const values = { 'A': 1, '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9, '10': 10, 'J': 11, 'Q': 12, 'K': 13 };
+
+        function createDeck() {
+            const deck = [];
+            for (let suit of suits) {
+                for (let rank of ranks) {
+                    deck.push({
+                        rank: rank,
+                        suit: suit,
+                        value: values[rank],
+                        color: (suit === '♥' || suit === '♦') ? 'red' : 'black'
+                    });
+                }
+            }
+            return shuffle(deck);
+        }
+
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function newGame() {
+            const deck = createDeck();
+            pyramid = [];
+            
+            // Build pyramid: 7 rows
+            let cardIndex = 0;
+            for (let row = 0; row < 7; row++) {
+                pyramid[row] = [];
+                for (let col = 0; col <= row; col++) {
+                    pyramid[row][col] = {
+                        card: deck[cardIndex++],
+                        covered: false
+                    };
+                }
+            }
+
+            // Remaining cards go to stock
+            stock = deck.slice(28);
+            waste = null;
+            selectedCard = null;
+            score = 0;
+            moves = 0;
+            gameStartTime = Date.now();
+
+            updateCoveredStatus();
+            render();
+            updateStats();
+            showMessage("Match pairs that add up to 13! Kings = 13 can be removed alone.");
+        }
+
+        function updateCoveredStatus() {
+            // Mark cards as covered if they have cards below them
+            for (let row = 0; row < 6; row++) {
+                for (let col = 0; col < pyramid[row].length; col++) {
+                    if (pyramid[row][col]) {
+                        // Check if cards below exist
+                        const hasLeftChild = pyramid[row + 1] && pyramid[row + 1][col];
+                        const hasRightChild = pyramid[row + 1] && pyramid[row + 1][col + 1];
+                        pyramid[row][col].covered = hasLeftChild || hasRightChild;
+                    }
+                }
+            }
+        }
+
+        function render() {
+            const container = document.getElementById('pyramid');
+            container.innerHTML = '';
+
+            // Render pyramid
+            for (let row = 0; row < pyramid.length; row++) {
+                const rowDiv = document.createElement('div');
+                rowDiv.className = 'pyramid-row';
+
+                for (let col = 0; col < pyramid[row].length; col++) {
+                    const cardData = pyramid[row][col];
+                    if (cardData) {
+                        const cardDiv = createCardElement(cardData.card, cardData.covered);
+                        cardDiv.onclick = () => selectPyramidCard(row, col);
+                        rowDiv.appendChild(cardDiv);
+                    } else {
+                        const emptyDiv = document.createElement('div');
+                        emptyDiv.className = 'card empty-slot';
+                        rowDiv.appendChild(emptyDiv);
+                    }
+                }
+
+                container.appendChild(rowDiv);
+            }
+
+            // Render stock
+            const stockDiv = document.getElementById('stock');
+            stockDiv.className = stock.length > 0 ? 'stock-pile' : 'stock-pile empty';
+            stockDiv.onclick = stock.length > 0 ? drawCard : null;
+
+            // Render waste
+            const wasteDiv = document.getElementById('waste');
+            wasteDiv.innerHTML = '';
+            if (waste) {
+                const cardDiv = createCardElement(waste, false);
+                cardDiv.onclick = () => selectWasteCard();
+                wasteDiv.appendChild(cardDiv);
+            }
+        }
+
+        function createCardElement(card, covered) {
+            const div = document.createElement('div');
+            div.className = `card face-up ${card.color}`;
+            if (covered) div.classList.add('covered');
+            div.textContent = card.rank + card.suit;
+            return div;
+        }
+
+        function selectPyramidCard(row, col) {
+            const cardData = pyramid[row][col];
+            if (!cardData || cardData.covered) return;
+
+            if (selectedCard) {
+                // Try to match
+                if (selectedCard.type === 'pyramid' && selectedCard.row === row && selectedCard.col === col) {
+                    // Deselect
+                    selectedCard = null;
+                } else {
+                    tryMatch(cardData.card, { type: 'pyramid', row, col });
+                }
+            } else {
+                // Check if King (can be removed alone)
+                if (cardData.card.value === 13) {
+                    removeCards([{ type: 'pyramid', row, col }]);
+                } else {
+                    selectedCard = { type: 'pyramid', row, col, card: cardData.card };
+                }
+            }
+
+            render();
+            highlightSelected();
+        }
+
+        function selectWasteCard() {
+            if (!waste) return;
+
+            if (selectedCard) {
+                // Try to match
+                if (selectedCard.type === 'waste') {
+                    // Deselect
+                    selectedCard = null;
+                } else {
+                    tryMatch(waste, { type: 'waste' });
+                }
+            } else {
+                // Check if King
+                if (waste.value === 13) {
+                    removeCards([{ type: 'waste' }]);
+                } else {
+                    selectedCard = { type: 'waste', card: waste };
+                }
+            }
+
+            render();
+            highlightSelected();
+        }
+
+        function tryMatch(card, location) {
+            if (selectedCard.card.value + card.value === 13) {
+                removeCards([selectedCard, location]);
+                showMessage("Great match! +" + (selectedCard.card.value + card.value) + " points");
+            } else {
+                showMessage("Cards must add up to 13!");
+                selectedCard = null;
+            }
+        }
+
+        function removeCards(locations) {
+            for (let loc of locations) {
+                if (loc.type === 'pyramid') {
+                    pyramid[loc.row][loc.col] = null;
+                } else if (loc.type === 'waste') {
+                    waste = null;
+                }
+            }
+
+            score += 13;
+            moves++;
+            selectedCard = null;
+
+            updateCoveredStatus();
+            render();
+            updateStats();
+            checkWin();
+        }
+
+        function drawCard() {
+            if (stock.length === 0) return;
+
+            waste = stock.pop();
+            moves++;
+
+            render();
+            updateStats();
+        }
+
+        function highlightSelected() {
+            if (!selectedCard) return;
+
+            if (selectedCard.type === 'pyramid') {
+                const rows = document.querySelectorAll('.pyramid-row');
+                const row = rows[selectedCard.row];
+                const cards = row.querySelectorAll('.card');
+                cards[selectedCard.col].classList.add('selected');
+            } else if (selectedCard.type === 'waste') {
+                const wasteCard = document.querySelector('#waste .card');
+                if (wasteCard) wasteCard.classList.add('selected');
+            }
+        }
+
+        function updateStats() {
+            document.getElementById('score').textContent = score;
+            document.getElementById('moves').textContent = moves;
+            
+            let remaining = 0;
+            for (let row of pyramid) {
+                for (let card of row) {
+                    if (card) remaining++;
+                }
+            }
+            document.getElementById('remaining').textContent = remaining;
+        }
+
+        function showMessage(msg) {
+            document.getElementById('message').textContent = msg;
+        }
+
+        function checkWin() {
+            let hasCards = false;
+            for (let row of pyramid) {
+                for (let card of row) {
+                    if (card) {
+                        hasCards = true;
+                        break;
+                    }
+                }
+                if (hasCards) break;
+            }
+
+            if (!hasCards) {
+                const gameTime = Math.floor((Date.now() - gameStartTime) / 1000);
+                showMessage("🎉 Pyramid Cleared! 🎉");
+                celebrateWin();
+                submitScore(score, gameTime);
+            } else if (stock.length === 0 && !canMakeMove()) {
+                showMessage("No more moves available. Try again!");
+            }
+        }
+
+        function canMakeMove() {
+            const availableCards = [];
+            
+            // Get uncovered pyramid cards
+            for (let row = 0; row < pyramid.length; row++) {
+                for (let col = 0; col < pyramid[row].length; col++) {
+                    if (pyramid[row][col] && !pyramid[row][col].covered) {
+                        availableCards.push(pyramid[row][col].card);
+                    }
+                }
+            }
+
+            // Add waste card
+            if (waste) availableCards.push(waste);
+
+            // Check for Kings
+            for (let card of availableCards) {
+                if (card.value === 13) return true;
+            }
+
+            // Check for pairs
+            for (let i = 0; i < availableCards.length; i++) {
+                for (let j = i + 1; j < availableCards.length; j++) {
+                    if (availableCards[i].value + availableCards[j].value === 13) {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        async function submitScore(finalScore, gameTime) {
+            if (!currentUser) return;
+
+            try {
+                await addDoc(collection(db, 'solitaire_scores'), {
+                    userId: currentUser.uid,
+                    userName: currentUser.displayName || currentUser.email || 'Anonymous',
+                    gameType: 'pyramid',
+                    score: finalScore,
+                    moves: moves,
+                    timeSeconds: gameTime,
+                    timestamp: serverTimestamp()
+                });
+            } catch (error) {
+                console.error('Error submitting score:', error);
+            }
+        }
+
+        function celebrateWin() {
+            const canvas = document.getElementById('confetti');
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            const confetti = [];
+            const colors = ['#d4af37', '#ffd700', '#ffed4e', '#f4d03f'];
+
+            for (let i = 0; i < 150; i++) {
+                confetti.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height - canvas.height,
+                    r: Math.random() * 6 + 4,
+                    d: Math.random() * 10 + 5,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    tilt: Math.random() * 10 - 10,
+                    tiltAngleIncremental: Math.random() * 0.07 + 0.05,
+                    tiltAngle: 0
+                });
+            }
+
+            function draw() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                confetti.forEach((c, index) => {
+                    ctx.beginPath();
+                    ctx.lineWidth = c.r / 2;
+                    ctx.strokeStyle = c.color;
+                    ctx.moveTo(c.x + c.tilt + c.r, c.y);
+                    ctx.lineTo(c.x + c.tilt, c.y + c.tilt + c.r);
+                    ctx.stroke();
+
+                    c.tiltAngle += c.tiltAngleIncremental;
+                    c.y += (Math.cos(c.d) + 3 + c.r / 2) / 2;
+                    c.tilt = Math.sin(c.tiltAngle) * 15;
+
+                    if (c.y > canvas.height) {
+                        confetti.splice(index, 1);
+                    }
+                });
+
+                if (confetti.length > 0) {
+                    requestAnimationFrame(draw);
+                } else {
+                    canvas.style.display = 'none';
+                }
+            }
+
+            canvas.style.display = 'block';
+            draw();
+        }
+
+        window.newGame = newGame;
+
+        // Start game when loaded
+        window.addEventListener('load', () => {
+            newGame();
+        });
+    </script>
+</body>
+</html>
