@@ -323,7 +323,12 @@
             if (user) {
                 currentUser = user;
             } else {
-                window.location.href = '/index.html';
+                // Break out of iframe if we're in one
+                if (window.top !== window.self) {
+                    window.top.location.href = '/index.html';
+                } else {
+                    window.location.href = '/index.html';
+                }
             }
         });
 
