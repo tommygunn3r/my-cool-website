@@ -413,49 +413,53 @@
 
         // TriPeaks layout: 3 peaks of 4 cards each (18 cards), plus 10 base cards (28 total)
         const LAYOUT = {
-            // Each position: [row, col, covers (indices it blocks)]
-            0: { row: 0, col: 0, covers: [3, 4] },      // Peak 1 top
-            1: { row: 0, col: 6, covers: [7, 8] },      // Peak 2 top
-            2: { row: 0, col: 12, covers: [11, 12] },   // Peak 3 top
+            // Peak 1 (indices 0-3)
+            0: { row: 0, col: 0, covers: [3, 4] },
             
-            3: { row: 1, col: -0.5, covers: [13, 14] },
-            4: { row: 1, col: 1.5, covers: [14, 15] },
-            5: { row: 1, col: 3.5, covers: [15, 16] },  // Missing peak 2 connections
-            6: { row: 1, col: 5.5, covers: [16, 17] },
-            7: { row: 1, col: 7.5, covers: [17, 18] },
-            8: { row: 1, col: 9.5, covers: [18, 19] },
-            9: { row: 1, col: 11.5, covers: [19, 20] }, // Missing peak 3 connections
-            10: { row: 1, col: 13.5, covers: [20, 21] },
-            11: { row: 1, col: 15.5, covers: [21, 22] },
-            12: { row: 1, col: 17.5, covers: [22, 23] },
+            // Peak 2 (indices 1, 5-7)  
+            1: { row: 0, col: 6, covers: [5, 6] },
+            
+            // Peak 3 (indices 2, 8-10)
+            2: { row: 0, col: 12, covers: [8, 9] },
+            
+            // Row 2 - Peak 1
+            3: { row: 1, col: -0.5, covers: [11, 12] },
+            4: { row: 1, col: 1.5, covers: [12, 13] },
+            
+            // Row 2 - Peak 2
+            5: { row: 1, col: 5.5, covers: [13, 14] },
+            6: { row: 1, col: 7.5, covers: [14, 15] },
+            
+            // Row 2 - Peak 3
+            7: { row: 1, col: 11.5, covers: [15, 16] },
+            8: { row: 1, col: 13.5, covers: [16, 17] },
+            
+            // Row 3 - connecting all peaks
+            9: { row: 2, col: 2, covers: [18] },
+            10: { row: 2, col: 4, covers: [18, 19] },
+            11: { row: 2, col: 6, covers: [19, 20] },
+            12: { row: 2, col: 8, covers: [20, 21] },
+            13: { row: 2, col: 10, covers: [21, 22] },
+            14: { row: 2, col: 12, covers: [22, 23] },
+            15: { row: 2, col: 14, covers: [23, 24] },
+            16: { row: 2, col: 16, covers: [24] },
 
-            13: { row: 2, col: 0, covers: [24] },
-            14: { row: 2, col: 2, covers: [24, 25] },
-            15: { row: 2, col: 4, covers: [25, 26] },
-            16: { row: 2, col: 6, covers: [26, 27] },
-            17: { row: 2, col: 8, covers: [27, 28] },
-            18: { row: 2, col: 10, covers: [28, 29] },
-            19: { row: 2, col: 12, covers: [29, 30] },
-            20: { row: 2, col: 14, covers: [30, 31] },
-            21: { row: 2, col: 16, covers: [31, 32] },
-            22: { row: 2, col: 18, covers: [32] },
-
-            // Base row (all face up)
-            24: { row: 3, col: 0, covers: [] },
-            25: { row: 3, col: 2, covers: [] },
-            26: { row: 3, col: 4, covers: [] },
-            27: { row: 3, col: 6, covers: [] },
-            28: { row: 3, col: 8, covers: [] },
-            29: { row: 3, col: 10, covers: [] },
-            30: { row: 3, col: 12, covers: [] },
-            31: { row: 3, col: 14, covers: [] },
-            32: { row: 3, col: 16, covers: [] },
-            33: { row: 3, col: 18, covers: [] },
+            // Base row (all face up, indices 17-27)
+            17: { row: 3, col: 0, covers: [] },
+            18: { row: 3, col: 2, covers: [] },
+            19: { row: 3, col: 4, covers: [] },
+            20: { row: 3, col: 6, covers: [] },
+            21: { row: 3, col: 8, covers: [] },
+            22: { row: 3, col: 10, covers: [] },
+            23: { row: 3, col: 12, covers: [] },
+            24: { row: 3, col: 14, covers: [] },
+            25: { row: 3, col: 16, covers: [] },
+            26: { row: 3, col: 18, covers: [] },
         };
 
         let state = {
-            peaks: [], // 28 cards in peaks
-            stock: [], // 24 cards in stock
+            peaks: [], // 27 cards in peaks (3 peaks + base row)
+            stock: [], // 25 cards in stock
             waste: null,
             score: 0,
             streak: 0,
@@ -509,15 +513,15 @@
                 [deck[i], deck[j]] = [deck[j], deck[i]];
             }
 
-            // Deal 28 cards to peaks (last 10 are face up)
-            for (let i = 0; i < 28; i++) {
+            // Deal 27 cards to peaks (last 10 are face up - the base row)
+            for (let i = 0; i < 27; i++) {
                 const card = deck[i];
-                card.faceUp = (i >= 18); // Base row starts face up
+                card.faceUp = (i >= 17); // Base row (indices 17-26) starts face up
                 state.peaks.push(card);
             }
 
-            // Deal 24 to stock
-            state.stock = deck.slice(28);
+            // Deal remaining 25 to stock
+            state.stock = deck.slice(27);
             
             // Draw first card to waste
             if (state.stock.length > 0) {
@@ -721,7 +725,7 @@
         }
 
         function checkWinOrLose() {
-            const peaksCleared = state.cleared.length === 28;
+            const peaksCleared = state.cleared.length === 27;
             
             if (peaksCleared) {
                 // Win!
@@ -752,7 +756,7 @@
                 if (!hasMove) {
                     // Lose - no more moves
                     document.getElementById('loseScoreDisplay').textContent = state.score;
-                    document.getElementById('cardsRemainingDisplay').textContent = 28 - state.cleared.length;
+                    document.getElementById('cardsRemainingDisplay').textContent = 27 - state.cleared.length;
                     document.getElementById('loseModal').classList.remove('hidden');
                     scoreManager.submitGameResult(state.score);
                 }
