@@ -404,6 +404,13 @@
             hasMoved: false
         };
 
+        let lastClick = {
+            time: 0,
+            sourceType: null,
+            sourceIndex: null,
+            cardIndex: null
+        };
+
         function init() {
             loadHighScore();
             loadPreferences();
@@ -689,7 +696,36 @@
             if (!drag.active) return;
 
             if (!drag.hasMoved) {
-                // Click without drag - select card
+                // Click without drag - check for double-click
+                const now = Date.now();
+                const timeDiff = now - lastClick.time;
+                const isSameCard = lastClick.sourceType === drag.sourceType &&
+                                   lastClick.sourceIndex === drag.sourceIndex &&
+                                   lastClick.cardIndex === drag.cardIndex;
+                
+                if (timeDiff < 500 && isSameCard) {
+                    // Double-click detected! Try to move to foundation
+                    const cards = getCardsToDrag(drag.sourceType, drag.sourceIndex, drag.cardIndex);
+                    if (cards.length === 1) {
+                        for (let i = 0; i < 4; i++) {
+                            if (canMoveToFoundation(cards[0], i)) {
+                                tryMove(drag.sourceType, drag.sourceIndex, drag.cardIndex, 'foundation', i);
+                                state.selectedCard = null;
+                                lastClick.time = 0; // Reset
+                                drag.active = false;
+                                return;
+                            }
+                        }
+                    }
+                }
+                
+                // Update last click tracking
+                lastClick.time = now;
+                lastClick.sourceType = drag.sourceType;
+                lastClick.sourceIndex = drag.sourceIndex;
+                lastClick.cardIndex = drag.cardIndex;
+                
+                // Single click - select card
                 selectCard(drag.sourceType, drag.sourceIndex, drag.cardIndex);
                 drag.active = false;
                 return;
