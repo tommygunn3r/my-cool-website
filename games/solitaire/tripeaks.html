@@ -414,47 +414,47 @@
         // TriPeaks layout: 3 peaks of 4 cards each (18 cards), plus 10 base cards (28 total)
         const LAYOUT = {
             // Peak 1 (indices 0-3)
-            0: { row: 0, col: 0, covers: [3, 4] },
+            0: { row: 0, col: 1, covers: [3, 4] },
             
             // Peak 2 (indices 1, 5-7)  
-            1: { row: 0, col: 6, covers: [5, 6] },
+            1: { row: 0, col: 7, covers: [5, 6] },
             
             // Peak 3 (indices 2, 8-10)
-            2: { row: 0, col: 12, covers: [8, 9] },
+            2: { row: 0, col: 13, covers: [8, 9] },
             
             // Row 2 - Peak 1
-            3: { row: 1, col: -0.5, covers: [11, 12] },
-            4: { row: 1, col: 1.5, covers: [12, 13] },
+            3: { row: 1, col: 0.5, covers: [11, 12] },
+            4: { row: 1, col: 2.5, covers: [12, 13] },
             
             // Row 2 - Peak 2
-            5: { row: 1, col: 5.5, covers: [13, 14] },
-            6: { row: 1, col: 7.5, covers: [14, 15] },
+            5: { row: 1, col: 6.5, covers: [13, 14] },
+            6: { row: 1, col: 8.5, covers: [14, 15] },
             
             // Row 2 - Peak 3
-            7: { row: 1, col: 11.5, covers: [15, 16] },
-            8: { row: 1, col: 13.5, covers: [16, 17] },
+            7: { row: 1, col: 12.5, covers: [15, 16] },
+            8: { row: 1, col: 14.5, covers: [16, 17] },
             
             // Row 3 - connecting all peaks
-            9: { row: 2, col: 2, covers: [18] },
-            10: { row: 2, col: 4, covers: [18, 19] },
-            11: { row: 2, col: 6, covers: [19, 20] },
-            12: { row: 2, col: 8, covers: [20, 21] },
-            13: { row: 2, col: 10, covers: [21, 22] },
-            14: { row: 2, col: 12, covers: [22, 23] },
-            15: { row: 2, col: 14, covers: [23, 24] },
-            16: { row: 2, col: 16, covers: [24] },
+            9: { row: 2, col: 3, covers: [18] },
+            10: { row: 2, col: 5, covers: [18, 19] },
+            11: { row: 2, col: 7, covers: [19, 20] },
+            12: { row: 2, col: 9, covers: [20, 21] },
+            13: { row: 2, col: 11, covers: [21, 22] },
+            14: { row: 2, col: 13, covers: [22, 23] },
+            15: { row: 2, col: 15, covers: [23, 24] },
+            16: { row: 2, col: 17, covers: [24] },
 
             // Base row (all face up, indices 17-27)
-            17: { row: 3, col: 0, covers: [] },
-            18: { row: 3, col: 2, covers: [] },
-            19: { row: 3, col: 4, covers: [] },
-            20: { row: 3, col: 6, covers: [] },
-            21: { row: 3, col: 8, covers: [] },
-            22: { row: 3, col: 10, covers: [] },
-            23: { row: 3, col: 12, covers: [] },
-            24: { row: 3, col: 14, covers: [] },
-            25: { row: 3, col: 16, covers: [] },
-            26: { row: 3, col: 18, covers: [] },
+            17: { row: 3, col: 1, covers: [] },
+            18: { row: 3, col: 3, covers: [] },
+            19: { row: 3, col: 5, covers: [] },
+            20: { row: 3, col: 7, covers: [] },
+            21: { row: 3, col: 9, covers: [] },
+            22: { row: 3, col: 11, covers: [] },
+            23: { row: 3, col: 13, covers: [] },
+            24: { row: 3, col: 15, covers: [] },
+            25: { row: 3, col: 17, covers: [] },
+            26: { row: 3, col: 19, covers: [] },
         };
 
         let state = {
@@ -545,7 +545,7 @@
             const containerWidth = container.offsetWidth;
             const cardWidth = window.innerWidth < 640 ? 60 : (window.innerWidth < 1024 ? 70 : 80);
             const spacing = cardWidth * 0.9; // Tighter spacing
-            const totalWidth = 18 * spacing; // Max column is 18
+            const totalWidth = 19 * spacing; // Max column is 19
             const baseX = (containerWidth - totalWidth) / 2;
 
             state.peaks.forEach((card, index) => {
