@@ -109,22 +109,22 @@
             width: 100%;
             max-width: 1200px;
             margin: 0 auto;
-            padding: 1rem;
-            min-height: 60vh;
+            padding: 0.5rem;
+            min-height: 45vh;
         }
 
         .card-slot {
             position: absolute;
-            width: 70px;
+            width: 60px;
             aspect-ratio: 2.5/3.5;
         }
 
         @media (min-width: 640px) {
-            .card-slot { width: 85px; }
+            .card-slot { width: 70px; }
         }
 
         @media (min-width: 1024px) {
-            .card-slot { width: 100px; }
+            .card-slot { width: 80px; }
         }
 
         .bottom-area {
@@ -543,9 +543,10 @@
             container.innerHTML = '';
 
             const containerWidth = container.offsetWidth;
-            const cardWidth = window.innerWidth < 640 ? 70 : (window.innerWidth < 1024 ? 85 : 100);
-            const spacing = cardWidth * 1.2;
-            const baseX = (containerWidth - (19 * spacing)) / 2;
+            const cardWidth = window.innerWidth < 640 ? 60 : (window.innerWidth < 1024 ? 70 : 80);
+            const spacing = cardWidth * 0.9; // Tighter spacing
+            const totalWidth = 18 * spacing; // Max column is 18
+            const baseX = (containerWidth - totalWidth) / 2;
 
             state.peaks.forEach((card, index) => {
                 if (state.cleared.includes(index)) return; // Skip cleared cards
@@ -556,7 +557,7 @@
                 const slot = document.createElement('div');
                 slot.className = 'card-slot';
                 slot.style.left = `${baseX + layout.col * spacing}px`;
-                slot.style.top = `${layout.row * 80}px`;
+                slot.style.top = `${layout.row * 70}px`; // Reduced vertical spacing
 
                 const cardEl = createCardElement(card);
                 cardEl.dataset.index = index;
