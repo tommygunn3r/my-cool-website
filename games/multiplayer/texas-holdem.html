@@ -827,6 +827,134 @@
             return deck;
         }
 
+        // ====== POKER HAND EVALUATION ======
+        function evaluateHand(holeCards, communityCards) {
+            const allCards = [...holeCards, ...communityCards];
+            const rankValues = { '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9, '10': 10, 'J': 11, 'Q': 12, 'K': 13, 'A': 14 };
+            
+            // Convert cards to numeric values
+            const cards = allCards.map(c => ({ rank: c.rank, suit: c.suit, value: rankValues[c.rank] }));
+            cards.sort((a, b) => b.value - a.value);
+            
+            // Count ranks and suits
+            const rankCount = {};
+            const suitCount = {};
+            cards.forEach(c => {
+                rankCount[c.value] = (rankCount[c.value] || 0) + 1;
+                suitCount[c.suit] = (suitCount[c.suit] || 0) + 1;
+            });
+            
+            const ranks = Object.keys(rankCount).map(Number).sort((a, b) => b - a);
+            const counts = ranks.map(r => rankCount[r]);
+            
+            // Check for flush
+            const isFlush = Object.values(suitCount).some(count => count >= 5);
+            const flushSuit = isFlush ? Object.keys(suitCount).find(suit => suitCount[suit] >= 5) : null;
+            
+            // Check for straight
+            function checkStraight(vals) {
+                const uniqueVals = [...new Set(vals)].sort((a, b) => b - a);
+                
+                // Check regular straight
+                for (let i = 0; i <= uniqueVals.length - 5; i++) {
+                    if (uniqueVals[i] - uniqueVals[i + 4] === 4) {
+                        return { isStraight: true, highCard: uniqueVals[i] };
+                    }
+                }
+                
+                // Check wheel (A-2-3-4-5)
+                if (uniqueVals.includes(14) && uniqueVals.includes(5) && uniqueVals.includes(4) && uniqueVals.includes(3) && uniqueVals.includes(2)) {
+                    return { isStraight: true, highCard: 5 };
+                }
+                
+                return { isStraight: false, highCard: 0 };
+            }
+            
+            const straightCheck = checkStraight(cards.map(c => c.value));
+            const isStraight = straightCheck.isStraight;
+            
+            // Check for straight flush
+            let isStraightFlush = false;
+            let straightFlushHigh = 0;
+            if (isFlush) {
+                const flushCards = cards.filter(c => c.suit === flushSuit);
+                const flushStraight = checkStraight(flushCards.map(c => c.value));
+                if (flushStraight.isStraight) {
+                    isStraightFlush = true;
+                    straightFlushHigh = flushStraight.highCard;
+                }
+            }
+            
+            // Determine hand rank
+            let handRank = 0;
+            let handName = '';
+            let tiebreakers = [];
+            
+            if (isStraightFlush && straightFlushHigh === 14) {
+                handRank = 10;
+                handName = 'Royal Flush';
+                tiebreakers = [14];
+            } else if (isStraightFlush) {
+                handRank = 9;
+                handName = 'Straight Flush';
+                tiebreakers = [straightFlushHigh];
+            } else if (counts[0] === 4) {
+                handRank = 8;
+                handName = 'Four of a Kind';
+                tiebreakers = [ranks[0], ranks[1]];
+            } else if (counts[0] === 3 && counts[1] >= 2) {
+                handRank = 7;
+                handName = 'Full House';
+                tiebreakers = [ranks[0], ranks[1]];
+            } else if (isFlush) {
+                handRank = 6;
+                handName = 'Flush';
+                const flushCards = cards.filter(c => c.suit === flushSuit);
+                tiebreakers = flushCards.slice(0, 5).map(c => c.value);
+            } else if (isStraight) {
+                handRank = 5;
+                handName = 'Straight';
+                tiebreakers = [straightCheck.highCard];
+            } else if (counts[0] === 3) {
+                handRank = 4;
+                handName = 'Three of a Kind';
+                const kickers = ranks.filter(r => rankCount[r] !== 3).slice(0, 2);
+                tiebreakers = [ranks[0], ...kickers];
+            } else if (counts[0] === 2 && counts[1] === 2) {
+                handRank = 3;
+                handName = 'Two Pair';
+                const kicker = ranks.find(r => rankCount[r] === 1);
+                tiebreakers = [ranks[0], ranks[1], kicker];
+            } else if (counts[0] === 2) {
+                handRank = 2;
+                handName = 'One Pair';
+                const kickers = ranks.filter(r => rankCount[r] !== 2).slice(0, 3);
+                tiebreakers = [ranks[0], ...kickers];
+            } else {
+                handRank = 1;
+                handName = 'High Card';
+                tiebreakers = ranks.slice(0, 5);
+            }
+            
+            return { handRank, handName, tiebreakers };
+        }
+
+        function compareHands(hand1, hand2) {
+            if (hand1.handRank !== hand2.handRank) {
+                return hand1.handRank > hand2.handRank ? 1 : -1;
+            }
+            
+            for (let i = 0; i < Math.max(hand1.tiebreakers.length, hand2.tiebreakers.length); i++) {
+                const t1 = hand1.tiebreakers[i] || 0;
+                const t2 = hand2.tiebreakers[i] || 0;
+                if (t1 !== t2) {
+                    return t1 > t2 ? 1 : -1;
+                }
+            }
+            
+            return 0;
+        }
+
         // ====== UI UPDATES ======
         function handleGameStateUpdate(state, oldState) {
             // Update pot
@@ -1252,22 +1380,55 @@
                     }
                 }, 3000);
             } else {
-                // Multiple players - simplified winner determination (random for now)
-                // TODO: Implement proper poker hand evaluation
-                const winner = activePlayers[Math.floor(Math.random() * activePlayers.length)];
-                const winnerChips = mp.getPlayer(winner).chips;
+                // Multiple players - evaluate hands
+                const playerHands = activePlayers.map(playerId => {
+                    const holeCards = state.hands[playerId];
+                    const evaluation = evaluateHand(holeCards, state.communityCards);
+                    return {
+                        playerId,
+                        evaluation,
+                        name: mp.getPlayer(playerId).name
+                    };
+                });
                 
-                console.log('Showdown winner (random):', mp.getPlayer(winner).name);
+                // Sort by hand strength (best first)
+                playerHands.sort((a, b) => compareHands(b.evaluation, a.evaluation));
                 
-                await mp.updatePlayerData(winner, { chips: winnerChips + state.pot });
+                // Check for ties
+                const winners = [playerHands[0]];
+                for (let i = 1; i < playerHands.length; i++) {
+                    if (compareHands(playerHands[i].evaluation, playerHands[0].evaluation) === 0) {
+                        winners.push(playerHands[i]);
+                    } else {
+                        break;
+                    }
+                }
                 
-                showMessage(`${mp.getPlayer(winner).name} wins ${state.pot} chips!`);
+                console.log('Showdown results:', playerHands.map(p => ({ 
+                    name: p.name, 
+                    hand: p.evaluation.handName 
+                })));
+                
+                // Split pot if tie
+                const potShare = Math.floor(state.pot / winners.length);
+                
+                for (const winner of winners) {
+                    const winnerChips = mp.getPlayer(winner.playerId).chips;
+                    await mp.updatePlayerData(winner.playerId, { chips: winnerChips + potShare });
+                }
+                
+                if (winners.length === 1) {
+                    showMessage(`${winners[0].name} wins ${state.pot} chips with ${winners[0].evaluation.handName}!`);
+                } else {
+                    const names = winners.map(w => w.name).join(' & ');
+                    showMessage(`Split pot! ${names} tie with ${winners[0].evaluation.handName}`);
+                }
                 
                 setTimeout(() => {
                     if (mp.isHost) {
                         dealNewHand();
                     }
-                }, 3000);
+                }, 4000);
             }
         }
 
