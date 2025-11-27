@@ -575,15 +575,15 @@
     <script>
         // ====== FIREBASE CONFIG ======
         // TODO: Replace with your actual Firebase config
-const firebaseConfig = {
-  apiKey: "AIzaSyDjdo3U9qg_h4TKvplsFoZgxVNepAbCpFA",
-  authDomain: "gunners-games.firebaseapp.com",
-  projectId: "gunners-games",
-  storageBucket: "gunners-games.firebasestorage.app",
-  messagingSenderId: "644077315462",
-  appId: "1:644077315462:web:431dd985426f3dbe02f807",
-  measurementId: "G-RWNL900X43"
-};
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            databaseURL: "YOUR_DATABASE_URL",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
 
         firebase.initializeApp(firebaseConfig);
 
@@ -608,7 +608,7 @@ const firebaseConfig = {
             
             if (!roomId) {
                 alert('No room ID provided!');
-                window.location.href = '/multiplayer-lobby.html';
+                window.location.href = '/multiplayer/index.html';
                 return;
             }
 
@@ -646,7 +646,7 @@ const firebaseConfig = {
                 } catch (error) {
                     console.error('Failed to initialize:', error);
                     alert('Failed to join room: ' + error.message);
-                    window.location.href = '/multiplayer-lobby.html';
+                    window.location.href = '/multiplayer/index.html';
                 }
             });
         }
@@ -1005,7 +1005,7 @@ const firebaseConfig = {
 
         document.getElementById('leaveBtn').addEventListener('click', async () => {
             await mp.leaveRoom();
-            window.location.href = '/multiplayer-lobby.html';
+            window.location.href = '/multiplayer/index.html';
         });
 
         document.getElementById('btnFold').addEventListener('click', async () => {
