@@ -940,16 +940,58 @@
             switch(action.type) {
                 case 'fold':
                     text = 'FOLD';
+                    // Host updates folded state
+                    if (mp.isHost) {
+                        mp.updateGameState({
+                            folded: { ...mp.gameState.folded, [action.playerId]: true }
+                        }, true).then(() => advanceTurn());
+                    }
                     break;
                 case 'check':
                     text = 'CHECK';
+                    // Host advances turn
+                    if (mp.isHost) {
+                        advanceTurn();
+                    }
                     break;
                 case 'call':
                     text = 'CALL';
+                    // Host updates chips, pot, bets
+                    if (mp.isHost) {
+                        const state = mp.gameState;
+                        const player = mp.getPlayer(action.playerId);
+                        const toCall = state.currentBet - ((state.bets && state.bets[action.playerId]) || 0);
+                        
+                        mp.updatePlayerData(action.playerId, { 
+                            chips: player.chips - toCall 
+                        }).then(() => {
+                            return mp.updateGameState({
+                                pot: state.pot + toCall,
+                                bets: { ...state.bets, [action.playerId]: state.currentBet }
+                            }, true);
+                        }).then(() => advanceTurn());
+                    }
                     break;
                 case 'raise':
                 case 'bet':
                     text = `RAISE ${action.amount}`;
+                    // Host updates chips, pot, bets, currentBet
+                    if (mp.isHost) {
+                        const state = mp.gameState;
+                        const player = mp.getPlayer(action.playerId);
+                        const currentBet = (state.bets && state.bets[action.playerId]) || 0;
+                        const additionalBet = action.amount - currentBet;
+                        
+                        mp.updatePlayerData(action.playerId, { 
+                            chips: player.chips - additionalBet 
+                        }).then(() => {
+                            return mp.updateGameState({
+                                pot: state.pot + additionalBet,
+                                currentBet: action.amount,
+                                bets: { ...state.bets, [action.playerId]: action.amount }
+                            }, true);
+                        }).then(() => advanceTurn());
+                    }
                     break;
             }
 
