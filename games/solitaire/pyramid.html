@@ -319,18 +319,24 @@
 
         let currentUser = null;
 
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                currentUser = user;
-            } else {
-                // Break out of iframe if we're in one
-                if (window.top !== window.self) {
-                    window.top.location.href = '/index.html';
-                } else {
-                    window.location.href = '/index.html';
-                }
+        // Initialize authentication
+        async function initGameAuth() {
+            try {
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        console.log("Player Identified:", user.displayName || user.email);
+                        currentUser = user;
+                    } else {
+                        // Not logged in? Redirect to home
+                        console.log("No user detected, redirecting...");
+                        window.location.href = '/index.html';
+                    }
+                });
+            } catch (error) {
+                console.error("Auth failed:", error);
             }
-        });
+        }
+        initGameAuth();
 
         // Game state
         let pyramid = [];
