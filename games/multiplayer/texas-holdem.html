@@ -649,6 +649,13 @@
                     await mp.init();
                     console.log('Multiplayer initialized successfully');
                     updateWaitingRoom();
+                    
+                    // Listen for player changes (ready status, etc)
+                    mp.playersRef.on('value', () => {
+                        if (!gameActive) {
+                            updateWaitingRoom();
+                        }
+                    });
                 } catch (error) {
                     console.error('Failed to initialize:', error);
                     alert('Failed to join room: ' + error.message);
@@ -713,18 +720,22 @@
             document.getElementById('waitingRoom').classList.add('hidden');
             document.getElementById('gameContainer').classList.add('active');
 
-            // Assign seats
+            // Assign seats - put current user in seat 0 (bottom), others clockwise
             const playerOrder = mp.getPlayerOrder();
-            playerOrder.forEach((playerId, index) => {
-                playerSeats[playerId] = index;
+            const myIndex = playerOrder.indexOf(myUserId);
+            
+            playerOrder.forEach((playerId, gameIndex) => {
+                // Rotate seats so current user is always at bottom (seat 0)
+                const visualSeat = (gameIndex - myIndex + playerOrder.length) % playerOrder.length;
+                playerSeats[playerId] = visualSeat;
                 const player = mp.getPlayer(playerId);
                 
-                document.getElementById(`name-${index}`).innerText = player.name;
-                document.getElementById(`chips-${index}`).innerText = player.chips;
-                document.getElementById(`seat-${index}`).style.display = 'flex';
+                document.getElementById(`name-${visualSeat}`).innerText = player.name;
+                document.getElementById(`chips-${visualSeat}`).innerText = player.chips;
+                document.getElementById(`seat-${visualSeat}`).style.display = 'flex';
 
                 if (playerId === myUserId) {
-                    mySeatIndex = index;
+                    mySeatIndex = visualSeat; // Will always be 0
                 }
             });
 
@@ -1061,37 +1072,23 @@
         });
 
         document.getElementById('btnFold').addEventListener('click', async () => {
+            console.log('Fold clicked');
             await mp.submitAction({ type: 'fold' });
-            
-            if (mp.isHost) {
-                await mp.updateGameState({
-                    folded: { ...mp.gameState.folded, [myUserId]: true }
-                }, true);
-                advanceTurn();
-            }
+            // Note: handlePlayerAction will process this and call advanceTurn
         });
 
         document.getElementById('btnCheckCall').addEventListener('click', async () => {
             const state = mp.gameState;
             const toCall = (state.currentBet || 0) - ((state.bets && state.bets[myUserId]) || 0);
             
+            console.log('Check/Call clicked:', { toCall, currentBet: state.currentBet, myBet: state.bets?.[myUserId] });
+            
             if (toCall === 0) {
                 await mp.submitAction({ type: 'check' });
             } else {
                 await mp.submitAction({ type: 'call', amount: toCall });
                 
-                if (mp.isHost) {
-                    const myChips = mp.getPlayer(myUserId).chips;
-                    await mp.updatePlayerData(myUserId, { chips: myChips - toCall });
-                    await mp.updateGameState({
-                        pot: state.pot + toCall,
-                        bets: { ...state.bets, [myUserId]: (state.bets[myUserId] || 0) + toCall }
-                    }, true);
-                }
-            }
-            
-            if (mp.isHost) {
-                advanceTurn();
+                // Note: handlePlayerAction will process this and call advanceTurn
             }
         });
 
@@ -1105,24 +1102,9 @@
 
         document.getElementById('btnConfirmRaise').addEventListener('click', async () => {
             const amount = parseInt(document.getElementById('raiseSlider').value);
+            console.log('Raise clicked:', amount);
             await mp.submitAction({ type: 'raise', amount });
-            
-            if (mp.isHost) {
-                const state = mp.gameState;
-                const myChips = mp.getPlayer(myUserId).chips;
-                const currentBet = (state.bets && state.bets[myUserId]) || 0;
-                const additionalBet = amount - currentBet;
-                
-                await mp.updatePlayerData(myUserId, { chips: myChips - additionalBet });
-                await mp.updateGameState({
-                    pot: state.pot + additionalBet,
-                    currentBet: amount,
-                    bets: { ...state.bets, [myUserId]: amount }
-                }, true);
-                
-                advanceTurn();
-            }
-            
+            // Note: handlePlayerAction will process this and call advanceTurn
             document.getElementById('raiseContainer').classList.remove('active');
         });
 
