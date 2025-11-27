@@ -255,14 +255,19 @@ class MultiplayerGame {
     async setReady(ready = true) {
         await this.updatePlayerData(this.currentUser.uid, { ready });
 
-        // If all players ready and host, start game
-        if (this.isHost && ready) {
-            const allReady = Object.values(this.allPlayers).every(p => p.ready);
-            const enoughPlayers = Object.keys(this.allPlayers).length >= this.config.minPlayers;
-            
-            if (allReady && enoughPlayers) {
-                await this.startGame();
-            }
+        // Check if all players ready (anyone can trigger this check, but only host starts)
+        if (ready) {
+            // Wait a moment for Firebase to sync
+            setTimeout(() => {
+                if (this.isHost) {
+                    const allReady = Object.values(this.allPlayers).every(p => p.connected && p.ready);
+                    const enoughPlayers = Object.keys(this.allPlayers).filter(id => this.allPlayers[id].connected).length >= this.config.minPlayers;
+                    
+                    if (allReady && enoughPlayers) {
+                        this.startGame();
+                    }
+                }
+            }, 500); // Give Firebase time to sync
         }
     }
 
