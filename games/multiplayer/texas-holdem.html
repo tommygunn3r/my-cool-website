@@ -949,9 +949,12 @@
                     break;
                 case 'check':
                     text = 'CHECK';
-                    // Host advances turn
+                    // Host records the check (bet of 0) and advances turn
                     if (mp.isHost) {
-                        advanceTurn();
+                        const state = mp.gameState;
+                        mp.updateGameState({
+                            bets: { ...state.bets, [action.playerId]: 0 }
+                        }, true).then(() => advanceTurn());
                     }
                     break;
                 case 'call':
