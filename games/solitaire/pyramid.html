@@ -300,35 +300,24 @@
     </div>
 
     <script type="module">
-        import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js';
-        import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-auth.js';
-        import { getFirestore, collection, addDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js';
+        import { db } from '/firebase-config.js';
+        import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { collection, addDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyBt0yyyappGK-79wy5HYwtLTkbbrStYUMg",
-            authDomain: "gunnersgames-7e241.firebaseapp.com",
-            projectId: "gunnersgames-7e241",
-            storageBucket: "gunnersgames-7e241.firebasestorage.app",
-            messagingSenderId: "890505816287",
-            appId: "1:890505816287:web:713620eafd7b37b76c7c8b"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-
+        let auth = null;
         let currentUser = null;
 
-        // Initialize authentication
+        // Gatekeeper: Check if logged in
         async function initGameAuth() {
             try {
+                auth = getAuth(db.app);
                 onAuthStateChanged(auth, (user) => {
                     if (user) {
                         console.log("Player Identified:", user.displayName || user.email);
                         currentUser = user;
                     } else {
-                        // Not logged in? Redirect to home
-                        console.log("No user detected, redirecting...");
+                        // Not logged in? Kick back to the portal
+                        console.log("No user detected, redirecting to index...");
                         window.location.href = '/index.html';
                     }
                 });
