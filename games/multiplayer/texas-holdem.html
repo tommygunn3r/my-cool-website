@@ -765,41 +765,40 @@
                 hands[playerId] = [deck.pop(), deck.pop()];
             });
 
-            // Set game state
-            await mp.setGameState({
-                deck: deck,
-                hands: hands,
-                communityCards: [],
-                pot: 0,
-                currentBet: BIG_BLIND,
-                round: 'preflop',
-                dealerIndex: 0,
-                currentTurnIndex: 2 % playerOrder.length, // Start after big blind
-                currentTurn: playerOrder[2 % playerOrder.length], // ADDED: Set who's turn it is
-                playerOrder: playerOrder,
-                bets: {},
-                folded: {}
-            }, true);
-
-            // Post blinds
-            await postBlinds();
-        }
-
-        async function postBlinds() {
-            const playerOrder = mp.gameState.playerOrder;
-            let smallBlindPlayer, bigBlindPlayer;
-            
+            // Determine blind positions
+            let smallBlindPlayer, bigBlindPlayer, firstToAct;
             if (playerOrder.length === 2) {
-                // Heads-up (2 players): Dealer posts small blind, other posts big blind
-                smallBlindPlayer = playerOrder[0]; // Dealer
+                // Heads-up: Dealer posts small blind, acts first preflop
+                smallBlindPlayer = playerOrder[0];
                 bigBlindPlayer = playerOrder[1];
+                firstToAct = playerOrder[0]; // Dealer acts first in heads-up
             } else {
                 // 3+ players: Normal positions
                 smallBlindPlayer = playerOrder[1 % playerOrder.length];
                 bigBlindPlayer = playerOrder[2 % playerOrder.length];
+                firstToAct = playerOrder[(2 + 1) % playerOrder.length]; // After big blind
             }
 
-            // Deduct blinds
+            // Set game state WITH blinds already in place
+            await mp.setGameState({
+                deck: deck,
+                hands: hands,
+                communityCards: [],
+                pot: SMALL_BLIND + BIG_BLIND,
+                currentBet: BIG_BLIND,
+                round: 'preflop',
+                dealerIndex: 0,
+                currentTurnIndex: playerOrder.indexOf(firstToAct),
+                currentTurn: firstToAct,
+                playerOrder: playerOrder,
+                bets: {
+                    [smallBlindPlayer]: SMALL_BLIND,
+                    [bigBlindPlayer]: BIG_BLIND
+                },
+                folded: {}
+            }, true);
+
+            // Deduct blinds from player chips
             await mp.updatePlayerData(smallBlindPlayer, {
                 chips: mp.getPlayer(smallBlindPlayer).chips - SMALL_BLIND
             });
@@ -807,15 +806,10 @@
             await mp.updatePlayerData(bigBlindPlayer, {
                 chips: mp.getPlayer(bigBlindPlayer).chips - BIG_BLIND
             });
+        }
 
-            // Update pot and bets
-            await mp.updateGameState({
-                pot: SMALL_BLIND + BIG_BLIND,
-                bets: {
-                    [smallBlindPlayer]: SMALL_BLIND,
-                    [bigBlindPlayer]: BIG_BLIND
-                }
-            }, true);
+        async function postBlinds() {
+            // No longer needed - blinds are posted in dealNewHand
         }
 
         function createDeck() {
