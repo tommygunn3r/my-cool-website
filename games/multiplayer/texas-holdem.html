@@ -1097,17 +1097,24 @@
             let nextIndex = (state.currentTurnIndex + 1) % playerOrder.length;
             
             // Skip folded players
-            while (state.folded && state.folded[playerOrder[nextIndex]]) {
+            let skipped = 0;
+            while (state.folded && state.folded[playerOrder[nextIndex]] && skipped < playerOrder.length) {
                 nextIndex = (nextIndex + 1) % playerOrder.length;
+                skipped++;
             }
 
             // Check if betting round complete
             const activePlayers = playerOrder.filter(id => !state.folded || !state.folded[id]);
+            
+            // All players must have matching bets
             const allBetsEqual = activePlayers.every(id => 
                 (state.bets && state.bets[id]) === state.currentBet
             );
+            
+            // And we're back to the first player after the dealer (or back around the table)
+            const backToStart = nextIndex === ((state.dealerIndex + 1) % playerOrder.length);
 
-            if (allBetsEqual && nextIndex === ((state.dealerIndex + 3) % playerOrder.length)) {
+            if (allBetsEqual && (backToStart || activePlayers.length === 1)) {
                 // Round complete, move to next round
                 await advanceRound();
             } else {
