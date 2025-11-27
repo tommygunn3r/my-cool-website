@@ -142,11 +142,22 @@ class MultiplayerGame {
             this.onGameStateUpdate(newState, oldState);
         });
 
-        // Listen for player actions
+        // Listen for player actions (only NEW actions after this point)
+        const startTime = Date.now();
+        console.log('[MultiplayerCore] Setting up actions listener, startTime:', startTime);
+        
         const actionsListener = this.roomRef.child('actions').on('child_added', (snapshot) => {
             const action = snapshot.val();
-            // Trigger callback for ALL actions (including own actions)
-            this.onPlayerAction(action);
+            console.log('[MultiplayerCore] child_added fired! Action:', action);
+            console.log('[MultiplayerCore] Timestamp check - Start:', startTime, 'Action:', action.timestamp, 'Valid:', action.timestamp >= startTime);
+            
+            // Only process actions that happen AFTER we initialized
+            if (action.timestamp && action.timestamp >= startTime) {
+                console.log('[MultiplayerCore] Calling onPlayerAction callback');
+                this.onPlayerAction(action);
+            } else {
+                console.log('[MultiplayerCore] Ignoring old action');
+            }
         });
 
         // Listen for chat messages
