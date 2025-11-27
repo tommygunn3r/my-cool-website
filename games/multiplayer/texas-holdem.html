@@ -946,8 +946,15 @@
             document.getElementById('raiseContainer').classList.remove('active');
         }
 
+        let advancingRound = false;
+
         function handlePlayerAction(action) {
             console.log('handlePlayerAction called:', action);
+            
+            if (advancingRound) {
+                console.log('Currently advancing round, ignoring action');
+                return;
+            }
             
             const seatIndex = playerSeats[action.playerId];
             if (seatIndex === undefined) {
@@ -1170,11 +1177,15 @@
             if (allBetsEqual && allPlayersActed && activePlayers.length > 1) {
                 // Round complete, move to next round
                 console.log('Round complete! Advancing to next round');
+                advancingRound = true;
                 await advanceRound();
+                advancingRound = false;
             } else if (activePlayers.length === 1) {
                 // Only one player left, they win
                 console.log('Only one player left, ending hand');
+                advancingRound = true;
                 await showdown();
+                advancingRound = false;
             } else {
                 // Next player's turn
                 console.log('Next player turn');
