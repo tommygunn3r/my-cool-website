@@ -787,8 +787,17 @@
 
         async function postBlinds() {
             const playerOrder = mp.gameState.playerOrder;
-            const smallBlindPlayer = playerOrder[1 % playerOrder.length];
-            const bigBlindPlayer = playerOrder[2 % playerOrder.length];
+            let smallBlindPlayer, bigBlindPlayer;
+            
+            if (playerOrder.length === 2) {
+                // Heads-up (2 players): Dealer posts small blind, other posts big blind
+                smallBlindPlayer = playerOrder[0]; // Dealer
+                bigBlindPlayer = playerOrder[1];
+            } else {
+                // 3+ players: Normal positions
+                smallBlindPlayer = playerOrder[1 % playerOrder.length];
+                bigBlindPlayer = playerOrder[2 % playerOrder.length];
+            }
 
             // Deduct blinds
             await mp.updatePlayerData(smallBlindPlayer, {
@@ -799,7 +808,7 @@
                 chips: mp.getPlayer(bigBlindPlayer).chips - BIG_BLIND
             });
 
-            // Update pot
+            // Update pot and bets
             await mp.updateGameState({
                 pot: SMALL_BLIND + BIG_BLIND,
                 bets: {
