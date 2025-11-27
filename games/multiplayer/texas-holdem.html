@@ -1148,19 +1148,31 @@
             // Check if betting round complete
             const activePlayers = playerOrder.filter(id => !state.folded || !state.folded[id]);
             
-            // All players must have matching bets
-            const allBetsEqual = activePlayers.every(id => 
-                (state.bets && state.bets[id]) === state.currentBet
-            );
+            // All players must have matching bets (treating undefined as 0)
+            const allBetsEqual = activePlayers.every(id => {
+                const playerBet = (state.bets && state.bets[id]) || 0;
+                return playerBet === (state.currentBet || 0);
+            });
             
             // And we're back to the first player after the dealer (or back around the table)
             const backToStart = nextIndex === ((state.dealerIndex + 1) % playerOrder.length);
 
+            console.log('advanceTurn check:', {
+                allBetsEqual,
+                backToStart,
+                currentBet: state.currentBet,
+                bets: state.bets,
+                nextIndex,
+                dealerIndex: state.dealerIndex
+            });
+
             if (allBetsEqual && (backToStart || activePlayers.length === 1)) {
                 // Round complete, move to next round
+                console.log('Round complete! Advancing to next round');
                 await advanceRound();
             } else {
                 // Next player's turn
+                console.log('Next player turn');
                 await mp.updateGameState({
                     currentTurnIndex: nextIndex,
                     currentTurn: playerOrder[nextIndex]
