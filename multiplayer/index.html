@@ -622,20 +622,23 @@
     <script>
         // ====== FIREBASE CONFIG ======
         // TODO: Replace with your actual Firebase config
-const firebaseConfig = {
-  apiKey: "AIzaSyDjdo3U9qg_h4TKvplsFoZgxVNepAbCpFA",
-  authDomain: "gunners-games.firebaseapp.com",
-  projectId: "gunners-games",
-  storageBucket: "gunners-games.firebasestorage.app",
-  messagingSenderId: "644077315462",
-  appId: "1:644077315462:web:431dd985426f3dbe02f807",
-  measurementId: "G-RWNL900X43"
-};
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            databaseURL: "YOUR_DATABASE_URL",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
 
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const database = firebase.database(); // Realtime Database for rooms
         const firestore = firebase.firestore(); // Firestore for user balance
+
+        console.log('Firebase initialized');
+        console.log('Auth domain:', firebaseConfig.authDomain);
 
         // ====== STATE ======
         let currentUser = null;
@@ -644,15 +647,22 @@ const firebaseConfig = {
         let selectedPrivacy = 'public';
 
         // ====== INIT ======
+        console.log('Waiting for auth state...');
         auth.onAuthStateChanged(user => {
+            console.log('Auth state changed:', user ? user.email : 'No user');
             if (user) {
                 currentUser = user;
                 document.getElementById('username').innerText = user.displayName || user.email?.split('@')[0] || 'Player';
                 loadUserBalance();
                 loadRooms();
             } else {
-                // Redirect to login if not authenticated
-                window.location.href = '/login.html';
+                // Not authenticated - show message instead of redirect for debugging
+                console.log('No user logged in');
+                document.getElementById('username').innerText = 'Not Logged In';
+                document.getElementById('userBalance').innerText = '0';
+                
+                // Uncomment this line once Firebase config is correct:
+                // window.location.href = '/index.html';
             }
         });
 
