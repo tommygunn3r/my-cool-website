@@ -617,24 +617,25 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
 
     <script>
         // ====== FIREBASE CONFIG ======
         // TODO: Replace with your actual Firebase config
-const firebaseConfig = {
-  apiKey: "AIzaSyDjdo3U9qg_h4TKvplsFoZgxVNepAbCpFA",
-  authDomain: "gunners-games.firebaseapp.com",
-  databaseURL: "https://gunners-games-default-rtdb.firebaseio.com",
-  projectId: "gunners-games",
-  storageBucket: "gunners-games.firebasestorage.app",
-  messagingSenderId: "644077315462",
-  appId: "1:644077315462:web:ed5207795338826202f807",
-  measurementId: "G-EY23ENYFBL"
-};
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            databaseURL: "YOUR_DATABASE_URL",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID"
+        };
 
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
-        const database = firebase.database();
+        const database = firebase.database(); // Realtime Database for rooms
+        const firestore = firebase.firestore(); // Firestore for user balance
 
         // ====== STATE ======
         let currentUser = null;
@@ -656,9 +657,18 @@ const firebaseConfig = {
         });
 
         function loadUserBalance() {
-            database.ref(`users/${currentUser.uid}/balance`).once('value', snap => {
-                userBalance = snap.val() || 0;
+            // Load balance from Firestore (where your GunnerCoins are stored)
+            firestore.collection('users').doc(currentUser.uid).get().then(doc => {
+                if (doc.exists) {
+                    userBalance = doc.data().gunnercoins || 0;
+                } else {
+                    userBalance = 0;
+                }
                 document.getElementById('userBalance').innerText = userBalance.toLocaleString();
+            }).catch(error => {
+                console.error('Error loading balance:', error);
+                userBalance = 0;
+                document.getElementById('userBalance').innerText = '0';
             });
         }
 
@@ -812,10 +822,12 @@ const firebaseConfig = {
             try {
                 await roomRef.set(roomData);
                 
-                // Deduct buy-in from balance
-                await database.ref(`users/${currentUser.uid}/balance`).transaction(bal => {
-                    return (bal || 0) - buyIn;
+                // Deduct buy-in from Firestore balance
+                await firestore.collection('users').doc(currentUser.uid).update({
+                    gunnercoins: firebase.firestore.FieldValue.increment(-buyIn)
                 });
+                userBalance -= buyIn;
+                document.getElementById('userBalance').innerText = userBalance.toLocaleString();
 
                 if (selectedPrivacy === 'private') {
                     // Show room code modal
@@ -825,9 +837,12 @@ const firebaseConfig = {
                     // Set up modal buttons
                     document.getElementById('cancelRoomBtn').onclick = async () => {
                         await roomRef.remove();
-                        await database.ref(`users/${currentUser.uid}/balance`).transaction(bal => {
-                            return (bal || 0) + buyIn;
+                        // Refund buy-in to Firestore
+                        await firestore.collection('users').doc(currentUser.uid).update({
+                            gunnercoins: firebase.firestore.FieldValue.increment(buyIn)
                         });
+                        userBalance += buyIn;
+                        document.getElementById('userBalance').innerText = userBalance.toLocaleString();
                         document.getElementById('roomCodeModal').classList.remove('active');
                     };
                     
@@ -880,10 +895,12 @@ const firebaseConfig = {
                     joinedAt: Date.now()
                 });
 
-                // Deduct buy-in
-                await database.ref(`users/${currentUser.uid}/balance`).transaction(bal => {
-                    return (bal || 0) - room.buyIn;
+                // Deduct buy-in from Firestore
+                await firestore.collection('users').doc(currentUser.uid).update({
+                    gunnercoins: firebase.firestore.FieldValue.increment(-room.buyIn)
                 });
+                userBalance -= room.buyIn;
+                document.getElementById('userBalance').innerText = userBalance.toLocaleString();
 
                 // Enter game room
                 enterGameRoom(roomId, room.gameType);
