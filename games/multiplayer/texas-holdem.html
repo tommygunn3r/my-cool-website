@@ -1156,13 +1156,15 @@
             );
 
             console.log('advanceTurn check:', {
+                round: state.round,
                 allBetsEqual,
                 allPlayersActed,
                 currentBet: state.currentBet,
                 bets: state.bets,
                 nextIndex,
                 dealerIndex: state.dealerIndex,
-                activePlayers: activePlayers.length
+                activePlayers: activePlayers.length,
+                activePlayerIds: activePlayers
             });
 
             if (allBetsEqual && allPlayersActed && activePlayers.length > 1) {
