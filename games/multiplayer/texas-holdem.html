@@ -1143,28 +1143,36 @@
             // Check if betting round complete
             const activePlayers = playerOrder.filter(id => !state.folded || !state.folded[id]);
             
-            // All players must have matching bets (treating undefined as 0)
+            // All active players must have matching bets (treating undefined as 0)
             const allBetsEqual = activePlayers.every(id => {
                 const playerBet = (state.bets && state.bets[id]) || 0;
                 return playerBet === (state.currentBet || 0);
             });
             
-            // And we're back to the first player after the dealer (or back around the table)
-            const backToStart = nextIndex === ((state.dealerIndex + 1) % playerOrder.length);
+            // Check if all active players have acted this round
+            // A player has acted if they have a bet recorded (even if 0)
+            const allPlayersActed = activePlayers.every(id => 
+                state.bets && state.bets.hasOwnProperty(id)
+            );
 
             console.log('advanceTurn check:', {
                 allBetsEqual,
-                backToStart,
+                allPlayersActed,
                 currentBet: state.currentBet,
                 bets: state.bets,
                 nextIndex,
-                dealerIndex: state.dealerIndex
+                dealerIndex: state.dealerIndex,
+                activePlayers: activePlayers.length
             });
 
-            if (allBetsEqual && (backToStart || activePlayers.length === 1)) {
+            if (allBetsEqual && allPlayersActed && activePlayers.length > 1) {
                 // Round complete, move to next round
                 console.log('Round complete! Advancing to next round');
                 await advanceRound();
+            } else if (activePlayers.length === 1) {
+                // Only one player left, they win
+                console.log('Only one player left, ending hand');
+                await showdown();
             } else {
                 // Next player's turn
                 console.log('Next player turn');
