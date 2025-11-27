@@ -1226,22 +1226,48 @@
         }
 
         async function showdown() {
-            // Determine winner (simplified - just give pot to last standing player)
+            console.log('Showdown!');
             const state = mp.gameState;
             const activePlayers = state.playerOrder.filter(id => !state.folded || !state.folded[id]);
             
+            if (activePlayers.length === 0) {
+                console.log('No active players!');
+                return;
+            }
+            
             if (activePlayers.length === 1) {
+                // Only one player left - they win by default
                 const winner = activePlayers[0];
                 const winnerChips = mp.getPlayer(winner).chips;
                 
+                console.log('Winner by default:', mp.getPlayer(winner).name);
+                
                 await mp.updatePlayerData(winner, { chips: winnerChips + state.pot });
                 
-                const results = {};
-                state.playerOrder.forEach(id => {
-                    results[id] = { winnings: id === winner ? state.pot : 0 };
-                });
+                showMessage(`${mp.getPlayer(winner).name} wins ${state.pot} chips!`);
                 
-                await mp.endGame(results);
+                setTimeout(() => {
+                    if (mp.isHost) {
+                        dealNewHand();
+                    }
+                }, 3000);
+            } else {
+                // Multiple players - simplified winner determination (random for now)
+                // TODO: Implement proper poker hand evaluation
+                const winner = activePlayers[Math.floor(Math.random() * activePlayers.length)];
+                const winnerChips = mp.getPlayer(winner).chips;
+                
+                console.log('Showdown winner (random):', mp.getPlayer(winner).name);
+                
+                await mp.updatePlayerData(winner, { chips: winnerChips + state.pot });
+                
+                showMessage(`${mp.getPlayer(winner).name} wins ${state.pot} chips!`);
+                
+                setTimeout(() => {
+                    if (mp.isHost) {
+                        dealNewHand();
+                    }
+                }, 3000);
             }
         }
 
