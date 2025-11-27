@@ -947,8 +947,15 @@
         }
 
         function handlePlayerAction(action) {
+            console.log('handlePlayerAction called:', action);
+            
             const seatIndex = playerSeats[action.playerId];
-            if (seatIndex === undefined) return;
+            if (seatIndex === undefined) {
+                console.log('Seat index undefined for player:', action.playerId);
+                return;
+            }
+
+            console.log('Processing action:', action.type, 'from seat:', seatIndex, 'isHost:', mp.isHost);
 
             let text = '';
             switch(action.type) {
