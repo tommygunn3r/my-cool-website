@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GunnersGames Texas Hold'em - Multiplayer</title>
+    <title>GunnersGames Multiplayer</title>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -20,545 +20,595 @@
 
         body {
             font-family: 'Cormorant Garamond', serif;
-            overflow: hidden;
-            height: 100vh;
-            width: 100vw;
-            margin: 0;
-            padding: 0;
-            background: url('/games/assets/casino/greentop.png') center/cover;
-            user-select: none;
+            background: linear-gradient(135deg, var(--dark) 0%, #2a1f1a 100%);
+            color: var(--cream);
+            min-height: 100vh;
+            overflow-x: hidden;
         }
 
-        /* Waiting Room */
-        #waitingRoom {
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem 3rem;
+            background: rgba(0,0,0,0.4);
+            backdrop-filter: blur(10px);
+            border-bottom: 2px solid var(--gold);
+        }
+
+        .logo {
+            font-family: 'Cinzel', serif;
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--gold);
+            letter-spacing: 0.15em;
+            text-shadow: 0 0 20px rgba(212, 175, 55, 0.6);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+        }
+
+        .balance {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+
+        .coin-icon {
+            width: 35px;
+            height: 35px;
+            background: radial-gradient(circle, var(--gold-light) 0%, var(--gold) 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: var(--dark);
+            font-size: 1.1rem;
+            box-shadow: 0 2px 10px rgba(212, 175, 55, 0.5);
+        }
+
+        .username {
+            font-family: 'Cinzel', serif;
+            color: var(--gold);
+            font-size: 1.2rem;
+        }
+
+        /* Main Content */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 3rem 2rem;
+        }
+
+        .page-title {
+            font-family: 'Cinzel', serif;
+            font-size: 3rem;
+            text-align: center;
+            color: var(--gold);
+            margin-bottom: 1rem;
+            text-shadow: 0 0 30px rgba(212, 175, 55, 0.5);
+        }
+
+        .page-subtitle {
+            text-align: center;
+            font-size: 1.2rem;
+            color: var(--gold-light);
+            margin-bottom: 3rem;
+            opacity: 0.8;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .tab-btn {
+            font-family: 'Cinzel', serif;
+            font-size: 1.2rem;
+            padding: 1rem 3rem;
+            background: transparent;
+            color: var(--gold-light);
+            border: 2px solid var(--gold-dark);
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s;
+            letter-spacing: 0.1em;
+        }
+
+        .tab-btn:hover {
+            background: var(--gold-dark);
+            color: var(--dark);
+            box-shadow: 0 5px 20px rgba(212, 175, 55, 0.4);
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
+            color: var(--dark);
+            box-shadow: 0 5px 20px rgba(212, 175, 55, 0.6);
+        }
+
+        /* Tab Content */
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Room Grid */
+        .room-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .room-card {
+            background: rgba(0,0,0,0.6);
+            border: 2px solid var(--gold-dark);
+            border-radius: 15px;
+            padding: 1.5rem;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .room-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(212, 175, 55, 0.3);
+            border-color: var(--gold);
+        }
+
+        .room-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .room-game {
+            font-family: 'Cinzel', serif;
+            font-size: 1.5rem;
+            color: var(--gold);
+            font-weight: 600;
+        }
+
+        .room-status {
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .room-status.waiting {
+            background: rgba(255, 165, 0, 0.2);
+            color: #ffa500;
+            border: 1px solid #ffa500;
+        }
+
+        .room-status.playing {
+            background: rgba(0, 255, 0, 0.2);
+            color: #00ff00;
+            border: 1px solid #00ff00;
+        }
+
+        .room-status.full {
+            background: rgba(255, 0, 0, 0.2);
+            color: #ff4444;
+            border: 1px solid #ff4444;
+        }
+
+        .room-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            color: var(--cream);
+            font-size: 1.1rem;
+        }
+
+        .room-players {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .room-buy-in {
+            color: var(--gold);
+            font-weight: 600;
+        }
+
+        .room-host {
+            font-size: 0.9rem;
+            color: var(--gold-light);
+            opacity: 0.7;
+        }
+
+        /* Create Room Section */
+        .create-room-section {
+            background: rgba(0,0,0,0.6);
+            border: 2px solid var(--gold);
+            border-radius: 15px;
+            padding: 2rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .section-title {
+            font-family: 'Cinzel', serif;
+            font-size: 1.8rem;
+            color: var(--gold);
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            font-family: 'Cinzel', serif;
+            color: var(--gold-light);
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+        }
+
+        .form-select, .form-input {
+            width: 100%;
+            padding: 0.8rem;
+            background: rgba(0,0,0,0.4);
+            border: 1px solid var(--gold-dark);
+            border-radius: 8px;
+            color: var(--cream);
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.1rem;
+        }
+
+        .form-select:focus, .form-input:focus {
+            outline: none;
+            border-color: var(--gold);
+            box-shadow: 0 0 10px rgba(212, 175, 55, 0.3);
+        }
+
+        .toggle-group {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .toggle-btn {
+            flex: 1;
+            padding: 0.8rem;
+            background: rgba(0,0,0,0.4);
+            border: 2px solid var(--gold-dark);
+            border-radius: 8px;
+            color: var(--cream);
+            font-family: 'Cinzel', serif;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+
+        .toggle-btn:hover {
+            border-color: var(--gold);
+        }
+
+        .toggle-btn.active {
+            background: var(--gold);
+            color: var(--dark);
+            border-color: var(--gold);
+        }
+
+        .create-btn {
+            width: 100%;
+            padding: 1rem;
+            background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
+            border: none;
+            border-radius: 50px;
+            color: var(--dark);
+            font-family: 'Cinzel', serif;
+            font-size: 1.3rem;
+            font-weight: 600;
+            cursor: pointer;
+            letter-spacing: 0.1em;
+            transition: all 0.3s;
+            margin-top: 1rem;
+        }
+
+        .create-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(212, 175, 55, 0.6);
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--gold-light);
+            font-size: 1.2rem;
+        }
+
+        .empty-state-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--gold);
+            font-family: 'Cinzel', serif;
+            font-size: 1.5rem;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(212, 175, 55, 0.2);
+            border-top-color: var(--gold);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 2rem auto;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: linear-gradient(135deg, var(--dark) 0%, #2a1f1a 100%);
-            display: flex;
-            flex-direction: column;
+            background: rgba(0,0,0,0.9);
+            z-index: 1000;
             align-items: center;
             justify-content: center;
-            z-index: 1000;
-            transition: opacity 0.5s, visibility 0.5s;
         }
 
-        #waitingRoom.hidden {
-            opacity: 0;
-            visibility: hidden;
-            pointer-events: none;
+        .modal.active {
+            display: flex;
         }
 
-        .waiting-title {
-            font-family: 'Cinzel', serif;
-            font-size: 3rem;
-            color: var(--gold);
-            margin-bottom: 2rem;
-            text-shadow: 0 0 20px rgba(212, 175, 55, 0.5);
-        }
-
-        .player-list {
-            background: rgba(0,0,0,0.6);
+        .modal-content {
+            background: linear-gradient(135deg, var(--dark) 0%, #2a1f1a 100%);
             border: 2px solid var(--gold);
             border-radius: 15px;
             padding: 2rem;
-            min-width: 400px;
-            margin-bottom: 2rem;
+            max-width: 500px;
+            width: 90%;
         }
 
-        .player-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1rem;
-            margin: 0.5rem 0;
-            background: rgba(212, 175, 55, 0.1);
-            border-radius: 8px;
-            color: var(--cream);
-            font-size: 1.2rem;
-        }
-
-        .player-ready {
-            color: #00ff00;
-            font-weight: bold;
-        }
-
-        .ready-button {
+        .modal-title {
             font-family: 'Cinzel', serif;
-            font-size: 1.3rem;
-            padding: 1rem 3rem;
-            background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
-            color: var(--dark);
+            font-size: 1.8rem;
+            color: var(--gold);
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        .modal-text {
+            color: var(--cream);
+            font-size: 1.1rem;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .modal-btn {
+            flex: 1;
+            padding: 0.8rem;
             border: none;
-            border-radius: 50px;
+            border-radius: 8px;
+            font-family: 'Cinzel', serif;
+            font-size: 1.1rem;
             cursor: pointer;
-            font-weight: 600;
-            letter-spacing: 0.1em;
             transition: all 0.3s;
-            box-shadow: 0 5px 20px rgba(212, 175, 55, 0.4);
         }
 
-        .ready-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 30px rgba(212, 175, 55, 0.6);
+        .modal-btn.primary {
+            background: var(--gold);
+            color: var(--dark);
         }
 
-        .ready-button:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        .leave-button {
-            margin-top: 1rem;
+        .modal-btn.secondary {
             background: transparent;
             color: var(--gold);
             border: 2px solid var(--gold);
         }
 
-        /* Game Interface */
-        #gameContainer {
-            width: 100vw;
-            height: 100vh;
-            display: none;
-            flex-direction: column;
-            position: relative;
-        }
-
-        #gameContainer.active {
-            display: flex;
-        }
-
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1rem 2rem;
-            background: linear-gradient(180deg, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.0) 100%);
-            flex-shrink: 0;
-            z-index: 10;
-        }
-
-        .logo {
-            font-family: 'Cinzel', serif;
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--gold);
-            letter-spacing: 0.15em;
-            text-shadow: 0 0 15px rgba(212, 175, 55, 0.6);
-        }
-
-        .poker-table {
-            flex: 1;
-            position: relative;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        /* Community Cards */
-        .community-area {
-            display: flex;
-            gap: 10px;
-            padding: 20px;
-            background: rgba(0,0,0,0.3);
-            border-radius: 100px;
-            border: 2px solid rgba(212, 175, 55, 0.3);
-            min-height: 140px;
-            min-width: 480px;
-            justify-content: center;
-            align-items: center;
-        }
-
-        /* Pot Display */
-        .pot-display {
-            position: absolute;
-            top: 35%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-family: 'Cinzel', serif;
-            color: var(--gold-light);
-            font-size: 1.2rem;
-            background: rgba(0,0,0,0.6);
-            padding: 5px 20px;
-            border-radius: 20px;
-            border: 1px solid var(--gold);
-            text-shadow: 0 0 5px var(--gold);
-        }
-
-        /* Cards */
-        .card {
-            width: 80px;
-            height: 112px;
-            position: relative;
-            transform-style: preserve-3d;
-            transition: transform 0.6s;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
-            border-radius: 6px;
-        }
-
-        .card-front, .card-back {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            backface-visibility: hidden;
-            border-radius: 6px;
-        }
-
-        .card-back {
-            background: url('/games/assets/casino/card_back.png') center/cover;
-            border: 1px solid #fff;
-        }
-
-        .card-front {
-            background: white;
-            transform: rotateY(180deg);
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            padding: 5px;
-            font-family: 'Cinzel', serif;
-            font-weight: 600;
-        }
-
-        .card.flipped {
-            transform: rotateY(180deg);
-        }
-
-        .card-value {
-            font-size: 1.2rem;
-            line-height: 1;
-        }
-
-        .card-suit {
-            font-size: 1.8rem;
-            text-align: center;
-            line-height: 1;
-        }
-
-        .hearts, .diamonds { color: #dc143c; }
-        .clubs, .spades { color: #000; }
-
-        /* Player Seats */
-        .seat {
-            position: absolute;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            width: 180px;
-            transition: all 0.3s;
-        }
-
-        .seat-name {
-            background: rgba(0,0,0,0.8);
-            color: var(--gold);
-            padding: 4px 15px;
-            border-radius: 15px;
-            border: 1px solid var(--gold);
-            font-family: 'Cinzel', serif;
-            font-size: 0.9rem;
-            margin-bottom: 5px;
-            display: flex;
-            justify-content: space-between;
-            width: 100%;
-        }
-
-        .seat-chips {
-            font-size: 0.8rem;
-            color: var(--cream);
-            margin-left: 5px;
-        }
-
-        .seat-hand {
-            display: flex;
-            gap: 5px;
-            height: 112px;
-            justify-content: center;
-        }
-
-        .seat-action {
-            position: absolute;
-            top: -30px;
-            background: var(--gold);
-            color: var(--dark);
-            padding: 2px 10px;
-            border-radius: 10px;
-            font-weight: bold;
-            font-family: 'Cinzel', serif;
-            font-size: 0.8rem;
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
-
-        .seat-action.show {
-            opacity: 1;
-        }
-
-        .dealer-button {
-            width: 20px;
-            height: 20px;
-            background: white;
-            color: black;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            font-size: 0.8rem;
-            position: absolute;
-            top: 50px;
-            left: -25px;
-            border: 2px solid black;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.5);
-        }
-
-        /* Seat Positions */
-        #seat-0 { bottom: 120px; left: 50%; transform: translateX(-50%); }
-        #seat-1 { top: 120px; left: 10%; }
-        #seat-2 { top: 40px; left: 50%; transform: translateX(-50%); }
-        #seat-3 { top: 120px; right: 10%; }
-
-        /* Active Turn */
-        .seat.active-turn .seat-name {
-            background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
-            color: var(--dark);
-            box-shadow: 0 0 15px var(--gold);
-        }
-
-        /* Controls */
-        .controls {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            display: none;
-            justify-content: center;
-            align-items: center;
-            gap: 1rem;
-            padding: 1.5rem;
-            background: linear-gradient(0deg, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.7) 100%);
-            border-top: 2px solid var(--gold);
-            z-index: 20;
-        }
-
-        .controls.active {
-            display: flex;
-        }
-
-        .game-button {
-            font-family: 'Cinzel', serif;
-            font-size: 1rem;
-            padding: 0.7rem 1.5rem;
-            background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
-            color: var(--dark);
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.3s;
-            box-shadow: 0 3px 10px rgba(212, 175, 55, 0.4);
-        }
-
-        .game-button:hover {
+        .modal-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(212, 175, 55, 0.6);
         }
 
-        .game-button.fold {
-            background: linear-gradient(135deg, #8b0000 0%, #660000 100%);
-            color: white;
+        /* Room Code Display */
+        .room-code-display {
+            background: rgba(0,0,0,0.4);
+            border: 2px dashed var(--gold);
+            border-radius: 10px;
+            padding: 1rem;
+            text-align: center;
+            margin: 1rem 0;
         }
 
-        /* Raise Controls */
-        .raise-container {
-            display: none;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .raise-container.active {
-            display: flex;
-        }
-
-        .raise-slider {
-            width: 200px;
-        }
-
-        /* Emoji Bar */
-        .emoji-bar {
-            position: absolute;
-            bottom: 120px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            gap: 10px;
-            background: rgba(0,0,0,0.8);
-            padding: 10px;
-            border-radius: 50px;
-            border: 1px solid var(--gold);
-        }
-
-        .emoji-btn {
-            background: none;
-            border: none;
-            font-size: 2rem;
-            cursor: pointer;
-            transition: transform 0.2s;
-            padding: 5px 10px;
-        }
-
-        .emoji-btn:hover {
-            transform: scale(1.3);
-        }
-
-        /* Emoji Bubble */
-        .emoji-bubble {
-            position: absolute;
-            font-size: 3rem;
-            animation: floatUp 3s ease-out forwards;
-            pointer-events: none;
-            z-index: 100;
-        }
-
-        @keyframes floatUp {
-            0% {
-                transform: translateY(0);
-                opacity: 1;
-            }
-            100% {
-                transform: translateY(-100px);
-                opacity: 0;
-            }
-        }
-
-        /* Turn Timer */
-        .turn-timer {
-            position: absolute;
-            top: -50px;
-            right: 10px;
-            background: rgba(139, 0, 0, 0.8);
-            color: white;
-            padding: 5px 15px;
-            border-radius: 20px;
+        .room-code {
             font-family: 'Cinzel', serif;
-            font-weight: bold;
-            font-size: 1rem;
-            border: 2px solid #ff0000;
-        }
-
-        /* Message Overlay */
-        .message-overlay {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(0,0,0,0.9);
+            font-size: 2rem;
             color: var(--gold);
-            padding: 2rem 4rem;
-            border-radius: 20px;
-            border: 3px solid var(--gold);
-            font-family: 'Cinzel', serif;
-            font-size: 2rem;
-            z-index: 1000;
-            box-shadow: 0 0 50px rgba(212, 175, 55, 0.6);
-            animation: messageAppear 0.3s;
+            letter-spacing: 0.3em;
+            font-weight: 700;
         }
 
-        @keyframes messageAppear {
-            from {
-                opacity: 0;
-                transform: translate(-50%, -50%) scale(0.8);
+        .copy-hint {
+            font-size: 0.9rem;
+            color: var(--gold-light);
+            margin-top: 0.5rem;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .header {
+                padding: 1rem 1.5rem;
             }
-            to {
-                opacity: 1;
-                transform: translate(-50%, -50%) scale(1);
+
+            .logo {
+                font-size: 1.5rem;
+            }
+
+            .page-title {
+                font-size: 2rem;
+            }
+
+            .tabs {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .tab-btn {
+                width: 100%;
+            }
+
+            .room-grid {
+                grid-template-columns: 1fr;
             }
         }
     </style>
 </head>
 <body>
-    <!-- Waiting Room -->
-    <div id="waitingRoom">
-        <h1 class="waiting-title">WAITING FOR PLAYERS</h1>
-        <div class="player-list" id="playerList"></div>
-        <button class="ready-button" id="readyBtn">READY</button>
-        <button class="ready-button leave-button" id="leaveBtn">LEAVE ROOM</button>
+    <!-- Header -->
+    <div class="header">
+        <div class="logo">GUNNERSGAMES</div>
+        <div class="user-info">
+            <div class="balance">
+                <div class="coin-icon">G</div>
+                <span id="userBalance">0</span>
+            </div>
+            <div class="username" id="username">Guest</div>
+        </div>
     </div>
 
-    <!-- Game Container -->
-    <div id="gameContainer">
-        <!-- Header -->
-        <div class="header">
-            <div class="logo">TEXAS HOLD'EM</div>
+    <!-- Main Content -->
+    <div class="container">
+        <h1 class="page-title">MULTIPLAYER LOBBY</h1>
+        <p class="page-subtitle">Join a table or create your own room</p>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="browse">BROWSE ROOMS</button>
+            <button class="tab-btn" data-tab="create">CREATE ROOM</button>
+            <button class="tab-btn" data-tab="join">JOIN PRIVATE</button>
         </div>
 
-        <!-- Poker Table -->
-        <div class="poker-table">
-            <!-- Community Cards -->
-            <div class="community-area" id="communityCards"></div>
-
-            <!-- Pot Display -->
-            <div class="pot-display" id="potDisplay">POT: 0</div>
-
-            <!-- Player Seats -->
-            <div class="seat" id="seat-0">
-                <div class="seat-action" id="action-0"></div>
-                <div class="seat-name">
-                    <span id="name-0">You</span>
-                    <span class="seat-chips" id="chips-0">0</span>
-                </div>
-                <div class="seat-hand" id="hand-0"></div>
+        <!-- Browse Rooms Tab -->
+        <div class="tab-content active" id="browse-tab">
+            <div id="roomsLoading" class="loading">
+                <div class="spinner"></div>
+                Loading rooms...
             </div>
-
-            <div class="seat" id="seat-1">
-                <div class="seat-action" id="action-1"></div>
-                <div class="seat-name">
-                    <span id="name-1">Player 2</span>
-                    <span class="seat-chips" id="chips-1">0</span>
-                </div>
-                <div class="seat-hand" id="hand-1"></div>
-            </div>
-
-            <div class="seat" id="seat-2">
-                <div class="seat-action" id="action-2"></div>
-                <div class="seat-name">
-                    <span id="name-2">Player 3</span>
-                    <span class="seat-chips" id="chips-2">0</span>
-                </div>
-                <div class="seat-hand" id="hand-2"></div>
-            </div>
-
-            <div class="seat" id="seat-3">
-                <div class="seat-action" id="action-3"></div>
-                <div class="seat-name">
-                    <span id="name-3">Player 4</span>
-                    <span class="seat-chips" id="chips-3">0</span>
-                </div>
-                <div class="seat-hand" id="hand-3"></div>
-            </div>
-
-            <!-- Emoji Bar -->
-            <div class="emoji-bar">
-                <button class="emoji-btn" data-emoji="😎">😎</button>
-                <button class="emoji-btn" data-emoji="🔥">🔥</button>
-                <button class="emoji-btn" data-emoji="💰">💰</button>
-                <button class="emoji-btn" data-emoji="😤">😤</button>
-                <button class="emoji-btn" data-emoji="🎉">🎉</button>
-                <button class="emoji-btn" data-emoji="😅">😅</button>
+            <div id="roomsContainer" class="room-grid" style="display: none;"></div>
+            <div id="emptyRooms" class="empty-state" style="display: none;">
+                <div class="empty-state-icon">🎰</div>
+                <div>No active rooms found</div>
+                <div style="margin-top: 1rem; opacity: 0.7;">Be the first to create one!</div>
             </div>
         </div>
 
-        <!-- Controls -->
-        <div class="controls" id="playerControls">
-            <button class="game-button fold" id="btnFold">FOLD</button>
-            <button class="game-button" id="btnCheckCall">CALL</button>
-            <button class="game-button" id="btnRaise">RAISE</button>
+        <!-- Create Room Tab -->
+        <div class="tab-content" id="create-tab">
+            <div class="create-room-section">
+                <h2 class="section-title">CREATE NEW ROOM</h2>
+                
+                <div class="form-group">
+                    <label class="form-label">Game Type</label>
+                    <select class="form-select" id="gameType">
+                        <option value="texas-holdem">Texas Hold'em Poker</option>
+                        <option value="roulette">Roulette</option>
+                        <option value="blackjack">Blackjack</option>
+                        <option value="liars-dice" disabled>Liar's Dice (Coming Soon)</option>
+                    </select>
+                </div>
 
-            <div class="raise-container" id="raiseContainer">
-                <input type="range" class="raise-slider" id="raiseSlider" min="0" max="1000" step="10" value="100">
-                <span style="color: var(--gold); font-family: 'Cinzel', serif; font-size: 1.2rem;" id="raiseAmount">100</span>
-                <button class="game-button" id="btnConfirmRaise">CONFIRM</button>
+                <div class="form-group">
+                    <label class="form-label">Buy-In Amount</label>
+                    <select class="form-select" id="buyIn">
+                        <option value="500">500 GunnerCoins</option>
+                        <option value="1000">1,000 GunnerCoins</option>
+                        <option value="2000" selected>2,000 GunnerCoins</option>
+                        <option value="5000">5,000 GunnerCoins</option>
+                        <option value="10000">10,000 GunnerCoins</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Room Privacy</label>
+                    <div class="toggle-group">
+                        <button class="toggle-btn active" data-privacy="public">PUBLIC</button>
+                        <button class="toggle-btn" data-privacy="private">PRIVATE</button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Max Players</label>
+                    <select class="form-select" id="maxPlayers">
+                        <option value="2">2 Players</option>
+                        <option value="3">3 Players</option>
+                        <option value="4" selected>4 Players</option>
+                        <option value="6">6 Players</option>
+                        <option value="8">8 Players</option>
+                    </select>
+                </div>
+
+                <button class="create-btn" id="createRoomBtn">CREATE ROOM</button>
+            </div>
+        </div>
+
+        <!-- Join Private Room Tab -->
+        <div class="tab-content" id="join-tab">
+            <div class="create-room-section">
+                <h2 class="section-title">JOIN PRIVATE ROOM</h2>
+                
+                <div class="form-group">
+                    <label class="form-label">Enter Room Code</label>
+                    <input type="text" class="form-input" id="roomCodeInput" placeholder="ABCD-1234" maxlength="9" style="text-transform: uppercase; text-align: center; font-size: 1.5rem; letter-spacing: 0.2em;">
+                </div>
+
+                <button class="create-btn" id="joinPrivateBtn">JOIN ROOM</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Room Code Modal -->
+    <div class="modal" id="roomCodeModal">
+        <div class="modal-content">
+            <h2 class="modal-title">ROOM CREATED!</h2>
+            <p class="modal-text">Share this code with your friends:</p>
+            <div class="room-code-display">
+                <div class="room-code" id="displayRoomCode">XXXX-XXXX</div>
+                <div class="copy-hint">Click to copy</div>
+            </div>
+            <p class="modal-text" style="font-size: 0.9rem; opacity: 0.7;">Waiting for players to join...</p>
+            <div class="modal-buttons">
+                <button class="modal-btn secondary" id="cancelRoomBtn">CANCEL</button>
+                <button class="modal-btn primary" id="enterRoomBtn">ENTER ROOM</button>
             </div>
         </div>
     </div>
@@ -568,9 +618,6 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
-
-    <!-- Multiplayer Core -->
-    <script src="/multiplayer-core.js"></script>
 
     <script>
         // ====== FIREBASE CONFIG ======
@@ -586,583 +633,373 @@
         };
 
         firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const database = firebase.database(); // Realtime Database for rooms
+        const firestore = firebase.firestore(); // Firestore for user balance
 
-        // ====== GAME CONSTANTS ======
-        const SUITS = ['♠', '♥', '♦', '♣'];
-        const RANKS = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
-        const SMALL_BLIND = 10;
-        const BIG_BLIND = 20;
+        console.log('Firebase initialized');
+        console.log('Auth domain:', firebaseConfig.authDomain);
 
         // ====== STATE ======
-        let mp = null;
-        let roomId = null;
-        let playerSeats = {}; // Maps userId to seat index
-        let myUserId = null;
-        let mySeatIndex = null;
-        let gameActive = false;
+        let currentUser = null;
+        let userBalance = 0;
+        let roomsListener = null;
+        let selectedPrivacy = 'public';
 
         // ====== INIT ======
-        async function init() {
-            // Get room ID from URL
-            roomId = new URLSearchParams(window.location.search).get('room');
-            
-            if (!roomId) {
-                alert('No room ID provided!');
-                window.location.href = '/multiplayer/index.html';
-                return;
+        console.log('Waiting for auth state...');
+        auth.onAuthStateChanged(user => {
+            console.log('Auth state changed:', user ? user.email : 'No user');
+            if (user) {
+                currentUser = user;
+                document.getElementById('username').innerText = user.displayName || user.email?.split('@')[0] || 'Player';
+                loadUserBalance();
+                loadRooms();
+            } else {
+                // Not authenticated - show message instead of redirect for debugging
+                console.log('No user logged in');
+                document.getElementById('username').innerText = 'Not Logged In';
+                document.getElementById('userBalance').innerText = '0';
+                
+                // Uncomment this line once Firebase config is correct:
+                // window.location.href = '/index.html';
+            }
+        });
+
+        function loadUserBalance() {
+            // Load balance from Firestore (where your GunnerCoins are stored)
+            firestore.collection('users').doc(currentUser.uid).get().then(doc => {
+                if (doc.exists) {
+                    userBalance = doc.data().gunnercoins || 0;
+                } else {
+                    userBalance = 0;
+                }
+                document.getElementById('userBalance').innerText = userBalance.toLocaleString();
+            }).catch(error => {
+                console.error('Error loading balance:', error);
+                userBalance = 0;
+                document.getElementById('userBalance').innerText = '0';
+            });
+        }
+
+        // ====== TAB SYSTEM ======
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const tab = btn.dataset.tab;
+                
+                // Update buttons
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                
+                // Update content
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                document.getElementById(`${tab}-tab`).classList.add('active');
+            });
+        });
+
+        // ====== PRIVACY TOGGLE ======
+        document.querySelectorAll('[data-privacy]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                selectedPrivacy = btn.dataset.privacy;
+                document.querySelectorAll('[data-privacy]').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+            });
+        });
+
+        // ====== LOAD ROOMS ======
+        function loadRooms() {
+            // Clean up old listener
+            if (roomsListener) {
+                database.ref('rooms').off('value', roomsListener);
             }
 
-            // Wait for auth
-            firebase.auth().onAuthStateChanged(async (user) => {
-                if (!user) {
-                    window.location.href = '/index.html';
+            document.getElementById('roomsLoading').style.display = 'block';
+            document.getElementById('roomsContainer').style.display = 'none';
+            document.getElementById('emptyRooms').style.display = 'none';
+
+            // Listen for room changes
+            roomsListener = database.ref('rooms').on('value', snapshot => {
+                const rooms = snapshot.val();
+                document.getElementById('roomsLoading').style.display = 'none';
+                
+                if (!rooms) {
+                    document.getElementById('emptyRooms').style.display = 'block';
                     return;
                 }
 
-                myUserId = user.uid;
-
-                // Initialize multiplayer
-                mp = new MultiplayerGame({
-                    roomId: roomId,
-                    gameType: 'texas-holdem',
-                    maxPlayers: 4,
-                    minPlayers: 2,
-                    turnTimeout: 30000,
+                // Clean up old rooms (older than 1 hour or finished with no players)
+                const now = Date.now();
+                const ONE_HOUR = 60 * 60 * 1000;
+                
+                Object.entries(rooms).forEach(([roomId, room]) => {
+                    const roomAge = now - (room.createdAt || 0);
+                    const hasPlayers = room.players && Object.keys(room.players).length > 0;
                     
-                    onPlayerJoined: handlePlayerJoined,
-                    onPlayerLeft: handlePlayerLeft,
-                    onGameStateUpdate: handleGameStateUpdate,
-                    onGameStart: handleGameStart,
-                    onGameEnd: handleGameEnd,
-                    onPlayerAction: handlePlayerAction,
-                    onTurnChange: handleTurnChange,
-                    onChatMessage: handleChatMessage
-                });
-
-                try {
-                    await mp.init();
-                    console.log('Multiplayer initialized');
-                    updateWaitingRoom();
-                } catch (error) {
-                    console.error('Failed to initialize:', error);
-                    alert('Failed to join room: ' + error.message);
-                    window.location.href = '/multiplayer/index.html';
-                }
-            });
-        }
-
-        // ====== WAITING ROOM ======
-        function updateWaitingRoom() {
-            const playerListEl = document.getElementById('playerList');
-            playerListEl.innerHTML = '';
-
-            const players = mp.allPlayers;
-            Object.entries(players).forEach(([playerId, player]) => {
-                if (!player.connected) return;
-
-                const item = document.createElement('div');
-                item.className = 'player-item';
-                item.innerHTML = `
-                    <span>${player.name}</span>
-                    <span class="${player.ready ? 'player-ready' : ''}">
-                        ${player.ready ? '✓ READY' : 'Not Ready'}
-                    </span>
-                `;
-                playerListEl.appendChild(item);
-            });
-
-            // Update ready button
-            const localPlayer = players[myUserId];
-            if (localPlayer && localPlayer.ready) {
-                document.getElementById('readyBtn').innerText = 'WAITING...';
-                document.getElementById('readyBtn').disabled = true;
-            }
-        }
-
-        function handlePlayerJoined(playerId, player) {
-            console.log(`${player.name} joined`);
-            updateWaitingRoom();
-        }
-
-        function handlePlayerLeft(playerId, player) {
-            console.log(`${player.name} left`);
-            updateWaitingRoom();
-            
-            if (gameActive) {
-                // Remove from seat
-                const seatIndex = playerSeats[playerId];
-                if (seatIndex !== undefined) {
-                    document.getElementById(`seat-${seatIndex}`).style.display = 'none';
-                    delete playerSeats[playerId];
-                }
-            }
-        }
-
-        // ====== GAME START ======
-        function handleGameStart(state) {
-            console.log('Game starting!');
-            gameActive = true;
-
-            // Hide waiting room, show game
-            document.getElementById('waitingRoom').classList.add('hidden');
-            document.getElementById('gameContainer').classList.add('active');
-
-            // Assign seats
-            const playerOrder = mp.getPlayerOrder();
-            playerOrder.forEach((playerId, index) => {
-                playerSeats[playerId] = index;
-                const player = mp.getPlayer(playerId);
-                
-                document.getElementById(`name-${index}`).innerText = player.name;
-                document.getElementById(`chips-${index}`).innerText = player.chips;
-                document.getElementById(`seat-${index}`).style.display = 'flex';
-
-                if (playerId === myUserId) {
-                    mySeatIndex = index;
-                }
-            });
-
-            // Hide empty seats
-            for (let i = playerOrder.length; i < 4; i++) {
-                document.getElementById(`seat-${i}`).style.display = 'none';
-            }
-
-            // If host, deal cards
-            if (mp.isHost) {
-                dealNewHand();
-            }
-        }
-
-        // ====== GAME LOGIC ======
-        async function dealNewHand() {
-            if (!mp.isHost) return;
-
-            // Create and shuffle deck
-            const deck = createDeck();
-            
-            // Deal 2 cards to each player
-            const playerOrder = mp.getPlayerOrder();
-            const hands = {};
-            
-            playerOrder.forEach(playerId => {
-                hands[playerId] = [deck.pop(), deck.pop()];
-            });
-
-            // Set game state
-            await mp.setGameState({
-                deck: deck,
-                hands: hands,
-                communityCards: [],
-                pot: 0,
-                currentBet: BIG_BLIND,
-                round: 'preflop',
-                dealerIndex: 0,
-                currentTurnIndex: 2 % playerOrder.length, // Start after big blind
-                playerOrder: playerOrder,
-                bets: {},
-                folded: {}
-            }, true);
-
-            // Post blinds
-            await postBlinds();
-        }
-
-        async function postBlinds() {
-            const playerOrder = mp.gameState.playerOrder;
-            const smallBlindPlayer = playerOrder[1 % playerOrder.length];
-            const bigBlindPlayer = playerOrder[2 % playerOrder.length];
-
-            // Deduct blinds
-            await mp.updatePlayerData(smallBlindPlayer, {
-                chips: mp.getPlayer(smallBlindPlayer).chips - SMALL_BLIND
-            });
-            
-            await mp.updatePlayerData(bigBlindPlayer, {
-                chips: mp.getPlayer(bigBlindPlayer).chips - BIG_BLIND
-            });
-
-            // Update pot
-            await mp.updateGameState({
-                pot: SMALL_BLIND + BIG_BLIND,
-                bets: {
-                    [smallBlindPlayer]: SMALL_BLIND,
-                    [bigBlindPlayer]: BIG_BLIND
-                }
-            }, true);
-        }
-
-        function createDeck() {
-            let deck = [];
-            for (let suit of SUITS) {
-                for (let rank of RANKS) {
-                    deck.push({ suit, value: rank });
-                }
-            }
-            // Shuffle
-            for (let i = deck.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [deck[i], deck[j]] = [deck[j], deck[i]];
-            }
-            return deck;
-        }
-
-        // ====== UI UPDATES ======
-        function handleGameStateUpdate(state, oldState) {
-            // Update pot
-            document.getElementById('potDisplay').innerText = `POT: ${state.pot || 0}`;
-
-            // Update community cards
-            if (state.communityCards) {
-                renderCommunityCards(state.communityCards);
-            }
-
-            // Update player chips
-            if (state.playerOrder) {
-                state.playerOrder.forEach(playerId => {
-                    const player = mp.getPlayer(playerId);
-                    const seatIndex = playerSeats[playerId];
-                    if (seatIndex !== undefined && player) {
-                        document.getElementById(`chips-${seatIndex}`).innerText = player.chips;
+                    // Delete if: finished with no players, or older than 1 hour
+                    if ((room.status === 'finished' && !hasPlayers) || roomAge > ONE_HOUR) {
+                        database.ref(`rooms/${roomId}`).remove();
+                        console.log(`Cleaned up old room: ${roomId}`);
                     }
                 });
-            }
 
-            // Update hands
-            if (state.hands && state.hands[myUserId]) {
-                renderMyHand(state.hands[myUserId]);
-            }
+                const container = document.getElementById('roomsContainer');
+                container.innerHTML = '';
+                container.style.display = 'grid';
 
-            // Show folded players
-            if (state.folded) {
-                Object.entries(state.folded).forEach(([playerId, isFolded]) => {
-                    const seatIndex = playerSeats[playerId];
-                    if (seatIndex !== undefined && isFolded) {
-                        document.getElementById(`hand-${seatIndex}`).style.opacity = '0.3';
+                // Filter and display public rooms
+                Object.entries(rooms).forEach(([roomId, room]) => {
+                    if (room.privacy === 'public' && room.status !== 'finished') {
+                        container.appendChild(createRoomCard(roomId, room));
                     }
                 });
-            }
-        }
 
-        function renderCommunityCards(cards) {
-            const container = document.getElementById('communityCards');
-            container.innerHTML = '';
-            
-            cards.forEach(card => {
-                container.appendChild(createCardElement(card, true));
+                if (container.children.length === 0) {
+                    container.style.display = 'none';
+                    document.getElementById('emptyRooms').style.display = 'block';
+                }
             });
         }
 
-        function renderMyHand(cards) {
-            const container = document.getElementById(`hand-${mySeatIndex}`);
-            container.innerHTML = '';
+        function createRoomCard(roomId, room) {
+            const card = document.createElement('div');
+            card.className = 'room-card';
             
-            cards.forEach(card => {
-                container.appendChild(createCardElement(card, true));
-            });
-        }
+            const playerCount = room.players ? Object.keys(room.players).length : 0;
+            const statusClass = room.status === 'playing' ? 'playing' : 
+                               playerCount >= room.maxPlayers ? 'full' : 'waiting';
+            const statusText = room.status === 'playing' ? 'IN GAME' : 
+                              playerCount >= room.maxPlayers ? 'FULL' : 'WAITING';
 
-        function createCardElement(card, flipped = false) {
-            const el = document.createElement('div');
-            el.className = `card ${flipped ? 'flipped' : ''}`;
-            
-            const suitClass = (card.suit === '♥' || card.suit === '♦') ? 'hearts' : 'clubs';
-            
-            el.innerHTML = `
-                <div class="card-back"></div>
-                <div class="card-front">
-                    <div class="card-value ${suitClass}">${card.value}</div>
-                    <div class="card-suit ${suitClass}">${card.suit}</div>
-                    <div class="card-value ${suitClass}" style="transform: rotate(180deg);">${card.value}</div>
+            card.innerHTML = `
+                <div class="room-header">
+                    <div class="room-game">${getGameName(room.gameType)}</div>
+                    <div class="room-status ${statusClass}">${statusText}</div>
                 </div>
+                <div class="room-info">
+                    <div class="room-players">
+                        <span>👥</span>
+                        <span>${playerCount}/${room.maxPlayers}</span>
+                    </div>
+                    <div class="room-buy-in">💰 ${room.buyIn.toLocaleString()}</div>
+                </div>
+                <div class="room-host">Host: ${room.hostName}</div>
             `;
-            
-            return el;
-        }
 
-        function handleTurnChange(currentTurnPlayerId, state) {
-            // Clear all active turn indicators
-            document.querySelectorAll('.seat').forEach(seat => {
-                seat.classList.remove('active-turn');
-            });
-
-            // Highlight current player
-            const seatIndex = playerSeats[currentTurnPlayerId];
-            if (seatIndex !== undefined) {
-                document.getElementById(`seat-${seatIndex}`).classList.add('active-turn');
-            }
-
-            // Enable/disable controls
-            if (currentTurnPlayerId === myUserId) {
-                enableControls(state);
+            if (statusClass !== 'full' && room.status !== 'playing') {
+                card.addEventListener('click', () => joinRoom(roomId, room));
             } else {
-                disableControls();
-            }
-        }
-
-        function enableControls(state) {
-            document.getElementById('playerControls').classList.add('active');
-
-            const toCall = (state.currentBet || 0) - ((state.bets && state.bets[myUserId]) || 0);
-            const callBtn = document.getElementById('btnCheckCall');
-            
-            if (toCall === 0) {
-                callBtn.innerText = 'CHECK';
-            } else {
-                callBtn.innerText = `CALL ${toCall}`;
+                card.style.cursor = 'not-allowed';
+                card.style.opacity = '0.6';
             }
 
-            // Setup raise slider
-            const myChips = mp.getPlayer(myUserId).chips;
-            const raiseSlider = document.getElementById('raiseSlider');
-            raiseSlider.min = state.currentBet || BIG_BLIND;
-            raiseSlider.max = myChips;
-            raiseSlider.value = Math.min(state.currentBet * 2 || BIG_BLIND * 2, myChips);
-            document.getElementById('raiseAmount').innerText = raiseSlider.value;
+            return card;
         }
 
-        function disableControls() {
-            document.getElementById('playerControls').classList.remove('active');
-            document.getElementById('raiseContainer').classList.remove('active');
+        function getGameName(type) {
+            const names = {
+                'texas-holdem': 'Texas Hold\'em',
+                'roulette': 'Roulette',
+                'blackjack': 'Blackjack',
+                'liars-dice': 'Liar\'s Dice'
+            };
+            return names[type] || type;
         }
 
-        function handlePlayerAction(action) {
-            const seatIndex = playerSeats[action.playerId];
-            if (seatIndex === undefined) return;
+        // ====== CREATE ROOM ======
+        document.getElementById('createRoomBtn').addEventListener('click', createRoom);
 
-            let text = '';
-            switch(action.type) {
-                case 'fold':
-                    text = 'FOLD';
-                    break;
-                case 'check':
-                    text = 'CHECK';
-                    break;
-                case 'call':
-                    text = 'CALL';
-                    break;
-                case 'raise':
-                case 'bet':
-                    text = `RAISE ${action.amount}`;
-                    break;
-            }
+        async function createRoom() {
+            const gameType = document.getElementById('gameType').value;
+            const buyIn = parseInt(document.getElementById('buyIn').value);
+            const maxPlayers = parseInt(document.getElementById('maxPlayers').value);
 
-            showActionBubble(seatIndex, text);
-        }
-
-        function showActionBubble(seatIndex, text) {
-            const bubble = document.getElementById(`action-${seatIndex}`);
-            bubble.innerText = text;
-            bubble.classList.add('show');
-            
-            setTimeout(() => {
-                bubble.classList.remove('show');
-            }, 2000);
-        }
-
-        function handleChatMessage(message) {
-            const seatIndex = playerSeats[message.playerId];
-            if (seatIndex === undefined) return;
-
-            const bubble = document.createElement('div');
-            bubble.className = 'emoji-bubble';
-            bubble.innerText = message.emoji;
-            bubble.style.left = '50%';
-            bubble.style.top = '50px';
-
-            const seat = document.getElementById(`seat-${seatIndex}`);
-            seat.appendChild(bubble);
-
-            setTimeout(() => bubble.remove(), 3000);
-        }
-
-        function handleGameEnd(state) {
-            console.log('Game ended!', state.results);
-            
-            setTimeout(() => {
-                showMessage('Hand Complete!');
-                setTimeout(() => {
-                    if (mp.isHost) {
-                        dealNewHand();
-                    }
-                }, 3000);
-            }, 2000);
-        }
-
-        function showMessage(text) {
-            const msg = document.createElement('div');
-            msg.className = 'message-overlay';
-            msg.innerText = text;
-            document.body.appendChild(msg);
-            
-            setTimeout(() => msg.remove(), 2000);
-        }
-
-        // ====== PLAYER ACTIONS ======
-        document.getElementById('readyBtn').addEventListener('click', async () => {
-            await mp.setReady(true);
-            updateWaitingRoom();
-        });
-
-        document.getElementById('leaveBtn').addEventListener('click', async () => {
-            await mp.leaveRoom();
-            window.location.href = '/multiplayer/index.html';
-        });
-
-        document.getElementById('btnFold').addEventListener('click', async () => {
-            await mp.submitAction({ type: 'fold' });
-            
-            if (mp.isHost) {
-                await mp.updateGameState({
-                    folded: { ...mp.gameState.folded, [myUserId]: true }
-                }, true);
-                advanceTurn();
-            }
-        });
-
-        document.getElementById('btnCheckCall').addEventListener('click', async () => {
-            const state = mp.gameState;
-            const toCall = (state.currentBet || 0) - ((state.bets && state.bets[myUserId]) || 0);
-            
-            if (toCall === 0) {
-                await mp.submitAction({ type: 'check' });
-            } else {
-                await mp.submitAction({ type: 'call', amount: toCall });
-                
-                if (mp.isHost) {
-                    const myChips = mp.getPlayer(myUserId).chips;
-                    await mp.updatePlayerData(myUserId, { chips: myChips - toCall });
-                    await mp.updateGameState({
-                        pot: state.pot + toCall,
-                        bets: { ...state.bets, [myUserId]: (state.bets[myUserId] || 0) + toCall }
-                    }, true);
-                }
-            }
-            
-            if (mp.isHost) {
-                advanceTurn();
-            }
-        });
-
-        document.getElementById('btnRaise').addEventListener('click', () => {
-            document.getElementById('raiseContainer').classList.add('active');
-        });
-
-        document.getElementById('raiseSlider').addEventListener('input', (e) => {
-            document.getElementById('raiseAmount').innerText = e.target.value;
-        });
-
-        document.getElementById('btnConfirmRaise').addEventListener('click', async () => {
-            const amount = parseInt(document.getElementById('raiseSlider').value);
-            await mp.submitAction({ type: 'raise', amount });
-            
-            if (mp.isHost) {
-                const state = mp.gameState;
-                const myChips = mp.getPlayer(myUserId).chips;
-                const currentBet = (state.bets && state.bets[myUserId]) || 0;
-                const additionalBet = amount - currentBet;
-                
-                await mp.updatePlayerData(myUserId, { chips: myChips - additionalBet });
-                await mp.updateGameState({
-                    pot: state.pot + additionalBet,
-                    currentBet: amount,
-                    bets: { ...state.bets, [myUserId]: amount }
-                }, true);
-                
-                advanceTurn();
-            }
-            
-            document.getElementById('raiseContainer').classList.remove('active');
-        });
-
-        // Emoji buttons
-        document.querySelectorAll('.emoji-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                mp.sendEmoji(btn.dataset.emoji);
-            });
-        });
-
-        // ====== GAME FLOW (HOST ONLY) ======
-        async function advanceTurn() {
-            if (!mp.isHost) return;
-
-            const state = mp.gameState;
-            const playerOrder = state.playerOrder;
-            let nextIndex = (state.currentTurnIndex + 1) % playerOrder.length;
-            
-            // Skip folded players
-            while (state.folded && state.folded[playerOrder[nextIndex]]) {
-                nextIndex = (nextIndex + 1) % playerOrder.length;
-            }
-
-            // Check if betting round complete
-            const activePlayers = playerOrder.filter(id => !state.folded || !state.folded[id]);
-            const allBetsEqual = activePlayers.every(id => 
-                (state.bets && state.bets[id]) === state.currentBet
-            );
-
-            if (allBetsEqual && nextIndex === ((state.dealerIndex + 3) % playerOrder.length)) {
-                // Round complete, move to next round
-                await advanceRound();
-            } else {
-                // Next player's turn
-                await mp.updateGameState({
-                    currentTurnIndex: nextIndex,
-                    currentTurn: playerOrder[nextIndex]
-                }, true);
-            }
-        }
-
-        async function advanceRound() {
-            const state = mp.gameState;
-            let newRound, newCards = [];
-
-            if (state.round === 'preflop') {
-                newRound = 'flop';
-                newCards = [state.deck.pop(), state.deck.pop(), state.deck.pop()];
-            } else if (state.round === 'flop') {
-                newRound = 'turn';
-                newCards = [state.deck.pop()];
-            } else if (state.round === 'turn') {
-                newRound = 'river';
-                newCards = [state.deck.pop()];
-            } else {
-                // Showdown
-                await showdown();
+            // Validate balance
+            if (userBalance < buyIn) {
+                alert(`Insufficient funds! You need ${buyIn.toLocaleString()} GunnerCoins.`);
                 return;
             }
 
-            await mp.updateGameState({
-                round: newRound,
-                communityCards: [...(state.communityCards || []), ...newCards],
-                currentBet: 0,
-                bets: {},
-                currentTurnIndex: (state.dealerIndex + 1) % state.playerOrder.length,
-                currentTurn: state.playerOrder[(state.dealerIndex + 1) % state.playerOrder.length]
-            }, true);
-        }
+            // Generate room code for private rooms
+            const roomCode = selectedPrivacy === 'private' ? generateRoomCode() : null;
 
-        async function showdown() {
-            // Determine winner (simplified - just give pot to last standing player)
-            const state = mp.gameState;
-            const activePlayers = state.playerOrder.filter(id => !state.folded || !state.folded[id]);
-            
-            if (activePlayers.length === 1) {
-                const winner = activePlayers[0];
-                const winnerChips = mp.getPlayer(winner).chips;
+            // Create room in database
+            const roomRef = database.ref('rooms').push();
+            const roomData = {
+                gameType,
+                buyIn,
+                maxPlayers,
+                privacy: selectedPrivacy,
+                roomCode,
+                hostId: currentUser.uid,
+                hostName: currentUser.displayName || 'Player',
+                status: 'waiting',
+                createdAt: Date.now(),
+                players: {
+                    [currentUser.uid]: {
+                        name: currentUser.displayName || 'Player',
+                        chips: buyIn,
+                        ready: false,
+                        joinedAt: Date.now()
+                    }
+                }
+            };
+
+            try {
+                await roomRef.set(roomData);
                 
-                await mp.updatePlayerData(winner, { chips: winnerChips + state.pot });
-                
-                const results = {};
-                state.playerOrder.forEach(id => {
-                    results[id] = { winnings: id === winner ? state.pot : 0 };
+                // Deduct buy-in from Firestore balance
+                await firestore.collection('users').doc(currentUser.uid).update({
+                    gunnercoins: firebase.firestore.FieldValue.increment(-buyIn)
                 });
-                
-                await mp.endGame(results);
+                userBalance -= buyIn;
+                document.getElementById('userBalance').innerText = userBalance.toLocaleString();
+
+                if (selectedPrivacy === 'private') {
+                    // Show room code modal
+                    document.getElementById('displayRoomCode').innerText = roomCode;
+                    document.getElementById('roomCodeModal').classList.add('active');
+                    
+                    // Set up modal buttons
+                    document.getElementById('cancelRoomBtn').onclick = async () => {
+                        await roomRef.remove();
+                        // Refund buy-in to Firestore
+                        await firestore.collection('users').doc(currentUser.uid).update({
+                            gunnercoins: firebase.firestore.FieldValue.increment(buyIn)
+                        });
+                        userBalance += buyIn;
+                        document.getElementById('userBalance').innerText = userBalance.toLocaleString();
+                        document.getElementById('roomCodeModal').classList.remove('active');
+                    };
+                    
+                    document.getElementById('enterRoomBtn').onclick = () => {
+                        document.getElementById('roomCodeModal').classList.remove('active');
+                        enterGameRoom(roomRef.key, gameType);
+                    };
+
+                    // Copy code on click
+                    document.getElementById('displayRoomCode').onclick = () => {
+                        navigator.clipboard.writeText(roomCode);
+                        const hint = document.querySelector('.copy-hint');
+                        hint.innerText = 'Copied!';
+                        setTimeout(() => hint.innerText = 'Click to copy', 2000);
+                    };
+                } else {
+                    // Public room - enter immediately
+                    enterGameRoom(roomRef.key, gameType);
+                }
+            } catch (error) {
+                console.error('Error creating room:', error);
+                alert('Failed to create room. Please try again.');
             }
         }
 
-        // ====== START ======
-        init();
+        function generateRoomCode() {
+            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+            let code = '';
+            for (let i = 0; i < 8; i++) {
+                if (i === 4) code += '-';
+                code += chars[Math.floor(Math.random() * chars.length)];
+            }
+            return code;
+        }
+
+        // ====== JOIN ROOM ======
+        async function joinRoom(roomId, room) {
+            // Validate balance
+            if (userBalance < room.buyIn) {
+                alert(`Insufficient funds! You need ${room.buyIn.toLocaleString()} GunnerCoins.`);
+                return;
+            }
+
+            try {
+                // Add player to room
+                await database.ref(`rooms/${roomId}/players/${currentUser.uid}`).set({
+                    name: currentUser.displayName || 'Player',
+                    chips: room.buyIn,
+                    ready: false,
+                    joinedAt: Date.now()
+                });
+
+                // Deduct buy-in from Firestore
+                await firestore.collection('users').doc(currentUser.uid).update({
+                    gunnercoins: firebase.firestore.FieldValue.increment(-room.buyIn)
+                });
+                userBalance -= room.buyIn;
+                document.getElementById('userBalance').innerText = userBalance.toLocaleString();
+
+                // Enter game room
+                enterGameRoom(roomId, room.gameType);
+            } catch (error) {
+                console.error('Error joining room:', error);
+                alert('Failed to join room. Please try again.');
+            }
+        }
+
+        // ====== JOIN PRIVATE ROOM ======
+        document.getElementById('joinPrivateBtn').addEventListener('click', async () => {
+            const code = document.getElementById('roomCodeInput').value.trim().toUpperCase();
+            
+            if (!code || code.length < 8) {
+                alert('Please enter a valid room code.');
+                return;
+            }
+
+            try {
+                // Search for room with this code
+                const snapshot = await database.ref('rooms')
+                    .orderByChild('roomCode')
+                    .equalTo(code)
+                    .once('value');
+
+                const rooms = snapshot.val();
+                
+                if (!rooms) {
+                    alert('Room not found. Please check the code and try again.');
+                    return;
+                }
+
+                const roomId = Object.keys(rooms)[0];
+                const room = rooms[roomId];
+
+                if (room.status === 'finished') {
+                    alert('This room has ended.');
+                    return;
+                }
+
+                const playerCount = room.players ? Object.keys(room.players).length : 0;
+                if (playerCount >= room.maxPlayers) {
+                    alert('This room is full.');
+                    return;
+                }
+
+                await joinRoom(roomId, room);
+            } catch (error) {
+                console.error('Error finding room:', error);
+                alert('Failed to find room. Please try again.');
+            }
+        });
+
+        // ====== ENTER GAME ROOM ======
+        function enterGameRoom(roomId, gameType) {
+            // Store room info in session storage
+            sessionStorage.setItem('currentRoom', roomId);
+            
+            // Redirect to appropriate game
+            const gameUrls = {
+                'texas-holdem': '/games/multiplayer/texas-holdem.html',
+                'roulette': '/games/multiplayer/roulette.html',
+                'blackjack': '/games/multiplayer/blackjack.html'
+            };
+
+            window.location.href = `${gameUrls[gameType]}?room=${roomId}`;
+        }
+
+        // ====== CLEANUP ======
+        window.addEventListener('beforeunload', () => {
+            if (roomsListener) {
+                database.ref('rooms').off('value', roomsListener);
+            }
+        });
     </script>
 </body>
 </html>
