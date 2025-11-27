@@ -145,9 +145,8 @@ class MultiplayerGame {
         // Listen for player actions
         const actionsListener = this.roomRef.child('actions').on('child_added', (snapshot) => {
             const action = snapshot.val();
-            if (action.playerId !== this.currentUser.uid) {
-                this.onPlayerAction(action);
-            }
+            // Trigger callback for ALL actions (including own actions)
+            this.onPlayerAction(action);
         });
 
         // Listen for chat messages
