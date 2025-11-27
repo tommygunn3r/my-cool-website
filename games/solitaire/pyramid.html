@@ -5,6 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Pyramid Solitaire - GunnersGames</title>
     <style>
+        :root {
+            --gold: #d4af37;
+            --gold-dark: #b8941f;
+            --gold-light: #f4e5a7;
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -13,39 +19,46 @@
 
         body {
             font-family: 'Georgia', serif;
-            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
-            color: #d4af37;
+            background-color: #1a472a;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            transition: background-image 0.5s ease-in-out;
+            color: var(--gold);
             display: flex;
             flex-direction: column;
             align-items: center;
             min-height: 100vh;
             padding: 10px;
             overflow-x: hidden;
+            user-select: none;
+            -webkit-user-select: none;
         }
 
         .game-header {
             text-align: center;
-            margin: 15px 0;
+            margin: 10px 0 5px 0;
         }
 
         .game-header h1 {
-            font-size: 2.5em;
-            color: #d4af37;
+            font-size: 2em;
+            color: var(--gold);
             text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
             margin-bottom: 5px;
         }
 
         .stats {
             display: flex;
-            gap: 30px;
+            gap: 20px;
             justify-content: center;
-            margin: 10px 0;
-            font-size: 1.1em;
+            margin: 5px 0;
+            font-size: 0.95em;
         }
 
         .stat {
-            background: rgba(212, 175, 55, 0.1);
-            padding: 8px 20px;
+            background: rgba(212, 175, 55, 0.15);
+            padding: 6px 15px;
             border-radius: 8px;
             border: 1px solid rgba(212, 175, 55, 0.3);
         }
@@ -54,7 +67,7 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 20px;
+            gap: 10px;
             width: 100%;
             max-width: 900px;
         }
@@ -63,59 +76,50 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 8px;
-            margin: 20px 0;
+            margin: 10px 0;
         }
 
         .pyramid-row {
             display: flex;
-            gap: 8px;
             justify-content: center;
+            position: relative;
+            margin-top: -15px; /* Overlap rows */
         }
 
-        .controls {
-            display: flex;
-            gap: 20px;
-            align-items: center;
-            justify-content: center;
-            margin: 10px 0;
-        }
-
-        .deck-area {
-            display: flex;
-            gap: 15px;
-            align-items: center;
+        .pyramid-row:first-child {
+            margin-top: 0;
         }
 
         .card {
-            width: 70px;
-            height: 98px;
+            width: 60px;
+            height: 84px;
             border-radius: 8px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.5em;
+            font-size: 1.4em;
             font-weight: bold;
             cursor: pointer;
             transition: all 0.3s ease;
             position: relative;
             box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+            margin: 0 -5px; /* Overlap cards horizontally */
         }
 
         .card.face-up {
             background: white;
-            border: 2px solid #d4af37;
+            border: 2px solid var(--gold);
         }
 
         .card.face-down {
             background: linear-gradient(135deg, #8b4513 0%, #654321 100%);
-            border: 2px solid #d4af37;
+            border: 2px solid var(--gold);
             cursor: pointer;
         }
 
         .card.face-down::after {
             content: '♠';
-            color: #d4af37;
+            color: var(--gold);
             font-size: 2em;
         }
 
@@ -128,9 +132,10 @@
         }
 
         .card.selected {
-            transform: translateY(-10px);
+            transform: translateY(-10px) scale(1.05);
             box-shadow: 0 8px 16px rgba(212, 175, 55, 0.6), 0 0 20px rgba(212, 175, 55, 0.4);
             border-color: #ffd700;
+            z-index: 100;
         }
 
         .card.covered {
@@ -149,9 +154,24 @@
             cursor: default;
         }
 
+        .controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            justify-content: center;
+            margin: 10px 0;
+        }
+
+        .deck-area {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            margin: 5px 0;
+        }
+
         .stock-pile, .waste-pile {
-            width: 70px;
-            height: 98px;
+            width: 60px;
+            height: 84px;
             border-radius: 8px;
             display: flex;
             align-items: center;
@@ -161,7 +181,7 @@
 
         .stock-pile {
             background: linear-gradient(135deg, #8b4513 0%, #654321 100%);
-            border: 2px solid #d4af37;
+            border: 2px solid var(--gold);
             cursor: pointer;
         }
 
@@ -173,7 +193,7 @@
 
         .stock-pile::after {
             content: '♠';
-            color: #d4af37;
+            color: var(--gold);
             font-size: 2em;
         }
 
@@ -187,11 +207,11 @@
         }
 
         button {
-            background: linear-gradient(135deg, #d4af37 0%, #f4d03f 100%);
+            background: linear-gradient(135deg, var(--gold) 0%, var(--gold-light) 100%);
             color: #1a1a1a;
             border: none;
-            padding: 12px 30px;
-            font-size: 1.1em;
+            padding: 10px 25px;
+            font-size: 1em;
             font-weight: bold;
             border-radius: 8px;
             cursor: pointer;
@@ -202,7 +222,7 @@
         button:hover {
             transform: translateY(-2px);
             box-shadow: 0 6px 12px rgba(0,0,0,0.4);
-            background: linear-gradient(135deg, #f4d03f 0%, #d4af37 100%);
+            background: linear-gradient(135deg, var(--gold-light) 0%, var(--gold) 100%);
         }
 
         button:active {
@@ -210,24 +230,111 @@
         }
 
         .message {
-            font-size: 1.2em;
-            margin: 10px 0;
-            padding: 10px 20px;
+            font-size: 1.1em;
+            margin: 5px 0;
+            padding: 8px 20px;
             border-radius: 8px;
-            background: rgba(212, 175, 55, 0.1);
+            background: rgba(212, 175, 55, 0.15);
             border: 1px solid rgba(212, 175, 55, 0.3);
-            min-height: 40px;
+            min-height: 36px;
             display: flex;
             align-items: center;
             justify-content: center;
         }
 
-        .help-text {
+        /* Menu Button */
+        .menu-button {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            width: 50px;
+            height: 50px;
+            background: rgba(0, 0, 0, 0.7);
+            border: 2px solid var(--gold);
+            border-radius: 10px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 5px;
+            z-index: 200;
+            transition: all 0.3s ease;
+        }
+
+        .menu-button:hover {
+            background: rgba(0, 0, 0, 0.9);
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.5);
+        }
+
+        .menu-button span {
+            width: 30px;
+            height: 3px;
+            background: var(--gold);
+            border-radius: 2px;
+        }
+
+        /* Menu Overlay */
+        .menu-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 300;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .menu-overlay.active {
+            display: flex;
+        }
+
+        .menu-content {
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            border: 3px solid var(--gold);
+            border-radius: 15px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.9);
+        }
+
+        .menu-content h2 {
+            color: var(--gold);
             text-align: center;
-            font-size: 0.9em;
-            color: rgba(212, 175, 55, 0.7);
-            margin-top: 10px;
-            max-width: 600px;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+        }
+
+        .menu-content label {
+            display: block;
+            color: var(--gold);
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .menu-content select {
+            width: 100%;
+            background: #1a1a1a;
+            border: 2px solid var(--gold-dark);
+            border-radius: 8px;
+            padding: 10px;
+            color: white;
+            font-size: 1em;
+            margin-bottom: 20px;
+        }
+
+        .menu-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .menu-buttons button {
+            flex: 1;
         }
 
         canvas {
@@ -242,33 +349,61 @@
 
         @media (max-width: 768px) {
             .card {
-                width: 50px;
-                height: 70px;
-                font-size: 1.2em;
+                width: 45px;
+                height: 63px;
+                font-size: 1.1em;
             }
 
             .stock-pile, .waste-pile {
-                width: 50px;
-                height: 70px;
+                width: 45px;
+                height: 63px;
             }
 
             .game-header h1 {
-                font-size: 2em;
+                font-size: 1.6em;
             }
 
             .stats {
-                gap: 15px;
-                font-size: 1em;
+                gap: 10px;
+                font-size: 0.85em;
             }
 
             .pyramid-row {
-                gap: 5px;
+                margin-top: -10px;
+            }
+
+            .card {
+                margin: 0 -3px;
             }
         }
     </style>
 </head>
 <body>
     <canvas id="confetti"></canvas>
+
+    <div class="menu-button" onclick="toggleMenu()">
+        <span></span>
+        <span></span>
+        <span></span>
+    </div>
+
+    <div class="menu-overlay" id="menuOverlay">
+        <div class="menu-content">
+            <h2>⚙ Settings</h2>
+            
+            <label for="themeSelect">Background Theme</label>
+            <select id="themeSelect">
+                <option value="green">Classic Green</option>
+                <option value="red">Royal Red</option>
+                <option value="blue">Ocean Blue</option>
+            </select>
+
+            <div class="menu-buttons">
+                <button onclick="saveAndResume()">Resume</button>
+                <button onclick="newGameFromMenu()">New Game</button>
+            </div>
+        </div>
+    </div>
 
     <div class="game-header">
         <h1>⚜ Pyramid Solitaire ⚜</h1>
@@ -280,7 +415,7 @@
     </div>
 
     <div class="game-container">
-        <div class="message" id="message">Match pairs that add up to 13! Kings = 13 can be removed alone.</div>
+        <div class="message" id="message">Match pairs that add up to 13!</div>
 
         <div class="pyramid-container" id="pyramid"></div>
 
@@ -291,11 +426,6 @@
 
         <div class="controls">
             <button onclick="newGame()">New Game</button>
-        </div>
-
-        <div class="help-text">
-            Click pairs of cards that add up to 13 (Ace=1, Jack=11, Queen=12, King=13).
-            Kings can be removed alone. Only uncovered cards can be selected.
         </div>
     </div>
 
@@ -326,6 +456,49 @@
             }
         }
         initGameAuth();
+
+        // Theme system
+        const THEMES = {
+            green: '/games/assets/solitaire/greentop.png',
+            red: '/games/assets/solitaire/redtop.png',
+            blue: '/games/assets/solitaire/bluetop.png'
+        };
+
+        let currentTheme = localStorage.getItem('pyramid_theme') || 'green';
+
+        function applyTheme() {
+            const url = THEMES[currentTheme];
+            document.body.style.backgroundImage = `url('${url}')`;
+        }
+
+        function toggleMenu() {
+            const overlay = document.getElementById('menuOverlay');
+            overlay.classList.toggle('active');
+            
+            // Update select to show current theme
+            if (overlay.classList.contains('active')) {
+                document.getElementById('themeSelect').value = currentTheme;
+            }
+        }
+
+        function saveAndResume() {
+            const themeSelect = document.getElementById('themeSelect');
+            const newTheme = themeSelect.value;
+            if (newTheme !== currentTheme) {
+                currentTheme = newTheme;
+                localStorage.setItem('pyramid_theme', currentTheme);
+                applyTheme();
+            }
+            toggleMenu();
+        }
+
+        function newGameFromMenu() {
+            toggleMenu();
+            newGame();
+        }
+
+        // Apply theme on load
+        applyTheme();
 
         // Game state
         let pyramid = [];
