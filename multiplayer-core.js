@@ -15,7 +15,8 @@ class MultiplayerGame {
         };
 
         this.firebase = firebase;
-        this.database = firebase.database();
+        this.database = firebase.database(); // Realtime Database for game state
+        this.firestore = firebase.firestore(); // Firestore for user balance
         this.auth = firebase.auth();
         
         this.currentUser = null;
@@ -287,11 +288,11 @@ class MultiplayerGame {
             throw new Error('Only host can end the game');
         }
 
-        // Calculate winnings and update balances
+        // Calculate winnings and update Firestore balances
         for (const [playerId, result] of Object.entries(results)) {
             if (result.winnings > 0) {
-                await this.database.ref(`users/${playerId}/balance`).transaction(bal => {
-                    return (bal || 0) + result.winnings;
+                await this.firestore.collection('users').doc(playerId).update({
+                    gunnercoins: this.firebase.firestore.FieldValue.increment(result.winnings)
                 });
             }
         }
@@ -341,10 +342,10 @@ class MultiplayerGame {
         // Remove player from room
         await this.playersRef.child(this.currentUser.uid).remove();
 
-        // Refund remaining chips
+        // Refund remaining chips to Firestore balance
         if (this.localPlayerData && this.localPlayerData.chips > 0) {
-            await this.database.ref(`users/${this.currentUser.uid}/balance`).transaction(bal => {
-                return (bal || 0) + this.localPlayerData.chips;
+            await this.firestore.collection('users').doc(this.currentUser.uid).update({
+                gunnercoins: this.firebase.firestore.FieldValue.increment(this.localPlayerData.chips)
             });
         }
 
