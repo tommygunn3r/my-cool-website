@@ -72,6 +72,13 @@
             max-width: 900px;
         }
 
+        .game-area {
+            display: flex;
+            align-items: flex-start;
+            gap: 30px;
+            justify-content: center;
+        }
+
         .pyramid-container {
             display: flex;
             flex-direction: column;
@@ -154,19 +161,12 @@
             cursor: default;
         }
 
-        .controls {
-            display: flex;
-            gap: 15px;
-            align-items: center;
-            justify-content: center;
-            margin: 10px 0;
-        }
-
         .deck-area {
             display: flex;
+            flex-direction: column;
             gap: 15px;
             align-items: center;
-            margin: 5px 0;
+            margin: 10px 0;
         }
 
         .stock-pile, .waste-pile {
@@ -348,6 +348,16 @@
         }
 
         @media (max-width: 768px) {
+            .game-area {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .deck-area {
+                flex-direction: row;
+                gap: 15px;
+            }
+
             .card {
                 width: 45px;
                 height: 63px;
@@ -417,15 +427,12 @@
     <div class="game-container">
         <div class="message" id="message">Match pairs that add up to 13!</div>
 
-        <div class="pyramid-container" id="pyramid"></div>
-
-        <div class="deck-area">
-            <div class="stock-pile" id="stock" title="Draw card"></div>
-            <div class="waste-pile" id="waste"></div>
-        </div>
-
-        <div class="controls">
-            <button onclick="newGame()">New Game</button>
+        <div class="game-area">
+            <div class="pyramid-container" id="pyramid"></div>
+            <div class="deck-area">
+                <div class="stock-pile" id="stock" title="Draw card"></div>
+                <div class="waste-pile" id="waste"></div>
+            </div>
         </div>
     </div>
 
@@ -497,6 +504,11 @@
             newGame();
         }
 
+        // Make functions available to onclick handlers
+        window.toggleMenu = toggleMenu;
+        window.saveAndResume = saveAndResume;
+        window.newGameFromMenu = newGameFromMenu;
+
         // Apply theme on load
         applyTheme();
 
@@ -565,6 +577,7 @@
             updateStats();
             showMessage("Match pairs that add up to 13! Kings = 13 can be removed alone.");
         }
+        window.newGame = newGame;
 
         function updateCoveredStatus() {
             // Mark cards as covered if they have cards below them
