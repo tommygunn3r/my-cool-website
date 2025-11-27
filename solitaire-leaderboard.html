@@ -115,13 +115,29 @@
 
         let currentMode = 'scores';
         
-        // IMPORTANT: These IDs must match the 'gameName' saved in your database EXACTLY.
-        // If your database uses "Klondike" (capitalized), change 'klondike' below to 'Klondike'.
+        // Updated game configurations that match what's actually saved in Firebase
         const games = [
-            { id: 'spider_solitaire', name: 'Spider Solitaire' },
-            { id: 'klondike', name: 'Klondike' },
-            { id: 'freecell', name: 'FreeCell' },
-            { id: 'tripeaks', name: 'TriPeaks' }
+            { 
+                id: 'Spider Solitaire', 
+                name: 'Spider Solitaire',
+                collection: 'scores'  // Uses main scores collection
+            },
+            { 
+                id: 'Klondike Solitaire', 
+                name: 'Klondike',
+                collection: 'scores'  // Uses main scores collection
+            },
+            { 
+                id: 'FreeCell Solitaire', 
+                name: 'FreeCell',
+                collection: 'scores'  // Uses main scores collection
+            },
+            { 
+                id: 'pyramid', 
+                name: 'Pyramid',
+                collection: 'solitaire_scores',  // Uses separate collection
+                isPyramid: true  // Flag to handle different field structure
+            }
         ];
 
         function formatTime(seconds) {
@@ -135,37 +151,65 @@
             return `${hours}h ${remainMins}m`;
         }
 
-        async function loadScores(gameId, mode) {
+        async function loadScores(game, mode) {
             try {
-                const scoresRef = collection(db, 'scores');
-                const orderField = mode === 'scores' ? 'score' : 'timePlayed';
+                const scoresRef = collection(db, game.collection);
                 
-                // Firestore Composite Query
-                const q = query(
-                    scoresRef, 
-                    where('gameName', '==', gameId),
-                    orderBy(orderField, 'desc'), 
-                    limit(10)
-                );
-                
-                const querySnapshot = await getDocs(q);
-                const results = [];
-                
-                querySnapshot.forEach((doc) => {
-                    const data = doc.data();
-                    results.push({
-                        playerName: data.playerName,
-                        score: data.score || 0,
-                        timePlayed: data.timePlayed || 0
+                if (game.isPyramid) {
+                    // Pyramid uses different field names
+                    const orderField = mode === 'scores' ? 'score' : 'timeSeconds';
+                    
+                    const q = query(
+                        scoresRef, 
+                        where('gameType', '==', game.id),
+                        orderBy(orderField, 'desc'), 
+                        limit(10)
+                    );
+                    
+                    const querySnapshot = await getDocs(q);
+                    const results = [];
+                    
+                    querySnapshot.forEach((doc) => {
+                        const data = doc.data();
+                        results.push({
+                            playerName: data.userName || 'Anonymous',
+                            score: data.score || 0,
+                            timePlayed: data.timeSeconds || 0
+                        });
                     });
-                });
 
-                return results;
+                    return results;
+                } else {
+                    // Other games use standard structure
+                    const orderField = mode === 'scores' ? 'score' : 'timePlayed';
+                    
+                    const q = query(
+                        scoresRef, 
+                        where('gameName', '==', game.id),
+                        orderBy(orderField, 'desc'), 
+                        limit(10)
+                    );
+                    
+                    const querySnapshot = await getDocs(q);
+                    const results = [];
+                    
+                    querySnapshot.forEach((doc) => {
+                        const data = doc.data();
+                        results.push({
+                            playerName: data.playerName,
+                            score: data.score || 0,
+                            timePlayed: data.timePlayed || 0
+                        });
+                    });
+
+                    return results;
+                }
             } catch (error) {
-                console.error(`Error loading ${gameId}:`, error);
+                console.error(`Error loading ${game.name}:`, error);
                 
                 if (error.code === 'failed-precondition') {
-                    // This returns a special error flag we can check later to show the link
+                    // Index is missing - show Firebase console link
+                    console.error('Index required. Create it here:', error.message);
                     return { error: 'index_missing' };
                 }
                 return [];
@@ -240,7 +284,7 @@
             
             const allResults = {};
             for (const game of games) {
-                allResults[game.id] = await loadScores(game.id, mode);
+                allResults[game.id] = await loadScores(game, mode);
             }
             displayAllScores(allResults);
         };
@@ -248,7 +292,7 @@
         async function init() {
             const allResults = {};
             for (const game of games) {
-                allResults[game.id] = await loadScores(game.id, 'scores');
+                allResults[game.id] = await loadScores(game, 'scores');
             }
             displayAllScores(allResults);
         }
