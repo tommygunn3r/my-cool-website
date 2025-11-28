@@ -541,8 +541,9 @@
                     <label class="form-label">Game Type</label>
                     <select class="form-select" id="gameType">
                         <option value="texas-holdem">Texas Hold'em Poker</option>
-                        <option value="roulette">Roulette</option>
-                        <option value="blackjack">Blackjack</option>
+                        <option value="who-wrote-it-better">Who Wrote It Better? 🎵</option>
+                        <option value="roulette" disabled>Roulette (Coming Soon)</option>
+                        <option value="blackjack" disabled>Blackjack (Coming Soon)</option>
                         <option value="liars-dice" disabled>Liar's Dice (Coming Soon)</option>
                     </select>
                 </div>
@@ -798,6 +799,7 @@
         function getGameName(type) {
             const names = {
                 'texas-holdem': 'Texas Hold\'em',
+                'who-wrote-it-better': 'Who Wrote It Better?',
                 'roulette': 'Roulette',
                 'blackjack': 'Blackjack',
                 'liars-dice': 'Liar\'s Dice'
@@ -987,6 +989,7 @@
             // Redirect to appropriate game
             const gameUrls = {
                 'texas-holdem': '/games/multiplayer/texas-holdem.html',
+                'who-wrote-it-better': '/games/multiplayer/who-wrote-it-better.html',
                 'roulette': '/games/multiplayer/roulette.html',
                 'blackjack': '/games/multiplayer/blackjack.html'
             };
