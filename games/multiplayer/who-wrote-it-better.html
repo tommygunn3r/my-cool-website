@@ -495,6 +495,39 @@
             <button class="ready-btn" id="readyBtn">READY</button>
         </div>
         
+        <!-- Game Setup (Host Only) -->
+        <div id="gameSetup" class="waiting-room" style="display: none;">
+            <h2 class="waiting-title">Game Setup</h2>
+            
+            <div class="setup-section">
+                <h3 class="setup-label">Content Rating</h3>
+                <div class="rating-filter">
+                    <button class="rating-toggle active" data-rating="G">G - Family</button>
+                    <button class="rating-toggle active" data-rating="PG">PG - Teen+</button>
+                    <button class="rating-toggle" data-rating="NSFW">NSFW - Adult</button>
+                </div>
+            </div>
+            
+            <div class="setup-section">
+                <h3 class="setup-label">Select Content Packs</h3>
+                <div id="packSelection" class="pack-grid">
+                    <!-- Dynamically loaded from Firestore -->
+                </div>
+            </div>
+            
+            <div class="setup-section">
+                <h3 class="setup-label">Number of Rounds</h3>
+                <select id="roundsSelect" class="setup-select">
+                    <option value="3">3 Rounds</option>
+                    <option value="5" selected>5 Rounds</option>
+                    <option value="7">7 Rounds</option>
+                    <option value="10">10 Rounds</option>
+                </select>
+            </div>
+            
+            <button class="ready-btn" id="confirmSetupBtn">Confirm & Ready</button>
+        </div>
+        
         <!-- Game Screen -->
         <div id="gameScreen" class="game-screen">
             <div class="game-header">
@@ -646,6 +679,11 @@
             },
             
             onGameStateUpdate: (newState, oldState) => {
+                // Update player status continuously during active phases
+                if (newState.phase === 'selection' || newState.phase === 'voting') {
+                    updatePlayerStatus(newState, newState.phase);
+                }
+                
                 if (newState.phase === 'selection') {
                     showSelectionPhase(newState);
                 } else if (newState.phase === 'reveal') {
@@ -869,7 +907,10 @@
                 
                 // Check if all players submitted
                 const connectedPlayers = Object.keys(mpGame.allPlayers).filter(id => mpGame.allPlayers[id].connected);
+                console.log(`Selection check: ${Object.keys(submissions).length}/${connectedPlayers.length} submitted`);
+                
                 if (Object.keys(submissions).length === connectedPlayers.length) {
+                    console.log('All players submitted! Host advancing to reveal...');
                     if (mpGame.isHost) {
                         setTimeout(() => startRevealPhase(), 1000);
                     }
@@ -893,7 +934,11 @@
                 const connectedPlayers = Object.keys(mpGame.allPlayers).filter(id => mpGame.allPlayers[id].connected);
                 const submittedPlayers = Object.keys(currentState.submissions);
                 const votingPlayers = connectedPlayers.filter(id => submittedPlayers.includes(id));
+                
+                console.log(`Voting check: ${Object.keys(votes).length}/${votingPlayers.length} voted`);
+                
                 if (Object.keys(votes).length === votingPlayers.length) {
+                    console.log('All players voted! Host ending round...');
                     if (mpGame.isHost) {
                         setTimeout(() => endRound(), 1000);
                     }
@@ -948,14 +993,15 @@
                 answersGrid.appendChild(answerCard);
             });
             
-            // Auto-advance to voting after 3 seconds
+            // Auto-advance to voting after 5 seconds
             if (mpGame.isHost) {
                 setTimeout(() => {
                     mpGame.updateGameState({
                         phase: 'voting',
-                        shuffledAnswers: shuffledAnswers // Save the shuffled order
+                        shuffledAnswers: shuffledAnswers, // Save the shuffled order
+                        startTime: Date.now() // Reset timer for voting
                     });
-                }, 3000);
+                }, 5000);
             }
         }
         
@@ -1080,9 +1126,10 @@
             });
             
             mpGame.updateGameState({
-                phase: 'round_results',
+                phase: 'results',
                 voteCounts: voteCounts,
-                winners: winners
+                winningIndices: winningIndices,
+                winningPlayers: winningPlayers
             });
             
             setTimeout(() => {
@@ -1091,7 +1138,7 @@
                 } else {
                     endGame();
                 }
-            }, 5000);
+            }, 8000); // 8 seconds to see results
         }
         
         function showRoundResults(gameState) {
@@ -1190,16 +1237,18 @@
             const statusList = document.getElementById('playerStatusList');
             statusList.innerHTML = '';
             
-            const connectedPlayers = Object.values(mpGame.allPlayers).filter(p => p.connected);
+            // Get player entries with their IDs
+            const connectedPlayers = Object.entries(mpGame.allPlayers)
+                .filter(([id, player]) => player.connected);
             
-            connectedPlayers.forEach(player => {
+            connectedPlayers.forEach(([playerId, player]) => {
                 const statusDiv = document.createElement('div');
                 let isDone = false;
                 
                 if (phase === 'selection') {
-                    isDone = gameState.submissions && gameState.submissions[player.id] !== undefined;
+                    isDone = gameState.submissions && gameState.submissions[playerId] !== undefined;
                 } else if (phase === 'voting') {
-                    isDone = gameState.votes && gameState.votes[player.id] !== undefined;
+                    isDone = gameState.votes && gameState.votes[playerId] !== undefined;
                 }
                 
                 statusDiv.className = `player-status ${isDone ? 'submitted' : 'waiting'}`;
