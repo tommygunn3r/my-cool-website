@@ -161,7 +161,7 @@
         .pack-checkbox {
             display: flex;
             align-items: center;
-            padding: 8px;
+            padding: 10px 12px;
             margin: 5px 0;
             background: rgba(255,255,255,0.03);
             border-radius: 5px;
@@ -178,17 +178,27 @@
             width: 18px;
             height: 18px;
             cursor: pointer;
+            flex-shrink: 0;
         }
         
         .pack-label {
             flex: 1;
             font-size: 0.95em;
             cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .pack-name-text {
+            flex: 1 1 auto;
         }
         
         .pack-count {
             font-size: 0.85em;
             color: #aaa;
+            white-space: nowrap;
+            flex-shrink: 0;
         }
         
         .pack-rating-badge {
@@ -197,7 +207,8 @@
             border-radius: 4px;
             font-size: 0.75em;
             font-weight: bold;
-            margin-left: 5px;
+            white-space: nowrap;
+            flex-shrink: 0;
         }
         
         .pack-rating-badge.G {
