@@ -870,6 +870,8 @@
                 startRoundTimer();
             }
         }
+        
+        function startRoundTimer() {
             clearInterval(roundTimer);
             let timeLeft = roundTimeLimit;
             document.getElementById('timer').textContent = timeLeft;
