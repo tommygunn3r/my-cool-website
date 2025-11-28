@@ -97,6 +97,273 @@
             color: #1a1a2e;
         }
         
+        /* Pack Selection Panel */
+        .pack-selection-panel {
+            background: rgba(0,0,0,0.4);
+            padding: 25px;
+            border-radius: 15px;
+            margin: 20px auto 30px;
+            max-width: 700px;
+            border: 2px solid rgba(255,215,0,0.3);
+        }
+        
+        .settings-section {
+            margin-bottom: 20px;
+        }
+        
+        .rating-toggles {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .rating-toggle {
+            padding: 10px 20px;
+            background: rgba(255,255,255,0.1);
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 8px;
+            color: #fff;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+        }
+        
+        .rating-toggle:hover {
+            background: rgba(255,255,255,0.2);
+        }
+        
+        .rating-toggle.active {
+            background: #FFD700;
+            color: #1a1a2e;
+            border-color: #FFD700;
+        }
+        
+        .categories-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        
+        .category-group {
+            background: rgba(255,255,255,0.05);
+            padding: 15px;
+            border-radius: 10px;
+        }
+        
+        .category-title {
+            color: #FFD700;
+            font-size: 1.1em;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+        
+        .pack-checkbox {
+            display: flex;
+            align-items: center;
+            padding: 8px;
+            margin: 5px 0;
+            background: rgba(255,255,255,0.03);
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .pack-checkbox:hover {
+            background: rgba(255,255,255,0.1);
+        }
+        
+        .pack-checkbox input {
+            margin-right: 10px;
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+        
+        .pack-label {
+            flex: 1;
+            font-size: 0.95em;
+            cursor: pointer;
+        }
+        
+        .pack-count {
+            font-size: 0.85em;
+            color: #aaa;
+        }
+        
+        .pack-rating-badge {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.75em;
+            font-weight: bold;
+            margin-left: 5px;
+        }
+        
+        .pack-rating-badge.G {
+            background: #4CAF50;
+            color: white;
+        }
+        
+        .pack-rating-badge.PG {
+            background: #FF9800;
+            color: white;
+        }
+        
+        .pack-rating-badge.NSFW {
+            background: #f44336;
+            color: white;
+        }
+        
+        .pack-summary {
+            margin-top: 15px;
+            padding: 10px;
+            background: rgba(255,215,0,0.1);
+            border-radius: 8px;
+            text-align: center;
+            color: #FFD700;
+            font-weight: bold;
+        }
+        
+        /* Game Setup */
+        .setup-section {
+            margin-bottom: 30px;
+            text-align: left;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .setup-label {
+            font-size: 1.3em;
+            color: #FFD700;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        .rating-filter {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .rating-toggle {
+            padding: 12px 24px;
+            font-size: 1.1em;
+            font-weight: bold;
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .rating-toggle:hover {
+            background: rgba(255,255,255,0.2);
+        }
+        
+        .rating-toggle.active {
+            background: #4CAF50;
+            border-color: #4CAF50;
+            transform: scale(1.05);
+        }
+        
+        .pack-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            max-height: 400px;
+            overflow-y: auto;
+            padding: 10px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 10px;
+        }
+        
+        .pack-item {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 8px;
+            border: 2px solid rgba(255,255,255,0.2);
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .pack-item:hover {
+            background: rgba(255,255,255,0.2);
+            transform: translateY(-2px);
+        }
+        
+        .pack-item.selected {
+            background: rgba(76,175,80,0.3);
+            border-color: #4CAF50;
+        }
+        
+        .pack-checkbox {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+        
+        .pack-info {
+            flex: 1;
+        }
+        
+        .pack-name {
+            font-weight: bold;
+            font-size: 1.1em;
+            color: #fff;
+            text-transform: capitalize;
+        }
+        
+        .pack-details {
+            font-size: 0.9em;
+            color: #aaa;
+            margin-top: 3px;
+        }
+        
+        .pack-badge {
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+        
+        .pack-badge.G {
+            background: #4CAF50;
+            color: white;
+        }
+        
+        .pack-badge.PG {
+            background: #FF9800;
+            color: white;
+        }
+        
+        .pack-badge.NSFW {
+            background: #f44336;
+            color: white;
+        }
+        
+        .setup-select {
+            width: 100%;
+            padding: 12px;
+            font-size: 1.1em;
+            background: rgba(0,0,0,0.3);
+            color: #fff;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        
+        .setup-select option {
+            background: #1a1a2e;
+            color: #fff;
+        }
+        
         /* Game Screen */
         .game-screen {
             display: none;
@@ -492,6 +759,32 @@
         <div id="waitingRoom" class="waiting-room">
             <h2 class="waiting-title">Waiting for Players...</h2>
             <div id="playersGrid" class="players-grid"></div>
+            
+            <!-- Pack Selection (Host Only) -->
+            <div id="packSelectionPanel" class="pack-selection-panel" style="display: none;">
+                <h3 style="color: #FFD700; margin-bottom: 15px;">Game Settings (Host)</h3>
+                
+                <div class="settings-section">
+                    <label style="color: #FFD700; display: block; margin-bottom: 10px;">Content Rating:</label>
+                    <div class="rating-toggles">
+                        <button class="rating-toggle active" data-rating="G">G - Family</button>
+                        <button class="rating-toggle active" data-rating="PG">PG - Teen+</button>
+                        <button class="rating-toggle" data-rating="NSFW">NSFW - Adult</button>
+                    </div>
+                </div>
+                
+                <div class="settings-section">
+                    <label style="color: #FFD700; display: block; margin-bottom: 10px;">Categories & Packs:</label>
+                    <div id="categoriesContainer" class="categories-container">
+                        <!-- Categories populated by JS -->
+                    </div>
+                </div>
+                
+                <div class="pack-summary">
+                    <span id="selectedPacksCount">0 packs selected</span>
+                </div>
+            </div>
+            
             <button class="ready-btn" id="readyBtn">READY</button>
         </div>
         
@@ -627,8 +920,235 @@
         let roundTimer = null;
         let roundTimeLimit = 30;
         
+        // Game setup state
+        let availablePacks = {};
+        let selectedPacks = new Set();
+        let selectedRatings = new Set(['G', 'PG']);
+        
         // Initialize game
         console.log('Initializing game...');
+        
+        // Load available packs from Firestore
+        async function loadAvailablePacks() {
+            try {
+                const promptsSnapshot = await firestore.collection('prompts').get();
+                
+                // Group by category and pack
+                promptsSnapshot.docs.forEach(doc => {
+                    const data = doc.data();
+                    const category = data.category || 'other';
+                    const pack = data.pack;
+                    const rating = data.rating;
+                    
+                    if (!availablePacks[category]) {
+                        availablePacks[category] = {};
+                    }
+                    
+                    if (!availablePacks[category][pack]) {
+                        availablePacks[category][pack] = {
+                            name: pack,
+                            category: category,
+                            rating: rating,
+                            count: 0
+                        };
+                    }
+                    
+                    availablePacks[category][pack].count++;
+                });
+                
+                console.log('Available packs:', availablePacks);
+                
+                // If host, show setup screen
+                if (mpGame.isHost) {
+                    populatePackSelection();
+                }
+            } catch (error) {
+                console.error('Error loading packs:', error);
+            }
+        }
+        
+        // Populate pack selection UI
+        function populatePackSelection() {
+            document.getElementById('packSelectionPanel').style.display = 'block';
+            
+            const container = document.getElementById('categoriesContainer');
+            container.innerHTML = '';
+            
+            Object.entries(availablePacks).forEach(([category, packs]) => {
+                const categoryDiv = document.createElement('div');
+                categoryDiv.className = 'category-group';
+                
+                const titleDiv = document.createElement('div');
+                titleDiv.className = 'category-title';
+                titleDiv.textContent = category;
+                categoryDiv.appendChild(titleDiv);
+                
+                Object.entries(packs).forEach(([packName, packInfo]) => {
+                    const packDiv = document.createElement('div');
+                    packDiv.className = 'pack-checkbox';
+                    
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.id = `pack-${packName}`;
+                    checkbox.dataset.pack = packName;
+                    checkbox.dataset.rating = packInfo.rating;
+                    checkbox.checked = selectedRatings.has(packInfo.rating); // Auto-check if rating active
+                    
+                    if (checkbox.checked) {
+                        selectedPacks.add(packName);
+                    }
+                    
+                    const label = document.createElement('label');
+                    label.className = 'pack-label';
+                    label.htmlFor = `pack-${packName}`;
+                    label.innerHTML = `
+                        ${packName.replace(/-/g, ' ')}
+                        <span class="pack-rating-badge ${packInfo.rating}">${packInfo.rating}</span>
+                        <span class="pack-count">(${packInfo.count})</span>
+                    `;
+                    
+                    packDiv.appendChild(checkbox);
+                    packDiv.appendChild(label);
+                    
+                    // Handle click on whole div
+                    packDiv.addEventListener('click', (e) => {
+                        if (e.target !== checkbox) {
+                            checkbox.checked = !checkbox.checked;
+                        }
+                        updatePackSelection();
+                    });
+                    
+                    checkbox.addEventListener('change', updatePackSelection);
+                    
+                    categoryDiv.appendChild(packDiv);
+                });
+                
+                container.appendChild(categoryDiv);
+            });
+            
+            setupRatingToggles();
+            updatePackSelection();
+        }
+        
+        // Setup rating toggle buttons
+        function setupRatingToggles() {
+            document.querySelectorAll('.rating-toggle').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const rating = btn.dataset.rating;
+                    
+                    if (selectedRatings.has(rating)) {
+                        selectedRatings.delete(rating);
+                        btn.classList.remove('active');
+                    } else {
+                        selectedRatings.add(rating);
+                        btn.classList.add('active');
+                    }
+                    
+                    // Update pack checkboxes based on rating
+                    document.querySelectorAll('.pack-checkbox input').forEach(checkbox => {
+                        const packRating = checkbox.dataset.rating;
+                        const shouldBeVisible = selectedRatings.has(packRating);
+                        
+                        checkbox.closest('.pack-checkbox').style.display = shouldBeVisible ? 'flex' : 'none';
+                        
+                        // Auto-check/uncheck based on rating
+                        if (shouldBeVisible && !checkbox.checked) {
+                            checkbox.checked = true;
+                            selectedPacks.add(checkbox.dataset.pack);
+                        } else if (!shouldBeVisible && checkbox.checked) {
+                            checkbox.checked = false;
+                            selectedPacks.delete(checkbox.dataset.pack);
+                        }
+                    });
+                    
+                    updatePackSelection();
+                });
+            });
+        }
+        
+        // Update selected packs and summary
+        function updatePackSelection() {
+            selectedPacks.clear();
+            
+            document.querySelectorAll('.pack-checkbox input:checked').forEach(checkbox => {
+                selectedPacks.add(checkbox.dataset.pack);
+            });
+            
+            document.getElementById('selectedPacksCount').textContent = 
+                `${selectedPacks.size} pack${selectedPacks.size !== 1 ? 's' : ''} selected`;
+        }
+                    <span class="pack-badge ${pack.rating}">${pack.rating}</span>
+                    ${pack.category} • ${pack.count} cards
+                `;
+                
+                packInfo.appendChild(packName);
+                packInfo.appendChild(packDetails);
+                
+                packItem.appendChild(checkbox);
+                packItem.appendChild(packInfo);
+                
+                packItem.addEventListener('click', (e) => {
+                    if (e.target !== checkbox) {
+                        checkbox.checked = !checkbox.checked;
+                    }
+                    
+                    if (checkbox.checked) {
+                        selectedPacks.add(pack.name);
+                        packItem.classList.add('selected');
+                    } else {
+                        selectedPacks.delete(pack.name);
+                        packItem.classList.remove('selected');
+                    }
+                });
+                
+                packGrid.appendChild(packItem);
+            });
+            
+            filterPacksByRating();
+        }
+        
+        // Rating filter
+        document.addEventListener('DOMContentLoaded', () => {
+            document.querySelectorAll('.rating-toggle').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const rating = btn.dataset.rating;
+                    btn.classList.toggle('active');
+                    
+                    if (selectedRatings.has(rating)) {
+                        selectedRatings.delete(rating);
+                    } else {
+                        selectedRatings.add(rating);
+                    }
+                    
+                    filterPacksByRating();
+                });
+            });
+        });
+        
+        function filterPacksByRating() {
+            document.querySelectorAll('.pack-item').forEach(item => {
+                const rating = item.dataset.rating;
+                if (selectedRatings.has(rating)) {
+                    item.style.display = 'flex';
+                } else {
+                    item.style.display = 'none';
+                    // Unselect if hidden
+                    const checkbox = item.querySelector('.pack-checkbox');
+                    if (checkbox.checked) {
+                        checkbox.checked = false;
+                        selectedPacks.delete(item.dataset.pack);
+                        item.classList.remove('selected');
+                    }
+                }
+            });
+        }
+        
+        // Rounds selection
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('roundsSelect')?.addEventListener('change', (e) => {
+                totalRounds = parseInt(e.target.value);
+            });
+        });
         
         // Load card data from Firestore
         async function loadCardData() {
@@ -672,10 +1192,13 @@
                 document.getElementById('gameScreen').style.display = 'block';
                 document.getElementById('emojiChat').classList.remove('hidden');
                 
-                // Initialize game if host
-                if (mpGame.isHost) {
-                    initializeGame();
-                }
+                // Load all card data first
+                loadCardData().then(() => {
+                    // Initialize game if host
+                    if (mpGame.isHost) {
+                        initializeGame();
+                    }
+                });
             },
             
             onGameStateUpdate: (newState, oldState) => {
@@ -705,7 +1228,16 @@
         // Initialize multiplayer
         mpGame.init().then(() => {
             console.log('Multiplayer initialized successfully');
+            console.log('Is host?', mpGame.isHost);
+            
             loadCardData();
+            loadAvailablePacks();
+            
+            // Show setup for host, waiting room for others
+            if (mpGame.isHost) {
+                document.getElementById('waitingRoom').style.display = 'none';
+                document.getElementById('gameSetup').style.display = 'block';
+            }
         }).catch(error => {
             console.error('Failed to initialize multiplayer:', error);
             alert('Failed to join game: ' + error.message);
@@ -741,6 +1273,36 @@
             checkAllReady();
         });
         
+        // Confirm setup button (host only)
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('confirmSetupBtn')?.addEventListener('click', () => {
+                if (selectedPacks.size === 0) {
+                    alert('Please select at least one content pack!');
+                    return;
+                }
+                
+                // Save settings to game state
+                mpGame.updateGameState({
+                    settings: {
+                        packs: Array.from(selectedPacks),
+                        ratings: Array.from(selectedRatings),
+                        rounds: totalRounds
+                    }
+                });
+                
+                // Show waiting room
+                document.getElementById('gameSetup').style.display = 'none';
+                document.getElementById('waitingRoom').style.display = 'block';
+                
+                // Auto-mark host as ready
+                mpGame.setReady(true);
+                document.getElementById('readyBtn').classList.add('ready');
+                document.getElementById('readyBtn').textContent = 'READY ✓';
+                document.getElementById('readyBtn').disabled = true;
+                checkAllReady();
+            });
+        });
+        
         // Check if all players are ready and start game
         function checkAllReady() {
             if (!mpGame.isHost) return; // Only host can start
@@ -752,9 +1314,23 @@
             
             if (connectedPlayers.length >= 2 && readyPlayers.length === connectedPlayers.length) {
                 console.log('All players ready! Starting game...');
+                
+                // Save game settings to game state
+                const settings = {
+                    packs: Array.from(selectedPacks),
+                    ratings: Array.from(selectedRatings),
+                    rounds: totalRounds
+                };
+                
+                console.log('Saving settings:', settings);
+                
                 setTimeout(() => {
                     if (mpGame.gameState.started) return; // Already started
-                    mpGame.startGame();
+                    
+                    // Save settings then start
+                    mpGame.updateGameState({ settings: settings }).then(() => {
+                        mpGame.startGame();
+                    });
                 }, 500);
             }
         }
@@ -763,17 +1339,31 @@
         async function initializeGame() {
             await loadCardData();
             
-            // Filter prompts and answers
-            const selectedPacks = new Set(['disney', 'hip-hop', '90s-pop', 'classic-rock', 'sci-fi', 'classic-films']);
-            const activeRatings = new Set(['G', 'PG']);
+            // Get settings from game state (or use defaults)
+            const settings = mpGame.gameState.settings || {
+                packs: ['disney', 'hip-hop', '90s-pop', 'classic-rock', 'sci-fi', 'classic-films'],
+                ratings: ['G', 'PG'],
+                rounds: 5
+            };
             
+            console.log('Game settings:', settings);
+            
+            const selectedPacksSet = new Set(settings.packs);
+            const activeRatings = new Set(settings.ratings);
+            totalRounds = settings.rounds;
+            
+            document.getElementById('totalRounds').textContent = totalRounds;
+            
+            // Filter prompts and answers
             gamePrompts = allPrompts.filter(p => 
-                selectedPacks.has(p.pack) && activeRatings.has(p.rating)
+                selectedPacksSet.has(p.pack) && activeRatings.has(p.rating)
             );
             
             gameAnswers = allAnswers.filter(a => 
                 activeRatings.has(a.rating)
             );
+            
+            console.log(`Filtered to ${gamePrompts.length} prompts and ${gameAnswers.length} answers`);
             
             // Shuffle and select
             gamePrompts = shuffleArray(gamePrompts).slice(0, totalRounds);
