@@ -1125,15 +1125,20 @@
             
             onPlayerJoined: (playerId, playerData) => {
                 console.log('Player joined:', playerData.name);
-                updateWaitingRoom();
-                updateScoreboard();
-                checkAllReady(); // Check if we can start
+                // Wait a moment for allPlayers to sync
+                setTimeout(() => {
+                    updateWaitingRoom();
+                    updateScoreboard();
+                    checkAllReady(); // Check if we can start
+                }, 100);
             },
             
             onPlayerLeft: (playerId, playerData) => {
                 console.log('Player left:', playerData.name);
-                updateWaitingRoom();
-                updateScoreboard();
+                setTimeout(() => {
+                    updateWaitingRoom();
+                    updateScoreboard();
+                }, 100);
             },
             
             onGameStart: (gameState) => {
