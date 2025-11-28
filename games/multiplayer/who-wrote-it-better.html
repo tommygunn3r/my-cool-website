@@ -422,23 +422,30 @@
         <button class="emoji-btn" onclick="sendEmoji('💩')">💩</button>
     </div>
 
-    <script src="/multiplayer-core.js"></script>
-    <script type="module">
-        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-        import { getFirestore, collection, getDocs } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
-        
+    <!-- Firebase Compat Libraries -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+    
+    <!-- Multiplayer Core -->
+    <script src="https://www.gunnersgames.com/multiplayer-core.js"></script>
+    
+    <script>
+        // Firebase Config
         const firebaseConfig = {
-        apiKey: "AIzaSyDjdo3U9qg_h4TKvplsFoZgxVNepAbCpFA",
-        authDomain: "gunners-games.firebaseapp.com",
-        projectId: "gunners-games",
-        storageBucket: "gunners-games.firebasestorage.app",
-        messagingSenderId: "644077315462",
-        appId: "1:644077315462:web:431dd985426f3dbe02f807",
-        measurementId: "G-RWNL900X43"
+            apiKey: "AIzaSyDjdo3U9qg_h4TKvplsFoZgxVNepAbCpFA",
+            authDomain: "gunners-games.firebaseapp.com",
+            projectId: "gunners-games",
+            storageBucket: "gunners-games.firebasestorage.app",
+            messagingSenderId: "644077315462",
+            appId: "1:644077315462:web:431dd985426f3dbe02f807",
+            measurementId: "G-RWNL900X43",
+            databaseURL: "https://gunners-games-default-rtdb.firebaseio.com"
         };
         
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
+        firebase.initializeApp(firebaseConfig);
+        const firestore = firebase.firestore();
         
         // Get room code from URL
         const urlParams = new URLSearchParams(window.location.search);
@@ -449,8 +456,8 @@
             window.location.href = '/games/multiplayer/index.html';
         }
         
-        // Game state variables (module scope)
-        let mpCore;
+        // Game state variables
+        let mpGame;
         let allPrompts = [];
         let allAnswers = [];
         let gamePrompts = [];
@@ -461,13 +468,16 @@
         let roundTimer = null;
         let roundTimeLimit = 30;
         
+        // Initialize game
+        console.log('Initializing game...');
+        
         // Load card data from Firestore
         async function loadCardData() {
             try {
-                const promptsSnapshot = await getDocs(collection(db, 'prompts'));
+                const promptsSnapshot = await firestore.collection('prompts').get();
                 allPrompts = promptsSnapshot.docs.map(doc => doc.data());
                 
-                const answersSnapshot = await getDocs(collection(db, 'answers'));
+                const answersSnapshot = await firestore.collection('answers').get();
                 allAnswers = answersSnapshot.docs.map(doc => doc.data());
                 
                 console.log(`Loaded ${allPrompts.length} prompts and ${allAnswers.length} answers`);
@@ -477,64 +487,69 @@
             }
         }
         
-        // Wait for multiplayer-core.js to load, then initialize
-        function initMultiplayer() {
-            if (typeof MultiplayerCore === 'undefined') {
-                console.log('Waiting for MultiplayerCore...');
-                setTimeout(initMultiplayer, 100);
-                return;
+        // Initialize MultiplayerGame
+        mpGame = new MultiplayerGame({
+            roomId: roomCode,
+            gameType: 'who-wrote-it-better',
+            maxPlayers: 8,
+            minPlayers: 2,
+            
+            onPlayerJoined: (playerId, playerData) => {
+                console.log('Player joined:', playerData.name);
+                updateWaitingRoom();
+                updateScoreboard();
+            },
+            
+            onPlayerLeft: (playerId, playerData) => {
+                console.log('Player left:', playerData.name);
+                updateWaitingRoom();
+                updateScoreboard();
+            },
+            
+            onGameStart: (gameState) => {
+                console.log('Game starting!', gameState);
+                document.getElementById('waitingRoom').style.display = 'none';
+                document.getElementById('gameScreen').style.display = 'block';
+                document.getElementById('emojiChat').classList.remove('hidden');
+                
+                // Initialize game if host
+                if (mpGame.isHost) {
+                    initializeGame();
+                }
+            },
+            
+            onGameStateUpdate: (newState, oldState) => {
+                if (newState.phase === 'round_active') {
+                    loadRound(newState);
+                } else if (newState.phase === 'round_results') {
+                    showRoundResults(newState);
+                } else if (newState.phase === 'game_over') {
+                    showFinalResults(newState);
+                }
+            },
+            
+            onChatMessage: (message) => {
+                showChatMessage(message.playerId, message.emoji);
             }
-            
-            console.log('MultiplayerCore loaded, initializing...');
-            mpCore = new MultiplayerCore(roomCode, 'who-wrote-it-better');
-            setupGame();
-        }
+        });
         
-        // Setup game after mpCore is ready
-        function setupGame() {
-            console.log('Setting up game...');
-            
-            // Load card data
+        // Initialize multiplayer
+        mpGame.init().then(() => {
+            console.log('Multiplayer initialized successfully');
             loadCardData();
-            
-            // Multiplayer callbacks
-            mpCore.onPlayersUpdate((players) => {
-                updateWaitingRoom(players);
-                updateScoreboard(players);
-            });
-        
-        mpCore.onGameStart((gameState) => {
-            console.log('Game starting!', gameState);
-            document.getElementById('waitingRoom').style.display = 'none';
-            document.getElementById('gameScreen').style.display = 'block';
-            document.getElementById('emojiChat').classList.remove('hidden');
-            
-            // Initialize game if host
-            if (mpCore.isHost()) {
-                initializeGame();
-            }
-        });
-        
-        mpCore.onGameStateUpdate((gameState) => {
-            if (gameState.phase === 'round_active') {
-                loadRound(gameState);
-            } else if (gameState.phase === 'round_results') {
-                showRoundResults(gameState);
-            } else if (gameState.phase === 'game_over') {
-                showFinalResults(gameState);
-            }
-        });
-        
-        mpCore.onChatMessage((playerId, message) => {
-            showChatMessage(playerId, message);
+        }).catch(error => {
+            console.error('Failed to initialize multiplayer:', error);
+            alert('Failed to join game: ' + error.message);
         });
         
         // Waiting room
-        function updateWaitingRoom(players) {
+        function updateWaitingRoom() {
             const grid = document.getElementById('playersGrid');
             grid.innerHTML = '';
             
-            Object.values(players).forEach(player => {
+            Object.values(mpGame.allPlayers).forEach(player => {
+                if (!player.connected) return;
+                
                 const slot = document.createElement('div');
                 slot.className = 'player-slot' + (player.ready ? ' ready' : '');
                 
@@ -548,7 +563,7 @@
         }
         
         document.getElementById('readyBtn').addEventListener('click', () => {
-            mpCore.setReady(true);
+            mpGame.setReady(true);
             document.getElementById('readyBtn').classList.add('ready');
             document.getElementById('readyBtn').textContent = 'READY ✓';
             document.getElementById('readyBtn').disabled = true;
@@ -558,11 +573,10 @@
         async function initializeGame() {
             await loadCardData();
             
-            // Get selected packs from room settings (you can add pack selection to lobby)
+            // Filter prompts and answers
             const selectedPacks = new Set(['disney', 'hip-hop', '90s-pop', 'classic-rock', 'sci-fi', 'classic-films']);
             const activeRatings = new Set(['G', 'PG']);
             
-            // Filter prompts and answers
             gamePrompts = allPrompts.filter(p => 
                 selectedPacks.has(p.pack) && activeRatings.has(p.rating)
             );
@@ -575,6 +589,12 @@
             gamePrompts = shuffleArray(gamePrompts).slice(0, totalRounds);
             gameAnswers = shuffleArray(gameAnswers);
             
+            // Initialize scores
+            const players = mpGame.allPlayers;
+            Object.keys(players).forEach(playerId => {
+                mpGame.updatePlayerData(playerId, { score: 0 });
+            });
+            
             // Start first round
             startNewRound(0);
         }
@@ -583,7 +603,7 @@
             const prompt = gamePrompts[roundIndex];
             const roundAnswers = shuffleArray([...gameAnswers]).slice(0, 4);
             
-            mpCore.updateGameState({
+            mpGame.updateGameState({
                 phase: 'round_active',
                 roundIndex: roundIndex,
                 prompt: prompt,
@@ -617,8 +637,8 @@
                 answerCard.appendChild(answerText);
                 
                 // Check if player already voted
-                const playerId = mpCore.getPlayerId();
-                if (gameState.votes && gameState.votes[playerId] === index) {
+                const currentUserId = mpGame.currentUser.uid;
+                if (gameState.votes && gameState.votes[currentUserId] === index) {
                     answerCard.classList.add('selected');
                     selectedAnswerIndex = index;
                     document.getElementById('submitAnswerBtn').disabled = false;
@@ -645,12 +665,12 @@
         document.getElementById('submitAnswerBtn').addEventListener('click', () => {
             if (selectedAnswerIndex === null) return;
             
-            const playerId = mpCore.getPlayerId();
-            const currentState = mpCore.getGameState();
+            const currentUserId = mpGame.currentUser.uid;
+            const currentState = mpGame.gameState;
             const votes = currentState.votes || {};
-            votes[playerId] = selectedAnswerIndex;
+            votes[currentUserId] = selectedAnswerIndex;
             
-            mpCore.updateGameState({
+            mpGame.updateGameState({
                 votes: votes
             });
             
@@ -660,9 +680,9 @@
             });
             
             // Check if all players voted
-            const players = mpCore.getPlayers();
-            if (Object.keys(votes).length === Object.keys(players).length) {
-                if (mpCore.isHost()) {
+            const connectedPlayers = Object.keys(mpGame.allPlayers).filter(id => mpGame.allPlayers[id].connected);
+            if (Object.keys(votes).length === connectedPlayers.length) {
+                if (mpGame.isHost) {
                     endRound();
                 }
             }
@@ -679,7 +699,7 @@
                 
                 if (timeLeft <= 0) {
                     clearInterval(roundTimer);
-                    if (mpCore.isHost()) {
+                    if (mpGame.isHost) {
                         endRound();
                     }
                 }
@@ -687,7 +707,7 @@
         }
         
         function endRound() {
-            const gameState = mpCore.getGameState();
+            const gameState = mpGame.gameState;
             const votes = gameState.votes || {};
             
             // Count votes
@@ -700,15 +720,15 @@
             const maxVotes = Math.max(...Object.values(voteCounts));
             const winners = Object.keys(voteCounts).filter(idx => voteCounts[idx] === maxVotes).map(Number);
             
-            // Award points to players who voted for winning answers
-            const players = mpCore.getPlayers();
+            // Award points
             Object.entries(votes).forEach(([playerId, answerIndex]) => {
                 if (winners.includes(answerIndex)) {
-                    players[playerId].score = (players[playerId].score || 0) + 10;
+                    const currentScore = mpGame.allPlayers[playerId].score || 0;
+                    mpGame.updatePlayerData(playerId, { score: currentScore + 10 });
                 }
             });
             
-            mpCore.updateGameState({
+            mpGame.updateGameState({
                 phase: 'round_results',
                 voteCounts: voteCounts,
                 winners: winners
@@ -746,7 +766,7 @@
         }
         
         function endGame() {
-            mpCore.updateGameState({
+            mpGame.updateGameState({
                 phase: 'game_over'
             });
         }
@@ -755,8 +775,9 @@
             document.getElementById('gameScreen').style.display = 'none';
             document.getElementById('resultsScreen').style.display = 'block';
             
-            const players = mpCore.getPlayers();
-            const sortedPlayers = Object.values(players).sort((a, b) => (b.score || 0) - (a.score || 0));
+            const sortedPlayers = Object.values(mpGame.allPlayers)
+                .filter(p => p.connected)
+                .sort((a, b) => (b.score || 0) - (a.score || 0));
             
             document.getElementById('winnerText').textContent = `🎉 ${sortedPlayers[0].name} Wins! 🎉`;
             
@@ -774,11 +795,13 @@
             });
         }
         
-        function updateScoreboard(players) {
+        function updateScoreboard() {
             const container = document.getElementById('scoresContainer');
             container.innerHTML = '';
             
-            const sortedPlayers = Object.values(players).sort((a, b) => (b.score || 0) - (a.score || 0));
+            const sortedPlayers = Object.values(mpGame.allPlayers)
+                .filter(p => p.connected)
+                .sort((a, b) => (b.score || 0) - (a.score || 0));
             
             sortedPlayers.forEach(player => {
                 const scoreItem = document.createElement('div');
@@ -792,15 +815,14 @@
         }
         
         document.getElementById('playAgainBtn').addEventListener('click', () => {
-            if (mpCore.isHost()) {
+            if (mpGame.isHost) {
                 // Reset game
-                const players = mpCore.getPlayers();
-                Object.values(players).forEach(p => {
-                    p.score = 0;
-                    p.ready = false;
+                Object.keys(mpGame.allPlayers).forEach(playerId => {
+                    mpGame.updatePlayerData(playerId, { score: 0, ready: false });
                 });
                 
-                mpCore.updateGameState({
+                mpGame.updateGameState({
+                    started: false,
                     phase: 'waiting'
                 });
                 
@@ -818,16 +840,16 @@
         
         // Chat
         window.sendEmoji = function(emoji) {
-            mpCore.sendChat(emoji);
+            mpGame.sendEmoji(emoji);
         };
         
-        function showChatMessage(playerId, message) {
-            const players = mpCore.getPlayers();
-            const player = players[playerId];
+        function showChatMessage(playerId, emoji) {
+            const player = mpGame.allPlayers[playerId];
+            if (!player) return;
             
             const chatMsg = document.createElement('div');
             chatMsg.className = 'chat-message';
-            chatMsg.textContent = `${player.name}: ${message}`;
+            chatMsg.textContent = `${player.name}: ${emoji}`;
             document.body.appendChild(chatMsg);
             
             setTimeout(() => {
@@ -844,11 +866,6 @@
             }
             return newArray;
         }
-        
-        } // End of setupGame
-        
-        // Start initialization when page loads
-        initMultiplayer();
     </script>
 </body>
 </html>
