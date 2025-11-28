@@ -449,8 +449,16 @@
             window.location.href = '/games/multiplayer/index.html';
         }
         
-        // Initialize multiplayer core
-        const mpCore = new MultiplayerCore(roomCode, 'who-wrote-it-better');
+        // Wait for multiplayer-core.js to load
+        let mpCore;
+        function initMultiplayer() {
+            if (typeof MultiplayerCore === 'undefined') {
+                setTimeout(initMultiplayer, 100);
+                return;
+            }
+            
+            // Initialize multiplayer core
+            mpCore = new MultiplayerCore(roomCode, 'who-wrote-it-better');
         
         // Game state
         let allPrompts = [];
@@ -479,11 +487,16 @@
             }
         }
         
-        // Multiplayer callbacks
-        mpCore.onPlayersUpdate((players) => {
-            updateWaitingRoom(players);
-            updateScoreboard(players);
-        });
+        // Setup multiplayer callbacks
+        function setupMultiplayer() {
+            // Load card data
+            loadCardData();
+            
+            // Multiplayer callbacks
+            mpCore.onPlayersUpdate((players) => {
+                updateWaitingRoom(players);
+                updateScoreboard(players);
+            });
         
         mpCore.onGameStart((gameState) => {
             console.log('Game starting!', gameState);
@@ -817,6 +830,8 @@
             }, 3000);
         }
         
+        } // End of setupMultiplayer function
+        
         // Utility
         function shuffleArray(array) {
             const newArray = [...array];
@@ -827,8 +842,13 @@
             return newArray;
         }
         
-        // Initialize
-        loadCardData();
+        // Setup multiplayer callbacks and start game
+        setupMultiplayer();
+        
+        } // End of initMultiplayer function
+        
+        // Start initialization
+        initMultiplayer();
     </script>
 </body>
 </html>
