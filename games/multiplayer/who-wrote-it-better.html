@@ -519,9 +519,13 @@
             },
             
             onGameStateUpdate: (newState, oldState) => {
-                if (newState.phase === 'round_active') {
-                    loadRound(newState);
-                } else if (newState.phase === 'round_results') {
+                if (newState.phase === 'selection') {
+                    showSelectionPhase(newState);
+                } else if (newState.phase === 'reveal') {
+                    showRevealPhase(newState);
+                } else if (newState.phase === 'voting') {
+                    showVotingPhase(newState);
+                } else if (newState.phase === 'results') {
                     showRoundResults(newState);
                 } else if (newState.phase === 'game_over') {
                     showFinalResults(newState);
@@ -601,19 +605,35 @@
         
         function startNewRound(roundIndex) {
             const prompt = gamePrompts[roundIndex];
-            const roundAnswers = shuffleArray([...gameAnswers]).slice(0, 4);
+            
+            // Deal unique answer cards to each player (7 cards each)
+            const playerHands = {};
+            const connectedPlayers = Object.keys(mpGame.allPlayers).filter(id => mpGame.allPlayers[id].connected);
+            let deckIndex = 0;
+            
+            connectedPlayers.forEach(playerId => {
+                playerHands[playerId] = [];
+                for (let i = 0; i < 7; i++) {
+                    if (deckIndex < gameAnswers.length) {
+                        playerHands[playerId].push(gameAnswers[deckIndex]);
+                        deckIndex++;
+                    }
+                }
+            });
             
             mpGame.updateGameState({
-                phase: 'round_active',
+                phase: 'selection', // Players pick their answer
                 roundIndex: roundIndex,
                 prompt: prompt,
-                answers: roundAnswers,
+                playerHands: playerHands,
+                submissions: {}, // {playerId: answerIndex}
                 votes: {},
                 startTime: Date.now()
             });
         }
         
-        function loadRound(gameState) {
+        // PHASE 1: Selection - Players pick their answer card
+        function showSelectionPhase(gameState) {
             currentRoundIndex = gameState.roundIndex;
             selectedAnswerIndex = null;
             
@@ -621,11 +641,17 @@
             document.getElementById('totalRounds').textContent = totalRounds;
             document.getElementById('promptText').textContent = gameState.prompt.text;
             document.getElementById('promptSource').textContent = `- ${gameState.prompt.source}`;
+            document.getElementById('submitAnswerBtn').textContent = 'Submit Answer';
+            document.getElementById('submitAnswerBtn').style.display = 'block';
             
             const answersGrid = document.getElementById('answersGrid');
             answersGrid.innerHTML = '';
             
-            gameState.answers.forEach((answer, index) => {
+            // Show this player's hand
+            const currentUserId = mpGame.currentUser.uid;
+            const myHand = gameState.playerHands[currentUserId] || [];
+            
+            myHand.forEach((answer, index) => {
                 const answerCard = document.createElement('div');
                 answerCard.className = 'answer-card';
                 answerCard.dataset.index = index;
@@ -636,12 +662,12 @@
                 
                 answerCard.appendChild(answerText);
                 
-                // Check if player already voted
-                const currentUserId = mpGame.currentUser.uid;
-                if (gameState.votes && gameState.votes[currentUserId] === index) {
-                    answerCard.classList.add('selected');
-                    selectedAnswerIndex = index;
-                    document.getElementById('submitAnswerBtn').disabled = false;
+                // Check if player already submitted
+                if (gameState.submissions && gameState.submissions[currentUserId] !== undefined) {
+                    if (gameState.submissions[currentUserId] === index) {
+                        answerCard.classList.add('selected');
+                    }
+                    answerCard.style.pointerEvents = 'none';
                 } else {
                     answerCard.addEventListener('click', () => selectAnswer(index));
                 }
@@ -649,7 +675,13 @@
                 answersGrid.appendChild(answerCard);
             });
             
-            startRoundTimer();
+            // Check if already submitted
+            if (gameState.submissions && gameState.submissions[currentUserId] !== undefined) {
+                document.getElementById('submitAnswerBtn').disabled = true;
+                document.getElementById('submitAnswerBtn').textContent = 'Waiting for others...';
+            } else {
+                startRoundTimer();
+            }
         }
         
         function selectAnswer(index) {
@@ -667,28 +699,176 @@
             
             const currentUserId = mpGame.currentUser.uid;
             const currentState = mpGame.gameState;
-            const votes = currentState.votes || {};
-            votes[currentUserId] = selectedAnswerIndex;
             
-            mpGame.updateGameState({
-                votes: votes
-            });
-            
-            document.getElementById('submitAnswerBtn').disabled = true;
-            document.querySelectorAll('.answer-card').forEach(card => {
-                card.style.pointerEvents = 'none';
-            });
-            
-            // Check if all players voted
-            const connectedPlayers = Object.keys(mpGame.allPlayers).filter(id => mpGame.allPlayers[id].connected);
-            if (Object.keys(votes).length === connectedPlayers.length) {
-                if (mpGame.isHost) {
-                    endRound();
+            // Different behavior based on phase
+            if (currentState.phase === 'selection') {
+                // Submit answer card
+                const submissions = currentState.submissions || {};
+                submissions[currentUserId] = selectedAnswerIndex;
+                
+                mpGame.updateGameState({
+                    submissions: submissions
+                });
+                
+                document.getElementById('submitAnswerBtn').disabled = true;
+                document.getElementById('submitAnswerBtn').textContent = 'Waiting for others...';
+                document.querySelectorAll('.answer-card').forEach(card => {
+                    card.style.pointerEvents = 'none';
+                });
+                
+                // Check if all players submitted
+                const connectedPlayers = Object.keys(mpGame.allPlayers).filter(id => mpGame.allPlayers[id].connected);
+                if (Object.keys(submissions).length === connectedPlayers.length) {
+                    if (mpGame.isHost) {
+                        setTimeout(() => startRevealPhase(), 1000);
+                    }
+                }
+            } else if (currentState.phase === 'voting') {
+                // Submit vote
+                const votes = currentState.votes || {};
+                votes[currentUserId] = selectedAnswerIndex;
+                
+                mpGame.updateGameState({
+                    votes: votes
+                });
+                
+                document.getElementById('submitAnswerBtn').disabled = true;
+                document.getElementById('submitAnswerBtn').textContent = 'Waiting for votes...';
+                document.querySelectorAll('.answer-card').forEach(card => {
+                    card.style.pointerEvents = 'none';
+                });
+                
+                // Check if all players voted (excluding the players whose cards are shown)
+                const submittedPlayers = Object.keys(currentState.submissions);
+                const votingPlayers = connectedPlayers.filter(id => submittedPlayers.includes(id));
+                if (Object.keys(votes).length === votingPlayers.length) {
+                    if (mpGame.isHost) {
+                        setTimeout(() => endRound(), 1000);
+                    }
                 }
             }
         });
         
-        function startRoundTimer() {
+        // PHASE 2: Reveal - Show submitted cards (no player names yet)
+        function showRevealPhase(gameState) {
+            clearInterval(roundTimer);
+            selectedAnswerIndex = null;
+            
+            document.getElementById('submitAnswerBtn').style.display = 'none';
+            
+            const answersGrid = document.getElementById('answersGrid');
+            answersGrid.innerHTML = '';
+            
+            // Show all submitted answers (shuffled so players don't know who submitted what)
+            const submittedAnswers = [];
+            Object.entries(gameState.submissions).forEach(([playerId, answerIndex]) => {
+                const playerHand = gameState.playerHands[playerId];
+                if (playerHand && playerHand[answerIndex]) {
+                    submittedAnswers.push({
+                        text: playerHand[answerIndex].text,
+                        playerId: playerId,
+                        originalIndex: answerIndex
+                    });
+                }
+            });
+            
+            // Shuffle so you can't tell who submitted what
+            const shuffledAnswers = shuffleArray(submittedAnswers);
+            
+            shuffledAnswers.forEach((answer, index) => {
+                const answerCard = document.createElement('div');
+                answerCard.className = 'answer-card';
+                answerCard.style.pointerEvents = 'none';
+                
+                const answerText = document.createElement('div');
+                answerText.className = 'answer-text';
+                answerText.textContent = answer.text;
+                
+                const revealLabel = document.createElement('div');
+                revealLabel.style.marginTop = '10px';
+                revealLabel.style.fontSize = '0.9em';
+                revealLabel.style.color = '#FFD700';
+                revealLabel.textContent = '???';
+                
+                answerCard.appendChild(answerText);
+                answerCard.appendChild(revealLabel);
+                
+                answersGrid.appendChild(answerCard);
+            });
+            
+            // Auto-advance to voting after 3 seconds
+            if (mpGame.isHost) {
+                setTimeout(() => {
+                    mpGame.updateGameState({
+                        phase: 'voting',
+                        shuffledAnswers: shuffledAnswers // Save the shuffled order
+                    });
+                }, 3000);
+            }
+        }
+        
+        function startRevealPhase() {
+            mpGame.updateGameState({
+                phase: 'reveal'
+            });
+        }
+        
+        // PHASE 3: Voting - Players vote for best answer
+        function showVotingPhase(gameState) {
+            selectedAnswerIndex = null;
+            
+            document.getElementById('submitAnswerBtn').textContent = 'Vote';
+            document.getElementById('submitAnswerBtn').style.display = 'block';
+            document.getElementById('submitAnswerBtn').disabled = true;
+            
+            const answersGrid = document.getElementById('answersGrid');
+            answersGrid.innerHTML = '';
+            
+            // Show the shuffled answers from reveal phase
+            gameState.shuffledAnswers.forEach((answer, index) => {
+                const answerCard = document.createElement('div');
+                answerCard.className = 'answer-card';
+                answerCard.dataset.index = index;
+                answerCard.dataset.playerId = answer.playerId;
+                
+                const answerText = document.createElement('div');
+                answerText.className = 'answer-text';
+                answerText.textContent = answer.text;
+                
+                answerCard.appendChild(answerText);
+                
+                const currentUserId = mpGame.currentUser.uid;
+                
+                // Check if already voted
+                if (gameState.votes && gameState.votes[currentUserId] !== undefined) {
+                    if (gameState.votes[currentUserId] === index) {
+                        answerCard.classList.add('selected');
+                    }
+                    answerCard.style.pointerEvents = 'none';
+                } else {
+                    // Can't vote for your own card
+                    if (answer.playerId === currentUserId) {
+                        answerCard.style.opacity = '0.5';
+                        answerCard.style.cursor = 'not-allowed';
+                        const yourLabel = document.createElement('div');
+                        yourLabel.style.marginTop = '10px';
+                        yourLabel.style.fontSize = '0.9em';
+                        yourLabel.style.color = '#4CAF50';
+                        yourLabel.textContent = '(Your Card)';
+                        answerCard.appendChild(yourLabel);
+                    } else {
+                        answerCard.addEventListener('click', () => selectAnswer(index));
+                    }
+                }
+                
+                answersGrid.appendChild(answerCard);
+            });
+            
+            // Start voting timer
+            if (!gameState.votes || !gameState.votes[mpGame.currentUser.uid]) {
+                startRoundTimer();
+            }
+        }
             clearInterval(roundTimer);
             let timeLeft = roundTimeLimit;
             document.getElementById('timer').textContent = timeLeft;
@@ -744,25 +924,46 @@
         }
         
         function showRoundResults(gameState) {
-            const answersGrid = document.getElementById('answersGrid');
-            const cards = answersGrid.querySelectorAll('.answer-card');
+            clearInterval(roundTimer);
+            document.getElementById('submitAnswerBtn').style.display = 'none';
             
-            cards.forEach((card, index) => {
+            const answersGrid = document.getElementById('answersGrid');
+            answersGrid.innerHTML = '';
+            
+            // Show all answers with vote counts AND player names revealed
+            gameState.shuffledAnswers.forEach((answer, index) => {
+                const answerCard = document.createElement('div');
+                answerCard.className = 'answer-card';
+                
                 const voteCount = gameState.voteCounts[index] || 0;
-                const isWinner = gameState.winners.includes(index);
+                const isWinner = gameState.winningIndices && gameState.winningIndices.includes(index);
                 
                 if (isWinner) {
-                    card.classList.add('winner');
+                    answerCard.classList.add('winner');
                 }
+                
+                const answerText = document.createElement('div');
+                answerText.className = 'answer-text';
+                answerText.textContent = answer.text;
+                
+                const playerName = mpGame.allPlayers[answer.playerId]?.name || 'Unknown';
+                const playerLabel = document.createElement('div');
+                playerLabel.style.marginTop = '10px';
+                playerLabel.style.fontSize = '1.1em';
+                playerLabel.style.color = isWinner ? '#FFD700' : '#4CAF50';
+                playerLabel.style.fontWeight = 'bold';
+                playerLabel.textContent = `- ${playerName}`;
                 
                 const voteCountDiv = document.createElement('div');
                 voteCountDiv.className = 'vote-count';
                 voteCountDiv.textContent = `${voteCount} vote${voteCount !== 1 ? 's' : ''}`;
-                card.appendChild(voteCountDiv);
+                
+                answerCard.appendChild(answerText);
+                answerCard.appendChild(playerLabel);
+                answerCard.appendChild(voteCountDiv);
+                
+                answersGrid.appendChild(answerCard);
             });
-            
-            clearInterval(roundTimer);
-            document.getElementById('submitAnswerBtn').style.display = 'none';
         }
         
         function endGame() {
