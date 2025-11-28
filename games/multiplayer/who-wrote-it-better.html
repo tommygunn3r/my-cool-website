@@ -99,6 +99,7 @@
         
         /* Pack Selection Panel */
         .pack-selection-panel {
+            display: none; /* Hidden by default, JS will show for host */
             background: rgba(0,0,0,0.4);
             padding: 25px;
             border-radius: 15px;
@@ -743,7 +744,7 @@
             <div id="playersGrid" class="players-grid"></div>
             
             <!-- Pack Selection (Host Only) -->
-            <div id="packSelectionPanel" class="pack-selection-panel" style="display: none;">
+            <div id="packSelectionPanel" class="pack-selection-panel">
                 <h3 style="color: #FFD700; margin-bottom: 15px;">Game Settings (Host)</h3>
                 
                 <div class="settings-section">
