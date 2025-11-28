@@ -1012,11 +1012,22 @@
                     const label = document.createElement('label');
                     label.className = 'pack-label';
                     label.htmlFor = `pack-${packName}`;
-                    label.innerHTML = `
-                        ${packName.replace(/-/g, ' ')}
-                        <span class="pack-rating-badge ${packInfo.rating}">${packInfo.rating}</span>
-                        <span class="pack-count">(${packInfo.count})</span>
-                    `;
+                    
+                    const nameSpan = document.createElement('span');
+                    nameSpan.className = 'pack-name-text';
+                    nameSpan.textContent = packName.replace(/-/g, ' ');
+                    
+                    const badgeSpan = document.createElement('span');
+                    badgeSpan.className = `pack-rating-badge ${packInfo.rating}`;
+                    badgeSpan.textContent = packInfo.rating;
+                    
+                    const countSpan = document.createElement('span');
+                    countSpan.className = 'pack-count';
+                    countSpan.textContent = `(${packInfo.count})`;
+                    
+                    label.appendChild(nameSpan);
+                    label.appendChild(badgeSpan);
+                    label.appendChild(countSpan);
                     
                     packDiv.appendChild(checkbox);
                     packDiv.appendChild(label);
