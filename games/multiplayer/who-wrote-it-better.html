@@ -957,10 +957,14 @@
                 });
                 
                 console.log('Available packs:', availablePacks);
+                console.log('mpGame.isHost:', mpGame.isHost);
                 
                 // If host, show setup screen
                 if (mpGame.isHost) {
+                    console.log('Calling populatePackSelection...');
                     populatePackSelection();
+                } else {
+                    console.log('Not host, skipping pack selection');
                 }
             } catch (error) {
                 console.error('Error loading packs:', error);
@@ -969,12 +973,17 @@
         
         // Populate pack selection UI
         function populatePackSelection() {
+            console.log('populatePackSelection called, isHost:', mpGame.isHost);
             document.getElementById('packSelectionPanel').style.display = 'block';
             
             const container = document.getElementById('categoriesContainer');
+            console.log('categoriesContainer element:', container);
             container.innerHTML = '';
             
+            console.log('Available packs entries:', Object.entries(availablePacks));
+            
             Object.entries(availablePacks).forEach(([category, packs]) => {
+                console.log('Creating category:', category, 'with packs:', packs);
                 const categoryDiv = document.createElement('div');
                 categoryDiv.className = 'category-group';
                 
@@ -1158,12 +1167,6 @@
             
             loadCardData();
             loadAvailablePacks();
-            
-            // Show setup for host, waiting room for others
-            if (mpGame.isHost) {
-                document.getElementById('waitingRoom').style.display = 'none';
-                document.getElementById('gameSetup').style.display = 'block';
-            }
         }).catch(error => {
             console.error('Failed to initialize multiplayer:', error);
             alert('Failed to join game: ' + error.message);
