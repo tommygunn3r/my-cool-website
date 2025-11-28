@@ -144,7 +144,6 @@
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 15px;
             min-height: 200px;
-            background: rgba(255,0,0,0.1); /* Red tint to see if container exists */
         }
         
         .category-group {
@@ -163,8 +162,6 @@
             font-weight: bold;
             margin-bottom: 10px;
             text-transform: uppercase;
-            background: rgba(255,0,0,0.3);
-            padding: 5px;
             display: block !important;
             visibility: visible !important;
         }
@@ -1195,10 +1192,12 @@
         
         // Waiting room
         function updateWaitingRoom() {
+            console.log('updateWaitingRoom called, players:', mpGame.allPlayers);
             const grid = document.getElementById('playersGrid');
             grid.innerHTML = '';
             
             Object.values(mpGame.allPlayers).forEach(player => {
+                console.log('Adding player to waiting room:', player);
                 if (!player.connected) return;
                 
                 const slot = document.createElement('div');
@@ -1654,15 +1653,22 @@
             });
             
             // Find winner(s)
-            const maxVotes = Math.max(...Object.values(voteCounts));
-            const winners = Object.keys(voteCounts).filter(idx => voteCounts[idx] === maxVotes).map(Number);
+            const maxVotes = Math.max(...Object.values(voteCounts), 0);
+            const winningIndices = Object.keys(voteCounts).filter(idx => voteCounts[idx] === maxVotes).map(Number);
+            
+            // Map back to player IDs
+            const winningPlayers = [];
+            winningIndices.forEach(idx => {
+                const answer = gameState.shuffledAnswers[idx];
+                if (answer) {
+                    winningPlayers.push(answer.playerId);
+                }
+            });
             
             // Award points
-            Object.entries(votes).forEach(([playerId, answerIndex]) => {
-                if (winners.includes(answerIndex)) {
-                    const currentScore = mpGame.allPlayers[playerId].score || 0;
-                    mpGame.updatePlayerData(playerId, { score: currentScore + 10 });
-                }
+            winningPlayers.forEach(playerId => {
+                const currentScore = mpGame.allPlayers[playerId].score || 0;
+                mpGame.updatePlayerData(playerId, { score: currentScore + 10 });
             });
             
             mpGame.updateGameState({
