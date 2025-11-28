@@ -1179,18 +1179,15 @@
         });
         
         // Initialize multiplayer
-        mpGame.init().then(() => {
+        mpGame.init().then(async () => {
             console.log('Multiplayer initialized successfully');
             console.log('Is host?', mpGame.isHost);
             
-            loadCardData();
-            loadAvailablePacks();
+            // Load data (wait for it to finish)
+            await loadCardData();
+            await loadAvailablePacks();
             
-            // Show setup for host, waiting room for others
-            if (mpGame.isHost) {
-                document.getElementById('waitingRoom').style.display = 'none';
-                document.getElementById('gameSetup').style.display = 'block';
-            }
+            console.log('All data loaded, pack selection should be visible now');
         }).catch(error => {
             console.error('Failed to initialize multiplayer:', error);
             alert('Failed to join game: ' + error.message);
