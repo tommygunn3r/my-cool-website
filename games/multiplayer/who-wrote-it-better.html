@@ -1180,6 +1180,26 @@
             }
         });
         
+        // Periodic update to keep waiting room fresh and clean up disconnected players
+        let waitingRoomInterval = setInterval(() => {
+            if (document.getElementById('waitingRoom').style.display !== 'none') {
+                updateWaitingRoom();
+                
+                // Host: Clean up disconnected players after 5 seconds
+                if (mpGame.isHost) {
+                    const now = Date.now();
+                    Object.entries(mpGame.allPlayers).forEach(([playerId, player]) => {
+                        if (!player.connected && player.lastSeen && (now - player.lastSeen > 5000)) {
+                            console.log('Removing disconnected player:', player.name);
+                            mpGame.playersRef.child(playerId).remove();
+                        }
+                    });
+                }
+            } else {
+                clearInterval(waitingRoomInterval);
+            }
+        }, 1000); // Update every second while in waiting room
+        
         // Initialize multiplayer
         mpGame.init().then(async () => {
             console.log('Multiplayer initialized successfully');
