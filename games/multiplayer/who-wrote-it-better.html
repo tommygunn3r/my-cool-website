@@ -449,18 +449,8 @@
             window.location.href = '/games/multiplayer/index.html';
         }
         
-        // Wait for multiplayer-core.js to load
+        // Game state variables (module scope)
         let mpCore;
-        function initMultiplayer() {
-            if (typeof MultiplayerCore === 'undefined') {
-                setTimeout(initMultiplayer, 100);
-                return;
-            }
-            
-            // Initialize multiplayer core
-            mpCore = new MultiplayerCore(roomCode, 'who-wrote-it-better');
-        
-        // Game state
         let allPrompts = [];
         let allAnswers = [];
         let gamePrompts = [];
@@ -487,8 +477,23 @@
             }
         }
         
-        // Setup multiplayer callbacks
-        function setupMultiplayer() {
+        // Wait for multiplayer-core.js to load, then initialize
+        function initMultiplayer() {
+            if (typeof MultiplayerCore === 'undefined') {
+                console.log('Waiting for MultiplayerCore...');
+                setTimeout(initMultiplayer, 100);
+                return;
+            }
+            
+            console.log('MultiplayerCore loaded, initializing...');
+            mpCore = new MultiplayerCore(roomCode, 'who-wrote-it-better');
+            setupGame();
+        }
+        
+        // Setup game after mpCore is ready
+        function setupGame() {
+            console.log('Setting up game...');
+            
             // Load card data
             loadCardData();
             
@@ -830,8 +835,6 @@
             }, 3000);
         }
         
-        } // End of setupMultiplayer function
-        
         // Utility
         function shuffleArray(array) {
             const newArray = [...array];
@@ -842,12 +845,9 @@
             return newArray;
         }
         
-        // Setup multiplayer callbacks and start game
-        setupMultiplayer();
+        } // End of setupGame
         
-        } // End of initMultiplayer function
-        
-        // Start initialization
+        // Start initialization when page loads
         initMultiplayer();
     </script>
 </body>
