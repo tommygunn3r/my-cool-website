@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Who Wrote It Better? - Multiplayer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial Black', Arial, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #fff;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        h1 {
+            text-align: center;
+            font-size: 3em;
+            color: #FFD700;
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.5);
+            margin-bottom: 30px;
+        }
+        
+        /* Waiting Room */
+        .waiting-room {
+            text-align: center;
+        }
+        
+        .waiting-title {
+            font-size: 2em;
+            color: #FFD700;
+            margin-bottom: 30px;
+        }
+        
+        .players-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .player-slot {
+            background: rgba(255,255,255,0.1);
+            padding: 30px;
+            border-radius: 15px;
+            border: 3px solid rgba(255,255,255,0.2);
+        }
+        
+        .player-slot.ready {
+            border-color: #4CAF50;
+            background: rgba(76,175,80,0.2);
+        }
+        
+        .player-name {
+            font-size: 1.5em;
+            color: #FFD700;
+            margin-bottom: 10px;
+        }
+        
+        .ready-status {
+            font-size: 1.2em;
+            color: #4CAF50;
+            font-weight: bold;
+        }
+        
+        .ready-btn {
+            padding: 20px 40px;
+            font-size: 1.5em;
+            font-weight: bold;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .ready-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(76,175,80,0.5);
+        }
+        
+        .ready-btn.ready {
+            background: #FFD700;
+            color: #1a1a2e;
+        }
+        
+        /* Game Screen */
+        .game-screen {
+            display: none;
+        }
+        
+        .game-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        
+        .round-info {
+            font-size: 1.5em;
+            color: #FFD700;
+        }
+        
+        .timer {
+            font-size: 2em;
+            color: #f44336;
+            font-weight: bold;
+        }
+        
+        .prompt-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 40px;
+            border-radius: 15px;
+            text-align: center;
+            margin-bottom: 40px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+        
+        .prompt-text {
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 20px;
+            line-height: 1.4;
+        }
+        
+        .prompt-source {
+            font-size: 1em;
+            color: rgba(255,255,255,0.8);
+            font-style: italic;
+        }
+        
+        .answers-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .answer-card {
+            background: rgba(255,255,255,0.1);
+            padding: 30px;
+            border-radius: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 3px solid transparent;
+            min-height: 150px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+        
+        .answer-card:hover {
+            transform: translateY(-5px);
+            background: rgba(255,255,255,0.2);
+            border-color: #FFD700;
+        }
+        
+        .answer-card.selected {
+            border-color: #4CAF50;
+            background: rgba(76,175,80,0.2);
+        }
+        
+        .answer-card.winner {
+            border-color: #FFD700;
+            background: rgba(255,215,0,0.3);
+            animation: pulse 1s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        .answer-text {
+            font-size: 1.3em;
+            font-weight: bold;
+        }
+        
+        .vote-count {
+            margin-top: 10px;
+            font-size: 1em;
+            color: #4CAF50;
+        }
+        
+        .submit-answer-btn {
+            display: block;
+            width: 250px;
+            margin: 0 auto;
+            padding: 15px;
+            font-size: 1.3em;
+            font-weight: bold;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .submit-answer-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(76,175,80,0.5);
+        }
+        
+        .submit-answer-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        /* Scoreboard */
+        .scoreboard {
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .score-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            margin: 5px 0;
+            background: rgba(255,255,255,0.05);
+            border-radius: 5px;
+        }
+        
+        .score-item.winner {
+            background: rgba(255,215,0,0.2);
+            border: 2px solid #FFD700;
+        }
+        
+        .player-name-score {
+            font-size: 1.2em;
+            color: #fff;
+        }
+        
+        .player-score {
+            font-size: 1.2em;
+            color: #4CAF50;
+            font-weight: bold;
+        }
+        
+        /* Results */
+        .results-screen {
+            display: none;
+            text-align: center;
+        }
+        
+        .winner-announcement {
+            font-size: 2.5em;
+            color: #FFD700;
+            margin-bottom: 30px;
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.5);
+        }
+        
+        .play-again-btn {
+            padding: 20px 40px;
+            font-size: 1.5em;
+            font-weight: bold;
+            background: #FFD700;
+            color: #1a1a2e;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin: 10px;
+        }
+        
+        .play-again-btn:hover {
+            transform: scale(1.05);
+        }
+        
+        /* Chat */
+        .emoji-chat {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+            background: rgba(0,0,0,0.8);
+            padding: 15px;
+            border-radius: 50px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .emoji-btn {
+            font-size: 2em;
+            background: none;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s;
+            padding: 5px 10px;
+            border-radius: 50%;
+        }
+        
+        .emoji-btn:hover {
+            transform: scale(1.3);
+            background: rgba(255,255,255,0.2);
+        }
+        
+        .chat-message {
+            position: fixed;
+            bottom: 100px;
+            right: 20px;
+            background: rgba(0,0,0,0.9);
+            padding: 15px 25px;
+            border-radius: 15px;
+            font-size: 1.5em;
+            animation: fadeInOut 3s forwards;
+        }
+        
+        @keyframes fadeInOut {
+            0% { opacity: 0; transform: translateY(20px); }
+            10% { opacity: 1; transform: translateY(0); }
+            90% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(-20px); }
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2em;
+            }
+            
+            .prompt-text {
+                font-size: 1.5em;
+            }
+            
+            .answers-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .emoji-chat {
+                bottom: 10px;
+                right: 10px;
+                padding: 10px;
+            }
+            
+            .emoji-btn {
+                font-size: 1.5em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Who Wrote It Better? 🎵🎬</h1>
+        
+        <!-- Waiting Room -->
+        <div id="waitingRoom" class="waiting-room">
+            <h2 class="waiting-title">Waiting for Players...</h2>
+            <div id="playersGrid" class="players-grid"></div>
+            <button class="ready-btn" id="readyBtn">READY</button>
+        </div>
+        
+        <!-- Game Screen -->
+        <div id="gameScreen" class="game-screen">
+            <div class="game-header">
+                <div class="round-info">
+                    Round <span id="currentRound">1</span> of <span id="totalRounds">5</span>
+                </div>
+                <div class="timer">
+                    <span id="timer">30</span>s
+                </div>
+            </div>
+            
+            <div class="scoreboard">
+                <div id="scoresContainer"></div>
+            </div>
+            
+            <div class="prompt-card">
+                <div class="prompt-text" id="promptText"></div>
+                <div class="prompt-source" id="promptSource"></div>
+            </div>
+            
+            <div id="answersGrid" class="answers-grid">
+                <!-- Answer cards populated by JS -->
+            </div>
+            
+            <button class="submit-answer-btn" id="submitAnswerBtn" disabled>Submit Answer</button>
+        </div>
+        
+        <!-- Results Screen -->
+        <div id="resultsScreen" class="results-screen">
+            <div class="winner-announcement" id="winnerText"></div>
+            <div class="scoreboard">
+                <h2 style="margin-bottom: 20px;">Final Scores</h2>
+                <div id="finalScoresContainer"></div>
+            </div>
+            <button class="play-again-btn" id="playAgainBtn">Play Again</button>
+            <button class="play-again-btn" id="backToLobbyBtn" style="background: #666;">Back to Lobby</button>
+        </div>
+    </div>
+    
+    <!-- Emoji Chat -->
+    <div class="emoji-chat hidden" id="emojiChat">
+        <button class="emoji-btn" onclick="sendEmoji('😎')">😎</button>
+        <button class="emoji-btn" onclick="sendEmoji('🔥')">🔥</button>
+        <button class="emoji-btn" onclick="sendEmoji('💀')">💀</button>
+        <button class="emoji-btn" onclick="sendEmoji('😂')">😂</button>
+        <button class="emoji-btn" onclick="sendEmoji('🤔')">🤔</button>
+        <button class="emoji-btn" onclick="sendEmoji('💩')">💩</button>
+    </div>
+
+    <script src="/multiplayer-core.js"></script>
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getFirestore, collection, getDocs } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+        
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID",
+            databaseURL: "YOUR_DATABASE_URL"
+        };
+        
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        
+        // Get room code from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const roomCode = urlParams.get('room');
+        
+        if (!roomCode) {
+            alert('No room code provided!');
+            window.location.href = '/games/multiplayer/index.html';
+        }
+        
+        // Initialize multiplayer core
+        const mpCore = new MultiplayerCore(roomCode, 'who-wrote-it-better');
+        
+        // Game state
+        let allPrompts = [];
+        let allAnswers = [];
+        let gamePrompts = [];
+        let gameAnswers = [];
+        let currentRoundIndex = 0;
+        let selectedAnswerIndex = null;
+        let totalRounds = 5;
+        let roundTimer = null;
+        let roundTimeLimit = 30;
+        
+        // Load card data from Firestore
+        async function loadCardData() {
+            try {
+                const promptsSnapshot = await getDocs(collection(db, 'prompts'));
+                allPrompts = promptsSnapshot.docs.map(doc => doc.data());
+                
+                const answersSnapshot = await getDocs(collection(db, 'answers'));
+                allAnswers = answersSnapshot.docs.map(doc => doc.data());
+                
+                console.log(`Loaded ${allPrompts.length} prompts and ${allAnswers.length} answers`);
+            } catch (error) {
+                console.error('Error loading card data:', error);
+                alert('Error loading game data. Please refresh.');
+            }
+        }
+        
+        // Multiplayer callbacks
+        mpCore.onPlayersUpdate((players) => {
+            updateWaitingRoom(players);
+            updateScoreboard(players);
+        });
+        
+        mpCore.onGameStart((gameState) => {
+            console.log('Game starting!', gameState);
+            document.getElementById('waitingRoom').style.display = 'none';
+            document.getElementById('gameScreen').style.display = 'block';
+            document.getElementById('emojiChat').classList.remove('hidden');
+            
+            // Initialize game if host
+            if (mpCore.isHost()) {
+                initializeGame();
+            }
+        });
+        
+        mpCore.onGameStateUpdate((gameState) => {
+            if (gameState.phase === 'round_active') {
+                loadRound(gameState);
+            } else if (gameState.phase === 'round_results') {
+                showRoundResults(gameState);
+            } else if (gameState.phase === 'game_over') {
+                showFinalResults(gameState);
+            }
+        });
+        
+        mpCore.onChatMessage((playerId, message) => {
+            showChatMessage(playerId, message);
+        });
+        
+        // Waiting room
+        function updateWaitingRoom(players) {
+            const grid = document.getElementById('playersGrid');
+            grid.innerHTML = '';
+            
+            Object.values(players).forEach(player => {
+                const slot = document.createElement('div');
+                slot.className = 'player-slot' + (player.ready ? ' ready' : '');
+                
+                slot.innerHTML = `
+                    <div class="player-name">${player.name}</div>
+                    ${player.ready ? '<div class="ready-status">✓ READY</div>' : '<div class="ready-status">Waiting...</div>'}
+                `;
+                
+                grid.appendChild(slot);
+            });
+        }
+        
+        document.getElementById('readyBtn').addEventListener('click', () => {
+            mpCore.setReady(true);
+            document.getElementById('readyBtn').classList.add('ready');
+            document.getElementById('readyBtn').textContent = 'READY ✓';
+            document.getElementById('readyBtn').disabled = true;
+        });
+        
+        // Initialize game (host only)
+        async function initializeGame() {
+            await loadCardData();
+            
+            // Get selected packs from room settings (you can add pack selection to lobby)
+            const selectedPacks = new Set(['disney', 'hip-hop', '90s-pop', 'classic-rock', 'sci-fi', 'classic-films']);
+            const activeRatings = new Set(['G', 'PG']);
+            
+            // Filter prompts and answers
+            gamePrompts = allPrompts.filter(p => 
+                selectedPacks.has(p.pack) && activeRatings.has(p.rating)
+            );
+            
+            gameAnswers = allAnswers.filter(a => 
+                activeRatings.has(a.rating)
+            );
+            
+            // Shuffle and select
+            gamePrompts = shuffleArray(gamePrompts).slice(0, totalRounds);
+            gameAnswers = shuffleArray(gameAnswers);
+            
+            // Start first round
+            startNewRound(0);
+        }
+        
+        function startNewRound(roundIndex) {
+            const prompt = gamePrompts[roundIndex];
+            const roundAnswers = shuffleArray([...gameAnswers]).slice(0, 4);
+            
+            mpCore.updateGameState({
+                phase: 'round_active',
+                roundIndex: roundIndex,
+                prompt: prompt,
+                answers: roundAnswers,
+                votes: {},
+                startTime: Date.now()
+            });
+        }
+        
+        function loadRound(gameState) {
+            currentRoundIndex = gameState.roundIndex;
+            selectedAnswerIndex = null;
+            
+            document.getElementById('currentRound').textContent = currentRoundIndex + 1;
+            document.getElementById('totalRounds').textContent = totalRounds;
+            document.getElementById('promptText').textContent = gameState.prompt.text;
+            document.getElementById('promptSource').textContent = `- ${gameState.prompt.source}`;
+            
+            const answersGrid = document.getElementById('answersGrid');
+            answersGrid.innerHTML = '';
+            
+            gameState.answers.forEach((answer, index) => {
+                const answerCard = document.createElement('div');
+                answerCard.className = 'answer-card';
+                answerCard.dataset.index = index;
+                
+                const answerText = document.createElement('div');
+                answerText.className = 'answer-text';
+                answerText.textContent = answer.text;
+                
+                answerCard.appendChild(answerText);
+                
+                // Check if player already voted
+                const playerId = mpCore.getPlayerId();
+                if (gameState.votes && gameState.votes[playerId] === index) {
+                    answerCard.classList.add('selected');
+                    selectedAnswerIndex = index;
+                    document.getElementById('submitAnswerBtn').disabled = false;
+                } else {
+                    answerCard.addEventListener('click', () => selectAnswer(index));
+                }
+                
+                answersGrid.appendChild(answerCard);
+            });
+            
+            startRoundTimer();
+        }
+        
+        function selectAnswer(index) {
+            document.querySelectorAll('.answer-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            
+            document.querySelector(`.answer-card[data-index="${index}"]`).classList.add('selected');
+            selectedAnswerIndex = index;
+            document.getElementById('submitAnswerBtn').disabled = false;
+        }
+        
+        document.getElementById('submitAnswerBtn').addEventListener('click', () => {
+            if (selectedAnswerIndex === null) return;
+            
+            const playerId = mpCore.getPlayerId();
+            const currentState = mpCore.getGameState();
+            const votes = currentState.votes || {};
+            votes[playerId] = selectedAnswerIndex;
+            
+            mpCore.updateGameState({
+                votes: votes
+            });
+            
+            document.getElementById('submitAnswerBtn').disabled = true;
+            document.querySelectorAll('.answer-card').forEach(card => {
+                card.style.pointerEvents = 'none';
+            });
+            
+            // Check if all players voted
+            const players = mpCore.getPlayers();
+            if (Object.keys(votes).length === Object.keys(players).length) {
+                if (mpCore.isHost()) {
+                    endRound();
+                }
+            }
+        });
+        
+        function startRoundTimer() {
+            clearInterval(roundTimer);
+            let timeLeft = roundTimeLimit;
+            document.getElementById('timer').textContent = timeLeft;
+            
+            roundTimer = setInterval(() => {
+                timeLeft--;
+                document.getElementById('timer').textContent = timeLeft;
+                
+                if (timeLeft <= 0) {
+                    clearInterval(roundTimer);
+                    if (mpCore.isHost()) {
+                        endRound();
+                    }
+                }
+            }, 1000);
+        }
+        
+        function endRound() {
+            const gameState = mpCore.getGameState();
+            const votes = gameState.votes || {};
+            
+            // Count votes
+            const voteCounts = {};
+            Object.values(votes).forEach(answerIndex => {
+                voteCounts[answerIndex] = (voteCounts[answerIndex] || 0) + 1;
+            });
+            
+            // Find winner(s)
+            const maxVotes = Math.max(...Object.values(voteCounts));
+            const winners = Object.keys(voteCounts).filter(idx => voteCounts[idx] === maxVotes).map(Number);
+            
+            // Award points to players who voted for winning answers
+            const players = mpCore.getPlayers();
+            Object.entries(votes).forEach(([playerId, answerIndex]) => {
+                if (winners.includes(answerIndex)) {
+                    players[playerId].score = (players[playerId].score || 0) + 10;
+                }
+            });
+            
+            mpCore.updateGameState({
+                phase: 'round_results',
+                voteCounts: voteCounts,
+                winners: winners
+            });
+            
+            setTimeout(() => {
+                if (currentRoundIndex + 1 < totalRounds) {
+                    startNewRound(currentRoundIndex + 1);
+                } else {
+                    endGame();
+                }
+            }, 5000);
+        }
+        
+        function showRoundResults(gameState) {
+            const answersGrid = document.getElementById('answersGrid');
+            const cards = answersGrid.querySelectorAll('.answer-card');
+            
+            cards.forEach((card, index) => {
+                const voteCount = gameState.voteCounts[index] || 0;
+                const isWinner = gameState.winners.includes(index);
+                
+                if (isWinner) {
+                    card.classList.add('winner');
+                }
+                
+                const voteCountDiv = document.createElement('div');
+                voteCountDiv.className = 'vote-count';
+                voteCountDiv.textContent = `${voteCount} vote${voteCount !== 1 ? 's' : ''}`;
+                card.appendChild(voteCountDiv);
+            });
+            
+            clearInterval(roundTimer);
+            document.getElementById('submitAnswerBtn').style.display = 'none';
+        }
+        
+        function endGame() {
+            mpCore.updateGameState({
+                phase: 'game_over'
+            });
+        }
+        
+        function showFinalResults(gameState) {
+            document.getElementById('gameScreen').style.display = 'none';
+            document.getElementById('resultsScreen').style.display = 'block';
+            
+            const players = mpCore.getPlayers();
+            const sortedPlayers = Object.values(players).sort((a, b) => (b.score || 0) - (a.score || 0));
+            
+            document.getElementById('winnerText').textContent = `🎉 ${sortedPlayers[0].name} Wins! 🎉`;
+            
+            const scoresContainer = document.getElementById('finalScoresContainer');
+            scoresContainer.innerHTML = '';
+            
+            sortedPlayers.forEach((player, index) => {
+                const scoreItem = document.createElement('div');
+                scoreItem.className = 'score-item' + (index === 0 ? ' winner' : '');
+                scoreItem.innerHTML = `
+                    <span class="player-name-score">${index + 1}. ${player.name}</span>
+                    <span class="player-score">${player.score || 0} points</span>
+                `;
+                scoresContainer.appendChild(scoreItem);
+            });
+        }
+        
+        function updateScoreboard(players) {
+            const container = document.getElementById('scoresContainer');
+            container.innerHTML = '';
+            
+            const sortedPlayers = Object.values(players).sort((a, b) => (b.score || 0) - (a.score || 0));
+            
+            sortedPlayers.forEach(player => {
+                const scoreItem = document.createElement('div');
+                scoreItem.className = 'score-item';
+                scoreItem.innerHTML = `
+                    <span class="player-name-score">${player.name}</span>
+                    <span class="player-score">${player.score || 0} pts</span>
+                `;
+                container.appendChild(scoreItem);
+            });
+        }
+        
+        document.getElementById('playAgainBtn').addEventListener('click', () => {
+            if (mpCore.isHost()) {
+                // Reset game
+                const players = mpCore.getPlayers();
+                Object.values(players).forEach(p => {
+                    p.score = 0;
+                    p.ready = false;
+                });
+                
+                mpCore.updateGameState({
+                    phase: 'waiting'
+                });
+                
+                document.getElementById('resultsScreen').style.display = 'none';
+                document.getElementById('waitingRoom').style.display = 'block';
+                document.getElementById('readyBtn').classList.remove('ready');
+                document.getElementById('readyBtn').textContent = 'READY';
+                document.getElementById('readyBtn').disabled = false;
+            }
+        });
+        
+        document.getElementById('backToLobbyBtn').addEventListener('click', () => {
+            window.location.href = '/games/multiplayer/index.html';
+        });
+        
+        // Chat
+        window.sendEmoji = function(emoji) {
+            mpCore.sendChat(emoji);
+        };
+        
+        function showChatMessage(playerId, message) {
+            const players = mpCore.getPlayers();
+            const player = players[playerId];
+            
+            const chatMsg = document.createElement('div');
+            chatMsg.className = 'chat-message';
+            chatMsg.textContent = `${player.name}: ${message}`;
+            document.body.appendChild(chatMsg);
+            
+            setTimeout(() => {
+                chatMsg.remove();
+            }, 3000);
+        }
+        
+        // Utility
+        function shuffleArray(array) {
+            const newArray = [...array];
+            for (let i = newArray.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+            }
+            return newArray;
+        }
+        
+        // Initialize
+        loadCardData();
+    </script>
+</body>
+</html>
