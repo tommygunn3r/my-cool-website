@@ -739,6 +739,7 @@
                 });
                 
                 // Check if all players voted (excluding the players whose cards are shown)
+                const connectedPlayers = Object.keys(mpGame.allPlayers).filter(id => mpGame.allPlayers[id].connected);
                 const submittedPlayers = Object.keys(currentState.submissions);
                 const votingPlayers = connectedPlayers.filter(id => submittedPlayers.includes(id));
                 if (Object.keys(votes).length === votingPlayers.length) {
