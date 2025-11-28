@@ -968,10 +968,14 @@
                 });
                 
                 console.log('Available packs:', availablePacks);
+                console.log('mpGame.isHost:', mpGame.isHost);
                 
                 // If host, show setup screen
                 if (mpGame.isHost) {
+                    console.log('Host detected! Calling populatePackSelection...');
                     populatePackSelection();
+                } else {
+                    console.log('Not host, skipping pack selection UI');
                 }
             } catch (error) {
                 console.error('Error loading packs:', error);
