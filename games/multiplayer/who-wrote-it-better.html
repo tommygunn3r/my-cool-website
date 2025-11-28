@@ -980,12 +980,33 @@
         
         // Populate pack selection UI
         function populatePackSelection() {
-            document.getElementById('packSelectionPanel').style.display = 'block';
+            console.log('=== populatePackSelection START ===');
+            console.log('availablePacks:', availablePacks);
+            console.log('Object.entries(availablePacks):', Object.entries(availablePacks));
+            
+            const panel = document.getElementById('packSelectionPanel');
+            console.log('packSelectionPanel element:', panel);
+            if (panel) {
+                panel.style.display = 'block';
+                console.log('Panel display set to block');
+            } else {
+                console.error('packSelectionPanel not found!');
+                return;
+            }
             
             const container = document.getElementById('categoriesContainer');
+            console.log('categoriesContainer element:', container);
+            if (!container) {
+                console.error('categoriesContainer not found!');
+                return;
+            }
             container.innerHTML = '';
             
+            let categoryCount = 0;
             Object.entries(availablePacks).forEach(([category, packs]) => {
+                categoryCount++;
+                console.log(`Creating category #${categoryCount}: "${category}"`, packs);
+                
                 const categoryDiv = document.createElement('div');
                 categoryDiv.className = 'category-group';
                 
@@ -994,7 +1015,10 @@
                 titleDiv.textContent = category;
                 categoryDiv.appendChild(titleDiv);
                 
+                let packCount = 0;
                 Object.entries(packs).forEach(([packName, packInfo]) => {
+                    packCount++;
+                    console.log(`  Creating pack #${packCount}: "${packName}"`, packInfo);
                     const packDiv = document.createElement('div');
                     packDiv.className = 'pack-checkbox';
                     
@@ -1046,7 +1070,12 @@
                 });
                 
                 container.appendChild(categoryDiv);
+                console.log(`Category "${category}" added with ${packCount} packs`);
             });
+            
+            console.log(`Total categories created: ${categoryCount}`);
+            console.log('Container children count:', container.children.length);
+            console.log('=== populatePackSelection END ===');
             
             setupRatingToggles();
             updatePackSelection();
