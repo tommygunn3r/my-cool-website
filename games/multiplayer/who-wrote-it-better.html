@@ -13,7 +13,8 @@
         
         body {
             font-family: 'Arial Black', Arial, sans-serif;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            /* UPDATED: Changed gradient to solid black */
+            background: #1a1410; 
             color: #fff;
             min-height: 100vh;
             overflow-x: hidden;
@@ -411,6 +412,7 @@
         }
         
         .answers-grid {
+            /* Kept original max-width grid for larger screens */
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(160px, 160px));
             gap: 12px;
@@ -729,7 +731,16 @@
             }
             
             .answers-grid {
-                grid-template-columns: 1fr;
+                /* UPDATED: Allow cards to dynamically size and take full width */
+                grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            }
+
+            .answer-card {
+                /* UPDATED: Allow card to stretch and be centered */
+                width: 100%; 
+                max-width: 250px; 
+                height: 120px; 
+                margin: 0 auto;
             }
             
             .emoji-chat {
@@ -748,12 +759,10 @@
     <div class="container">
         <h1>Who Wrote It Better? 🎵🎬</h1>
         
-        <!-- Waiting Room -->
         <div id="waitingRoom" class="waiting-room">
             <h2 class="waiting-title">Waiting for Players...</h2>
             <div id="playersGrid" class="players-grid"></div>
             
-            <!-- Pack Selection (Host Only) -->
             <div id="packSelectionPanel" class="pack-selection-panel">
                 <h3 style="color: #FFD700; margin-bottom: 15px;">Game Settings (Host)</h3>
                 
@@ -769,8 +778,7 @@
                 <div class="settings-section">
                     <label style="color: #FFD700; display: block; margin-bottom: 10px;">Categories & Packs:</label>
                     <div id="categoriesContainer" class="categories-container">
-                        <!-- Categories populated by JS -->
-                    </div>
+                        </div>
                 </div>
                 
                 <div class="pack-summary">
@@ -781,7 +789,6 @@
             <button class="ready-btn" id="readyBtn">READY</button>
         </div>
         
-        <!-- Game Setup (Host Only) -->
         <div id="gameSetup" class="waiting-room" style="display: none;">
             <h2 class="waiting-title">Game Setup</h2>
             
@@ -797,8 +804,7 @@
             <div class="setup-section">
                 <h3 class="setup-label">Select Content Packs</h3>
                 <div id="packSelection" class="pack-grid">
-                    <!-- Dynamically loaded from Firestore -->
-                </div>
+                    </div>
             </div>
             
             <div class="setup-section">
@@ -814,7 +820,6 @@
             <button class="ready-btn" id="confirmSetupBtn">Confirm & Ready</button>
         </div>
         
-        <!-- Game Screen -->
         <div id="gameScreen" class="game-screen">
             <div class="game-header">
                 <div class="round-info">
@@ -826,8 +831,7 @@
             </div>
             
             <div class="player-status-list" id="playerStatusList">
-                <!-- Player status populated by JS -->
-            </div>
+                </div>
             
             <div class="scoreboard">
                 <div id="scoresContainer"></div>
@@ -839,13 +843,11 @@
             </div>
             
             <div id="answersGrid" class="answers-grid">
-                <!-- Answer cards populated by JS -->
-            </div>
+                </div>
             
             <button class="submit-answer-btn" id="submitAnswerBtn" disabled>Submit Answer</button>
         </div>
         
-        <!-- Results Screen -->
         <div id="resultsScreen" class="results-screen">
             <div class="winner-announcement" id="winnerText"></div>
             <div class="scoreboard">
@@ -857,7 +859,6 @@
         </div>
     </div>
     
-    <!-- Emoji Chat -->
     <div class="emoji-chat hidden" id="emojiChat">
         <button class="emoji-btn" onclick="sendEmoji('😎')">😎</button>
         <button class="emoji-btn" onclick="sendEmoji('🔥')">🔥</button>
@@ -867,13 +868,11 @@
         <button class="emoji-btn" onclick="sendEmoji('💩')">💩</button>
     </div>
 
-    <!-- Firebase Compat Libraries -->
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
     
-    <!-- Multiplayer Core -->
     <script src="https://www.gunnersgames.com/multiplayer-core.js"></script>
     
     <script>
@@ -1879,8 +1878,8 @@
         });
         
         document.getElementById('backToLobbyBtn').addEventListener('click', () => {
-            // Try relative path first, then absolute
-            window.location.href = 'index.html';
+            // UPDATED: Assuming game is in a sub-directory relative to the lobby.
+            window.location.href = '../index.html'; 
         });
         
         // Chat
