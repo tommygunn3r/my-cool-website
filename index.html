@@ -6,24 +6,28 @@
 <title>Gunner's Games</title>
 
 <style>
-/* RESET */
+/* === GLOBAL RESET === */
 * { margin:0; padding:0; box-sizing:border-box; }
 html, body {
     width:100%;
     height:100%;
-    background:#000;
+    background:#000 !important;
     color:white;
     overflow-x:hidden;
 }
 
-/* HEADER */
+/* === FORCE ALL CONTAINERS BLACK === */
+header, main, footer,
+.game-card, .game-image,
+#gameWrapper, #gameFrame {
+    background:#000 !important;
+}
+
+/* === HEADER === */
 header {
-    width:100%;
     padding:20px 0;
-    background:#0a0a0a;
     border-bottom:3px solid #e94560;
     text-align:center;
-    z-index:10;
 }
 .banner img {
     width:90%;
@@ -31,7 +35,7 @@ header {
     height:auto;
 }
 
-/* USER BAR */
+/* === USER BAR === */
 .user-bar {
     position:absolute;
     top:15px;
@@ -48,36 +52,40 @@ header {
     border-radius:6px;
     cursor:pointer;
 }
+
+/* logged-in pill */
 .user-info {
     display:none;
-    background:#111;
-    border:1px solid #333;
+    background:#000;
+    border:1px solid #444;
     padding:6px 16px;
     border-radius:30px;
+    gap:12px;
+    align-items:center;
 }
 
-/* MAIN */
+/* === MAIN ARCADE GRID === */
 main {
     width:100%;
     max-width:1200px;
     margin:auto;
     padding:20px;
 }
-
-/* GAME GRID */
 .game-categories {
     display:flex;
     flex-direction:column;
     gap:20px;
 }
 .game-card {
-    background:#111;
     border-radius:20px;
     overflow:hidden;
+    border:2px solid #111;
     cursor:pointer;
-    border:2px solid #222;
+    transition:0.2s;
 }
-.game-card:hover { border-color:#e94560; }
+.game-card:hover {
+    border-color:#e94560;
+}
 .game-image {
     width:100%;
     height:200px;
@@ -88,27 +96,39 @@ main {
     object-fit:contain;
 }
 
-/* DESKTOP GRID */
-@media (min-width:768px){
+/* DISABLED GAME CARD (when not logged in) */
+.disabled {
+    opacity:0.35;
+    pointer-events:none;
+    filter:grayscale(100%);
+}
+
+/* === DESKTOP GRID === */
+@media(min-width:768px){
     .game-categories {flex-direction:row; flex-wrap:wrap;}
     .game-card {flex:1 1 calc(25% - 20px); max-width:260px;}
 }
 
-/* FOOTER */
+/* === FOOTER === */
 footer {
     padding:20px;
-    background:#0a0a0a;
+    background:#000;
     text-align:center;
     border-top:3px solid #e94560;
 }
+footer a {
+    color:#aaa;
+    margin:0 10px;
+    text-decoration:none;
+}
+footer a:hover { color:#e94560; }
 
-/* GAME FULLSCREEN OVERLAY – ALWAYS ON TOP */
+/* === FULLSCREEN GAME OVERLAY === */
 #gameWrapper {
     position:fixed;
     inset:0;
     width:100vw;
     height:100vh;
-    background:black;
     display:none;
     z-index:99999;
 }
@@ -116,7 +136,6 @@ footer {
     width:100vw;
     height:100vh;
     border:none;
-    background:black;
 }
 
 /* BACK BUTTON */
@@ -127,9 +146,10 @@ footer {
     background:#e94560;
     border:none;
     padding:10px 16px;
+    color:white;
     font-size:1rem;
     border-radius:8px;
-    color:white;
+    cursor:pointer;
     z-index:100000;
 }
 
@@ -139,8 +159,11 @@ body.game-open footer,
 body.game-open main {
     display:none !important;
 }
-body.game-open {
-    overflow:hidden !important;
+body.game-open { overflow:hidden !important; }
+
+/* MOBILE: ALWAYS FULLSCREEN */
+@media(max-width:767px){
+    header, footer, main { display:block; }
 }
 </style>
 </head>
@@ -167,18 +190,23 @@ body.game-open {
 <!-- MAIN GRID -->
 <main id="gameContainer">
     <div class="game-categories">
-        <div class="game-card" onclick="openGame('arcade.html')">
+
+        <div class="game-card disabled" data-game="arcade.html">
             <div class="game-image"><img src="assets/arcade.png"></div>
         </div>
-        <div class="game-card" onclick="openGame('casino.html')">
+
+        <div class="game-card disabled" data-game="casino.html">
             <div class="game-image"><img src="assets/casino.png"></div>
         </div>
-        <div class="game-card" onclick="openGame('solitaire.html')">
+
+        <div class="game-card disabled" data-game="solitaire.html">
             <div class="game-image"><img src="assets/solitaire.png"></div>
         </div>
-        <div class="game-card" onclick="openGame('multiplayer/index.html')">
+
+        <div class="game-card disabled" data-game="multiplayer/index.html">
             <div class="game-image"><img src="assets/multiplayer.png"></div>
         </div>
+
     </div>
 </main>
 
@@ -186,8 +214,7 @@ body.game-open {
 <div id="gameWrapper">
     <button class="close-game-btn" onclick="closeGame()">Back</button>
     <iframe id="gameFrame"
-        sandbox="allow-scripts allow-same-origin allow-pointer-lock allow-popups allow-modals">
-    </iframe>
+        sandbox="allow-scripts allow-same-origin allow-pointer-lock allow-popups allow-modals"></iframe>
 </div>
 
 <!-- FOOTER -->
@@ -198,15 +225,37 @@ body.game-open {
     <a href="terms.html">Terms</a>
 </footer>
 
+<!-- SUPABASE LOGIN -->
 <script type="module" src="/assets/js/index-auth.js"></script>
 
 <script>
+/* ---------------------------
+   LOGIN REQUIRED GAME LAUNCH
+----------------------------*/
+function enableGames() {
+    document.querySelectorAll('.game-card').forEach(card => {
+        card.classList.remove('disabled');
+        card.onclick = () => openGame(card.dataset.game);
+    });
+}
+
+function disableGames() {
+    document.querySelectorAll('.game-card').forEach(card => {
+        card.classList.add('disabled');
+        card.onclick = () => openModal("login");
+    });
+}
+
+/* index-auth.js will call these */
+window.enableGames = enableGames;
+window.disableGames = disableGames;
+
+/* --- GAME OPEN/CLOSE --- */
 function openGame(url){
     document.body.classList.add("game-open");
     document.getElementById("gameWrapper").style.display="block";
     document.getElementById("gameFrame").src=url;
 }
-
 function closeGame(){
     document.body.classList.remove("game-open");
     document.getElementById("gameFrame").src="";
