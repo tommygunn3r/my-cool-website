@@ -16,7 +16,7 @@ html, body {
     overflow-x:hidden;
 }
 
-/* === FORCE ALL CONTAINERS BLACK === */
+/* === FORCE BLACK EVERYWHERE === */
 header, main, footer,
 .game-card, .game-image,
 #gameWrapper, #gameFrame {
@@ -28,6 +28,7 @@ header {
     padding:20px 0;
     border-bottom:3px solid #e94560;
     text-align:center;
+    position:relative;
 }
 .banner img {
     width:90%;
@@ -64,7 +65,7 @@ header {
     align-items:center;
 }
 
-/* === MAIN ARCADE GRID === */
+/* === MAIN GAME GRID === */
 main {
     width:100%;
     max-width:1200px;
@@ -83,12 +84,11 @@ main {
     cursor:pointer;
     transition:0.2s;
 }
-.game-card:hover {
-    border-color:#e94560;
-}
+.game-card:hover { border-color:#e94560; }
 .game-image {
     width:100%;
     height:200px;
+    background:#000;
 }
 .game-image img {
     width:100%;
@@ -96,14 +96,14 @@ main {
     object-fit:contain;
 }
 
-/* DISABLED GAME CARD (when not logged in) */
+/* DISABLED GAME CARD (when logged out) */
 .disabled {
     opacity:0.35;
     pointer-events:none;
     filter:grayscale(100%);
 }
 
-/* === DESKTOP GRID === */
+/* DESKTOP GRID */
 @media(min-width:768px){
     .game-categories {flex-direction:row; flex-wrap:wrap;}
     .game-card {flex:1 1 calc(25% - 20px); max-width:260px;}
@@ -136,9 +136,8 @@ footer a:hover { color:#e94560; }
     width:100vw;
     height:100vh;
     border:none;
+    background:black;
 }
-
-/* BACK BUTTON */
 .close-game-btn {
     position:fixed;
     top:20px;
@@ -161,9 +160,74 @@ body.game-open main {
 }
 body.game-open { overflow:hidden !important; }
 
-/* MOBILE: ALWAYS FULLSCREEN */
-@media(max-width:767px){
-    header, footer, main { display:block; }
+/* =========================================================
+   AUTH MODAL (LOGIN / SIGNUP)
+   ========================================================= */
+#authModal {
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.8);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    z-index:200000;
+}
+.modal-content {
+    background:#111;
+    width:90%;
+    max-width:380px;
+    padding:30px 24px;
+    border-radius:10px;
+    border:2px solid #e94560;
+    position:relative;
+}
+.close-modal {
+    position:absolute;
+    top:10px;
+    right:15px;
+    font-size:26px;
+    cursor:pointer;
+}
+.modal-content h2 {
+    text-align:center;
+    color:#e94560;
+    margin-bottom:20px;
+}
+.input-group { margin-bottom:15px; }
+label { font-size:0.9rem; color:#aaa; }
+.input-field {
+    width:100%;
+    padding:10px;
+    background:#000;
+    border:1px solid #333;
+    color:white;
+    border-radius:5px;
+}
+.submit-btn {
+    width:100%;
+    padding:12px;
+    background:#e94560;
+    color:white;
+    border:none;
+    border-radius:6px;
+    font-size:1.1rem;
+    margin-top:10px;
+    cursor:pointer;
+}
+.switch-link {
+    text-align:center;
+    margin-top:15px;
+    font-size:0.9rem;
+    color:#bbb;
+}
+.switch-link span {
+    color:#e94560;
+    cursor:pointer;
+}
+.error-msg {
+    color:#ff4444;
+    margin-bottom:12px;
+    display:none;
 }
 </style>
 </head>
@@ -187,7 +251,7 @@ body.game-open { overflow:hidden !important; }
     </div>
 </header>
 
-<!-- MAIN GRID -->
+<!-- GAME GRID -->
 <main id="gameContainer">
     <div class="game-categories">
 
@@ -210,7 +274,7 @@ body.game-open { overflow:hidden !important; }
     </div>
 </main>
 
-<!-- FULLSCREEN GAME OVERLAY -->
+<!-- GAME OVERLAY -->
 <div id="gameWrapper">
     <button class="close-game-btn" onclick="closeGame()">Back</button>
     <iframe id="gameFrame"
@@ -225,41 +289,123 @@ body.game-open { overflow:hidden !important; }
     <a href="terms.html">Terms</a>
 </footer>
 
-<!-- SUPABASE LOGIN -->
+<!-- AUTH MODAL -->
+<div id="authModal">
+<div class="modal-content">
+
+    <span class="close-modal" onclick="closeModal()">&times;</span>
+
+    <!-- LOGIN FORM -->
+    <div id="loginForm">
+        <h2>PLAYER LOGIN</h2>
+        <div id="loginError" class="error-msg"></div>
+
+        <div class="input-group">
+            <label>Email</label>
+            <input type="email" id="loginEmail" class="input-field" placeholder="player@example.com">
+        </div>
+
+        <div class="input-group">
+            <label>Password</label>
+            <input type="password" id="loginPass" class="input-field" placeholder="••••••••">
+        </div>
+
+        <button id="btnLogin" class="submit-btn">LOGIN</button>
+
+        <div class="switch-link">
+            New player? <span onclick="switchForm('signup')">Create account</span>
+        </div>
+    </div>
+
+    <!-- SIGNUP FORM -->
+    <div id="signupForm" style="display:none;">
+        <h2>CREATE ACCOUNT</h2>
+        <div id="signupError" class="error-msg"></div>
+
+        <div class="input-group">
+            <label>Display Name</label>
+            <input type="text" id="regName" class="input-field" placeholder="PlayerOne">
+        </div>
+
+        <div class="input-group">
+            <label>Email</label>
+            <input type="email" id="regEmail" class="input-field" placeholder="player@example.com">
+        </div>
+
+        <div class="input-group">
+            <label>Password</label>
+            <input type="password" id="regPass" class="input-field" placeholder="••••••••">
+        </div>
+
+        <button id="btnSignup" class="submit-btn">CREATE ACCOUNT</button>
+
+        <div class="switch-link">
+            Already have an account? <span onclick="switchForm('login')">Login</span>
+        </div>
+    </div>
+
+</div>
+</div>
+
 <script type="module" src="/assets/js/index-auth.js"></script>
 
 <script>
-/* ---------------------------
-   LOGIN REQUIRED GAME LAUNCH
-----------------------------*/
-function enableGames() {
-    document.querySelectorAll('.game-card').forEach(card => {
+/* ============================================================
+   GAME LOCK / UNLOCK CONTROL
+============================================================ */
+function enableGames(){
+    document.querySelectorAll('.game-card').forEach(card=>{
         card.classList.remove('disabled');
-        card.onclick = () => openGame(card.dataset.game);
+        card.onclick = ()=> openGame(card.dataset.game);
     });
 }
 
-function disableGames() {
-    document.querySelectorAll('.game-card').forEach(card => {
+function disableGames(){
+    document.querySelectorAll('.game-card').forEach(card=>{
         card.classList.add('disabled');
-        card.onclick = () => openModal("login");
+        card.onclick = ()=> openModal("login");
     });
 }
 
-/* index-auth.js will call these */
 window.enableGames = enableGames;
 window.disableGames = disableGames;
 
-/* --- GAME OPEN/CLOSE --- */
+/* ============================================================
+   GAME OPEN/CLOSE
+============================================================ */
 function openGame(url){
     document.body.classList.add("game-open");
     document.getElementById("gameWrapper").style.display="block";
     document.getElementById("gameFrame").src=url;
 }
+
 function closeGame(){
     document.body.classList.remove("game-open");
     document.getElementById("gameFrame").src="";
     document.getElementById("gameWrapper").style.display="none";
+}
+
+/* ============================================================
+   MODAL CONTROL
+============================================================ */
+function openModal(type="login"){
+    document.getElementById("authModal").style.display="flex";
+    switchForm(type);
+}
+function closeModal(){
+    document.getElementById("authModal").style.display="none";
+}
+function switchForm(type){
+    document.getElementById("loginError").style.display="none";
+    document.getElementById("signupError").style.display="none";
+
+    if(type==="login"){
+        document.getElementById("loginForm").style.display="block";
+        document.getElementById("signupForm").style.display="none";
+    } else {
+        document.getElementById("loginForm").style.display="none";
+        document.getElementById("signupForm").style.display="block";
+    }
 }
 </script>
 
