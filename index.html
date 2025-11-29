@@ -1,303 +1,243 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Gunner's Games - Games Portal</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Gunner's Games</title>
 
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #000;
-            color: #e0e0e0;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
+<style>
+/* BASIC RESET */
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+    font-family: Arial, sans-serif;
+    background:#000;
+    color:white;
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    overflow-x:hidden;
+}
 
-        /* USER BAR */
-        .user-bar {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            display: flex;
-            gap: 15px;
-            align-items: center;
-            z-index: 100;
-        }
-        .auth-btn {
-            background: transparent;
-            border: 2px solid #e94560;
-            color: #e94560;
-            padding: 8px 20px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: 0.3s;
-            border-radius: 5px;
-            text-transform: uppercase;
-            font-size: 0.9rem;
-        }
-        .auth-btn:hover {
-            background: #e94560;
-            color: #fff;
-            box-shadow: 0 0 15px rgba(233,69,96,0.6);
-        }
-        .user-info {
-            display: none;
-            align-items: center;
-            gap: 15px;
-            background: rgba(10,10,10,0.8);
-            padding: 8px 20px;
-            border-radius: 30px;
-            border: 1px solid #333;
-        }
-        .user-name { font-weight: bold; }
-        .user-balance { color: #ffd700; font-weight: bold; }
+/* USER BAR */
+.user-bar {
+    position:absolute;
+    top:15px;
+    right:15px;
+    z-index:100;
+    display:flex;
+    gap:10px;
+}
+.auth-btn {
+    padding:8px 16px;
+    background:transparent;
+    border:2px solid #e94560;
+    color:#e94560;
+    border-radius:5px;
+    cursor:pointer;
+}
+.user-info {
+    display:none;
+    padding:6px 18px;
+    background:#111;
+    border-radius:30px;
+    border:1px solid #444;
+    gap:12px;
+    align-items:center;
+}
+.user-balance { color:#ffd700; }
 
-        /* HEADER */
-        header {
-            background: #0a0a0a;
-            padding: 20px;
-            text-align: center;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.9);
-            border-bottom: 3px solid #e94560;
-            position: relative;
-            z-index: 10;
-        }
-        .banner {
-            max-width: 90%;
-            margin: 0 auto;
-        }
-        .banner-image {
-            width: 100%;
-            height: auto;
-            max-height: 150px;
-            object-fit: contain;
-        }
+/* HEADER */
+header {
+    background:#0a0a0a;
+    padding:20px 0;
+    border-bottom:3px solid #e94560;
+    text-align:center;
+}
+.banner { max-width:90%; margin:auto; }
+.banner img { width:100%; object-fit:contain; }
 
-        /* MAIN */
-        main {
-            flex: 1;
-            max-width: 1200px;
-            margin: 10px auto 0;
-            padding: 0 20px 20px;
-        }
+/* MAIN */
+main {
+    flex:1;
+    width:100%;
+    max-width:1200px;
+    margin:auto;
+    padding:20px;
+}
 
-        /* GAME GRID */
-        .game-categories {
-            display: flex;
-            flex-direction: column;
-            gap: 20px;
-        }
-        .game-card {
-            background: #0a0a0a;
-            border-radius: 20px;
-            overflow: hidden;
-            border: 2px solid #1a1a1a;
-            cursor: pointer;
-            transition: 0.3s;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.9);
-        }
-        .game-card:hover {
-            transform: translateY(-5px);
-            border-color: #e94560;
-        }
-        .game-image {
-            width: 100%;
-            height: 200px;
-            background: #000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .game-icon-img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-        }
+/* GAME GRID */
+.game-categories {
+    display:flex;
+    flex-direction:column;
+    gap:20px;
+}
+.game-card {
+    background:#111;
+    border-radius:20px;
+    overflow:hidden;
+    cursor:pointer;
+    border:2px solid #222;
+    box-shadow:0 0 20px rgba(0,0,0,0.6);
+}
+.game-card:hover { border-color:#e94560; }
+.game-image {
+    width:100%;
+    height:200px;
+    background:#000;
+}
+.game-image img {
+    width:100%;
+    height:100%;
+    object-fit:contain;
+}
 
-        /* GAME FRAME */
-        #gameWrapper {
-            display: none;
-            width: 100%;
-            height: 100%;
-            position: relative;
-            background: #000;
-        }
-        #gameFrame {
-            width: 100%;
-            height: calc(100vh - 60px);
-            border: none;
-            background: #000;
-        }
-        .close-game-btn {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            z-index: 10000;
-            background: #e94560;
-            color: white;
-            padding: 10px 18px;
-            border: none;
-            border-radius: 8px;
-            font-size: 1rem;
-            cursor: pointer;
-            box-shadow: 0 0 10px rgba(233,69,96,0.6);
-        }
+/* FOOTER */
+footer {
+    background:#0a0a0a;
+    border-top:3px solid #e94560;
+    padding:20px;
+    text-align:center;
+}
+footer a {
+    color:#aaa;
+    margin:0 10px;
+    text-decoration:none;
+}
+footer a:hover { color:#e94560; }
 
-        /* FOOTER */
-        footer {
-            background: #0a0a0a;
-            padding: 30px 20px;
-            text-align: center;
-            border-top: 3px solid #e94560;
-        }
-        .footer-links a {
-            color: #a8b2d1;
-            margin: 0 10px;
-            text-decoration: none;
-            font-size: 0.9rem;
-        }
-        .footer-links a:hover { color: #e94560; }
+/* GAME IFRAME OVERLAY */
+#gameWrapper {
+    display:none;
+    position:fixed;
+    inset:0;
+    width:100vw;
+    height:100vh;
+    background:black;
+    z-index:99999;
+}
+#gameFrame {
+    width:100vw;
+    height:100vh;
+    border:none;
+    background:black;
+}
+.close-game-btn {
+    position:fixed;
+    top:20px;
+    left:20px;
+    z-index:100000;
+    background:#e94560;
+    color:white;
+    padding:10px 18px;
+    border:none;
+    border-radius:8px;
+    font-size:1rem;
+    cursor:pointer;
+}
 
-        /* MOBILE FULLSCREEN GAME */
-        @media (max-width: 767px) {
-            header, footer {
-                display: none;
-            }
-            #gameFrame { height: 100vh; }
-        }
+/* DESKTOP GRID */
+@media(min-width:768px) {
+    .game-categories {
+        flex-direction:row;
+        flex-wrap:wrap;
+    }
+    .game-card {
+        flex:1 1 calc(25% - 20px);
+        max-width:260px;
+    }
+}
 
-        /* DESKTOP FULLSCREEN GAME MODE */
-        @media (min-width: 768px) {
-            .game-categories {
-                flex-direction: row;
-                flex-wrap: wrap;
-            }
-            .game-card {
-                flex: 1 1 calc(25% - 20px);
-                max-width: 260px;
-            }
+/* MOBILE FULLSCREEN FIX */
+@media(max-width:767px) {
+    header, footer { display:none !important; }
+    main { display:none !important; }
 
-            body.game-open header,
-            body.game-open footer,
-            body.game-open main {
-                display: none !important;
-            }
-
-            body.game-open #gameWrapper {
-                display: block !important;
-                position: fixed;
-                inset: 0;
-                width: 100vw;
-                height: 100vh;
-                z-index: 99999;
-                background: #000;
-            }
-
-            body.game-open #gameFrame {
-                width: 100vw;
-                height: 100vh;
-            }
-
-            body.game-open .close-game-btn {
-                position: fixed;
-                top: 20px;
-                left: 20px;
-                z-index: 100000;
-            }
-        }
-    </style>
+    body.game-open {
+        overflow:hidden!important;
+    }
+}
+</style>
 </head>
 
 <body>
 
+<!-- HEADER -->
 <header>
     <div class="user-bar">
         <div id="loggedOutView">
-            <button class="auth-btn" onclick="openModal('login')">PLAYER LOGIN</button>
+            <button class="auth-btn" onclick="openModal('login')">LOGIN</button>
         </div>
         <div id="loggedInView" class="user-info">
-            <span class="user-name" id="displayName">Player</span>
+            <span id="displayName">Player</span>
             <span class="user-balance">🪙 <span id="displayBalance">0</span></span>
             <button class="auth-btn" onclick="handleLogout()">LOGOUT</button>
         </div>
     </div>
 
     <div class="banner">
-        <img src="assets/banner.png" class="banner-image" />
+        <img src="assets/banner.png" />
     </div>
 </header>
 
-<main>
-    <div id="gameContainer">
-        <div class="game-categories">
+<!-- MAIN ARCADE GRID -->
+<main id="gameContainer">
+    <div class="game-categories">
 
-            <div class="game-card" onclick="openGame('arcade.html')">
-                <div class="game-image">
-                    <img src="assets/arcade.png" class="game-icon-img">
-                </div>
-            </div>
-
-            <div class="game-card" onclick="openGame('casino.html')">
-                <div class="game-image">
-                    <img src="assets/casino.png" class="game-icon-img">
-                </div>
-            </div>
-
-            <div class="game-card" onclick="openGame('solitaire.html')">
-                <div class="game-image">
-                    <img src="assets/solitaire.png" class="game-icon-img">
-                </div>
-            </div>
-
-            <div class="game-card" onclick="openGame('multiplayer/index.html')">
-                <div class="game-image">
-                    <img src="assets/multiplayer.png" class="game-icon-img">
-                </div>
-            </div>
-
+        <div class="game-card" onclick="openGame('arcade.html')">
+            <div class="game-image"><img src="assets/arcade.png"></div>
         </div>
-    </div>
 
-    <!-- IFRAME GAME WRAPPER -->
-    <div id="gameWrapper">
-        <button class="close-game-btn" onclick="closeGame()">Back to Arcade</button>
-        <iframe id="gameFrame"
-    sandbox="allow-scripts allow-pointer-lock allow-same-origin allow-popups allow-modals">
-</iframe>
+        <div class="game-card" onclick="openGame('casino.html')">
+            <div class="game-image"><img src="assets/casino.png"></div>
+        </div>
+
+        <div class="game-card" onclick="openGame('solitaire.html')">
+            <div class="game-image"><img src="assets/solitaire.png"></div>
+        </div>
+
+        <div class="game-card" onclick="openGame('multiplayer/index.html')">
+            <div class="game-image"><img src="assets/multiplayer.png"></div>
+        </div>
+
     </div>
 </main>
 
+<!-- GAME OVERLAY -->
+<div id="gameWrapper">
+    <button class="close-game-btn" onclick="closeGame()">Back</button>
+    <iframe id="gameFrame" sandbox="allow-scripts allow-same-origin allow-pointer-lock allow-popups allow-modals"></iframe>
+</div>
+
+<!-- FOOTER -->
 <footer>
-    <div class="footer-links">
-        <a href="about.html">About</a>
-        <a href="contact.html">Contact</a>
-        <a href="privacy.html">Privacy</a>
-        <a href="terms.html">Terms</a>
-    </div>
-    <p style="margin-top:10px;font-size:0.8rem;color:#777;">© 2025 Gunner's Games</p>
+    <a href="about.html">About</a>
+    <a href="contact.html">Contact</a>
+    <a href="privacy.html">Privacy</a>
+    <a href="terms.html">Terms</a>
+    <p style="margin-top:10px;font-size:.8rem;color:#666;">© 2025 Gunner's Games</p>
 </footer>
 
-<!-- AUTH -->
 <script type="module" src="/assets/js/index-auth.js"></script>
 
-<!-- GAME OPEN/CLOSE LOGIC -->
 <script>
 function openGame(url) {
     document.body.classList.add("game-open");
-    document.getElementById('gameContainer').style.display = "none";
-    document.getElementById('gameWrapper').style.display = "block";
-    document.getElementById('gameFrame').src = url;
+    document.getElementById("gameWrapper").style.display="block";
+    document.getElementById("gameFrame").src=url;
+
+    // lock scroll (mobile fix)
+    document.documentElement.style.overflow="hidden";
+    document.body.style.overflow="hidden";
 }
 
 function closeGame() {
     document.body.classList.remove("game-open");
-    const frame = document.getElementById('gameFrame');
-    frame.src = ""; // stops game audio
-    document.getElementById('gameWrapper').style.display = "none";
-    document.getElementById('gameContainer').style.display = "block";
+    document.getElementById("gameFrame").src="";
+    document.getElementById("gameWrapper").style.display="none";
+
+    // restore scroll
+    document.documentElement.style.overflow="";
+    document.body.style.overflow="";
 }
 </script>
 
