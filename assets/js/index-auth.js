@@ -46,12 +46,11 @@ function disableGames() {
 // ---------------------------------------------------------
 function updateProfileUI(profile) {
     const name = (profile?.player_name || "PLAYER").toUpperCase();
-    const coins = Number(profile?.gunnercoin ?? 0);
+    const coins = Number(profile?.gunnercoins ?? 0);
 
     displayNameEl.textContent = name;
     displayBalanceEl.textContent = coins.toLocaleString();
 
-    // Sync local storage for games (optional)
     localStorage.setItem("playerName", name);
     localStorage.setItem("gunnercoins", coins);
 }
@@ -75,7 +74,7 @@ async function fetchOrCreateProfile(user) {
         .insert({
             id: user.id,
             player_name: user.user_metadata.display_name ?? "Player",
-            gunnercoin: 0
+            gunnercoins: 0
         })
         .select()
         .single();
