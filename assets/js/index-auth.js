@@ -16,11 +16,12 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 //  UI ELEMENTS
 // ---------------------------------------------------------
 const loggedOutView = document.getElementById("loggedOutView");
-const loggedInView = document.getElementById("loggedInView");
-const displayNameEl = document.getElementById("displayName");
+const loggedInView  = document.getElementById("loggedInView");
+
+const displayNameEl    = document.getElementById("displayName");
 const displayBalanceEl = document.getElementById("displayBalance");
 
-const loginError = document.getElementById("loginError");
+const loginError  = document.getElementById("loginError");
 const signupError = document.getElementById("signupError");
 
 const regName = document.getElementById("regName");
@@ -28,24 +29,32 @@ const regEmail = document.getElementById("regEmail");
 const regPass = document.getElementById("regPass");
 
 const loginEmail = document.getElementById("loginEmail");
-const loginPass = document.getElementById("loginPass");
+const loginPass  = document.getElementById("loginPass");
 
-const btnLogin = document.getElementById("btnLogin");
+const btnLogin  = document.getElementById("btnLogin");
 const btnSignup = document.getElementById("btnSignup");
 
+// Reset modal
+const resetError   = document.getElementById("resetError");
+const resetSuccess = document.getElementById("resetSuccess");
+const resetEmail   = document.getElementById("resetEmail");
+
+// Change name modal
+const nameChangeError = document.getElementById("nameChangeError");
+const newPlayerName   = document.getElementById("newPlayerName");
+
+
 // ---------------------------------------------------------
-//  GAME LOCK / UNLOCK (hooks into functions defined in index.html)
+//  UI HELPERS
 // ---------------------------------------------------------
 function unlockGamesUI() {
     if (window.enableGames) window.enableGames();
 }
+
 function lockGamesUI() {
     if (window.disableGames) window.disableGames();
 }
 
-// ---------------------------------------------------------
-//  UPDATE UI WITH PROFILE INFO
-// ---------------------------------------------------------
 function updateProfileUI(profile) {
     const name = (profile?.player_name || "PLAYER").toUpperCase();
     const coins = Number(profile?.gunnercoins ?? 0);
@@ -53,16 +62,15 @@ function updateProfileUI(profile) {
     displayNameEl.textContent = name;
     displayBalanceEl.textContent = coins.toLocaleString();
 
-    // Sync local storage for games if needed later
     localStorage.setItem("playerName", name);
     localStorage.setItem("gunnercoins", coins);
 }
 
+
 // ---------------------------------------------------------
-//  FETCH OR CREATE PROFILE (includes starting 5k coins)
+//  FETCH OR CREATE PROFILE
 // ---------------------------------------------------------
 async function fetchOrCreateProfile(user) {
-    // Try fetch existing
     const { data: existing } = await supabase
         .from("profiles")
         .select("*")
@@ -71,7 +79,6 @@ async function fetchOrCreateProfile(user) {
 
     if (existing) return existing;
 
-    // New profile with 5,000 starting coins
     const STARTING_COINS = 5000;
 
     const { data, error } = await supabase
@@ -80,7 +87,6 @@ async function fetchOrCreateProfile(user) {
             id: user.id,
             player_name: user.user_metadata.display_name ?? "Player",
             gunnercoins: STARTING_COINS
-            // last_login, streak will be handled by daily reward
         })
         .select()
         .single();
@@ -93,10 +99,9 @@ async function fetchOrCreateProfile(user) {
     return data;
 }
 
+
 // ---------------------------------------------------------
-//  DAILY + STREAK REWARD SYSTEM
-//  Columns expected in profiles:
-//    last_login (date), streak (int), gunnercoins (int)
+//  DAILY & STREAK BONUS
 // ---------------------------------------------------------
 async function applyDailyRewards(profile, user) {
     const today = new Date().toISOString().split("T")[0];
@@ -106,27 +111,17 @@ async function applyDailyRewards(profile, user) {
     let reward = 0;
 
     if (!last) {
-        // First login ever
         streak = 1;
         reward = 250;
     } else {
-        // Calculate day delta
         const diff = Math.floor(
             (new Date(today) - new Date(last)) / (1000 * 60 * 60 * 24)
         );
 
-        if (diff === 0) {
-            // Already claimed today
-            return;
-        } else if (diff === 1) {
-            // Continue streak
-            streak++;
-        } else if (diff > 1) {
-            // Streak broken
-            streak = 1;
-        }
+        if (diff === 0) return;
+        if (diff === 1) streak++;
+        if (diff > 1) streak = 1;
 
-        // Streak reward ladder
         reward =
             streak === 1 ? 250 :
             streak === 2 ? 350 :
@@ -134,7 +129,7 @@ async function applyDailyRewards(profile, user) {
             streak === 4 ? 750 :
             streak === 5 ? 1000 :
             streak === 6 ? 1500 :
-            2000; // Day 7+
+            2000;
     }
 
     const { data, error } = await supabase
@@ -149,21 +144,20 @@ async function applyDailyRewards(profile, user) {
         .single();
 
     if (error) {
-        console.error("Error applying daily reward:", error);
+        console.error("Daily reward error:", error);
         return;
     }
 
-    // Update UI with new profile values
     updateProfileUI(data);
 
-    // Use global helper from index.html for now
     if (window.showDailyRewardPopup) {
         window.showDailyRewardPopup(reward, streak);
     }
 }
 
+
 // ---------------------------------------------------------
-//  AUTH STATE INIT
+//  AUTH STATE
 // ---------------------------------------------------------
 let profileSubscription = null;
 
@@ -173,26 +167,21 @@ async function initAuthState() {
     } = await supabase.auth.getSession();
 
     if (!session) {
-        // Logged OUT
         loggedOutView.style.display = "flex";
-        loggedInView.style.display = "none";
+        loggedInView.style.display  = "none";
         lockGamesUI();
         return;
     }
 
     const user = session.user;
 
-    // Logged IN
     loggedOutView.style.display = "none";
-    loggedInView.style.display = "flex";
+    loggedInView.style.display  = "flex";
 
-    // Load/create profile
     let profile = await fetchOrCreateProfile(user);
 
-    // Apply daily reward + streak bonuses
     await applyDailyRewards(profile, user);
 
-    // Re-fetch profile after potential update
     const { data: refreshed } = await supabase
         .from("profiles")
         .select("*")
@@ -207,8 +196,9 @@ async function initAuthState() {
     subscribeToProfile(user.id);
 }
 
+
 // ---------------------------------------------------------
-//  REALTIME SUBSCRIPTION - Live Profile Updates
+//  REALTIME PROFILE SUBSCRIPTION
 // ---------------------------------------------------------
 function subscribeToProfile(user_id) {
     if (profileSubscription) profileSubscription.unsubscribe();
@@ -223,12 +213,11 @@ function subscribeToProfile(user_id) {
                 table: "profiles",
                 filter: `id=eq.${user_id}`
             },
-            (payload) => {
-                updateProfileUI(payload.new);
-            }
+            payload => updateProfileUI(payload.new)
         )
         .subscribe();
 }
+
 
 // ---------------------------------------------------------
 //  LOGIN
@@ -250,24 +239,24 @@ btnLogin.addEventListener("click", async () => {
         return;
     }
 
-    // On success
     if (window.closeModal) window.closeModal();
     await initAuthState();
 });
 
+
 // ---------------------------------------------------------
-//  SIGN UP
+//  SIGNUP
 // ---------------------------------------------------------
 btnSignup.addEventListener("click", async () => {
     signupError.style.display = "none";
 
-    const name = regName.value.trim();
+    const name  = regName.value.trim();
     const email = regEmail.value.trim();
-    const pass = regPass.value;
+    const pass  = regPass.value;
 
     if (name.length < 3) {
-        signupError.style.display = "block";
-        signupError.textContent = "Name must be at least 3 characters.";
+        signupError.style.display="block";
+        signupError.textContent="Name must be at least 3 characters.";
         return;
     }
 
@@ -275,11 +264,7 @@ btnSignup.addEventListener("click", async () => {
         const { data, error } = await supabase.auth.signUp({
             email,
             password: pass,
-            options: {
-                data: {
-                    display_name: name
-                }
-            }
+            options: { data: { display_name: name } }
         });
 
         if (error) throw error;
@@ -287,38 +272,141 @@ btnSignup.addEventListener("click", async () => {
         const user = data.user;
 
         if (!user) {
-            signupError.style.display = "block";
-            signupError.textContent =
-                "Check your email to confirm your account.";
+            signupError.style.display="block";
+            signupError.textContent="Check your email to confirm.";
             return;
         }
 
-        // Create matching DB profile with 5k starting coins
         const profile = await fetchOrCreateProfile(user);
         updateProfileUI(profile);
 
         if (window.closeModal) window.closeModal();
         await initAuthState();
-    } catch (err) {
-        signupError.style.display = "block";
+    }
+    catch (err) {
+        signupError.style.display="block";
         signupError.textContent = err.message;
     }
 });
+
+
+// ---------------------------------------------------------
+//  RESET PASSWORD
+// ---------------------------------------------------------
+window.sendPasswordReset = async function () {
+    resetError.style.display = "none";
+    resetSuccess.style.display = "none";
+
+    const email = resetEmail.value.trim();
+
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: "https://www.gunnersgames.com/reset-complete.html"
+    });
+
+    if (error) {
+        resetError.style.display="block";
+        resetError.textContent = error.message;
+    } else {
+        resetSuccess.style.display="block";
+        resetSuccess.textContent = "Reset link sent! Check your email.";
+    }
+};
+
+
+// ---------------------------------------------------------
+//  CHANGE PLAYER NAME
+// ---------------------------------------------------------
+window.changePlayerName = async function () {
+    nameChangeError.style.display = "none";
+
+    const name = newPlayerName.value.trim();
+
+    if (name.length < 3) {
+        nameChangeError.style.display="block";
+        nameChangeError.textContent="Name must be at least 3 characters.";
+        return;
+    }
+
+    const {
+        data: { user }
+    } = await supabase.auth.getUser();
+
+    // Update auth metadata
+    await supabase.auth.updateUser({
+        data: { display_name: name }
+    });
+
+    // Update profile table
+    const { data, error } = await supabase
+        .from("profiles")
+        .update({ player_name: name })
+        .eq("id", user.id)
+        .select()
+        .single();
+
+    if (error) {
+        nameChangeError.style.display="block";
+        nameChangeError.textContent = error.message;
+        return;
+    }
+
+    updateProfileUI(data);
+    if (window.closeChangeName) window.closeChangeName();
+};
+
+
+// ---------------------------------------------------------
+//  DELETE ACCOUNT  (CONFIRMATION INCLUDED)
+// ---------------------------------------------------------
+window.confirmDeleteAccount = async function () {
+    const really = confirm(
+        "⚠ WARNING ⚠\n\nThis will permanently delete your entire account,\ncoins, stats, and profile.\n\nThis CANNOT be undone.\n\nAre you 100% sure?"
+    );
+
+    if (!really) return;
+
+    const {
+        data: { user }
+    } = await supabase.auth.getUser();
+
+    // Delete profile rows
+    await supabase.from("profiles").delete().eq("id", user.id);
+
+    // Delete stats if used
+    await supabase.from("stats").delete().eq("user_id", user.id);
+
+    // Delete supabase auth user (safe browser method)
+    const session = (await supabase.auth.getSession()).data.session;
+
+    await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+        method:"DELETE",
+        headers:{
+            "apikey": SUPABASE_ANON_KEY,
+            "Authorization": "Bearer " + session.access_token
+        }
+    });
+
+    alert("Your account has been deleted.");
+
+    await supabase.auth.signOut();
+    location.reload();
+};
+
 
 // ---------------------------------------------------------
 //  LOGOUT
 // ---------------------------------------------------------
 window.handleLogout = async function () {
     await supabase.auth.signOut();
-    loggedOutView.style.display = "flex";
-    loggedInView.style.display = "none";
+
+    loggedOutView.style.display="flex";
+    loggedInView.style.display ="none";
+
     lockGamesUI();
-    // Clear local storage if you want
-    // localStorage.removeItem("playerName");
-    // localStorage.removeItem("gunnercoins");
 };
 
+
 // ---------------------------------------------------------
-//  ON LOAD
+//  ON PAGE LOAD
 // ---------------------------------------------------------
 initAuthState();

@@ -13,40 +13,41 @@ html, body {
     height:100%;
     background:#000 !important;
     color:white;
+    font-family:Arial, sans-serif;
     overflow-x:hidden;
-    font-family: Arial, sans-serif;
 }
 
-/* === PURE BLACK EVERYWHERE === */
-header, main, footer,
-.game-card, .game-image,
-#gameWrapper, #gameFrame {
+/* PURE BLACK */
+header, main, footer, .game-card, #gameWrapper, #gameFrame {
     background:#000 !important;
 }
 
-/* === HEADER === */
+/* HEADER */
 header {
     padding:20px 0;
     border-bottom:3px solid #e94560;
-    text-align:center;
     position:relative;
+    text-align:center;
 }
+
 .banner img {
     width:90%;
     max-width:600px;
     height:auto;
 }
 
-/* === USER BAR === */
+/* USER BAR */
 .user-bar {
     position:absolute;
     top:15px;
     right:15px;
-    z-index:20;
     display:flex;
-    gap:10px;
     align-items:center;
+    gap:10px;
+    z-index:30;
 }
+
+/* Logged-out button */
 .auth-btn {
     background:transparent;
     border:2px solid #e94560;
@@ -54,31 +55,49 @@ header {
     padding:6px 14px;
     border-radius:6px;
     cursor:pointer;
-    font-weight:bold;
     font-size:0.85rem;
-}
-.user-info {
-    display:none;
-    background:#000;
-    border:1px solid #444;
-    padding:6px 16px;
-    border-radius:30px;
-    gap:10px;
-    align-items:center;
-    font-size:0.8rem;
-}
-.user-info span {
-    display:inline-flex;
-    align-items:center;
-}
-.user-info span:nth-child(1) {
     font-weight:bold;
-}
-.user-info span:nth-child(2) {
-    color:#ffd700;
 }
 
-/* === MAIN GAME GRID === */
+/* Logged-in compact badge */
+.user-bar-auth {
+    display:flex;
+    align-items:center;
+    gap:12px;
+    background:#111;
+    border:1px solid #333;
+    padding:6px 14px;
+    border-radius:40px;
+}
+
+.settings-btn {
+    cursor:pointer;
+    font-size:20px;
+    color:#e94560;
+}
+
+#settingsMenu {
+    position:absolute;
+    top:55px;
+    right:0px;
+    width:180px;
+    background:#111;
+    border:1px solid #333;
+    border-radius:10px;
+    display:none;
+    flex-direction:column;
+    z-index:90;
+}
+#settingsMenu div {
+    padding:10px 16px;
+    cursor:pointer;
+}
+#settingsMenu div:hover {
+    background:#222;
+    color:#e94560;
+}
+
+/* GAME GRID */
 main {
     width:100%;
     max-width:1200px;
@@ -92,56 +111,54 @@ main {
 }
 .game-card {
     border-radius:20px;
-    overflow:hidden;
     border:2px solid #111;
+    overflow:hidden;
     cursor:pointer;
     transition:0.2s;
 }
 .game-card:hover { border-color:#e94560; }
-.game-image {
-    width:100%;
-    height:200px;
-}
-.game-image img {
-    width:100%;
-    height:100%;
-    object-fit:contain;
-}
-
-/* DISABLED GAME CARD (logged out) */
-.disabled {
+.game-card.disabled {
     opacity:0.35;
     pointer-events:none;
     filter:grayscale(100%);
 }
 
-/* DESKTOP GRID */
-@media(min-width:768px){
-    .game-categories {flex-direction:row; flex-wrap:wrap;}
-    .game-card {flex:1 1 calc(25% - 20px); max-width:260px;}
+.game-image img {
+    width:100%;
+    height:200px;
+    object-fit:contain;
 }
 
-/* === FOOTER === */
+/* Desktop grid */
+@media(min-width:768px){
+    .game-categories {
+        flex-direction:row;
+        flex-wrap:wrap;
+    }
+    .game-card {
+        flex:1 1 calc(25% - 20px);
+        max-width:260px;
+    }
+}
+
+/* FOOTER */
 footer {
     padding:20px;
-    background:#000;
-    text-align:center;
     border-top:3px solid #e94560;
+    text-align:center;
+    background:#000;
 }
 footer a {
     color:#aaa;
-    margin:0 10px;
     text-decoration:none;
-    font-size:0.9rem;
+    margin:0 10px;
 }
 footer a:hover { color:#e94560; }
 
-/* === FULLSCREEN GAME OVERLAY === */
+/* FULLSCREEN GAME */
 #gameWrapper {
     position:fixed;
     inset:0;
-    width:100vw;
-    height:100vh;
     display:none;
     background:#000;
     z-index:99999;
@@ -150,23 +167,21 @@ footer a:hover { color:#e94560; }
     width:100vw;
     height:100vh;
     border:none;
-    background:#000;
 }
 .close-game-btn {
     position:fixed;
     top:20px;
     left:20px;
     background:#e94560;
-    border:none;
-    padding:10px 16px;
     color:white;
-    font-size:1rem;
+    border:none;
+    padding:10px 14px;
     border-radius:8px;
     cursor:pointer;
     z-index:100000;
 }
 
-/* FULLSCREEN MODE */
+/* Fullscreen mode hides layout */
 body.game-open header,
 body.game-open footer,
 body.game-open main {
@@ -174,51 +189,49 @@ body.game-open main {
 }
 body.game-open { overflow:hidden !important; }
 
-/* =========================================================
-   AUTH MODAL (LOGIN / SIGNUP)
-   ========================================================= */
-#authModal {
+/* AUTH MODAL */
+#authModal, #resetPasswordModal, #changeNameModal {
     position:fixed;
     inset:0;
-    background:rgba(0,0,0,0.88);
     display:none;
     align-items:center;
     justify-content:center;
-    z-index:999999999 !important; /* ALWAYS ON TOP */
+    background:rgba(0,0,0,0.88);
+    z-index:999999;
 }
 .modal-content {
     background:#111;
+    padding:28px;
     width:90%;
     max-width:380px;
-    padding:30px 24px;
-    border-radius:10px;
+    border-radius:12px;
     border:2px solid #e94560;
     position:relative;
-    z-index:999999999 !important;
 }
 .close-modal {
     position:absolute;
     top:10px;
-    right:15px;
-    font-size:26px;
+    right:14px;
+    font-size:28px;
     cursor:pointer;
-    z-index:999999999 !important;
 }
 .modal-content h2 {
     text-align:center;
     color:#e94560;
-    margin-bottom:20px;
+    margin-bottom:18px;
 }
-.input-group { margin-bottom:15px; }
-label { font-size:0.9rem; color:#aaa; display:block; margin-bottom:4px; }
+
+.input-group { margin-bottom:12px; }
+label { display:block; margin-bottom:4px; color:#aaa; }
 .input-field {
     width:100%;
     padding:10px;
     background:#000;
     border:1px solid #333;
     color:white;
-    border-radius:5px;
+    border-radius:6px;
 }
+
 .submit-btn {
     width:100%;
     padding:12px;
@@ -226,26 +239,15 @@ label { font-size:0.9rem; color:#aaa; display:block; margin-bottom:4px; }
     color:white;
     border:none;
     border-radius:6px;
-    font-size:1.1rem;
     margin-top:10px;
     cursor:pointer;
+    font-size:1.1rem;
 }
-.switch-link {
-    text-align:center;
-    margin-top:15px;
-    font-size:0.9rem;
-    color:#bbb;
-}
-.switch-link span {
-    color:#e94560;
-    cursor:pointer;
-}
-.error-msg {
-    color:#ff4444;
-    margin-bottom:12px;
-    display:none;
-    font-size:0.85rem;
-}
+
+.switch-link { text-align:center; margin-top:12px; color:#bbb; }
+.switch-link span { color:#e94560; cursor:pointer; }
+
+.error-msg { color:#ff4444; display:none; margin-top:4px; }
 </style>
 </head>
 
@@ -254,38 +256,52 @@ label { font-size:0.9rem; color:#aaa; display:block; margin-bottom:4px; }
 <!-- HEADER -->
 <header>
     <div class="user-bar">
+
+        <!-- LOGGED OUT -->
         <div id="loggedOutView">
             <button class="auth-btn" onclick="openModal('login')">LOGIN</button>
         </div>
-        <div id="loggedInView" class="user-info">
+
+        <!-- LOGGED IN -->
+        <div id="loggedInView" class="user-bar-auth" style="display:none;">
             <span id="displayName">PLAYER</span>
             <span>🪙 <span id="displayBalance">0</span></span>
-            <button class="auth-btn" onclick="handleLogout()">LOGOUT</button>
+
+            <span id="settingsBtn" class="settings-btn" onclick="toggleSettings()">⚙</span>
+
+            <div id="settingsMenu">
+                <div onclick="openChangeName()">Change Player Name</div>
+                <div onclick="openResetPasswordModal()">Reset Password</div>
+                <div onclick="confirmDeleteAccount()">Delete Account</div>
+                <div onclick="handleLogout()">Log Out</div>
+            </div>
         </div>
+
     </div>
+
     <div class="banner">
-        <img src="assets/banner.png" alt="Gunner's Games Banner" />
+        <img src="assets/banner.png">
     </div>
 </header>
 
-<!-- GAME GRID -->
+<!-- MAIN GAME GRID -->
 <main id="gameContainer">
     <div class="game-categories">
 
         <div class="game-card disabled" data-game="arcade.html">
-            <div class="game-image"><img src="assets/arcade.png" alt="Arcade"></div>
+            <div class="game-image"><img src="assets/arcade.png"></div>
         </div>
 
         <div class="game-card disabled" data-game="casino.html">
-            <div class="game-image"><img src="assets/casino.png" alt="Casino"></div>
+            <div class="game-image"><img src="assets/casino.png"></div>
         </div>
 
         <div class="game-card disabled" data-game="solitaire.html">
-            <div class="game-image"><img src="assets/solitaire.png" alt="Solitaire"></div>
+            <div class="game-image"><img src="assets/solitaire.png"></div>
         </div>
 
         <div class="game-card disabled" data-game="multiplayer/index.html">
-            <div class="game-image"><img src="assets/multiplayer.png" alt="Multiplayer"></div>
+            <div class="game-image"><img src="assets/multiplayer.png"></div>
         </div>
 
     </div>
@@ -293,9 +309,9 @@ label { font-size:0.9rem; color:#aaa; display:block; margin-bottom:4px; }
 
 <!-- FULLSCREEN GAME -->
 <div id="gameWrapper">
-    <button class="close-game-btn" onclick="closeGame()">Back</button>
+    <button class="close-game-btn" onclick="closeGame()">BACK</button>
     <iframe id="gameFrame"
-        sandbox="allow-scripts allow-same-origin allow-pointer-lock allow-popups allow-modals"></iframe>
+    sandbox="allow-same-origin allow-scripts allow-pointer-lock allow-popups allow-modals"></iframe>
 </div>
 
 <!-- FOOTER -->
@@ -306,24 +322,23 @@ label { font-size:0.9rem; color:#aaa; display:block; margin-bottom:4px; }
     <a href="terms.html">Terms</a>
 </footer>
 
-<!-- AUTH MODAL -->
+<!-- LOGIN/SIGNUP MODAL -->
 <div id="authModal">
   <div class="modal-content">
-
     <span class="close-modal" onclick="closeModal()">&times;</span>
 
-    <!-- LOGIN FORM -->
+    <!-- LOGIN -->
     <div id="loginForm">
       <h2>PLAYER LOGIN</h2>
 
       <div class="input-group">
-        <label for="loginEmail">Email</label>
-        <input id="loginEmail" type="email" class="input-field" placeholder="player@example.com">
+        <label>Email</label>
+        <input id="loginEmail" type="email" class="input-field">
       </div>
 
       <div class="input-group">
-        <label for="loginPass">Password</label>
-        <input id="loginPass" type="password" class="input-field" placeholder="••••••••">
+        <label>Password</label>
+        <input id="loginPass" type="password" class="input-field">
       </div>
 
       <p id="loginError" class="error-msg"></p>
@@ -331,27 +346,28 @@ label { font-size:0.9rem; color:#aaa; display:block; margin-bottom:4px; }
       <button id="btnLogin" class="submit-btn">LOGIN</button>
 
       <div class="switch-link">
-        New player? <span onclick="switchForm('signup')">Create account</span>
+        <span onclick="switchForm('signup')">Create Account</span> |
+        <span onclick="openResetPasswordModal()">Forgot Password?</span>
       </div>
     </div>
 
-    <!-- SIGNUP FORM -->
+    <!-- SIGNUP -->
     <div id="signupForm" style="display:none;">
       <h2>CREATE ACCOUNT</h2>
 
       <div class="input-group">
-        <label for="regName">Display Name</label>
-        <input id="regName" type="text" class="input-field" placeholder="Your player name">
+        <label>Player Name</label>
+        <input id="regName" class="input-field">
       </div>
 
       <div class="input-group">
-        <label for="regEmail">Email</label>
-        <input id="regEmail" type="email" class="input-field" placeholder="player@example.com">
+        <label>Email</label>
+        <input id="regEmail" type="email" class="input-field">
       </div>
 
       <div class="input-group">
-        <label for="regPass">Password</label>
-        <input id="regPass" type="password" class="input-field" placeholder="••••••••">
+        <label>Password</label>
+        <input id="regPass" type="password" class="input-field">
       </div>
 
       <p id="signupError" class="error-msg"></p>
@@ -359,76 +375,122 @@ label { font-size:0.9rem; color:#aaa; display:block; margin-bottom:4px; }
       <button id="btnSignup" class="submit-btn">CREATE ACCOUNT</button>
 
       <div class="switch-link">
-        Already have an account? <span onclick="switchForm('login')">Login</span>
+        <span onclick="switchForm('login')">Back to Login</span>
       </div>
-    </div>
 
+    </div>
   </div>
 </div>
 
-<!-- AUTH / PROFILE LOGIC -->
+<!-- RESET PASSWORD MODAL -->
+<div id="resetPasswordModal">
+  <div class="modal-content">
+    <span class="close-modal" onclick="closeResetPasswordModal()">&times;</span>
+    <h2>Reset Password</h2>
+
+    <div class="input-group">
+        <label>Email</label>
+        <input id="resetEmail" type="email" class="input-field">
+    </div>
+
+    <p id="resetError" class="error-msg"></p>
+    <p id="resetSuccess" style="color:#00ff99; display:none;"></p>
+
+    <button class="submit-btn" onclick="sendPasswordReset()">SEND RESET LINK</button>
+  </div>
+</div>
+
+<!-- CHANGE NAME MODAL -->
+<div id="changeNameModal">
+  <div class="modal-content">
+    <span class="close-modal" onclick="closeChangeName()">&times;</span>
+    <h2>Change Player Name</h2>
+
+    <div class="input-group">
+        <label>New Name</label>
+        <input id="newPlayerName" class="input-field">
+    </div>
+
+    <p id="nameChangeError" class="error-msg"></p>
+
+    <button class="submit-btn" onclick="changePlayerName()">SAVE</button>
+  </div>
+</div>
+
+<!-- AUTH / PROFILE JS -->
 <script type="module" src="/assets/js/index-auth.js"></script>
 
-<!-- PAGE-LOCAL JS (iframe + modal + game lock/unlock) -->
+<!-- PAGE LOCAL JS -->
 <script>
-/* GAME LOCK / UNLOCK, used by index-auth.js via window.enableGames/disableGames */
-function enableGames(){
-    document.querySelectorAll('.game-card').forEach(card=>{
-        card.classList.remove('disabled');
-        card.onclick = () => openGame(card.dataset.game);
+function enableGames() {
+    document.querySelectorAll(".game-card").forEach(c=>{
+        c.classList.remove("disabled");
+        c.onclick = ()=> openGame(c.dataset.game);
     });
 }
-function disableGames(){
-    document.querySelectorAll('.game-card').forEach(card=>{
-        card.classList.add('disabled');
-        card.onclick = () => openModal("login");
+function disableGames() {
+    document.querySelectorAll(".game-card").forEach(c=>{
+        c.classList.add("disabled");
+        c.onclick = ()=> openModal("login");
     });
 }
+
 window.enableGames = enableGames;
 window.disableGames = disableGames;
 
-/* GAME OPEN / CLOSE */
 function openGame(url){
     document.body.classList.add("game-open");
-    document.getElementById("gameWrapper").style.display="block";
-    document.getElementById("gameFrame").src=url;
+    gameWrapper.style.display="block";
+    gameFrame.src=url;
 }
 function closeGame(){
     document.body.classList.remove("game-open");
-    document.getElementById("gameFrame").src="";
-    document.getElementById("gameWrapper").style.display="none";
+    gameFrame.src="";
+    gameWrapper.style.display="none";
 }
 
-/* MODAL CONTROL */
-function openModal(type="login"){
-    // ensure game overlay doesn't block modal
-    document.getElementById("gameWrapper").style.display="none";
-    document.getElementById("authModal").style.display="flex";
-    switchForm(type);
+function openModal(form="login"){
+    authModal.style.display="flex";
+    switchForm(form);
 }
 function closeModal(){
-    document.getElementById("authModal").style.display="none";
-    // if game was open, restore overlay
-    if (document.body.classList.contains("game-open")) {
-        document.getElementById("gameWrapper").style.display="block";
-    }
-}
-function switchForm(type){
-    document.getElementById("loginError").style.display="none";
-    document.getElementById("signupError").style.display="none";
-
-    if(type === "login"){
-        document.getElementById("loginForm").style.display="block";
-        document.getElementById("signupForm").style.display="none";
-    } else {
-        document.getElementById("loginForm").style.display="none";
-        document.getElementById("signupForm").style.display="block";
-    }
+    authModal.style.display="none";
 }
 
-/* Simple popup for daily rewards - can be replaced with fancy UI later */
-function showDailyRewardPopup(reward, streak) {
-    alert(`Daily Reward: +${reward} GunnerCoins!\nStreak: ${streak} days`);
+function switchForm(form){
+    loginError.style.display="none";
+    signupError.style.display="none";
+
+    document.getElementById("loginForm").style.display = (form==="login")?"block":"none";
+    document.getElementById("signupForm").style.display = (form==="signup")?"block":"none";
+}
+
+function openResetPasswordModal(){
+    resetPasswordModal.style.display="flex";
+}
+function closeResetPasswordModal(){
+    resetPasswordModal.style.display="none";
+}
+
+function openChangeName(){
+    changeNameModal.style.display="flex";
+}
+function closeChangeName(){
+    changeNameModal.style.display="none";
+}
+
+function toggleSettings(){
+    settingsMenu.style.display =
+        (settingsMenu.style.display==="flex") ? "none" : "flex";
+}
+document.addEventListener("click", e=>{
+    if(!e.target.closest("#settingsMenu") && !e.target.closest("#settingsBtn")){
+        settingsMenu.style.display="none";
+    }
+});
+
+function showDailyRewardPopup(reward, streak){
+    alert(`Daily Reward: +${reward} GunnerCoins\nStreak: ${streak} days`);
 }
 window.showDailyRewardPopup = showDailyRewardPopup;
 </script>
