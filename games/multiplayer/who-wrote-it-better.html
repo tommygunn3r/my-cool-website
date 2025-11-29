@@ -1,1134 +1,1008 @@
-<script>
-    // Firebase Config
-    const firebaseConfig = {
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GunnersGames Multiplayer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --gold: #d4af37;
+            --gold-dark: #b8941f;
+            --gold-light: #f4e5a7;
+            --cream: #f5f3e8;
+            --dark: #1a1410;
+            --red: #8b0000;
+            --green: #0a4a2e;
+        }
+
+        body {
+            font-family: 'Cormorant Garamond', serif;
+            background: linear-gradient(135deg, var(--dark) 0%, #2a1f1a 100%);
+            color: var(--cream);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem 3rem;
+            background: rgba(0,0,0,0.4);
+            backdrop-filter: blur(10px);
+            border-bottom: 2px solid var(--gold);
+        }
+
+        .logo {
+            font-family: 'Cinzel', serif;
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--gold);
+            letter-spacing: 0.15em;
+            text-shadow: 0 0 20px rgba(212, 175, 55, 0.6);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+        }
+
+        .balance {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+
+        .coin-icon {
+            width: 35px;
+            height: 35px;
+            background: radial-gradient(circle, var(--gold-light) 0%, var(--gold) 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: var(--dark);
+            font-size: 1.1rem;
+            box-shadow: 0 2px 10px rgba(212, 175, 55, 0.5);
+        }
+
+        .username {
+            font-family: 'Cinzel', serif;
+            color: var(--gold);
+            font-size: 1.2rem;
+        }
+
+        /* Main Content */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 3rem 2rem;
+        }
+
+        .page-title {
+            font-family: 'Cinzel', serif;
+            font-size: 3rem;
+            text-align: center;
+            color: var(--gold);
+            margin-bottom: 1rem;
+            text-shadow: 0 0 30px rgba(212, 175, 55, 0.5);
+        }
+
+        .page-subtitle {
+            text-align: center;
+            font-size: 1.2rem;
+            color: var(--gold-light);
+            margin-bottom: 3rem;
+            opacity: 0.8;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .tab-btn {
+            font-family: 'Cinzel', serif;
+            font-size: 1.2rem;
+            padding: 1rem 3rem;
+            background: transparent;
+            color: var(--gold-light);
+            border: 2px solid var(--gold-dark);
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s;
+            letter-spacing: 0.1em;
+        }
+
+        .tab-btn:hover {
+            background: var(--gold-dark);
+            color: var(--dark);
+            box-shadow: 0 5px 20px rgba(212, 175, 55, 0.4);
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
+            color: var(--dark);
+            box-shadow: 0 5px 20px rgba(212, 175, 55, 0.6);
+        }
+
+        /* Tab Content */
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Room Grid */
+        .room-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .room-card {
+            background: rgba(0,0,0,0.6);
+            border: 2px solid var(--gold-dark);
+            border-radius: 15px;
+            padding: 1.5rem;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .room-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(212, 175, 55, 0.3);
+            border-color: var(--gold);
+        }
+
+        .room-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .room-game {
+            font-family: 'Cinzel', serif;
+            font-size: 1.5rem;
+            color: var(--gold);
+            font-weight: 600;
+        }
+
+        .room-status {
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .room-status.waiting {
+            background: rgba(255, 165, 0, 0.2);
+            color: #ffa500;
+            border: 1px solid #ffa500;
+        }
+
+        .room-status.playing {
+            background: rgba(0, 255, 0, 0.2);
+            color: #00ff00;
+            border: 1px solid #00ff00;
+        }
+
+        .room-status.full {
+            background: rgba(255, 0, 0, 0.2);
+            color: #ff4444;
+            border: 1px solid #ff4444;
+        }
+
+        .room-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            color: var(--cream);
+            font-size: 1.1rem;
+        }
+
+        .room-players {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .room-buy-in {
+            color: var(--gold);
+            font-weight: 600;
+        }
+
+        .room-host {
+            font-size: 0.9rem;
+            color: var(--gold-light);
+            opacity: 0.7;
+        }
+
+        /* Create Room Section */
+        .create-room-section {
+            background: rgba(0,0,0,0.6);
+            border: 2px solid var(--gold);
+            border-radius: 15px;
+            padding: 2rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .section-title {
+            font-family: 'Cinzel', serif;
+            font-size: 1.8rem;
+            color: var(--gold);
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            font-family: 'Cinzel', serif;
+            color: var(--gold-light);
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+        }
+
+        .form-select, .form-input {
+            width: 100%;
+            padding: 0.8rem;
+            background: rgba(0,0,0,0.4);
+            border: 1px solid var(--gold-dark);
+            border-radius: 8px;
+            color: var(--cream);
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.1rem;
+        }
+
+        .form-select:focus, .form-input:focus {
+            outline: none;
+            border-color: var(--gold);
+            box-shadow: 0 0 10px rgba(212, 175, 55, 0.3);
+        }
+
+        .toggle-group {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .toggle-btn {
+            flex: 1;
+            padding: 0.8rem;
+            background: rgba(0,0,0,0.4);
+            border: 2px solid var(--gold-dark);
+            border-radius: 8px;
+            color: var(--cream);
+            font-family: 'Cinzel', serif;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+
+        .toggle-btn:hover {
+            border-color: var(--gold);
+        }
+
+        .toggle-btn.active {
+            background: var(--gold);
+            color: var(--dark);
+            border-color: var(--gold);
+        }
+
+        .create-btn {
+            width: 100%;
+            padding: 1rem;
+            background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
+            border: none;
+            border-radius: 50px;
+            color: var(--dark);
+            font-family: 'Cinzel', serif;
+            font-size: 1.3rem;
+            font-weight: 600;
+            cursor: pointer;
+            letter-spacing: 0.1em;
+            transition: all 0.3s;
+            margin-top: 1rem;
+        }
+
+        .create-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(212, 175, 55, 0.6);
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--gold-light);
+            font-size: 1.2rem;
+        }
+
+        .empty-state-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--gold);
+            font-family: 'Cinzel', serif;
+            font-size: 1.5rem;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(212, 175, 55, 0.2);
+            border-top-color: var(--gold);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 2rem auto;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, var(--dark) 0%, #2a1f1a 100%);
+            border: 2px solid var(--gold);
+            border-radius: 15px;
+            padding: 2rem;
+            max-width: 500px;
+            width: 90%;
+        }
+
+        .modal-title {
+            font-family: 'Cinzel', serif;
+            font-size: 1.8rem;
+            color: var(--gold);
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        .modal-text {
+            color: var(--cream);
+            font-size: 1.1rem;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .modal-btn {
+            flex: 1;
+            padding: 0.8rem;
+            border: none;
+            border-radius: 8px;
+            font-family: 'Cinzel', serif;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .modal-btn.primary {
+            background: var(--gold);
+            color: var(--dark);
+        }
+
+        .modal-btn.secondary {
+            background: transparent;
+            color: var(--gold);
+            border: 2px solid var(--gold);
+        }
+
+        .modal-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        /* Room Code Display */
+        .room-code-display {
+            background: rgba(0,0,0,0.4);
+            border: 2px dashed var(--gold);
+            border-radius: 10px;
+            padding: 1rem;
+            text-align: center;
+            margin: 1rem 0;
+        }
+
+        .room-code {
+            font-family: 'Cinzel', serif;
+            font-size: 2rem;
+            color: var(--gold);
+            letter-spacing: 0.3em;
+            font-weight: 700;
+        }
+
+        .copy-hint {
+            font-size: 0.9rem;
+            color: var(--gold-light);
+            margin-top: 0.5rem;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .header {
+                padding: 1rem 1.5rem;
+            }
+
+            .logo {
+                font-size: 1.5rem;
+            }
+
+            .page-title {
+                font-size: 2rem;
+            }
+
+            .tabs {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .tab-btn {
+                width: 100%;
+            }
+
+            .room-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="logo">GUNNERSGAMES</div>
+        <div class="user-info">
+            <div class="balance">
+                <div class="coin-icon">G</div>
+                <span id="userBalance">0</span>
+            </div>
+            <div class="username" id="username">Guest</div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container">
+        <h1 class="page-title">MULTIPLAYER LOBBY</h1>
+        <p class="page-subtitle">Join a table or create your own room</p>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="browse">BROWSE ROOMS</button>
+            <button class="tab-btn" data-tab="create">CREATE ROOM</button>
+            <button class="tab-btn" data-tab="join">JOIN PRIVATE</button>
+        </div>
+
+        <!-- Browse Rooms Tab -->
+        <div class="tab-content active" id="browse-tab">
+            <div id="roomsLoading" class="loading">
+                <div class="spinner"></div>
+                Loading rooms...
+            </div>
+            <div id="roomsContainer" class="room-grid" style="display: none;"></div>
+            <div id="emptyRooms" class="empty-state" style="display: none;">
+                <div class="empty-state-icon">🎰</div>
+                <div>No active rooms found</div>
+                <div style="margin-top: 1rem; opacity: 0.7;">Be the first to create one!</div>
+            </div>
+        </div>
+
+        <!-- Create Room Tab -->
+        <div class="tab-content" id="create-tab">
+            <div class="create-room-section">
+                <h2 class="section-title">CREATE NEW ROOM</h2>
+                
+                <div class="form-group">
+                    <label class="form-label">Game Type</label>
+                    <select class="form-select" id="gameType">
+                        <option value="texas-holdem">Texas Hold'em Poker</option>
+                        <option value="who-wrote-it-better">Who Wrote It Better? 🎵</option>
+                        <option value="roulette" disabled>Roulette (Coming Soon)</option>
+                        <option value="blackjack" disabled>Blackjack (Coming Soon)</option>
+                        <option value="liars-dice" disabled>Liar's Dice (Coming Soon)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Buy-In Amount</label>
+                    <select class="form-select" id="buyIn">
+                        <option value="500">500 GunnerCoins</option>
+                        <option value="1000">1,000 GunnerCoins</option>
+                        <option value="2000" selected>2,000 GunnerCoins</option>
+                        <option value="5000">5,000 GunnerCoins</option>
+                        <option value="10000">10,000 GunnerCoins</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Room Privacy</label>
+                    <div class="toggle-group">
+                        <button class="toggle-btn active" data-privacy="public">PUBLIC</button>
+                        <button class="toggle-btn" data-privacy="private">PRIVATE</button>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Max Players</label>
+                    <select class="form-select" id="maxPlayers">
+                        <option value="2">2 Players</option>
+                        <option value="3">3 Players</option>
+                        <option value="4" selected>4 Players</option>
+                        <option value="6">6 Players</option>
+                        <option value="8">8 Players</option>
+                    </select>
+                </div>
+
+                <button class="create-btn" id="createRoomBtn">CREATE ROOM</button>
+            </div>
+        </div>
+
+        <!-- Join Private Room Tab -->
+        <div class="tab-content" id="join-tab">
+            <div class="create-room-section">
+                <h2 class="section-title">JOIN PRIVATE ROOM</h2>
+                
+                <div class="form-group">
+                    <label class="form-label">Enter Room Code</label>
+                    <input type="text" class="form-input" id="roomCodeInput" placeholder="ABCD-1234" maxlength="9" style="text-transform: uppercase; text-align: center; font-size: 1.5rem; letter-spacing: 0.2em;">
+                </div>
+
+                <button class="create-btn" id="joinPrivateBtn">JOIN ROOM</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Room Code Modal -->
+    <div class="modal" id="roomCodeModal">
+        <div class="modal-content">
+            <h2 class="modal-title">ROOM CREATED!</h2>
+            <p class="modal-text">Share this code with your friends:</p>
+            <div class="room-code-display">
+                <div class="room-code" id="displayRoomCode">XXXX-XXXX</div>
+                <div class="copy-hint">Click to copy</div>
+            </div>
+            <p class="modal-text" style="font-size: 0.9rem; opacity: 0.7;">Waiting for players to join...</p>
+            <div class="modal-buttons">
+                <button class="modal-btn secondary" id="cancelRoomBtn">CANCEL</button>
+                <button class="modal-btn primary" id="enterRoomBtn">ENTER ROOM</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
+
+    <script>
+        // ====== FIREBASE CONFIG ======
+        // TODO: Replace with your actual Firebase config
+        const firebaseConfig = {
         apiKey: "AIzaSyDjdo3U9qg_h4TKvplsFoZgxVNepAbCpFA",
         authDomain: "gunners-games.firebaseapp.com",
         projectId: "gunners-games",
         storageBucket: "gunners-games.firebasestorage.app",
         messagingSenderId: "644077315462",
         appId: "1:644077315462:web:431dd985426f3dbe02f807",
-        measurementId: "G-RWNL900X43",
-        databaseURL: "https://gunners-games-default-rtdb.firebaseio.com"
-    };
-    
-    // This is now safe because the external Firebase libraries are loaded above
-    firebase.initializeApp(firebaseConfig);
-    const firestore = firebase.firestore();
-    const auth = firebase.auth(); 
+        measurementId: "G-RWNL900X43"
+        };
 
-    // Get room code from URL
-    const urlParams = new URLSearchParams(window.location.search);
-    const roomCode = urlParams.get('room');
-    
-    if (!roomCode) {
-        alert('No room code provided!');
-        window.location.href = '/multiplayer/index.html';
-    }
-    
-    // Game state variables
-    let mpGame;
-    let allPrompts = [];
-    let allAnswers = [];
-    let gamePrompts = [];
-    let gameAnswers = [];
-    let currentRoundIndex = 0;
-    let selectedAnswerIndices = []; 
-    let totalRounds = 5;
-    let roundTimer = null;
-    let roundTimeLimit = 30;
-    
-    // Game setup state
-    let availablePacks = {};
-    let selectedPacks = new Set();
-    let selectedRatings = new Set(['G', 'PG']);
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const database = firebase.database(); // Realtime Database for rooms
+        const firestore = firebase.firestore(); // Firestore for user balance
 
-    // Helper to determine how many answers are needed for the current prompt
-    function getAnswersNeeded(prompt) {
-        if (!prompt || !prompt.text) return 1;
-        // Count the number of [blank] occurrences (case-insensitive)
-        const count = (prompt.text.match(/\[blank\]/gi) || []).length;
-        // Ensure at least one is needed, max two for now
-        return Math.max(1, Math.min(2, count)); 
-    }
-    
-    // Initialize game
-    console.log('Initializing game...');
-    
-    // Load available packs from Firestore
-    async function loadAvailablePacks() {
-        // ADDED LOGGING
-        console.log('loadAvailablePacks: Starting Firestore query for prompts...');
-        try {
-            const promptsSnapshot = await firestore.collection('prompts').get();
-            console.log(`loadAvailablePacks: Loaded ${promptsSnapshot.docs.length} prompt documents.`);
-            
-            // Group by category and pack
-            promptsSnapshot.docs.forEach(doc => {
-                const data = doc.data();
-                const category = data.category || 'other';
-                const pack = data.pack;
-                const rating = data.rating;
-                
-                if (!availablePacks[category]) {
-                    availablePacks[category] = {};
-                }
-                
-                if (!availablePacks[category][pack]) {
-                    availablePacks[category][pack] = {
-                        name: pack,
-                        category: category,
-                        rating: rating,
-                        count: 0
-                    };
-                }
-                
-                availablePacks[category][pack].count++;
-            });
-            
-            console.log('Available packs structured successfully.');
-            
-            // If host, show setup screen
-            if (mpGame.isHost) {
-                console.log('Host detected! Calling populatePackSelection...');
-                populatePackSelection();
+        console.log('Firebase initialized');
+        console.log('Auth domain:', firebaseConfig.authDomain);
+
+        // ====== STATE ======
+        let currentUser = null;
+        let userBalance = 0;
+        let roomsListener = null;
+        let selectedPrivacy = 'public';
+
+        // ====== INIT ======
+        console.log('Waiting for auth state...');
+        auth.onAuthStateChanged(user => {
+            console.log('Auth state changed:', user ? user.email : 'No user');
+            if (user) {
+                currentUser = user;
+                document.getElementById('username').innerText = user.displayName || user.email?.split('@')[0] || 'Player';
+                loadUserBalance();
+                loadRooms();
             } else {
-                console.log('Not host, skipping pack selection UI');
+                // Not authenticated - show message instead of redirect for debugging
+                console.log('No user logged in');
+                document.getElementById('username').innerText = 'Not Logged In';
+                document.getElementById('userBalance').innerText = '0';
+                
+                // Uncomment this line once Firebase config is correct:
+                // window.location.href = '/index.html';
             }
-        } catch (error) {
-            console.error('CRITICAL ERROR: Error loading packs (check Firestore rules/connection):', error);
-        }
-    }
-    
-    // Populate pack selection UI
-    function populatePackSelection() {
-        console.log('=== populatePackSelection START ===');
-        
-        const panel = document.getElementById('packSelectionPanel');
-        if (panel) {
-            panel.style.display = 'block';
-        } else {
-            console.error('packSelectionPanel not found!');
-            return;
-        }
-        
-        const container = document.getElementById('categoriesContainer');
-        if (!container) {
-            console.error('categoriesContainer not found!');
-            return;
-        }
-        container.innerHTML = '';
-        
-        let categoryCount = 0;
-        Object.entries(availablePacks).forEach(([category, packs]) => {
-            categoryCount++;
-            
-            const categoryDiv = document.createElement('div');
-            categoryDiv.className = 'category-group';
-            
-            const titleDiv = document.createElement('div');
-            titleDiv.className = 'category-title';
-            titleDiv.textContent = category;
-            categoryDiv.appendChild(titleDiv);
-            
-            let packCount = 0;
-            Object.entries(packs).forEach(([packName, packInfo]) => {
-                packCount++;
-                const packDiv = document.createElement('div');
-                packDiv.className = 'pack-checkbox';
-                
-                const checkbox = document.createElement('input');
-                checkbox.type = 'checkbox';
-                checkbox.id = `pack-${packName}`;
-                checkbox.dataset.pack = packName;
-                checkbox.dataset.rating = packInfo.rating;
-                checkbox.checked = selectedRatings.has(packInfo.rating); // Auto-check if rating active
-                
-                if (checkbox.checked) {
-                    selectedPacks.add(packName);
-                }
-                
-                const label = document.createElement('label');
-                label.className = 'pack-label';
-                label.htmlFor = `pack-${packName}`;
-                
-                const nameSpan = document.createElement('span');
-                nameSpan.className = 'pack-name-text';
-                nameSpan.textContent = packName.replace(/-/g, ' ');
-                
-                const badgeSpan = document.createElement('span');
-                badgeSpan.className = `pack-rating-badge ${packInfo.rating}`;
-                badgeSpan.textContent = packInfo.rating;
-                
-                const countSpan = document.createElement('span');
-                countSpan.className = 'pack-count';
-                countSpan.textContent = `(${packInfo.count})`;
-                
-                label.appendChild(nameSpan);
-                label.appendChild(badgeSpan);
-                label.appendChild(countSpan);
-                
-                packDiv.appendChild(checkbox);
-                packDiv.appendChild(label);
-                
-                // Handle click on whole div
-                packDiv.addEventListener('click', (e) => {
-                    if (e.target !== checkbox) {
-                        checkbox.checked = !checkbox.checked;
-                    }
-                    updatePackSelection();
-                });
-                
-                checkbox.addEventListener('change', updatePackSelection);
-                
-                categoryDiv.appendChild(packDiv);
-            });
-            
-            container.appendChild(categoryDiv);
         });
-        
-        setupRatingToggles();
-        updatePackSelection();
-    }
-    
-    // Setup rating toggle buttons
-    function setupRatingToggles() {
-        document.querySelectorAll('.rating-toggle').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const rating = btn.dataset.rating;
-                
-                if (selectedRatings.has(rating)) {
-                    selectedRatings.delete(rating);
-                    btn.classList.remove('active');
+
+        function loadUserBalance() {
+            // Load balance from Firestore (where your GunnerCoins are stored)
+            firestore.collection('users').doc(currentUser.uid).get().then(doc => {
+                if (doc.exists) {
+                    userBalance = doc.data().gunnercoins || 0;
                 } else {
-                    selectedRatings.add(rating);
-                    btn.classList.add('active');
+                    userBalance = 0;
                 }
+                document.getElementById('userBalance').innerText = userBalance.toLocaleString();
+            }).catch(error => {
+                console.error('Error loading balance:', error);
+                userBalance = 0;
+                document.getElementById('userBalance').innerText = '0';
+            });
+        }
+
+        // ====== TAB SYSTEM ======
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const tab = btn.dataset.tab;
                 
-                // Update pack checkboxes based on rating
-                document.querySelectorAll('.pack-checkbox input').forEach(checkbox => {
-                    const packRating = checkbox.dataset.rating;
-                    const shouldBeVisible = selectedRatings.has(packRating);
-                    
-                    checkbox.closest('.pack-checkbox').style.display = shouldBeVisible ? 'flex' : 'none';
-                    
-                    // Auto-check/uncheck based on rating
-                    if (shouldBeVisible && !checkbox.checked) {
-                        checkbox.checked = true;
-                        selectedPacks.add(checkbox.dataset.pack);
-                    } else if (!shouldBeVisible && checkbox.checked) {
-                        checkbox.checked = false;
-                        selectedPacks.delete(checkbox.dataset.pack);
-                    }
-                });
+                // Update buttons
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
                 
-                updatePackSelection();
+                // Update content
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                document.getElementById(`${tab}-tab`).classList.add('active');
             });
         });
-    }
-    
-    // Update selected packs and summary
-    function updatePackSelection() {
-        selectedPacks.clear();
-        
-        document.querySelectorAll('.pack-checkbox input:checked').forEach(checkbox => {
-            selectedPacks.add(checkbox.dataset.pack);
+
+        // ====== PRIVACY TOGGLE ======
+        document.querySelectorAll('[data-privacy]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                selectedPrivacy = btn.dataset.privacy;
+                document.querySelectorAll('[data-privacy]').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+            });
         });
-        
-        document.getElementById('selectedPacksCount').textContent = 
-            `${selectedPacks.size} pack${selectedPacks.size !== 1 ? 's' : ''} selected`;
-    }
 
-    // ADDED LOGGING
-    async function loadCardData() {
-        console.log('loadCardData: Starting Firestore query for ALL card data...');
-        try {
-            const promptsSnapshot = await firestore.collection('prompts').get();
-            allPrompts = promptsSnapshot.docs.map(doc => doc.data());
-            
-            const answersSnapshot = await firestore.collection('answers').get();
-            allAnswers = answersSnapshot.docs.map(doc => doc.data());
-            
-            console.log(`loadCardData: Loaded ${allPrompts.length} total prompts and ${allAnswers.length} total answers.`);
-        } catch (error) {
-            console.error('CRITICAL ERROR: Error loading card data (check Firestore rules/connection):', error);
-            alert('Error loading game data. Please refresh.');
-        }
-    }
-
-    // NEW: Function to handle game setup after authentication is confirmed
-    async function setupGame() {
-        // Initialize MultiplayerGame
-        mpGame = new MultiplayerGame({
-            roomId: roomCode,
-            gameType: 'who-wrote-it-better',
-            maxPlayers: 8,
-            minPlayers: 2,
-            
-            onPlayerJoined: (playerId, playerData) => {
-                console.log('Player joined:', playerData.name);
-                // Wait a moment for allPlayers to sync
-                setTimeout(() => {
-                    updateWaitingRoom();
-                    updateScoreboard();
-                    checkAllReady(); // Check if we can start
-                }, 100);
-            },
-            
-            onPlayerLeft: (playerId, playerData) => {
-                console.log('Player left:', playerData.name);
-                setTimeout(() => {
-                    updateWaitingRoom();
-                    updateScoreboard();
-                }, 100);
-            },
-            
-            onGameStart: (gameState) => {
-                console.log('Game starting!', gameState);
-                document.getElementById('waitingRoom').style.display = 'none';
-                document.getElementById('gameScreen').style.display = 'block';
-                document.getElementById('emojiChat').classList.remove('hidden');
-                
-                // Load all card data first
-                loadCardData().then(() => {
-                    // Initialize game if host
-                    if (mpGame.isHost) {
-                        initializeGame();
-                    }
-                });
-            },
-            
-            onGameStateUpdate: (newState, oldState) => {
-                // Update player status continuously during active phases
-                if (newState.phase === 'selection' || newState.phase === 'voting') {
-                    updatePlayerStatus(newState, newState.phase);
-                }
-                
-                // Auto-advance when all players have submitted/voted
-                if (mpGame.isHost) {
-                    if (newState.phase === 'selection' && newState.submissions) {
-                        // Check against connected players to account for players who may have left
-                        const connectedPlayers = Object.keys(mpGame.allPlayers).filter(id => mpGame.allPlayers[id].connected);
-                        const submittedCount = Object.keys(newState.submissions).length;
-                        console.log(`Selection auto-check: ${submittedCount}/${connectedPlayers.length}`);
-                        
-                        if (submittedCount === connectedPlayers.length && submittedCount > 0) {
-                            console.log('All players submitted! Auto-advancing to reveal...');
-                            setTimeout(() => startRevealPhase(), 1500);
-                        }
-                    } else if (newState.phase === 'voting' && newState.votes) {
-                        // Only players who submitted answers get to vote
-                        const submittedPlayers = Object.keys(newState.submissions || {});
-                        const votingPlayers = submittedPlayers.filter(id => mpGame.allPlayers[id] && mpGame.allPlayers[id].connected); // Filter for only connected, submitted players
-                        const votedCount = Object.keys(newState.votes).length;
-                        console.log(`Voting auto-check: ${votedCount}/${votingPlayers.length}`);
-                        
-                        if (votedCount === votingPlayers.length && votedCount > 0) {
-                            console.log('All players voted! Auto-ending round...');
-                            setTimeout(() => endRound(), 1500);
-                        }
-                    }
-                }
-                
-                if (newState.phase === 'selection') {
-                    showSelectionPhase(newState);
-                } else if (newState.phase === 'reveal') {
-                    showRevealPhase(newState);
-                } else if (newState.phase === 'voting') {
-                    showVotingPhase(newState);
-                } else if (newState.phase === 'results') {
-                    showRoundResults(newState);
-                } else if (newState.phase === 'game_over') {
-                    showFinalResults(newState);
-                }
-            },
-            
-            onChatMessage: (message) => {
-                showChatMessage(message.playerId, message.emoji);
+        // ====== LOAD ROOMS ======
+        function loadRooms() {
+            // Clean up old listener
+            if (roomsListener) {
+                database.ref('rooms').off('value', roomsListener);
             }
-        });
 
-        // Initialize multiplayer core
-        try {
-            await mpGame.init();
-            console.log('Multiplayer initialized successfully');
-            
-            // Load data (wait for it to finish)
-            await loadCardData();
-            await loadAvailablePacks(); // This call triggers populatePackSelection for host
-            
-            console.log('All data loaded, starting game flow.');
+            document.getElementById('roomsLoading').style.display = 'block';
+            document.getElementById('roomsContainer').style.display = 'none';
+            document.getElementById('emptyRooms').style.display = 'none';
 
-        } catch (error) {
-            console.error('Failed to initialize multiplayer:', error);
-            alert('Failed to join game: ' + error.message);
-            // Fallback: send user back to lobby
-            window.location.href = '/multiplayer/index.html'; 
-        }
+            // Listen for room changes
+            roomsListener = database.ref('rooms').on('value', snapshot => {
+                const rooms = snapshot.val();
+                document.getElementById('roomsLoading').style.display = 'none';
+                
+                if (!rooms) {
+                    document.getElementById('emptyRooms').style.display = 'block';
+                    return;
+                }
 
-    }
-
-
-    // RESTRICTED: Periodic update to keep waiting room fresh and clean up disconnected players
-    let waitingRoomInterval = setInterval(() => {
-        // Only run if mpGame is defined and we are not in the main game loop already
-        if (mpGame && document.getElementById('waitingRoom').style.display !== 'none') {
-            updateWaitingRoom();
-            
-            // Host: Clean up disconnected players after 5 seconds
-            if (mpGame.isHost) {
+                // Clean up old rooms (older than 1 hour or finished with no players)
                 const now = Date.now();
-                Object.entries(mpGame.allPlayers).forEach(([playerId, player]) => {
-                    if (!player.connected && player.lastSeen && (now - player.lastSeen > 5000)) {
-                        console.log('Removing disconnected player:', player.name);
-                        mpGame.playersRef.child(playerId).remove();
+                const ONE_HOUR = 60 * 60 * 1000;
+                
+                Object.entries(rooms).forEach(([roomId, room]) => {
+                    const roomAge = now - (room.createdAt || 0);
+                    const hasPlayers = room.players && Object.keys(room.players).length > 0;
+                    
+                    // Delete if: finished with no players, or older than 1 hour
+                    if ((room.status === 'finished' && !hasPlayers) || roomAge > ONE_HOUR) {
+                        database.ref(`rooms/${roomId}`).remove();
+                        console.log(`Cleaned up old room: ${roomId}`);
                     }
                 });
-            }
-        } else if (mpGame && mpGame.gameState.started) {
-            // If game started, stop interval
-             clearInterval(waitingRoomInterval);
-        }
-    }, 1000); // Update every second while in waiting room
 
+                const container = document.getElementById('roomsContainer');
+                container.innerHTML = '';
+                container.style.display = 'grid';
 
-    // NEW ENTRY POINT: Wait for Firebase Authentication State
-    auth.onAuthStateChanged(user => {
-        if (user) {
-            // User is signed in. Proceed with game setup.
-            setupGame();
-        } else {
-            // No user, send them back to the login/lobby page
-            window.location.href = '/multiplayer/index.html';
+                // Filter and display public rooms
+                Object.entries(rooms).forEach(([roomId, room]) => {
+                    if (room.privacy === 'public' && room.status !== 'finished') {
+                        container.appendChild(createRoomCard(roomId, room));
+                    }
+                });
+
+                if (container.children.length === 0) {
+                    container.style.display = 'none';
+                    document.getElementById('emptyRooms').style.display = 'block';
+                }
+            });
         }
-    });
-    
-    // Waiting room
-    function updateWaitingRoom() {
-        // ... (function body unchanged) ...
-        console.log('updateWaitingRoom called, players:', mpGame.allPlayers);
-        const grid = document.getElementById('playersGrid');
-        grid.innerHTML = '';
-        
-        Object.values(mpGame.allPlayers).forEach(player => {
-            console.log('Adding player to waiting room:', player);
-            if (!player.connected) return;
+
+        function createRoomCard(roomId, room) {
+            const card = document.createElement('div');
+            card.className = 'room-card';
             
-            const slot = document.createElement('div');
-            slot.className = 'player-slot' + (player.ready ? ' ready' : '');
-            
-            slot.innerHTML = `
-                <div class="player-name">${player.name}</div>
-                ${player.ready ? '<div class="ready-status">✓ READY</div>' : '<div class="ready-status">Waiting...</div>'}
+            const playerCount = room.players ? Object.keys(room.players).length : 0;
+            const statusClass = room.status === 'playing' ? 'playing' : 
+                               playerCount >= room.maxPlayers ? 'full' : 'waiting';
+            const statusText = room.status === 'playing' ? 'IN GAME' : 
+                              playerCount >= room.maxPlayers ? 'FULL' : 'WAITING';
+
+            card.innerHTML = `
+                <div class="room-header">
+                    <div class="room-game">${getGameName(room.gameType)}</div>
+                    <div class="room-status ${statusClass}">${statusText}</div>
+                </div>
+                <div class="room-info">
+                    <div class="room-players">
+                        <span>👥</span>
+                        <span>${playerCount}/${room.maxPlayers}</span>
+                    </div>
+                    <div class="room-buy-in">💰 ${room.buyIn.toLocaleString()}</div>
+                </div>
+                <div class="room-host">Host: ${room.hostName}</div>
             `;
-            
-            grid.appendChild(slot);
-        });
-    }
-    
-    document.getElementById('readyBtn').addEventListener('click', () => {
-        mpGame.setReady(true);
-        document.getElementById('readyBtn').classList.add('ready');
-        document.getElementById('readyBtn').textContent = 'READY ✓';
-        document.getElementById('readyBtn').disabled = true;
-        
-        // Continuously check if all ready (works regardless of who clicks first)
-        checkAllReady();
-    });
-    
-    // Confirm setup button (host only)
-    document.addEventListener('DOMContentLoaded', () => {
-        document.getElementById('confirmSetupBtn')?.addEventListener('click', () => {
-            if (selectedPacks.size === 0) {
-                alert('Please select at least one content pack!');
+
+            if (statusClass !== 'full' && room.status !== 'playing') {
+                card.addEventListener('click', () => joinRoom(roomId, room));
+            } else {
+                card.style.cursor = 'not-allowed';
+                card.style.opacity = '0.6';
+            }
+
+            return card;
+        }
+
+        function getGameName(type) {
+            const names = {
+                'texas-holdem': 'Texas Hold\'em',
+                'who-wrote-it-better': 'Who Wrote It Better?',
+                'roulette': 'Roulette',
+                'blackjack': 'Blackjack',
+                'liars-dice': 'Liar\'s Dice'
+            };
+            return names[type] || type;
+        }
+
+        // ====== CREATE ROOM ======
+        document.getElementById('createRoomBtn').addEventListener('click', createRoom);
+
+        async function createRoom() {
+            const gameType = document.getElementById('gameType').value;
+            const buyIn = parseInt(document.getElementById('buyIn').value);
+            const maxPlayers = parseInt(document.getElementById('maxPlayers').value);
+
+            // Validate balance
+            if (userBalance < buyIn) {
+                alert(`Insufficient funds! You need ${buyIn.toLocaleString()} GunnerCoins.`);
                 return;
             }
-            
-            // Save settings to game state
-            mpGame.updateGameState({
-                settings: {
-                    packs: Array.from(selectedPacks),
-                    ratings: Array.from(selectedRatings),
-                    rounds: totalRounds
-                }
-            });
-            
-            // Show waiting room
-            document.getElementById('gameSetup').style.display = 'none';
-            document.getElementById('waitingRoom').style.display = 'block';
-            
-            // Auto-mark host as ready
-            mpGame.setReady(true);
-            document.getElementById('readyBtn').classList.add('ready');
-            document.getElementById('readyBtn').textContent = 'READY ✓';
-            document.getElementById('readyBtn').disabled = true;
-            checkAllReady();
-        });
-    });
-    
-    // Check if all players are ready and start game
-    function checkAllReady() {
-        if (!mpGame.isHost) return; // Only host can start
-        
-        const connectedPlayers = Object.values(mpGame.allPlayers).filter(p => p.connected);
-        const readyPlayers = connectedPlayers.filter(p => p.ready);
-        
-        console.log(`Ready check: ${readyPlayers.length}/${connectedPlayers.length} ready`);
-        
-        if (connectedPlayers.length >= 2 && readyPlayers.length === connectedPlayers.length) {
-            console.log('All players ready! Starting game...');
-            
-            // Get settings from game state
-            const settings = mpGame.gameState.settings || {
-                packs: ['default'], // Should be set by host, fallback is necessary
-                ratings: ['G', 'PG'],
-                rounds: 5
-            };
-            
-            console.log('Starting game with settings:', settings);
-            
-            setTimeout(() => {
-                if (mpGame.gameState.started) return; // Already started
-                
-                // Save settings then start
-                mpGame.updateGameState({ settings: settings }).then(() => {
-                    mpGame.startGame();
-                });
-            }, 500);
-        }
-    }
-    
-    // Initialize game (host only)
-    async function initializeGame() {
-        await loadCardData();
-        
-        // Get settings from game state
-        const settings = mpGame.gameState.settings; 
-        
-        console.log('Game settings:', settings);
-        
-        const selectedPacksSet = new Set(settings.packs);
-        const activeRatings = new Set(settings.ratings);
-        totalRounds = settings.rounds;
-        
-        document.getElementById('totalRounds').textContent = totalRounds;
 
-        // ADDED LOGGING HERE
-        console.log(`Filtering cards using Packs: [${Array.from(selectedPacksSet)}] and Ratings: [${Array.from(activeRatings)}]`);
-        
-        // Filter prompts and answers
-        gamePrompts = allPrompts.filter(p => 
-            selectedPacksSet.has(p.pack) && activeRatings.has(p.rating)
-        );
-        
-        gameAnswers = allAnswers.filter(a => 
-            activeRatings.has(a.rating)
-        );
+            // Generate room code for private rooms
+            const roomCode = selectedPrivacy === 'private' ? generateRoomCode() : null;
 
-        // ADDED LOGGING HERE
-        console.log(`Filtering Result: ${gamePrompts.length} Prompts and ${gameAnswers.length} Answers.`);
-
-        // Sanity check for minimum cards
-        if (gamePrompts.length < totalRounds || gameAnswers.length < 7 * 8) { // Assuming 8 max players * 7 cards
-             console.error("Insufficient card data for game settings.");
-             alert("Not enough cards available based on selected packs/ratings. Please select more content or reduce rounds.");
-             return; 
-        }
-        
-        console.log(`Filtered to ${gamePrompts.length} prompts and ${gameAnswers.length} answers`);
-        
-        // Shuffle and select
-        gamePrompts = shuffleArray(gamePrompts).slice(0, totalRounds);
-        gameAnswers = shuffleArray(gameAnswers);
-        
-        // Initialize scores
-        const players = mpGame.allPlayers;
-        Object.keys(players).forEach(playerId => {
-            mpGame.updatePlayerData(playerId, { score: 0 });
-        });
-        
-        // Start first round
-        startNewRound(0);
-    }
-    
-    function startNewRound(roundIndex) {
-        const prompt = gamePrompts[roundIndex];
-        
-        // Shuffle the deck for this round
-        const shuffledDeck = shuffleArray([...gameAnswers]);
-        
-        // Deal unique answer cards to each player (7 cards each)
-        const playerHands = {};
-        const connectedPlayers = Object.keys(mpGame.allPlayers).filter(id => mpGame.allPlayers[id].connected);
-        let deckIndex = 0;
-        
-        connectedPlayers.forEach(playerId => {
-            playerHands[playerId] = [];
-            for (let i = 0; i < 7; i++) {
-                if (deckIndex < shuffledDeck.length) {
-                    playerHands[playerId].push(shuffledDeck[deckIndex]);
-                    deckIndex++;
-                }
-            }
-        });
-        
-        console.log(`Round ${roundIndex + 1}: Dealt ${deckIndex} cards to ${connectedPlayers.length} players`);
-        
-        mpGame.updateGameState({
-            phase: 'selection', // Players pick their answer
-            roundIndex: roundIndex,
-            prompt: prompt,
-            playerHands: playerHands,
-            submissions: {}, // {playerId: [answerIndex1, answerIndex2...]}
-            votes: {},
-            startTime: Date.now()
-        });
-    }
-    
-    // PHASE 1: Selection - Players pick their answer card
-    function showSelectionPhase(gameState) {
-        currentRoundIndex = gameState.roundIndex;
-        selectedAnswerIndices = [];
-        
-        document.getElementById('currentRound').textContent = currentRoundIndex + 1;
-        document.getElementById('totalRounds').textContent = totalRounds;
-
-        const answersNeeded = getAnswersNeeded(gameState.prompt);
-        let promptText = gameState.prompt.text;
-        if (answersNeeded === 2) {
-             // Replace blanks with a combined visual placeholder
-             promptText = promptText.replace(/\[blank\]/i, '______').replace(/\[blank\]/i, '______');
-        } else {
-             promptText = promptText.replace(/\[blank\]/i, '______');
-        }
-
-        document.getElementById('promptText').textContent = promptText;
-        document.getElementById('promptSource').textContent = `- ${gameState.prompt.source}`;
-        
-        const submitBtn = document.getElementById('submitAnswerBtn');
-        submitBtn.textContent = `Submit ${answersNeeded} Answer${answersNeeded > 1 ? 's' : ''}`;
-        submitBtn.style.display = 'block';
-        
-        // Update player status
-        updatePlayerStatus(gameState, 'selection');
-        
-        const answersGrid = document.getElementById('answersGrid');
-        answersGrid.innerHTML = '';
-        
-        // Show this player's hand
-        const currentUserId = mpGame.currentUser.uid;
-        const myHand = gameState.playerHands[currentUserId] || [];
-        
-        myHand.forEach((answer, index) => {
-            const answerCard = document.createElement('div');
-            answerCard.className = 'answer-card';
-            answerCard.dataset.index = index;
-            
-            const answerText = document.createElement('div');
-            answerText.className = 'answer-text';
-            answerText.textContent = answer.text;
-            
-            answerCard.appendChild(answerText);
-            
-            // Check if player already submitted
-            if (gameState.submissions && gameState.submissions[currentUserId] !== undefined) {
-                if (gameState.submissions[currentUserId].includes(index)) {
-                    answerCard.classList.add('selected');
-                }
-                answerCard.style.pointerEvents = 'none';
-            } else {
-                answerCard.addEventListener('click', () => selectAnswer(index, answersNeeded, myHand));
-            }
-            
-            answersGrid.appendChild(answerCard);
-        });
-        
-        // Check if already submitted
-        if (gameState.submissions && gameState.submissions[currentUserId] !== undefined) {
-            submitBtn.disabled = true;
-            submitBtn.textContent = 'Waiting for others...';
-        } else {
-            submitBtn.disabled = true;
-            startRoundTimer();
-        }
-    }
-    
-    function selectAnswer(index, answersNeeded, hand) {
-        const card = document.querySelector(`.answer-card[data-index="${index}"]`);
-        
-        if (card.classList.contains('selected')) {
-            // Deselect card
-            card.classList.remove('selected');
-            selectedAnswerIndices = selectedAnswerIndices.filter(i => i !== index);
-        } else {
-            // Select card
-            if (selectedAnswerIndices.length < answersNeeded) {
-                card.classList.add('selected');
-                selectedAnswerIndices.push(index);
-            } else {
-                if (answersNeeded === 1) {
-                    // Only one card allowed, deselect existing first
-                    document.querySelectorAll('.answer-card').forEach(c => c.classList.remove('selected'));
-                    selectedAnswerIndices = [];
-                    
-                    card.classList.add('selected');
-                    selectedAnswerIndices.push(index);
-                } 
-                // If answersNeeded is 2 and length is 2, ignore third selection
-            }
-        }
-        
-        // Sort indices for consistent submission and comparison
-        selectedAnswerIndices.sort((a, b) => a - b);
-        
-        // Enable submit button only if required number of cards are selected
-        const submitBtn = document.getElementById('submitAnswerBtn');
-        submitBtn.disabled = (selectedAnswerIndices.length !== answersNeeded);
-    }
-    
-    document.getElementById('submitAnswerBtn').addEventListener('click', () => {
-        const currentState = mpGame.gameState;
-        const currentUserId = mpGame.currentUser.uid;
-        
-        if (currentState.phase === 'selection') {
-            const answersNeeded = getAnswersNeeded(currentState.prompt);
-            
-            if (selectedAnswerIndices.length !== answersNeeded) return;
-
-            const submissions = currentState.submissions || {};
-            submissions[currentUserId] = selectedAnswerIndices;
-            
-            mpGame.updateGameState({
-                submissions: submissions
-            });
-            
-            document.getElementById('submitAnswerBtn').disabled = true;
-            document.getElementById('submitAnswerBtn').textContent = 'Waiting for others...';
-            document.querySelectorAll('.answer-card').forEach(card => {
-                card.style.pointerEvents = 'none';
-            });
-        } else if (currentState.phase === 'voting') {
-            if (selectedAnswerIndices.length !== 1) return;
-            
-            const votes = currentState.votes || {};
-            votes[currentUserId] = selectedAnswerIndices[0]; 
-            
-            mpGame.updateGameState({
-                votes: votes
-            });
-            
-            document.getElementById('submitAnswerBtn').disabled = true;
-            document.getElementById('submitAnswerBtn').textContent = 'Waiting for votes...';
-            document.querySelectorAll('.answer-card').forEach(card => {
-                card.style.pointerEvents = 'none';
-            });
-        }
-    });
-    
-    // PHASE 2: Reveal - Show submitted cards (no player names yet)
-    function showRevealPhase(gameState) {
-        clearInterval(roundTimer);
-        selectedAnswerIndices = [];
-        
-        document.getElementById('submitAnswerBtn').style.display = 'none';
-        
-        const answersGrid = document.getElementById('answersGrid');
-        answersGrid.innerHTML = '';
-        
-        const promptText = gameState.prompt.text;
-        const answersNeeded = getAnswersNeeded(gameState.prompt);
-
-        // Show all submitted answers (shuffled so players don't know who submitted what)
-        const submittedAnswers = [];
-        Object.entries(gameState.submissions).forEach(([playerId, answerIndices]) => {
-            const playerHand = gameState.playerHands[playerId];
-
-            const indices = Array.isArray(answerIndices) ? answerIndices : [answerIndices];
-
-            if (indices.length === 1) {
-                const answerIndex = indices[0];
-                if (playerHand && playerHand[answerIndex]) {
-                    submittedAnswers.push({
-                        text: playerHand[answerIndex].text,
-                        playerId: playerId,
-                        originalIndex: answerIndex
-                    });
-                }
-            } else if (indices.length >= 2) {
-                if (playerHand && playerHand[indices[0]] && playerHand[indices[1]]) {
-                    const text1 = playerHand[indices[0]].text;
-                    const text2 = playerHand[indices[1]].text;
-                    
-                    let combinedText = promptText.replace(/\[blank\]/i, text1);
-                    combinedText = combinedText.replace(/\[blank\]/i, text2);
-
-                    submittedAnswers.push({
-                        text: combinedText,
-                        playerId: playerId,
-                        originalIndices: indices
-                    });
-                }
-            }
-        });
-        
-        // Shuffle so you can't tell who submitted what
-        const shuffledAnswers = shuffleArray(submittedAnswers);
-        
-        shuffledAnswers.forEach((answer, index) => {
-            const answerCard = document.createElement('div');
-            answerCard.className = 'answer-card';
-            answerCard.style.pointerEvents = 'none';
-            
-            const answerText = document.createElement('div');
-            answerText.className = 'answer-text';
-            answerText.textContent = answer.text.replace(/\[blank\]/gi, '______'); 
-            
-            const revealLabel = document.createElement('div');
-            revealLabel.style.marginTop = '10px';
-            revealLabel.style.fontSize = '0.9em';
-            revealLabel.style.color = '#FFD700';
-            revealLabel.textContent = '???';
-            
-            answerCard.appendChild(answerText);
-            answerCard.appendChild(revealLabel);
-            
-            answersGrid.appendChild(answerCard);
-        });
-        
-        // Auto-advance to voting after 5 seconds
-        if (mpGame.isHost) {
-            setTimeout(() => {
-                mpGame.updateGameState({
-                    phase: 'voting',
-                    shuffledAnswers: shuffledAnswers, 
-                    startTime: Date.now() 
-                });
-            }, 5000);
-        }
-    }
-    
-    function startRevealPhase() {
-        mpGame.updateGameState({
-            phase: 'reveal'
-        });
-    }
-    
-    // PHASE 3: Voting - Players vote for best answer
-    function showVotingPhase(gameState) {
-        selectedAnswerIndices = [];
-        
-        document.getElementById('submitAnswerBtn').textContent = 'Vote';
-        document.getElementById('submitAnswerBtn').style.display = 'block';
-        document.getElementById('submitAnswerBtn').disabled = true;
-        
-        // Update player status
-        updatePlayerStatus(gameState, 'voting');
-        
-        const answersGrid = document.getElementById('answersGrid');
-        answersGrid.innerHTML = '';
-        
-        // Show the shuffled answers from reveal phase
-        gameState.shuffledAnswers.forEach((answer, index) => {
-            const answerCard = document.createElement('div');
-            answerCard.className = 'answer-card';
-            answerCard.dataset.index = index;
-            answerCard.dataset.playerId = answer.playerId;
-            
-            const answerText = document.createElement('div');
-            answerText.className = 'answer-text';
-            answerText.textContent = answer.text; 
-            
-            answerCard.appendChild(answerText);
-            
-            const currentUserId = mpGame.currentUser.uid;
-            
-            // Check if already voted
-            if (gameState.votes && gameState.votes[currentUserId] !== undefined) {
-                if (gameState.votes[currentUserId] === index) {
-                    answerCard.classList.add('selected');
-                }
-                answerCard.style.pointerEvents = 'none';
-            } else {
-                // Can't vote for your own card
-                if (answer.playerId === currentUserId) {
-                    answerCard.style.opacity = '0.5';
-                    answerCard.style.cursor = 'not-allowed';
-                    const yourLabel = document.createElement('div');
-                    yourLabel.style.marginTop = '10px';
-                    yourLabel.style.fontSize = '0.9em';
-                    yourLabel.style.color = '#4CAF50';
-                    yourLabel.textContent = '(Your Card)';
-                    answerCard.appendChild(yourLabel);
-                } else {
-                    answerCard.addEventListener('click', () => selectAnswer(index, 1, gameState.shuffledAnswers)); 
-                }
-            }
-            
-            answersGrid.appendChild(answerCard);
-        });
-        
-        // Start voting timer
-        if (!gameState.votes || !gameState.votes[mpGame.currentUser.uid]) {
-            startRoundTimer();
-        }
-    }
-    
-    function startRoundTimer() {
-        clearInterval(roundTimer);
-        
-        const gameState = mpGame.gameState;
-        const startTime = gameState.startTime || Date.now();
-        const elapsed = Math.floor((Date.now() - startTime) / 1000);
-        let timeLeft = Math.max(0, roundTimeLimit - elapsed);
-        
-        document.getElementById('timer').textContent = timeLeft;
-        
-        roundTimer = setInterval(() => {
-            const newElapsed = Math.floor((Date.now() - startTime) / 1000);
-            timeLeft = Math.max(0, roundTimeLimit - newElapsed);
-            document.getElementById('timer').textContent = timeLeft;
-            
-            if (timeLeft <= 0) {
-                clearInterval(roundTimer);
-                // Timer expired - auto advance if host
-                if (mpGame.isHost) {
-                    const currentPhase = mpGame.gameState.phase;
-                    console.log('Timer expired, phase:', currentPhase);
-                    
-                    if (currentPhase === 'selection') {
-                        startRevealPhase();
-                    } else if (currentPhase === 'voting') {
-                        endRound();
+            // Create room in database
+            const roomRef = database.ref('rooms').push();
+            const roomData = {
+                gameType,
+                buyIn,
+                maxPlayers,
+                privacy: selectedPrivacy,
+                roomCode,
+                hostId: currentUser.uid,
+                hostName: currentUser.displayName || 'Player',
+                status: 'waiting',
+                createdAt: Date.now(),
+                players: {
+                    [currentUser.uid]: {
+                        name: currentUser.displayName || 'Player',
+                        chips: buyIn,
+                        ready: false,
+                        joinedAt: Date.now()
                     }
                 }
+            };
+
+            try {
+                await roomRef.set(roomData);
+                
+                // Deduct buy-in from Firestore balance
+                await firestore.collection('users').doc(currentUser.uid).update({
+                    gunnercoins: firebase.firestore.FieldValue.increment(-buyIn)
+                });
+                userBalance -= buyIn;
+                document.getElementById('userBalance').innerText = userBalance.toLocaleString();
+
+                if (selectedPrivacy === 'private') {
+                    // Show room code modal
+                    document.getElementById('displayRoomCode').innerText = roomCode;
+                    document.getElementById('roomCodeModal').classList.add('active');
+                    
+                    // Set up modal buttons
+                    document.getElementById('cancelRoomBtn').onclick = async () => {
+                        await roomRef.remove();
+                        // Refund buy-in to Firestore
+                        await firestore.collection('users').doc(currentUser.uid).update({
+                            gunnercoins: firebase.firestore.FieldValue.increment(buyIn)
+                        });
+                        userBalance += buyIn;
+                        document.getElementById('userBalance').innerText = userBalance.toLocaleString();
+                        document.getElementById('roomCodeModal').classList.remove('active');
+                    };
+                    
+                    document.getElementById('enterRoomBtn').onclick = () => {
+                        document.getElementById('roomCodeModal').classList.remove('active');
+                        enterGameRoom(roomRef.key, gameType);
+                    };
+
+                    // Copy code on click
+                    document.getElementById('displayRoomCode').onclick = () => {
+                        navigator.clipboard.writeText(roomCode);
+                        const hint = document.querySelector('.copy-hint');
+                        hint.innerText = 'Copied!';
+                        setTimeout(() => hint.innerText = 'Click to copy', 2000);
+                    };
+                } else {
+                    // Public room - enter immediately
+                    enterGameRoom(roomRef.key, gameType);
+                }
+            } catch (error) {
+                console.error('Error creating room:', error);
+                alert('Failed to create room. Please try again.');
             }
-        }, 1000);
-    }
-    
-    function endRound() {
-        const gameState = mpGame.gameState;
-        const votes = gameState.votes || {};
-        
-        // Count votes
-        const voteCounts = {};
-        Object.values(votes).forEach(answerIndex => {
-            voteCounts[answerIndex] = (voteCounts[answerIndex] || 0) + 1;
-        });
-        
-        // Find winner(s)
-        const maxVotes = Math.max(...Object.values(voteCounts), 0);
-        const winningIndices = Object.keys(voteCounts).filter(idx => voteCounts[idx] === maxVotes).map(Number);
-        
-        console.log('Vote counts:', voteCounts);
-        console.log('Max votes:', maxVotes);
-        console.log('Winning indices:', winningIndices);
-        
-        // Map back to player IDs
-        const winningPlayers = [];
-        winningIndices.forEach(idx => {
-            const answer = gameState.shuffledAnswers[idx];
-            console.log(`Checking index ${idx}, answer:`, answer);
-            if (answer) {
-                winningPlayers.push(answer.playerId);
-            }
-        });
-        
-        console.log('Winning players:', winningPlayers);
-        
-        // Award points
-        winningPlayers.forEach(playerId => {
-            const currentScore = mpGame.allPlayers[playerId].score || 0;
-            const newScore = currentScore + 10;
-            console.log(`Awarding points to ${playerId}: ${currentScore} + 10 = ${newScore}`);
-            mpGame.updatePlayerData(playerId, { score: newScore });
-        });
-        
-        mpGame.updateGameState({
-            phase: 'results',
-            voteCounts: voteCounts,
-            winningIndices: winningIndices,
-            winningPlayers: winningPlayers
-        });
-        
-        setTimeout(() => {
-            if (currentRoundIndex + 1 < totalRounds) {
-                startNewRound(currentRoundIndex + 1);
-            } else {
-                endGame();
-            }
-        }, 8000); // 8 seconds to see results
-    }
-    
-    function showRoundResults(gameState) {
-        clearInterval(roundTimer);
-        document.getElementById('submitAnswerBtn').style.display = 'none';
-        
-        const answersGrid = document.getElementById('answersGrid');
-        answersGrid.innerHTML = '';
-        
-        // Show all answers with vote counts AND player names revealed
-        gameState.shuffledAnswers.forEach((answer, index) => {
-            const answerCard = document.createElement('div');
-            answerCard.className = 'answer-card';
-            
-            const voteCount = gameState.voteCounts[index] || 0;
-            const isWinner = gameState.winningIndices && gameState.winningIndices.includes(index);
-            
-            if (isWinner) {
-                answerCard.classList.add('winner');
-            }
-            
-            const answerText = document.createElement('div');
-            answerText.className = 'answer-text';
-            answerText.textContent = answer.text;
-            
-            const playerName = mpGame.allPlayers[answer.playerId]?.name || 'Unknown';
-            const playerLabel = document.createElement('div');
-            playerLabel.style.marginTop = '10px';
-            playerLabel.style.fontSize = '1.1em';
-            playerLabel.style.color = isWinner ? '#FFD700' : '#4CAF50';
-            playerLabel.style.fontWeight = 'bold';
-            playerLabel.textContent = `- ${playerName}`;
-            
-            const voteCountDiv = document.createElement('div');
-            voteCountDiv.className = 'vote-count';
-            voteCountDiv.textContent = `${voteCount} vote${voteCount !== 1 ? 's' : ''}`;
-            
-            answerCard.appendChild(answerText);
-            answerCard.appendChild(playerLabel);
-            answerCard.appendChild(voteCountDiv);
-            
-            answersGrid.appendChild(answerCard);
-        });
-    }
-    
-    function endGame() {
-        mpGame.updateGameState({
-            phase: 'game_over'
-        });
-    }
-    
-    function showFinalResults(gameState) {
-        document.getElementById('gameScreen').style.display = 'none';
-        document.getElementById('resultsScreen').style.display = 'block';
-        
-        const sortedPlayers = Object.values(mpGame.allPlayers)
-            .filter(p => p.connected)
-            .sort((a, b) => (b.score || 0) - (a.score || 0));
-        
-        document.getElementById('winnerText').textContent = `🎉 ${sortedPlayers[0].name} Wins! 🎉`;
-        
-        const scoresContainer = document.getElementById('finalScoresContainer');
-        scoresContainer.innerHTML = '';
-        
-        sortedPlayers.forEach((player, index) => {
-            const scoreItem = document.createElement('div');
-            scoreItem.className = 'score-item' + (index === 0 ? ' winner' : '');
-            scoreItem.innerHTML = `
-                <span class="player-name-score">${index + 1}. ${player.name}</span>
-                <span class="player-score">${player.score || 0} points</span>
-            `;
-            scoresContainer.appendChild(scoreItem);
-        });
-    }
-    
-    function updateScoreboard() {
-        const container = document.getElementById('scoresContainer');
-        container.innerHTML = '';
-        
-        const sortedPlayers = Object.values(mpGame.allPlayers)
-            .filter(p => p.connected)
-            .sort((a, b) => (b.score || 0) - (a.score || 0));
-        
-        sortedPlayers.forEach(player => {
-            const scoreItem = document.createElement('div');
-            scoreItem.className = 'score-item';
-            scoreItem.innerHTML = `
-                <span class="player-name-score">${player.name}</span>
-                <span class="player-score">${player.score || 0} pts</span>
-            `;
-            container.appendChild(scoreItem);
-        });
-    }
-    
-    function updatePlayerStatus(gameState, phase) {
-        const statusList = document.getElementById('playerStatusList');
-        statusList.innerHTML = '';
-        
-        // Get player entries with their IDs
-        const connectedPlayers = Object.entries(mpGame.allPlayers)
-            .filter(([id, player]) => player.connected);
-        
-        connectedPlayers.forEach(([playerId, player]) => {
-            const statusDiv = document.createElement('div');
-            let isDone = false;
-            
-            if (phase === 'selection') {
-                isDone = gameState.submissions && gameState.submissions[playerId] !== undefined;
-            } else if (phase === 'voting') {
-                isDone = gameState.votes && gameState.votes[playerId] !== undefined;
-            }
-            
-            statusDiv.className = `player-status ${isDone ? 'submitted' : 'waiting'}`;
-            statusDiv.innerHTML = `
-                <span class="status-dot ${isDone ? 'done' : ''}"></span>
-                <span>${player.name}</span>
-            `;
-            
-            statusList.appendChild(statusDiv);
-        });
-    }
-    
-    document.getElementById('playAgainBtn').addEventListener('click', () => {
-        if (mpGame.isHost) {
-            // Reset game
-            Object.keys(mpGame.allPlayers).forEach(playerId => {
-                mpGame.updatePlayerData(playerId, { score: 0, ready: false });
-            });
-            
-            mpGame.updateGameState({
-                started: false,
-                phase: 'waiting'
-            });
-            
-            document.getElementById('resultsScreen').style.display = 'none';
-            document.getElementById('waitingRoom').style.display = 'block';
-            document.getElementById('readyBtn').classList.remove('ready');
-            document.getElementById('readyBtn').textContent = 'READY';
-            document.getElementById('readyBtn').disabled = false;
         }
-    });
-    
-    document.getElementById('backToLobbyBtn').addEventListener('click', () => {
-        // FIX: Using the correct root-relative path
-        window.location.href = '/multiplayer/index.html'; 
-    });
-    
-    // Chat
-    window.sendEmoji = function(emoji) {
-        mpGame.sendEmoji(emoji);
-    };
-    
-    function showChatMessage(playerId, emoji) {
-        const player = mpGame.allPlayers[playerId];
-        if (!player) return;
-        
-        const chatMsg = document.createElement('div');
-        chatMsg.className = 'chat-message';
-        chatMsg.textContent = `${player.name}: ${emoji}`;
-        document.body.appendChild(chatMsg);
-        
-        setTimeout(() => {
-            chatMsg.remove();
-        }, 3000);
-    }
-    
-    // Utility
-    function shuffleArray(array) {
-        const newArray = [...array];
-        for (let i = newArray.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+
+        function generateRoomCode() {
+            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+            let code = '';
+            for (let i = 0; i < 8; i++) {
+                if (i === 4) code += '-';
+                code += chars[Math.floor(Math.random() * chars.length)];
+            }
+            return code;
         }
-        return newArray;
-    }
-</script>
+
+        // ====== JOIN ROOM ======
+        async function joinRoom(roomId, room) {
+            // Validate balance
+            if (userBalance < room.buyIn) {
+                alert(`Insufficient funds! You need ${room.buyIn.toLocaleString()} GunnerCoins.`);
+                return;
+            }
+
+            try {
+                // Add player to room
+                await database.ref(`rooms/${roomId}/players/${currentUser.uid}`).set({
+                    name: currentUser.displayName || 'Player',
+                    chips: room.buyIn,
+                    ready: false,
+                    joinedAt: Date.now()
+                });
+
+                // Deduct buy-in from Firestore
+                await firestore.collection('users').doc(currentUser.uid).update({
+                    gunnercoins: firebase.firestore.FieldValue.increment(-room.buyIn)
+                });
+                userBalance -= room.buyIn;
+                document.getElementById('userBalance').innerText = userBalance.toLocaleString();
+
+                // Enter game room
+                enterGameRoom(roomId, room.gameType);
+            } catch (error) {
+                console.error('Error joining room:', error);
+                alert('Failed to join room. Please try again.');
+            }
+        }
+
+        // ====== JOIN PRIVATE ROOM ======
+        document.getElementById('joinPrivateBtn').addEventListener('click', async () => {
+            const code = document.getElementById('roomCodeInput').value.trim().toUpperCase();
+            
+            if (!code || code.length < 8) {
+                alert('Please enter a valid room code.');
+                return;
+            }
+
+            try {
+                // Search for room with this code
+                const snapshot = await database.ref('rooms')
+                    .orderByChild('roomCode')
+                    .equalTo(code)
+                    .once('value');
+
+                const rooms = snapshot.val();
+                
+                if (!rooms) {
+                    alert('Room not found. Please check the code and try again.');
+                    return;
+                }
+
+                const roomId = Object.keys(rooms)[0];
+                const room = rooms[roomId];
+
+                if (room.status === 'finished') {
+                    alert('This room has ended.');
+                    return;
+                }
+
+                const playerCount = room.players ? Object.keys(room.players).length : 0;
+                if (playerCount >= room.maxPlayers) {
+                    alert('This room is full.');
+                    return;
+                }
+
+                await joinRoom(roomId, room);
+            } catch (error) {
+                console.error('Error finding room:', error);
+                alert('Failed to find room. Please try again.');
+            }
+        });
+
+        // ====== ENTER GAME ROOM ======
+        function enterGameRoom(roomId, gameType) {
+            // Store room info in session storage
+            sessionStorage.setItem('currentRoom', roomId);
+            
+            // Redirect to appropriate game
+            const gameUrls = {
+                'texas-holdem': '/games/multiplayer/texas-holdem.html',
+                'who-wrote-it-better': '/games/multiplayer/who-wrote-it-better.html',
+                'roulette': '/games/multiplayer/roulette.html',
+                'blackjack': '/games/multiplayer/blackjack.html'
+            };
+
+            window.location.href = `${gameUrls[gameType]}?room=${roomId}`;
+        }
+
+        // ====== CLEANUP ======
+        window.addEventListener('beforeunload', () => {
+            if (roomsListener) {
+                database.ref('rooms').off('value', roomsListener);
+            }
+        });
+    </script>
+</body>
+</html>
