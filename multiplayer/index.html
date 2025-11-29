@@ -2,28 +2,35 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <title>GunnersGames Multiplayer Lobby</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GunnersGames Multiplayer</title>
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:wght@300;400;600&display=swap" rel="stylesheet">
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
 
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Cinzel:wght@400;700&display=swap" rel="stylesheet">
+
+    <style>
         :root {
-            --gold: #d4af37;
-            --gold-dark: #b8941f;
-            --gold-light: #f4e5a7;
-            --cream: #f5f3e8;
-            --dark: #1a1410;
-            --red: #8b0000;
-            --green: #0a4a2e;
+            --bg: #050509;
+            --bg-alt: #131321;
+            --card-bg: #141422;
+            --gold: #f5c25c;
+            --gold-light: #ffe29b;
+            --accent: #36c2ff;
+            --accent-soft: rgba(54, 194, 255, 0.2);
+            --danger: #ff4d4d;
+            --text-main: #f5f5f5;
+            --text-soft: #b0b0c0;
+        }
+
+        * {
+            box-sizing: border-box;
         }
 
         body {
-            font-family: 'Cormorant Garamond', serif;
-            background: linear-gradient(135deg, var(--dark) 0%, #2a1f1a 100%);
-            color: var(--cream);
-            min-height: 100vh;
-            overflow-x: hidden;
+            margin: 0;
+            background: radial-gradient(circle at top, #202040 0%, #050509 60%);
+            color: var(--text-main);
+            font-family: "Roboto", sans-serif;
         }
 
         /* Header */
@@ -32,112 +39,116 @@
             justify-content: space-between;
             align-items: center;
             padding: 1.5rem 3rem;
-            background: rgba(0,0,0,0.4);
-            backdrop-filter: blur(10px);
-            border-bottom: 2px solid var(--gold);
+            background: linear-gradient(to right, #0b0b14, #141428);
+            border-bottom: 1px solid rgba(245, 194, 92, 0.3);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
         }
 
         .logo {
-            font-family: 'Cinzel', serif;
-            font-size: 2rem;
-            font-weight: 700;
+            font-family: "Cinzel", serif;
+            font-size: 1.8rem;
+            letter-spacing: 0.25em;
             color: var(--gold);
-            letter-spacing: 0.15em;
-            text-shadow: 0 0 20px rgba(212, 175, 55, 0.6);
         }
 
         .user-info {
             display: flex;
             align-items: center;
-            gap: 2rem;
+            gap: 1.5rem;
         }
 
         .balance {
             display: flex;
             align-items: center;
-            gap: 0.5rem;
-            font-size: 1.3rem;
-            font-weight: 600;
+            gap: 0.4rem;
+            background: rgba(0,0,0,0.4);
+            padding: 0.4rem 0.8rem;
+            border-radius: 999px;
+            border: 1px solid rgba(245, 194, 92, 0.7);
         }
 
         .coin-icon {
-            width: 35px;
-            height: 35px;
-            background: radial-gradient(circle, var(--gold-light) 0%, var(--gold) 100%);
+            width: 22px;
+            height: 22px;
             border-radius: 50%;
+            background: radial-gradient(circle at 30% 20%, var(--gold-light), var(--gold));
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: 700;
-            color: var(--dark);
-            font-size: 1.1rem;
-            box-shadow: 0 2px 10px rgba(212, 175, 55, 0.5);
+            font-size: 0.8rem;
+            color: #3b2b10;
+            box-shadow: 0 0 10px rgba(245, 194, 92, 0.6);
         }
 
         .username {
-            font-family: 'Cinzel', serif;
-            color: var(--gold);
-            font-size: 1.2rem;
+            font-weight: 500;
+            color: var(--text-main);
         }
 
-        /* Main Content */
+        .name-input {
+            padding: 0.4rem 0.7rem;
+            border-radius: 6px;
+            border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(0,0,0,0.35);
+            color: var(--text-main);
+            min-width: 160px;
+        }
+
+        .name-input::placeholder {
+            color: var(--text-soft);
+        }
+
+        /* Main Layout */
         .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 3rem 2rem;
+            max-width: 1100px;
+            margin: 2rem auto 3rem;
+            padding: 0 1rem;
         }
 
         .page-title {
-            font-family: 'Cinzel', serif;
-            font-size: 3rem;
             text-align: center;
-            color: var(--gold);
-            margin-bottom: 1rem;
-            text-shadow: 0 0 30px rgba(212, 175, 55, 0.5);
+            font-size: 2.6rem;
+            margin-bottom: 0.4rem;
+            font-family: "Cinzel", serif;
+            letter-spacing: 0.15em;
         }
 
         .page-subtitle {
             text-align: center;
-            font-size: 1.2rem;
-            color: var(--gold-light);
-            margin-bottom: 3rem;
-            opacity: 0.8;
+            color: var(--text-soft);
+            margin-bottom: 2rem;
         }
 
         /* Tabs */
         .tabs {
             display: flex;
             justify-content: center;
-            gap: 2rem;
-            margin-bottom: 3rem;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
         }
 
         .tab-btn {
-            font-family: 'Cinzel', serif;
-            font-size: 1.2rem;
-            padding: 1rem 3rem;
-            background: transparent;
-            color: var(--gold-light);
-            border: 2px solid var(--gold-dark);
-            border-radius: 50px;
+            padding: 0.7rem 1.7rem;
+            border-radius: 999px;
+            border: 1px solid rgba(255,255,255,0.15);
+            background: rgba(7, 7, 20, 0.9);
+            color: var(--text-soft);
             cursor: pointer;
-            transition: all 0.3s;
-            letter-spacing: 0.1em;
-        }
-
-        .tab-btn:hover {
-            background: var(--gold-dark);
-            color: var(--dark);
-            box-shadow: 0 5px 20px rgba(212, 175, 55, 0.4);
+            font-weight: 500;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            transition: all 0.15s ease;
         }
 
         .tab-btn.active {
-            background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
-            color: var(--dark);
-            box-shadow: 0 5px 20px rgba(212, 175, 55, 0.6);
+            background: radial-gradient(circle at top, var(--accent), var(--accent-soft));
+            color: #021018;
+            border-color: var(--accent);
+            box-shadow: 0 0 12px rgba(54, 194, 255, 0.6);
         }
 
-        /* Tab Content */
         .tab-content {
             display: none;
         }
@@ -146,347 +157,215 @@
             display: block;
         }
 
-        /* Room Grid */
-        .room-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-            gap: 2rem;
-            margin-bottom: 2rem;
-        }
-
-        .room-card {
-            background: rgba(0,0,0,0.6);
-            border: 2px solid var(--gold-dark);
-            border-radius: 15px;
-            padding: 1.5rem;
-            transition: all 0.3s;
-            cursor: pointer;
-        }
-
-        .room-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 30px rgba(212, 175, 55, 0.3);
-            border-color: var(--gold);
-        }
-
-        .room-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-        }
-
-        .room-game {
-            font-family: 'Cinzel', serif;
-            font-size: 1.5rem;
-            color: var(--gold);
-            font-weight: 600;
-        }
-
-        .room-status {
-            padding: 0.3rem 0.8rem;
-            border-radius: 20px;
-            font-size: 0.9rem;
-            font-weight: 600;
-        }
-
-        .room-status.waiting {
-            background: rgba(255, 165, 0, 0.2);
-            color: #ffa500;
-            border: 1px solid #ffa500;
-        }
-
-        .room-status.playing {
-            background: rgba(0, 255, 0, 0.2);
-            color: #00ff00;
-            border: 1px solid #00ff00;
-        }
-
-        .room-status.full {
-            background: rgba(255, 0, 0, 0.2);
-            color: #ff4444;
-            border: 1px solid #ff4444;
-        }
-
-        .room-info {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 0.5rem;
-            color: var(--cream);
-            font-size: 1.1rem;
-        }
-
-        .room-players {
-            display: flex;
-            gap: 0.5rem;
-            align-items: center;
-        }
-
-        .room-buy-in {
-            color: var(--gold);
-            font-weight: 600;
-        }
-
-        .room-host {
-            font-size: 0.9rem;
-            color: var(--gold-light);
-            opacity: 0.7;
-        }
-
-        /* Create Room Section */
-        .create-room-section {
-            background: rgba(0,0,0,0.6);
-            border: 2px solid var(--gold);
-            border-radius: 15px;
-            padding: 2rem;
-            max-width: 600px;
-            margin: 0 auto;
-        }
-
-        .section-title {
-            font-family: 'Cinzel', serif;
-            font-size: 1.8rem;
-            color: var(--gold);
-            margin-bottom: 1.5rem;
-            text-align: center;
-        }
-
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
-
-        .form-label {
-            display: block;
-            font-family: 'Cinzel', serif;
-            color: var(--gold-light);
-            margin-bottom: 0.5rem;
-            font-size: 1.1rem;
-        }
-
-        .form-select, .form-input {
-            width: 100%;
-            padding: 0.8rem;
-            background: rgba(0,0,0,0.4);
-            border: 1px solid var(--gold-dark);
-            border-radius: 8px;
-            color: var(--cream);
-            font-family: 'Cormorant Garamond', serif;
-            font-size: 1.1rem;
-        }
-
-        .form-select:focus, .form-input:focus {
-            outline: none;
-            border-color: var(--gold);
-            box-shadow: 0 0 10px rgba(212, 175, 55, 0.3);
-        }
-
-        .toggle-group {
-            display: flex;
-            gap: 1rem;
-            align-items: center;
-        }
-
-        .toggle-btn {
-            flex: 1;
-            padding: 0.8rem;
-            background: rgba(0,0,0,0.4);
-            border: 2px solid var(--gold-dark);
-            border-radius: 8px;
-            color: var(--cream);
-            font-family: 'Cinzel', serif;
-            cursor: pointer;
-            transition: all 0.3s;
-            text-align: center;
-        }
-
-        .toggle-btn:hover {
-            border-color: var(--gold);
-        }
-
-        .toggle-btn.active {
-            background: var(--gold);
-            color: var(--dark);
-            border-color: var(--gold);
-        }
-
-        .create-btn {
-            width: 100%;
-            padding: 1rem;
-            background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
-            border: none;
-            border-radius: 50px;
-            color: var(--dark);
-            font-family: 'Cinzel', serif;
-            font-size: 1.3rem;
-            font-weight: 600;
-            cursor: pointer;
-            letter-spacing: 0.1em;
-            transition: all 0.3s;
-            margin-top: 1rem;
-        }
-
-        .create-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 30px rgba(212, 175, 55, 0.6);
-        }
-
-        /* Empty State */
-        .empty-state {
-            text-align: center;
-            padding: 4rem 2rem;
-            color: var(--gold-light);
-            font-size: 1.2rem;
-        }
-
-        .empty-state-icon {
-            font-size: 4rem;
-            margin-bottom: 1rem;
-            opacity: 0.5;
-        }
-
-        /* Loading */
+        /* Browse Rooms */
         .loading {
-            text-align: center;
-            padding: 4rem 2rem;
-            color: var(--gold);
-            font-family: 'Cinzel', serif;
-            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            padding: 2rem;
+            color: var(--text-soft);
         }
 
         .spinner {
-            width: 50px;
-            height: 50px;
-            border: 4px solid rgba(212, 175, 55, 0.2);
-            border-top-color: var(--gold);
+            width: 20px;
+            height: 20px;
             border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 2rem auto;
+            border: 3px solid rgba(255,255,255,0.2);
+            border-top-color: var(--accent);
+            animation: spin 0.8s linear infinite;
         }
 
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
 
-        /* Modal */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.9);
-            z-index: 1000;
-            align-items: center;
-            justify-content: center;
+        .room-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.5rem;
         }
 
-        .modal.active {
-            display: flex;
-        }
-
-        .modal-content {
-            background: linear-gradient(135deg, var(--dark) 0%, #2a1f1a 100%);
-            border: 2px solid var(--gold);
-            border-radius: 15px;
-            padding: 2rem;
-            max-width: 500px;
-            width: 90%;
-        }
-
-        .modal-title {
-            font-family: 'Cinzel', serif;
-            font-size: 1.8rem;
-            color: var(--gold);
-            margin-bottom: 1rem;
-            text-align: center;
-        }
-
-        .modal-text {
-            color: var(--cream);
-            font-size: 1.1rem;
-            margin-bottom: 1.5rem;
-            text-align: center;
-        }
-
-        .modal-buttons {
-            display: flex;
-            gap: 1rem;
-        }
-
-        .modal-btn {
-            flex: 1;
-            padding: 0.8rem;
-            border: none;
-            border-radius: 8px;
-            font-family: 'Cinzel', serif;
-            font-size: 1.1rem;
+        .room-card {
+            background: linear-gradient(145deg, #15152a, #1c1c38);
+            border-radius: 14px;
+            padding: 1.2rem 1.3rem;
+            box-shadow: 0 4px 18px rgba(0,0,0,0.7);
+            border: 1px solid rgba(255,255,255,0.08);
+            position: relative;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: transform 0.12s ease, box-shadow 0.12s ease, border-color 0.12s ease;
         }
 
-        .modal-btn.primary {
-            background: var(--gold);
-            color: var(--dark);
+        .room-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 26px rgba(0,0,0,0.8);
+            border-color: rgba(54, 194, 255, 0.7);
         }
 
-        .modal-btn.secondary {
-            background: transparent;
-            color: var(--gold);
-            border: 2px solid var(--gold);
+        .room-title {
+            font-size: 1.2rem;
+            margin-bottom: 0.3rem;
+            letter-spacing: 0.1em;
         }
 
-        .modal-btn:hover {
-            transform: translateY(-2px);
+        .room-subtitle {
+            font-size: 0.85rem;
+            color: var(--text-soft);
+            margin-bottom: 0.7rem;
         }
 
-        /* Room Code Display */
-        .room-code-display {
-            background: rgba(0,0,0,0.4);
-            border: 2px dashed var(--gold);
-            border-radius: 10px;
-            padding: 1rem;
-            text-align: center;
-            margin: 1rem 0;
-        }
-
-        .room-code {
-            font-family: 'Cinzel', serif;
-            font-size: 2rem;
-            color: var(--gold);
-            letter-spacing: 0.3em;
-            font-weight: 700;
-        }
-
-        .copy-hint {
+        .room-meta {
             font-size: 0.9rem;
-            color: var(--gold-light);
-            margin-top: 0.5rem;
+            margin-bottom: 0.25rem;
         }
 
-        /* Mobile Responsive */
+        .room-badge {
+            position: absolute;
+            top: 0.8rem;
+            right: 0.9rem;
+            padding: 0.2rem 0.7rem;
+            border-radius: 999px;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .room-badge.empty {
+            background: rgba(0,0,0,0.35);
+            color: var(--text-soft);
+        }
+
+        .room-badge.waiting {
+            background: rgba(245, 194, 92, 0.15);
+            color: var(--gold-light);
+            border-color: var(--gold);
+        }
+
+        .room-badge.playing {
+            background: rgba(0, 200, 120, 0.15);
+            color: #7cfac2;
+            border-color: #00d08a;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 2.5rem 1rem;
+            color: var(--text-soft);
+        }
+
+        .empty-state-icon {
+            font-size: 2rem;
+            margin-bottom: 0.7rem;
+        }
+
+        /* Create Room */
+        .create-room-section {
+            background: rgba(10, 10, 20, 0.9);
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 1px solid rgba(255,255,255,0.12);
+            box-shadow: 0 6px 22px rgba(0,0,0,0.7);
+        }
+
+        .section-title {
+            font-size: 1.4rem;
+            margin-bottom: 1rem;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.4rem;
+            font-size: 0.9rem;
+            color: var(--text-soft);
+        }
+
+        .form-select,
+        .form-input {
+            width: 100%;
+            padding: 0.55rem 0.7rem;
+            border-radius: 6px;
+            border: 1px solid rgba(255,255,255,0.2);
+            background: rgba(8,8,18,0.95);
+            color: var(--text-main);
+        }
+
+        .form-select:focus,
+        .form-input:focus,
+        .name-input:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 1px rgba(54, 194, 255, 0.4);
+        }
+
+        .create-room-hint {
+            font-size: 0.85rem;
+            color: var(--text-soft);
+            margin-bottom: 1rem;
+        }
+
+        .btn-primary {
+            display: inline-block;
+            padding: 0.7rem 1.4rem;
+            border-radius: 999px;
+            border: none;
+            background: radial-gradient(circle at top, var(--gold-light), var(--gold));
+            color: #2b1c08;
+            font-weight: 600;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: transform 0.12s ease, box-shadow 0.12s ease;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(245, 194, 92, 0.5);
+        }
+
+        /* Join Private (placeholder) */
+        .coming-soon {
+            text-align: center;
+            padding: 2rem 1rem;
+            color: var(--text-soft);
+        }
+
+        /* Status Bar */
+        #statusBar {
+            margin-top: 1rem;
+            text-align: center;
+            font-size: 0.85rem;
+            color: var(--text-soft);
+            opacity: 0.8;
+        }
+
+        /* Mobile */
         @media (max-width: 768px) {
             .header {
                 padding: 1rem 1.5rem;
             }
-
             .logo {
-                font-size: 1.5rem;
+                font-size: 1.4rem;
+                letter-spacing: 0.18em;
             }
-
+            .container {
+                margin-top: 1.5rem;
+            }
             .page-title {
                 font-size: 2rem;
             }
-
             .tabs {
                 flex-direction: column;
-                gap: 1rem;
+                gap: 0.7rem;
             }
-
             .tab-btn {
                 width: 100%;
             }
-
             .room-grid {
                 grid-template-columns: 1fr;
             }
@@ -494,6 +373,7 @@
     </style>
 </head>
 <body>
+
     <!-- Header -->
     <div class="header">
         <div class="logo">GUNNERSGAMES</div>
@@ -502,20 +382,21 @@
                 <div class="coin-icon">G</div>
                 <span id="userBalance">0</span>
             </div>
-            <div class="username" id="username">Guest</div>
+            <div class="username" id="usernameLabel">Guest</div>
+            <input id="playerNameInput" class="name-input" type="text" placeholder="Enter name..." />
         </div>
     </div>
 
     <!-- Main Content -->
     <div class="container">
         <h1 class="page-title">MULTIPLAYER LOBBY</h1>
-        <p class="page-subtitle">Join a table or create your own room</p>
+        <p class="page-subtitle">Join a static room or reserve one as host</p>
 
         <!-- Tabs -->
         <div class="tabs">
             <button class="tab-btn active" data-tab="browse">BROWSE ROOMS</button>
-            <button class="tab-btn" data-tab="create">CREATE ROOM</button>
-            <button class="tab-btn" data-tab="join">JOIN PRIVATE</button>
+            <button class="tab-btn" data-tab="create">CREATE / HOST</button>
+            <button class="tab-btn" data-tab="join">JOIN PRIVATE (Coming Soon)</button>
         </div>
 
         <!-- Browse Rooms Tab -->
@@ -527,44 +408,38 @@
             <div id="roomsContainer" class="room-grid" style="display: none;"></div>
             <div id="emptyRooms" class="empty-state" style="display: none;">
                 <div class="empty-state-icon">🎰</div>
-                <div>No active rooms found</div>
-                <div style="margin-top: 1rem; opacity: 0.7;">Be the first to create one!</div>
+                <div>No rooms found</div>
+                <div style="margin-top: 1rem; opacity: 0.7;">You can host one in the Create / Host tab.</div>
             </div>
         </div>
 
         <!-- Create Room Tab -->
         <div class="tab-content" id="create-tab">
             <div class="create-room-section">
-                <h2 class="section-title">CREATE NEW ROOM</h2>
-                
+                <h2 class="section-title">RESERVE A STATIC ROOM</h2>
+                <p class="create-room-hint">
+                    The backend currently provides 4 static rooms (<strong>room1–room4</strong>).  
+                    As the first player to join a room, you become the <strong>host</strong> and can set game type & max players.
+                </p>
+
+                <div class="form-group">
+                    <label class="form-label">Room Slot</label>
+                    <select class="form-select" id="roomSlot">
+                        <option value="room1">Room 1</option>
+                        <option value="room2">Room 2</option>
+                        <option value="room3">Room 3</option>
+                        <option value="room4">Room 4</option>
+                    </select>
+                </div>
+
                 <div class="form-group">
                     <label class="form-label">Game Type</label>
                     <select class="form-select" id="gameType">
-                        <option value="texas-holdem">Texas Hold'em Poker</option>
                         <option value="who-wrote-it-better">Who Wrote It Better? 🎵</option>
-                        <option value="roulette" disabled>Roulette (Coming Soon)</option>
-                        <option value="blackjack" disabled>Blackjack (Coming Soon)</option>
-                        <option value="liars-dice" disabled>Liar's Dice (Coming Soon)</option>
+                        <option value="texas-holdem" disabled>Texas Hold'em (Soon)</option>
+                        <option value="roulette" disabled>Roulette (Soon)</option>
+                        <option value="blackjack" disabled>Blackjack (Soon)</option>
                     </select>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">Buy-In Amount</label>
-                    <select class="form-select" id="buyIn">
-                        <option value="500">500 GunnerCoins</option>
-                        <option value="1000">1,000 GunnerCoins</option>
-                        <option value="2000" selected>2,000 GunnerCoins</option>
-                        <option value="5000">5,000 GunnerCoins</option>
-                        <option value="10000">10,000 GunnerCoins</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">Room Privacy</label>
-                    <div class="toggle-group">
-                        <button class="toggle-btn active" data-privacy="public">PUBLIC</button>
-                        <button class="toggle-btn" data-privacy="private">PRIVATE</button>
-                    </div>
                 </div>
 
                 <div class="form-group">
@@ -573,436 +448,300 @@
                         <option value="2">2 Players</option>
                         <option value="3">3 Players</option>
                         <option value="4" selected>4 Players</option>
-                        <option value="6">6 Players</option>
-                        <option value="8">8 Players</option>
                     </select>
                 </div>
 
-                <button class="create-btn" id="createRoomBtn">CREATE ROOM</button>
+                <p class="create-room-hint">
+                    <strong>Note:</strong> GunnerCoin buy-ins and private invite codes will be wired in later once the backend supports it.
+                </p>
+
+                <button class="btn-primary" id="hostRoomBtn">
+                    HOST ROOM & START GAME
+                </button>
             </div>
         </div>
 
-        <!-- Join Private Room Tab -->
+        <!-- Join Private Tab (placeholder for now) -->
         <div class="tab-content" id="join-tab">
-            <div class="create-room-section">
-                <h2 class="section-title">JOIN PRIVATE ROOM</h2>
-                
-                <div class="form-group">
-                    <label class="form-label">Enter Room Code</label>
-                    <input type="text" class="form-input" id="roomCodeInput" placeholder="ABCD-1234" maxlength="9" style="text-transform: uppercase; text-align: center; font-size: 1.5rem; letter-spacing: 0.2em;">
-                </div>
-
-                <button class="create-btn" id="joinPrivateBtn">JOIN ROOM</button>
+            <div class="coming-soon">
+                <h3>Private Rooms Coming Soon</h3>
+                <p>
+                    The new backend is live and using static rooms (<code>room1–room4</code>).
+                    Once we add support for invite codes / extra rooms, this tab will let you join by code.
+                </p>
             </div>
         </div>
+
+        <div id="statusBar">Connecting to backend...</div>
     </div>
 
-    <!-- Room Code Modal -->
-    <div class="modal" id="roomCodeModal">
-        <div class="modal-content">
-            <h2 class="modal-title">ROOM CREATED!</h2>
-            <p class="modal-text">Share this code with your friends:</p>
-            <div class="room-code-display">
-                <div class="room-code" id="displayRoomCode">XXXX-XXXX</div>
-                <div class="copy-hint">Click to copy</div>
-            </div>
-            <p class="modal-text" style="font-size: 0.9rem; opacity: 0.7;">Waiting for players to join...</p>
-            <div class="modal-buttons">
-                <button class="modal-btn secondary" id="cancelRoomBtn">CANCEL</button>
-                <button class="modal-btn primary" id="enterRoomBtn">ENTER ROOM</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Firebase -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
-
+    <script src="multiplayer-core.js"></script>
     <script>
-        // ====== FIREBASE CONFIG ======
-        // TODO: Replace with your actual Firebase config
-        const firebaseConfig = {
-        apiKey: "AIzaSyDjdo3U9qg_h4TKvplsFoZgxVNepAbCpFA",
-        authDomain: "gunners-games.firebaseapp.com",
-        projectId: "gunners-games",
-        storageBucket: "gunners-games.firebasestorage.app",
-        messagingSenderId: "644077315462",
-        appId: "1:644077315462:web:431dd985426f3dbe02f807",
-        measurementId: "G-RWNL900X43"
-        };
+        const BACKEND = "https://gunnersgames-backend.onrender.com";
 
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const database = firebase.database(); // Realtime Database for rooms
-        const firestore = firebase.firestore(); // Firestore for user balance
-
-        console.log('Firebase initialized');
-        console.log('Auth domain:', firebaseConfig.authDomain);
-
-        // ====== STATE ======
-        let currentUser = null;
-        let userBalance = 0;
-        let roomsListener = null;
-        let selectedPrivacy = 'public';
-
-        // ====== INIT ======
-        console.log('Waiting for auth state...');
-        auth.onAuthStateChanged(user => {
-            console.log('Auth state changed:', user ? user.email : 'No user');
-            if (user) {
-                currentUser = user;
-                document.getElementById('username').innerText = user.displayName || user.email?.split('@')[0] || 'Player';
-                loadUserBalance();
-                loadRooms();
-            } else {
-                // Not authenticated - show message instead of redirect for debugging
-                console.log('No user logged in');
-                document.getElementById('username').innerText = 'Not Logged In';
-                document.getElementById('userBalance').innerText = '0';
-                
-                // Uncomment this line once Firebase config is correct:
-                // window.location.href = '/index.html';
-            }
-        });
-
-        function loadUserBalance() {
-            // Load balance from Firestore (where your GunnerCoins are stored)
-            firestore.collection('users').doc(currentUser.uid).get().then(doc => {
-                if (doc.exists) {
-                    userBalance = doc.data().gunnercoins || 0;
-                } else {
-                    userBalance = 0;
-                }
-                document.getElementById('userBalance').innerText = userBalance.toLocaleString();
-            }).catch(error => {
-                console.error('Error loading balance:', error);
-                userBalance = 0;
-                document.getElementById('userBalance').innerText = '0';
-            });
+        // Basic local identity
+        let playerId = localStorage.getItem("gg_playerId");
+        if (!playerId) {
+            playerId = "p_" + Math.random().toString(36).substr(2, 9);
+            localStorage.setItem("gg_playerId", playerId);
         }
 
-        // ====== TAB SYSTEM ======
-        document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
+        const playerNameInput = document.getElementById("playerNameInput");
+        const usernameLabel = document.getElementById("usernameLabel");
+        const storedName = localStorage.getItem("gg_playerName") || "";
+        playerNameInput.value = storedName;
+        usernameLabel.innerText = storedName || "Guest";
+
+        playerNameInput.addEventListener("input", () => {
+            const name = playerNameInput.value.trim();
+            localStorage.setItem("gg_playerName", name);
+            usernameLabel.innerText = name || "Guest";
+        });
+
+        // Tabs
+        document.querySelectorAll(".tab-btn").forEach(btn => {
+            btn.addEventListener("click", () => {
                 const tab = btn.dataset.tab;
-                
-                // Update buttons
-                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                
-                // Update content
-                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-                document.getElementById(`${tab}-tab`).classList.add('active');
+                document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+                document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
+
+                btn.classList.add("active");
+                document.getElementById(tab + "-tab").classList.add("active");
             });
         });
 
-        // ====== PRIVACY TOGGLE ======
-        document.querySelectorAll('[data-privacy]').forEach(btn => {
-            btn.addEventListener('click', () => {
-                selectedPrivacy = btn.dataset.privacy;
-                document.querySelectorAll('[data-privacy]').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-            });
-        });
-
-        // ====== LOAD ROOMS ======
-        function loadRooms() {
-            // Clean up old listener
-            if (roomsListener) {
-                database.ref('rooms').off('value', roomsListener);
-            }
-
-            document.getElementById('roomsLoading').style.display = 'block';
-            document.getElementById('roomsContainer').style.display = 'none';
-            document.getElementById('emptyRooms').style.display = 'none';
-
-            // Listen for room changes
-            roomsListener = database.ref('rooms').on('value', snapshot => {
-                const rooms = snapshot.val();
-                document.getElementById('roomsLoading').style.display = 'none';
-                
-                if (!rooms) {
-                    document.getElementById('emptyRooms').style.display = 'block';
-                    return;
-                }
-
-                // Clean up old rooms (older than 1 hour or finished with no players)
-                const now = Date.now();
-                const ONE_HOUR = 60 * 60 * 1000;
-                
-                Object.entries(rooms).forEach(([roomId, room]) => {
-                    const roomAge = now - (room.createdAt || 0);
-                    const hasPlayers = room.players && Object.keys(room.players).length > 0;
-                    
-                    // Delete if: finished with no players, or older than 1 hour
-                    if ((room.status === 'finished' && !hasPlayers) || roomAge > ONE_HOUR) {
-                        database.ref(`rooms/${roomId}`).remove();
-                        console.log(`Cleaned up old room: ${roomId}`);
-                    }
-                });
-
-                const container = document.getElementById('roomsContainer');
-                container.innerHTML = '';
-                container.style.display = 'grid';
-
-                // Filter and display public rooms
-                Object.entries(rooms).forEach(([roomId, room]) => {
-                    if (room.privacy === 'public' && room.status !== 'finished') {
-                        container.appendChild(createRoomCard(roomId, room));
-                    }
-                });
-
-                if (container.children.length === 0) {
-                    container.style.display = 'none';
-                    document.getElementById('emptyRooms').style.display = 'block';
-                }
-            });
+        // Lobby status
+        const statusBar = document.getElementById("statusBar");
+        function setStatus(msg) {
+            statusBar.innerText = msg;
         }
 
-        function createRoomCard(roomId, room) {
-            const card = document.createElement('div');
-            card.className = 'room-card';
-            
-            const playerCount = room.players ? Object.keys(room.players).length : 0;
-            const statusClass = room.status === 'playing' ? 'playing' : 
-                               playerCount >= room.maxPlayers ? 'full' : 'waiting';
-            const statusText = room.status === 'playing' ? 'IN GAME' : 
-                              playerCount >= room.maxPlayers ? 'FULL' : 'WAITING';
+        // Fetch and render rooms
+        async function loadRooms() {
+            setStatus("Loading rooms...");
+            document.getElementById("roomsLoading").style.display = "flex";
+            document.getElementById("roomsContainer").style.display = "none";
+            document.getElementById("emptyRooms").style.display = "none";
 
-            card.innerHTML = `
-                <div class="room-header">
-                    <div class="room-game">${getGameName(room.gameType)}</div>
-                    <div class="room-status ${statusClass}">${statusText}</div>
-                </div>
-                <div class="room-info">
-                    <div class="room-players">
-                        <span>👥</span>
-                        <span>${playerCount}/${room.maxPlayers}</span>
-                    </div>
-                    <div class="room-buy-in">💰 ${room.buyIn.toLocaleString()}</div>
-                </div>
-                <div class="room-host">Host: ${room.hostName}</div>
-            `;
-
-            if (statusClass !== 'full' && room.status !== 'playing') {
-                card.addEventListener('click', () => joinRoom(roomId, room));
-            } else {
-                card.style.cursor = 'not-allowed';
-                card.style.opacity = '0.6';
+            try {
+                const rooms = await MultiplayerGame.fetchRooms(BACKEND);
+                renderRooms(rooms);
+                if (rooms && rooms.length > 0) {
+                    document.getElementById("roomsLoading").style.display = "none";
+                    document.getElementById("roomsContainer").style.display = "grid";
+                    setStatus("Lobby updated.");
+                } else {
+                    document.getElementById("roomsLoading").style.display = "none";
+                    document.getElementById("emptyRooms").style.display = "block";
+                    setStatus("No rooms available.");
+                }
+            } catch (err) {
+                console.error(err);
+                document.getElementById("roomsLoading").style.display = "none";
+                document.getElementById("emptyRooms").style.display = "block";
+                setStatus("Error loading rooms.");
             }
+        }
 
-            return card;
+        function renderRooms(rooms) {
+            const container = document.getElementById("roomsContainer");
+            container.innerHTML = "";
+
+            rooms.forEach(room => {
+                const card = document.createElement("div");
+                card.className = "room-card";
+
+                const status = room.status || "empty";
+                const players = parseInt(room.player_count || 0, 10);
+                const maxPlayers = room.max_players || 4;
+                const gameType = room.game_type || null;
+
+                const badge = document.createElement("div");
+                badge.className = "room-badge " + status;
+                badge.innerText = status.toUpperCase();
+                card.appendChild(badge);
+
+                const title = document.createElement("div");
+                title.className = "room-title";
+                title.innerText = room.id.toUpperCase();
+                card.appendChild(title);
+
+                const subtitle = document.createElement("div");
+                subtitle.className = "room-subtitle";
+                subtitle.innerText = gameType
+                    ? ("Game: " + getGameName(gameType))
+                    : "Game not set yet (host decides)";
+                card.appendChild(subtitle);
+
+                const meta1 = document.createElement("div");
+                meta1.className = "room-meta";
+                meta1.innerText = "Players: " + players + "/" + maxPlayers;
+                card.appendChild(meta1);
+
+                const meta2 = document.createElement("div");
+                meta2.className = "room-meta";
+                const hostName = room.host_name || "None";
+                meta2.innerText = "Host: " + hostName;
+                card.appendChild(meta2);
+
+                if (status === "playing" && players >= maxPlayers) {
+                    card.style.opacity = "0.6";
+                    card.style.cursor = "not-allowed";
+                } else {
+                    card.addEventListener("click", () => {
+                        joinRoomAndEnter(room.id);
+                    });
+                }
+
+                container.appendChild(card);
+            });
         }
 
         function getGameName(type) {
             const names = {
-                'texas-holdem': 'Texas Hold\'em',
-                'who-wrote-it-better': 'Who Wrote It Better?',
-                'roulette': 'Roulette',
-                'blackjack': 'Blackjack',
-                'liars-dice': 'Liar\'s Dice'
+                "who-wrote-it-better": "Who Wrote It Better?",
+                "texas-holdem": "Texas Hold'em",
+                "roulette": "Roulette",
+                "blackjack": "Blackjack"
             };
             return names[type] || type;
         }
 
-        // ====== CREATE ROOM ======
-        document.getElementById('createRoomBtn').addEventListener('click', createRoom);
-
-        async function createRoom() {
-            const gameType = document.getElementById('gameType').value;
-            const buyIn = parseInt(document.getElementById('buyIn').value);
-            const maxPlayers = parseInt(document.getElementById('maxPlayers').value);
-
-            // Validate balance
-            if (userBalance < buyIn) {
-                alert(`Insufficient funds! You need ${buyIn.toLocaleString()} GunnerCoins.`);
-                return;
-            }
-
-            // Generate room code for private rooms
-            const roomCode = selectedPrivacy === 'private' ? generateRoomCode() : null;
-
-            // Create room in database
-            const roomRef = database.ref('rooms').push();
-            const roomData = {
-                gameType,
-                buyIn,
-                maxPlayers,
-                privacy: selectedPrivacy,
-                roomCode,
-                hostId: currentUser.uid,
-                hostName: currentUser.displayName || 'Player',
-                status: 'waiting',
-                createdAt: Date.now(),
-                players: {
-                    [currentUser.uid]: {
-                        name: currentUser.displayName || 'Player',
-                        chips: buyIn,
-                        ready: false,
-                        joinedAt: Date.now()
-                    }
-                }
-            };
-
-            try {
-                await roomRef.set(roomData);
-                
-                // Deduct buy-in from Firestore balance
-                await firestore.collection('users').doc(currentUser.uid).update({
-                    gunnercoins: firebase.firestore.FieldValue.increment(-buyIn)
-                });
-                userBalance -= buyIn;
-                document.getElementById('userBalance').innerText = userBalance.toLocaleString();
-
-                if (selectedPrivacy === 'private') {
-                    // Show room code modal
-                    document.getElementById('displayRoomCode').innerText = roomCode;
-                    document.getElementById('roomCodeModal').classList.add('active');
-                    
-                    // Set up modal buttons
-                    document.getElementById('cancelRoomBtn').onclick = async () => {
-                        await roomRef.remove();
-                        // Refund buy-in to Firestore
-                        await firestore.collection('users').doc(currentUser.uid).update({
-                            gunnercoins: firebase.firestore.FieldValue.increment(buyIn)
-                        });
-                        userBalance += buyIn;
-                        document.getElementById('userBalance').innerText = userBalance.toLocaleString();
-                        document.getElementById('roomCodeModal').classList.remove('active');
-                    };
-                    
-                    document.getElementById('enterRoomBtn').onclick = () => {
-                        document.getElementById('roomCodeModal').classList.remove('active');
-                        enterGameRoom(roomRef.key, gameType);
-                    };
-
-                    // Copy code on click
-                    document.getElementById('displayRoomCode').onclick = () => {
-                        navigator.clipboard.writeText(roomCode);
-                        const hint = document.querySelector('.copy-hint');
-                        hint.innerText = 'Copied!';
-                        setTimeout(() => hint.innerText = 'Click to copy', 2000);
-                    };
-                } else {
-                    // Public room - enter immediately
-                    enterGameRoom(roomRef.key, gameType);
-                }
-            } catch (error) {
-                console.error('Error creating room:', error);
-                alert('Failed to create room. Please try again.');
-            }
-        }
-
-        function generateRoomCode() {
-            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-            let code = '';
-            for (let i = 0; i < 8; i++) {
-                if (i === 4) code += '-';
-                code += chars[Math.floor(Math.random() * chars.length)];
-            }
-            return code;
-        }
-
-        // ====== JOIN ROOM ======
-        async function joinRoom(roomId, room) {
-            // Validate balance
-            if (userBalance < room.buyIn) {
-                alert(`Insufficient funds! You need ${room.buyIn.toLocaleString()} GunnerCoins.`);
+        async function joinRoomAndEnter(roomId) {
+            const playerName = (playerNameInput.value || "").trim();
+            if (!playerName) {
+                alert("Please enter a player name in the top-right first.");
                 return;
             }
 
             try {
-                // Add player to room
-                await database.ref(`rooms/${roomId}/players/${currentUser.uid}`).set({
-                    name: currentUser.displayName || 'Player',
-                    chips: room.buyIn,
-                    ready: false,
-                    joinedAt: Date.now()
+                setStatus("Joining " + roomId + "...");
+                const res = await fetch(`${BACKEND}/rooms/${encodeURIComponent(roomId)}/join`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        playerId,
+                        playerName
+                    })
                 });
 
-                // Deduct buy-in from Firestore
-                await firestore.collection('users').doc(currentUser.uid).update({
-                    gunnercoins: firebase.firestore.FieldValue.increment(-room.buyIn)
-                });
-                userBalance -= room.buyIn;
-                document.getElementById('userBalance').innerText = userBalance.toLocaleString();
+                if (!res.ok) {
+                    const errData = await res.json().catch(() => ({}));
+                    throw new Error(errData.error || "Failed to join room");
+                }
 
-                // Enter game room
-                enterGameRoom(roomId, room.gameType);
-            } catch (error) {
-                console.error('Error joining room:', error);
-                alert('Failed to join room. Please try again.');
+                const data = await res.json();
+                const room = data.room || data; // depending on backend shape
+
+                const gameType = room.game_type || "who-wrote-it-better";
+
+                // Save a bit of context
+                sessionStorage.setItem("currentRoom", roomId);
+                sessionStorage.setItem("currentPlayerId", playerId);
+                sessionStorage.setItem("currentPlayerName", playerName);
+
+                const gameUrls = {
+                    "who-wrote-it-better": "/games/multiplayer/who-wrote-it-better.html",
+                    "texas-holdem": "/games/multiplayer/texas-holdem.html",
+                    "roulette": "/games/multiplayer/roulette.html",
+                    "blackjack": "/games/multiplayer/blackjack.html"
+                };
+
+                const targetUrl = gameUrls[gameType] || gameUrls["who-wrote-it-better"];
+
+                setStatus(`Joined ${roomId}. Launching ${getGameName(gameType)}...`);
+                window.location.href = `${targetUrl}?room=${roomId}`;
+            } catch (err) {
+                console.error(err);
+                alert("Failed to join room: " + err.message);
+                setStatus("Failed to join room.");
             }
         }
 
-        // ====== JOIN PRIVATE ROOM ======
-        document.getElementById('joinPrivateBtn').addEventListener('click', async () => {
-            const code = document.getElementById('roomCodeInput').value.trim().toUpperCase();
-            
-            if (!code || code.length < 8) {
-                alert('Please enter a valid room code.');
+        // Host room via Create tab
+        document.getElementById("hostRoomBtn").addEventListener("click", async () => {
+            const playerName = (playerNameInput.value || "").trim();
+            if (!playerName) {
+                alert("Please enter a player name in the top-right first.");
                 return;
             }
 
+            const roomId = document.getElementById("roomSlot").value;
+            const gameType = document.getElementById("gameType").value;
+            const maxPlayers = parseInt(document.getElementById("maxPlayers").value, 10);
+
             try {
-                // Search for room with this code
-                const snapshot = await database.ref('rooms')
-                    .orderByChild('roomCode')
-                    .equalTo(code)
-                    .once('value');
+                setStatus("Reserving " + roomId + " as host...");
 
-                const rooms = snapshot.val();
-                
-                if (!rooms) {
-                    alert('Room not found. Please check the code and try again.');
-                    return;
+                // 1) Join the room (this will make us host if it's empty)
+                const joinRes = await fetch(`${BACKEND}/rooms/${encodeURIComponent(roomId)}/join`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        playerId,
+                        playerName
+                    })
+                });
+
+                if (!joinRes.ok) {
+                    const errData = await joinRes.json().catch(() => ({}));
+                    throw new Error(errData.error || "Failed to join room");
                 }
 
-                const roomId = Object.keys(rooms)[0];
-                const room = rooms[roomId];
+                // 2) Set room settings (requires us to be host)
+                const settingsRes = await fetch(`${BACKEND}/rooms/${encodeURIComponent(roomId)}/settings`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        hostId: playerId,
+                        gameType,
+                        maxPlayers,
+                        buyIn: 0
+                    })
+                });
 
-                if (room.status === 'finished') {
-                    alert('This room has ended.');
-                    return;
+                if (!settingsRes.ok) {
+                    const errData = await settingsRes.json().catch(() => ({}));
+                    throw new Error(errData.error || "Failed to set room settings");
                 }
 
-                const playerCount = room.players ? Object.keys(room.players).length : 0;
-                if (playerCount >= room.maxPlayers) {
-                    alert('This room is full.');
-                    return;
-                }
+                // 3) (Optional) set status to waiting
+                await fetch(`${BACKEND}/rooms/${encodeURIComponent(roomId)}/status`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        hostId: playerId,
+                        status: "waiting"
+                    })
+                }).catch(() => {});
 
-                await joinRoom(roomId, room);
-            } catch (error) {
-                console.error('Error finding room:', error);
-                alert('Failed to find room. Please try again.');
+                // Save context and go to game
+                sessionStorage.setItem("currentRoom", roomId);
+                sessionStorage.setItem("currentPlayerId", playerId);
+                sessionStorage.setItem("currentPlayerName", playerName);
+
+                const gameUrls = {
+                    "who-wrote-it-better": "/games/multiplayer/who-wrote-it-better.html",
+                    "texas-holdem": "/games/multiplayer/texas-holdem.html",
+                    "roulette": "/games/multiplayer/roulette.html",
+                    "blackjack": "/games/multiplayer/blackjack.html"
+                };
+
+                const targetUrl = gameUrls[gameType] || gameUrls["who-wrote-it-better"];
+
+                setStatus(`Hosting ${roomId}. Launching ${getGameName(gameType)}...`);
+                window.location.href = `${targetUrl}?room=${roomId}`;
+            } catch (err) {
+                console.error(err);
+                alert("Failed to host room: " + err.message);
+                setStatus("Failed to host room.");
             }
         });
 
-        // ====== ENTER GAME ROOM ======
-        function enterGameRoom(roomId, gameType) {
-            // Store room info in session storage
-            sessionStorage.setItem('currentRoom', roomId);
-            
-            // Redirect to appropriate game
-            const gameUrls = {
-                'texas-holdem': '/games/multiplayer/texas-holdem.html',
-                'who-wrote-it-better': '/games/multiplayer/who-wrote-it-better.html',
-                'roulette': '/games/multiplayer/roulette.html',
-                'blackjack': '/games/multiplayer/blackjack.html'
-            };
-
-            window.location.href = `${gameUrls[gameType]}?room=${roomId}`;
-        }
-
-        // ====== CLEANUP ======
-        window.addEventListener('beforeunload', () => {
-            if (roomsListener) {
-                database.ref('rooms').off('value', roomsListener);
-            }
-        });
+        // Initial load + polling
+        loadRooms();
+        // Simple polling every 4 seconds so lobby updates while open
+        setInterval(loadRooms, 4000);
     </script>
 </body>
 </html>
