@@ -1,175 +1,172 @@
-// /assets/js/index-auth.js
-import { supabase } from "./supabaseClient.js";
+// ---------------------------------------------------------
+//  Gunner's Games - Supabase Auth + Profile Management
+// ---------------------------------------------------------
 
-// UI references
-const modal = document.getElementById("authModal");
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+// ---------------------------------------------------------
+//  CONFIG
+// ---------------------------------------------------------
+const SUPABASE_URL = "https://pknhslxhpohrzgsfkisr.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_-zZw-pi_3q1sdNGhITKuhQ_ECyDARzc";
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// ---------------------------------------------------------
+//  UI ELEMENTS
+// ---------------------------------------------------------
 const loggedOutView = document.getElementById("loggedOutView");
 const loggedInView = document.getElementById("loggedInView");
 const displayNameEl = document.getElementById("displayName");
 const displayBalanceEl = document.getElementById("displayBalance");
-const gameLinks = document.querySelectorAll(".game-card a");
-
-// Forms
-const loginEmail = document.getElementById("loginEmail");
-const loginPass = document.getElementById("loginPass");
 const loginError = document.getElementById("loginError");
+const signupError = document.getElementById("signupError");
 
 const regName = document.getElementById("regName");
 const regEmail = document.getElementById("regEmail");
 const regPass = document.getElementById("regPass");
-const signupError = document.getElementById("signupError");
+
+const loginEmail = document.getElementById("loginEmail");
+const loginPass = document.getElementById("loginPass");
 
 const btnLogin = document.getElementById("btnLogin");
 const btnSignup = document.getElementById("btnSignup");
 
-let profileSubscription = null;
-
-// --- UTIL: enable/disable game links ---
-function enableGames(enabled) {
-    gameLinks.forEach((link) => {
-        const card = link.closest(".game-card");
-        if (enabled) {
-            link.style.pointerEvents = "auto";
-            link.style.opacity = "1";
-            if (card) card.onclick = null;
-        } else {
-            link.style.pointerEvents = "none";
-            link.style.opacity = "0.5";
-            if (card) {
-                card.onclick = (e) => {
-                    e.preventDefault();
-                    openModal("login");
-                };
-            }
-        }
-    });
+// ---------------------------------------------------------
+//  ENABLE / DISABLE GAME CARDS (index.html)
+// ---------------------------------------------------------
+function enableGames() {
+    if (window.enableGames) window.enableGames();
+}
+function disableGames() {
+    if (window.disableGames) window.disableGames();
 }
 
-// --- UI updates from profile data ---
+// ---------------------------------------------------------
+//  UPDATE UI WITH PROFILE INFO
+// ---------------------------------------------------------
 function updateProfileUI(profile) {
-    const name = (profile?.display_name || profile?.playerName || "Player").toUpperCase();
-    const coins = profile?.gunnercoins ?? 0;
+    const name = (profile?.player_name || "PLAYER").toUpperCase();
+    const coins = Number(profile?.gunnercoin ?? 0);
 
     displayNameEl.textContent = name;
-    displayBalanceEl.textContent = Number(coins).toLocaleString();
+    displayBalanceEl.textContent = coins.toLocaleString();
 
-    // Sync to localStorage for games to use
+    // Sync local storage for games (optional)
     localStorage.setItem("playerName", name);
     localStorage.setItem("gunnercoins", coins);
 }
 
-// --- Fetch or create profile row for user ---
+// ---------------------------------------------------------
+//  FETCH OR CREATE PROFILE
+// ---------------------------------------------------------
 async function fetchOrCreateProfile(user) {
-    // Adjust table/column names to match your actual "profiles" schema
-    const { data, error } = await supabase
+    // Fetch existing profile
+    const { data: existing } = await supabase
         .from("profiles")
         .select("*")
         .eq("id", user.id)
-        .maybeSingle();
+        .single();
 
-    if (error) {
-        console.error("Error fetching profile:", error);
-        return null;
-    }
+    if (existing) return existing;
 
-    if (data) {
-        return data;
-    }
-
-    // If no profile yet, create one with 5000 starting coins
-    const defaultProfile = {
-        id: user.id,
-        email: user.email,
-        display_name: user.user_metadata?.display_name || user.email?.split("@")[0] || "Player",
-        gunnercoins: 5000,
-        created_at: new Date().toISOString()
-    };
-
-    const { data: inserted, error: insertError } = await supabase
+    // Create new profile
+    const { data, error } = await supabase
         .from("profiles")
-        .insert(defaultProfile)
+        .insert({
+            id: user.id,
+            player_name: user.user_metadata.display_name ?? "Player",
+            gunnercoin: 0
+        })
         .select()
         .single();
 
-    if (insertError) {
-        console.error("Error creating profile:", insertError);
-        return defaultProfile; // fall back to default for UI
+    if (error) {
+        console.error("Error creating profile:", error);
+        throw error;
     }
 
-    return inserted;
+    return data;
 }
 
-// --- Subscribe to realtime changes on this user's profile ---
-function subscribeToProfile(userId) {
-    if (profileSubscription) {
-        supabase.removeChannel(profileSubscription);
-        profileSubscription = null;
+// ---------------------------------------------------------
+//  AUTH STATE INIT
+// ---------------------------------------------------------
+async function initAuthState() {
+    const {
+        data: { session }
+    } = await supabase.auth.getSession();
+
+    if (!session) {
+        // Logged OUT
+        loggedOutView.style.display = "flex";
+        loggedInView.style.display = "none";
+        disableGames();
+        return;
     }
 
+    // Logged IN
+    loggedOutView.style.display = "none";
+    loggedInView.style.display = "flex";
+
+    const user = session.user;
+
+    // Load or create profile
+    const profile = await fetchOrCreateProfile(user);
+    updateProfileUI(profile);
+    enableGames();
+
+    // Realtime updates
+    subscribeToProfile(user.id);
+}
+
+// ---------------------------------------------------------
+//  REALTIME SUBSCRIPTION - Live Coin & Name Updates
+// ---------------------------------------------------------
+let profileSubscription;
+function subscribeToProfile(user_id) {
+    if (profileSubscription) profileSubscription.unsubscribe();
+
     profileSubscription = supabase
-        .channel("profiles-changes-" + userId)
+        .channel("profile_changes")
         .on(
             "postgres_changes",
-            { event: "*", schema: "public", table: "profiles", filter: `id=eq.${userId}` },
+            {
+                event: "UPDATE",
+                schema: "public",
+                table: "profiles",
+                filter: `id=eq.${user_id}`
+            },
             (payload) => {
-                if (payload.new) {
-                    updateProfileUI(payload.new);
-                }
+                updateProfileUI(payload.new);
             }
         )
         .subscribe();
 }
 
-// --- Auth state init ---
-async function initAuthState() {
-    const {
-        data: { user }
-    } = await supabase.auth.getUser();
-
-    if (user) {
-        loggedOutView.style.display = "none";
-        loggedInView.style.display = "flex";
-        enableGames(true);
-
-        const profile = await fetchOrCreateProfile(user);
-        updateProfileUI(profile);
-        subscribeToProfile(user.id);
-    } else {
-        loggedOutView.style.display = "block";
-        loggedInView.style.display = "none";
-        enableGames(false);
-        localStorage.removeItem("gunnercoins");
-        localStorage.removeItem("playerName");
-    }
-}
-
-// --- LOGIN ---
+// ---------------------------------------------------------
+//  LOGIN
+// ---------------------------------------------------------
 btnLogin.addEventListener("click", async () => {
     loginError.style.display = "none";
 
-    const email = loginEmail.value.trim();
-    const pass = loginPass.value;
+    const { data, error } = await supabase.auth.signInWithPassword({
+        email: loginEmail.value.trim(),
+        password: loginPass.value
+    });
 
-    try {
-        const { error } = await supabase.auth.signInWithPassword({
-            email,
-            password: pass
-        });
-
-        if (error) {
-            throw error;
-        }
-
-        // Refresh state
-        await initAuthState();
-        closeModal();
-    } catch (err) {
+    if (error) {
         loginError.style.display = "block";
-        loginError.textContent = "Invalid login: " + err.message;
+        loginError.textContent = error.message;
+        return;
     }
+
+    closeModal();
+    await initAuthState();
 });
 
-// --- SIGN UP ---
+// ---------------------------------------------------------
+//  SIGN UP
+// ---------------------------------------------------------
 btnSignup.addEventListener("click", async () => {
     signupError.style.display = "none";
 
@@ -179,17 +176,17 @@ btnSignup.addEventListener("click", async () => {
 
     if (name.length < 3) {
         signupError.style.display = "block";
-        signupError.textContent = "Name must be at least 3 chars.";
+        signupError.textContent = "Name must be at least 3 characters.";
         return;
     }
 
-    try { 
+    try {
         const { data, error } = await supabase.auth.signUp({
             email,
             password: pass,
             options: {
                 data: {
-                    display_name: name
+                    display_name: name // stored in auth.metadata
                 }
             }
         });
@@ -197,75 +194,37 @@ btnSignup.addEventListener("click", async () => {
         if (error) throw error;
 
         const user = data.user;
+
         if (!user) {
-            // If email confirmation is on, user may be null at this point
             signupError.style.display = "block";
-            signupError.textContent = "Check your email to confirm your account.";
+            signupError.textContent =
+                "Check your email to confirm your account.";
             return;
         }
 
-        // Create / ensure profile
+        // Create matching DB profile
         const profile = await fetchOrCreateProfile(user);
         updateProfileUI(profile);
-        subscribeToProfile(user.id);
 
-        await initAuthState();
         closeModal();
+        await initAuthState();
     } catch (err) {
         signupError.style.display = "block";
         signupError.textContent = err.message;
     }
 });
 
-// --- Logout (exposed globally for inline onclick) ---
-window.handleLogout = async () => {
-    if (profileSubscription) {
-        supabase.removeChannel(profileSubscription);
-        profileSubscription = null;
-    }
+// ---------------------------------------------------------
+//  LOGOUT
+// ---------------------------------------------------------
+window.handleLogout = async function () {
     await supabase.auth.signOut();
-    await initAuthState();
+    loggedOutView.style.display = "flex";
+    loggedInView.style.display = "none";
+    disableGames();
 };
 
-// --- Modal helpers (global for inline handlers) ---
-window.openModal = (type = "login") => {
-    modal.style.display = "flex";
-    switchForm(type);
-};
-
-window.closeModal = () => {
-    modal.style.display = "none";
-};
-
-window.switchForm = (type) => {
-    loginError.style.display = "none";
-    signupError.style.display = "none";
-
-    if (type === "login") {
-        document.getElementById("loginForm").style.display = "block";
-        document.getElementById("signupForm").style.display = "none";
-    } else {
-        document.getElementById("loginForm").style.display = "none";
-        document.getElementById("signupForm").style.display = "block";
-    }
-};
-
-// Close modal when clicking outside
-window.addEventListener("click", (e) => {
-    if (e.target === modal) {
-        closeModal();
-    }
-});
-
-// Banner fallback if image fails
-const bannerImage = document.querySelector(".banner-image");
-if (bannerImage) {
-    bannerImage.addEventListener("error", function () {
-        this.style.display = "none";
-        const placeholder = document.querySelector(".banner-placeholder");
-        if (placeholder) placeholder.style.display = "flex";
-    });
-}
-
-// Init on load
-document.addEventListener("DOMContentLoaded", initAuthState);
+// ---------------------------------------------------------
+//  ON LOAD
+// ---------------------------------------------------------
+initAuthState();
