@@ -14,6 +14,7 @@ html, body {
     background:#000 !important;
     color:white;
     overflow-x:hidden;
+    font-family: Arial, sans-serif;
 }
 
 /* === PURE BLACK EVERYWHERE === */
@@ -44,6 +45,7 @@ header {
     z-index:20;
     display:flex;
     gap:10px;
+    align-items:center;
 }
 .auth-btn {
     background:transparent;
@@ -53,17 +55,27 @@ header {
     border-radius:6px;
     cursor:pointer;
     font-weight:bold;
+    font-size:0.85rem;
 }
-
-/* logged-in pill */
 .user-info {
     display:none;
     background:#000;
     border:1px solid #444;
     padding:6px 16px;
     border-radius:30px;
-    gap:12px;
+    gap:10px;
     align-items:center;
+    font-size:0.8rem;
+}
+.user-info span {
+    display:inline-flex;
+    align-items:center;
+}
+.user-info span:nth-child(1) {
+    font-weight:bold;
+}
+.user-info span:nth-child(2) {
+    color:#ffd700;
 }
 
 /* === MAIN GAME GRID === */
@@ -120,6 +132,7 @@ footer a {
     color:#aaa;
     margin:0 10px;
     text-decoration:none;
+    font-size:0.9rem;
 }
 footer a:hover { color:#e94560; }
 
@@ -197,7 +210,7 @@ body.game-open { overflow:hidden !important; }
     margin-bottom:20px;
 }
 .input-group { margin-bottom:15px; }
-label { font-size:0.9rem; color:#aaa; }
+label { font-size:0.9rem; color:#aaa; display:block; margin-bottom:4px; }
 .input-field {
     width:100%;
     padding:10px;
@@ -231,6 +244,7 @@ label { font-size:0.9rem; color:#aaa; }
     color:#ff4444;
     margin-bottom:12px;
     display:none;
+    font-size:0.85rem;
 }
 </style>
 </head>
@@ -244,13 +258,13 @@ label { font-size:0.9rem; color:#aaa; }
             <button class="auth-btn" onclick="openModal('login')">LOGIN</button>
         </div>
         <div id="loggedInView" class="user-info">
-            <span id="displayName">Player</span>
+            <span id="displayName">PLAYER</span>
             <span>🪙 <span id="displayBalance">0</span></span>
             <button class="auth-btn" onclick="handleLogout()">LOGOUT</button>
         </div>
     </div>
     <div class="banner">
-        <img src="assets/banner.png" />
+        <img src="assets/banner.png" alt="Gunner's Games Banner" />
     </div>
 </header>
 
@@ -259,19 +273,19 @@ label { font-size:0.9rem; color:#aaa; }
     <div class="game-categories">
 
         <div class="game-card disabled" data-game="arcade.html">
-            <div class="game-image"><img src="assets/arcade.png"></div>
+            <div class="game-image"><img src="assets/arcade.png" alt="Arcade"></div>
         </div>
 
         <div class="game-card disabled" data-game="casino.html">
-            <div class="game-image"><img src="assets/casino.png"></div>
+            <div class="game-image"><img src="assets/casino.png" alt="Casino"></div>
         </div>
 
         <div class="game-card disabled" data-game="solitaire.html">
-            <div class="game-image"><img src="assets/solitaire.png"></div>
+            <div class="game-image"><img src="assets/solitaire.png" alt="Solitaire"></div>
         </div>
 
         <div class="game-card disabled" data-game="multiplayer/index.html">
-            <div class="game-image"><img src="assets/multiplayer.png"></div>
+            <div class="game-image"><img src="assets/multiplayer.png" alt="Multiplayer"></div>
         </div>
 
     </div>
@@ -294,125 +308,116 @@ label { font-size:0.9rem; color:#aaa; }
 
 <!-- AUTH MODAL -->
 <div id="authModal">
-<div class="modal-content">
+  <div class="modal-content">
 
     <span class="close-modal" onclick="closeModal()">&times;</span>
 
-    <!-- LOGIN -->
+    <!-- LOGIN FORM -->
     <div id="loginForm">
-        <h2>PLAYER LOGIN</h2>
-        <div id="loginError" class="error-msg"></div>
+      <h2>PLAYER LOGIN</h2>
 
-        <div class="input-group">
-            <label>Email</label>
-            <input type="email" id="loginEmail" class="input-field">
-        </div>
+      <div class="input-group">
+        <label for="loginEmail">Email</label>
+        <input id="loginEmail" type="email" class="input-field" placeholder="player@example.com">
+      </div>
 
-        <div class="input-group">
-            <label>Password</label>
-            <input type="password" id="loginPass" class="input-field">
-        </div>
+      <div class="input-group">
+        <label for="loginPass">Password</label>
+        <input id="loginPass" type="password" class="input-field" placeholder="••••••••">
+      </div>
 
-        <button id="btnLogin" class="submit-btn">LOGIN</button>
+      <p id="loginError" class="error-msg"></p>
 
-        <div class="switch-link">
-            New player? <span onclick="switchForm('signup')">Create account</span>
-        </div>
+      <button id="btnLogin" class="submit-btn">LOGIN</button>
+
+      <div class="switch-link">
+        New player? <span onclick="switchForm('signup')">Create account</span>
+      </div>
     </div>
 
-    <!-- SIGNUP -->
+    <!-- SIGNUP FORM -->
     <div id="signupForm" style="display:none;">
-        <h2>CREATE ACCOUNT</h2>
-        <div id="signupError" class="error-msg"></div>
+      <h2>CREATE ACCOUNT</h2>
 
-        <div class="input-group">
-            <label>Display Name</label>
-            <input type="text" id="regName" class="input-field">
-        </div>
+      <div class="input-group">
+        <label for="regName">Display Name</label>
+        <input id="regName" type="text" class="input-field" placeholder="Your player name">
+      </div>
 
-        <div class="input-group">
-            <label>Email</label>
-            <input type="email" id="regEmail" class="input-field">
-        </div>
+      <div class="input-group">
+        <label for="regEmail">Email</label>
+        <input id="regEmail" type="email" class="input-field" placeholder="player@example.com">
+      </div>
 
-        <div class="input-group">
-            <label>Password</label>
-            <input type="password" id="regPass" class="input-field">
-        </div>
+      <div class="input-group">
+        <label for="regPass">Password</label>
+        <input id="regPass" type="password" class="input-field" placeholder="••••••••">
+      </div>
 
-        <button id="btnSignup" class="submit-btn">CREATE ACCOUNT</button>
+      <p id="signupError" class="error-msg"></p>
 
-        <div class="switch-link">
-            Already have an account? <span onclick="switchForm('login')">Login</span>
-        </div>
+      <button id="btnSignup" class="submit-btn">CREATE ACCOUNT</button>
+
+      <div class="switch-link">
+        Already have an account? <span onclick="switchForm('login')">Login</span>
+      </div>
     </div>
 
-</div>
+  </div>
 </div>
 
+<!-- AUTH / PROFILE LOGIC -->
 <script type="module" src="/assets/js/index-auth.js"></script>
 
+<!-- PAGE-LOCAL JS (iframe + modal + game lock/unlock) -->
 <script>
-/* =====================================
-   GAME LOCK / UNLOCK
-===================================== */
+/* GAME LOCK / UNLOCK, used by index-auth.js via window.enableGames/disableGames */
 function enableGames(){
     document.querySelectorAll('.game-card').forEach(card=>{
         card.classList.remove('disabled');
         card.onclick = () => openGame(card.dataset.game);
     });
 }
-
 function disableGames(){
     document.querySelectorAll('.game-card').forEach(card=>{
         card.classList.add('disabled');
         card.onclick = () => openModal("login");
     });
 }
-
 window.enableGames = enableGames;
 window.disableGames = disableGames;
 
-/* =====================================
-   GAME OPEN / CLOSE
-===================================== */
+/* GAME OPEN / CLOSE */
 function openGame(url){
     document.body.classList.add("game-open");
     document.getElementById("gameWrapper").style.display="block";
     document.getElementById("gameFrame").src=url;
 }
-
 function closeGame(){
     document.body.classList.remove("game-open");
     document.getElementById("gameFrame").src="";
     document.getElementById("gameWrapper").style.display="none";
 }
 
-/* =====================================
-   AUTH MODAL CONTROL
-===================================== */
+/* MODAL CONTROL */
 function openModal(type="login"){
-    // Hide game overlay so it NEVER blocks the modal
+    // ensure game overlay doesn't block modal
     document.getElementById("gameWrapper").style.display="none";
-
     document.getElementById("authModal").style.display="flex";
     switchForm(type);
 }
-
 function closeModal(){
     document.getElementById("authModal").style.display="none";
-
-    // If gameplay was active, restore it
+    // if game was open, restore overlay
     if (document.body.classList.contains("game-open")) {
         document.getElementById("gameWrapper").style.display="block";
     }
 }
-
 function switchForm(type){
     document.getElementById("loginError").style.display="none";
     document.getElementById("signupError").style.display="none";
 
-    if(type==="login"){
+    if(type === "login"){
         document.getElementById("loginForm").style.display="block";
         document.getElementById("signupForm").style.display="none";
     } else {
@@ -420,6 +425,12 @@ function switchForm(type){
         document.getElementById("signupForm").style.display="block";
     }
 }
+
+/* Simple popup for daily rewards - can be replaced with fancy UI later */
+function showDailyRewardPopup(reward, streak) {
+    alert(`Daily Reward: +${reward} GunnerCoins!\nStreak: ${streak} days`);
+}
+window.showDailyRewardPopup = showDailyRewardPopup;
 </script>
 
 </body>
