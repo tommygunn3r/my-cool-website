@@ -1,474 +1,469 @@
 /**
- * GunnersGames Multiplayer Infrastructure
- * Reusable Firebase-based multiplayer system for casino games
+ * GunnersGames Multiplayer Core
+ * Backend: https://gunnersgames-backend.onrender.com
+ * Transport: REST (fetch) + WebSockets
+ *
+ * Usage example:
+ *
+ * const game = new MultiplayerGame({
+ *   roomId: 'room1',
+ *   playerId: currentUserId,
+ *   playerName: currentUserName,
+ *   onLog: console.log,
+ *   onError: console.error,
+ *   onRoomUpdate: (room) => { ... },
+ *   onStateUpdate: (state) => { ... },
+ *   onAction: (action) => { ... },
+ *   onChat: (chatMsg) => { ... }
+ * });
+ *
+ * game.connect();   // joins room + opens websocket
+ * game.sendAction('submitAnswer', { text: 'foo' });
+ * game.sendChat('Hello table!');
+ * game.setState({ ...gameState });
+ * game.leave();
  */
 
-class MultiplayerGame {
+(function(global) {
+  'use strict';
+
+  const BACKEND_HTTP = 'https://gunnersgames-backend.onrender.com';
+  const BACKEND_WS   = 'wss://gunnersgames-backend.onrender.com';
+
+  // Small helper to do JSON fetch with error handling
+  async function jsonFetch(url, options = {}) {
+    const finalOpts = {
+      headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
+      ...options
+    };
+
+    if (finalOpts.body && typeof finalOpts.body !== 'string') {
+      finalOpts.body = JSON.stringify(finalOpts.body);
+    }
+
+    const res = await fetch(url, finalOpts);
+    let data = null;
+    try {
+      data = await res.json();
+    } catch (e) {
+      // ignore parse errors for non-JSON responses
+    }
+
+    if (!res.ok) {
+      const msg = (data && data.error) || res.statusText || 'Request failed';
+      const err = new Error(msg);
+      err.status = res.status;
+      err.data = data;
+      throw err;
+    }
+
+    return data;
+  }
+
+  class MultiplayerGame {
+    /**
+     * @param {Object} config
+     * @param {string} config.roomId     - e.g. 'room1'
+     * @param {string} config.playerId   - unique ID for this user
+     * @param {string} config.playerName - display name
+     * @param {string} [config.backendHttp] - override backend base URL
+     * @param {string} [config.backendWs]   - override websocket URL
+     *
+     * Callbacks (all optional):
+     * @param {function} [config.onConnected]
+     * @param {function} [config.onDisconnected]
+     * @param {function} [config.onRoomUpdate]     - (roomData) => {}
+     * @param {function} [config.onStateUpdate]    - (state) => {}
+     * @param {function} [config.onAction]         - (actionObj) => {}
+     * @param {function} [config.onChat]           - (chatObj) => {}
+     * @param {function} [config.onError]          - (error) => {}
+     * @param {function} [config.onLog]            - (msg, extra) => {}
+     */
     constructor(config) {
-        this.config = {
-            roomId: config.roomId,
-            gameType: config.gameType,
-            maxPlayers: config.maxPlayers || 4,
-            minPlayers: config.minPlayers || 2,
-            turnTimeout: config.turnTimeout || 30000, // 30 seconds
-            ...config
-        };
+      if (!config || !config.roomId || !config.playerId || !config.playerName) {
+        throw new Error('MultiplayerGame: roomId, playerId and playerName are required.');
+      }
 
-        this.firebase = firebase;
-        this.database = firebase.database(); // Realtime Database for game state
-        this.firestore = firebase.firestore(); // Firestore for user balance
-        this.auth = firebase.auth();
-        
-        this.currentUser = null;
-        this.roomRef = null;
-        this.gameStateRef = null;
-        this.playersRef = null;
-        
-        this.localPlayerData = null;
-        this.allPlayers = {};
-        this.gameState = {};
-        this.isHost = false;
-        
-        this.listeners = [];
-        this.turnTimer = null;
-        
-        // Callbacks
-        this.onPlayerJoined = config.onPlayerJoined || (() => {});
-        this.onPlayerLeft = config.onPlayerLeft || (() => {});
-        this.onGameStateUpdate = config.onGameStateUpdate || (() => {});
-        this.onGameStart = config.onGameStart || (() => {});
-        this.onGameEnd = config.onGameEnd || (() => {});
-        this.onPlayerAction = config.onPlayerAction || (() => {});
-        this.onTurnChange = config.onTurnChange || (() => {});
-        this.onChatMessage = config.onChatMessage || (() => {});
+      this.roomId = config.roomId;
+      this.playerId = config.playerId;
+      this.playerName = config.playerName;
+
+      this.backendHttp = config.backendHttp || BACKEND_HTTP;
+      this.backendWs   = config.backendWs   || BACKEND_WS;
+
+      // callbacks
+      this.onConnected     = config.onConnected     || (() => {});
+      this.onDisconnected  = config.onDisconnected  || (() => {});
+      this.onRoomUpdate    = config.onRoomUpdate    || (() => {});
+      this.onStateUpdate   = config.onStateUpdate   || (() => {});
+      this.onAction        = config.onAction        || (() => {});
+      this.onChat          = config.onChat          || (() => {});
+      this.onError         = config.onError         || ((e) => console.error('[MultiplayerGame error]', e));
+      this.onLog           = config.onLog           || ((msg, extra) => console.log('[MultiplayerGame]', msg, extra || ''));
+
+      // internal state
+      this.ws = null;
+      this.connected = false;
+      this.roomData = null;
+      this.gameState = null;
+      this.reconnectAttempts = 0;
+      this.maxReconnectAttempts = 5;
+      this.reconnectDelayMs = 2000;
+      this._manualClose = false;
+    }
+
+    // ===== Public API =====
+
+    /**
+     * Join room (via REST) and then open WebSocket connection.
+     */
+    async connect() {
+      this.onLog('Connecting: join room + open websocket...');
+
+      try {
+        // 1) REST: join the room (creates player row, may make us host)
+        const joinedRoom = await this.joinRoomRest();
+        this.roomData = joinedRoom;
+        this.onRoomUpdate(joinedRoom);
+
+        // 2) WebSocket: open live connection
+        await this.openWebSocket();
+
+        this.onLog('Connected successfully.');
+      } catch (err) {
+        this.onError(err);
+      }
     }
 
     /**
-     * Initialize the multiplayer system
+     * Cleanly leave the room and close websocket.
      */
-    async init() {
-        return new Promise((resolve, reject) => {
-            this.auth.onAuthStateChanged(async (user) => {
-                if (!user) {
-                    reject(new Error('User not authenticated'));
-                    return;
-                }
+    async leave() {
+      this.onLog('Leaving room and closing websocket...');
+      this._manualClose = true;
 
-                this.currentUser = user;
-                this.roomRef = this.database.ref(`rooms/${this.config.roomId}`);
-                this.gameStateRef = this.roomRef.child('gameState');
-                this.playersRef = this.roomRef.child('players');
+      try {
+        if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+          this.ws.close();
+        }
+      } catch (e) {
+        // ignore
+      }
 
-                try {
-                    // Check if room exists
-                    const roomSnapshot = await this.roomRef.once('value');
-                    if (!roomSnapshot.exists()) {
-                        reject(new Error('Room not found'));
-                        return;
-                    }
+      try {
+        await this.leaveRoomRest();
+      } catch (err) {
+        this.onError(err);
+      }
 
-                    const roomData = roomSnapshot.val();
-                    this.isHost = roomData.hostId === user.uid;
-
-                    // Set up listeners
-                    this.setupListeners();
-
-                    // Mark player as active
-                    await this.setPlayerPresence(true);
-
-                    // Set up disconnect handler
-                    this.playersRef.child(user.uid).child('connected').onDisconnect().set(false);
-
-                    resolve();
-                } catch (error) {
-                    reject(error);
-                }
-            });
-        });
+      this.connected = false;
+      this.onDisconnected({ reason: 'leave' });
     }
 
     /**
-     * Set up Firebase listeners for real-time sync
+     * Host: update room settings (game type, max players, buy-in).
      */
-    setupListeners() {
-        // Listen for player changes
-        const playerListener = this.playersRef.on('value', (snapshot) => {
-            const players = snapshot.val() || {};
-            
-            // Check for new players
-            Object.keys(players).forEach(playerId => {
-                if (!this.allPlayers[playerId]) {
-                    this.onPlayerJoined(playerId, players[playerId]);
-                }
-            });
-
-            // Check for left players
-            Object.keys(this.allPlayers).forEach(playerId => {
-                if (!players[playerId] || !players[playerId].connected) {
-                    this.onPlayerLeft(playerId, this.allPlayers[playerId]);
-                }
-            });
-
-            this.allPlayers = players;
-            
-            // Update local player data
-            if (players[this.currentUser.uid]) {
-                this.localPlayerData = players[this.currentUser.uid];
+    async updateRoomSettings({ gameType, maxPlayers, buyIn }) {
+      try {
+        const room = await jsonFetch(
+          `${this.backendHttp}/rooms/${encodeURIComponent(this.roomId)}/settings`,
+          {
+            method: 'POST',
+            body: {
+              hostId: this.playerId,
+              gameType,
+              maxPlayers,
+              buyIn: buyIn || 0
             }
-        });
-
-        // Listen for game state changes
-        const gameStateListener = this.gameStateRef.on('value', (snapshot) => {
-            const newState = snapshot.val() || {};
-            const oldState = this.gameState;
-            this.gameState = newState;
-
-            // Check for game start
-            if (!oldState.started && newState.started) {
-                this.onGameStart(newState);
-            }
-
-            // Check for game end
-            if (!oldState.finished && newState.finished) {
-                this.onGameEnd(newState);
-            }
-
-            // Check for turn change
-            if (oldState.currentTurn !== newState.currentTurn) {
-                this.onTurnChange(newState.currentTurn, newState);
-                this.startTurnTimer();
-            }
-
-            this.onGameStateUpdate(newState, oldState);
-        });
-
-        // Listen for player actions (only NEW actions after this point)
-        const startTime = Date.now();
-        console.log('[MultiplayerCore] Setting up actions listener, startTime:', startTime);
-        
-        const actionsListener = this.roomRef.child('actions').on('child_added', (snapshot) => {
-            const action = snapshot.val();
-            console.log('[MultiplayerCore] child_added fired! Action:', action);
-            console.log('[MultiplayerCore] Timestamp check - Start:', startTime, 'Action:', action.timestamp, 'Valid:', action.timestamp >= startTime);
-            
-            // Only process actions that happen AFTER we initialized
-            if (action.timestamp && action.timestamp >= startTime) {
-                console.log('[MultiplayerCore] Calling onPlayerAction callback');
-                this.onPlayerAction(action);
-            } else {
-                console.log('[MultiplayerCore] Ignoring old action');
-            }
-        });
-
-        // Listen for chat messages
-        const chatListener = this.roomRef.child('chat').limitToLast(50).on('child_added', (snapshot) => {
-            const message = snapshot.val();
-            this.onChatMessage(message);
-        });
-
-        this.listeners.push(
-            { ref: this.playersRef, event: 'value', callback: playerListener },
-            { ref: this.gameStateRef, event: 'value', callback: gameStateListener },
-            { ref: this.roomRef.child('actions'), event: 'child_added', callback: actionsListener },
-            { ref: this.roomRef.child('chat'), event: 'child_added', callback: chatListener }
+          }
         );
+        this.roomData = room;
+        this.onRoomUpdate(room);
+      } catch (err) {
+        this.onError(err);
+        throw err;
+      }
     }
 
     /**
-     * Start turn timer
+     * Host: set room status (e.g. 'waiting' or 'playing').
      */
-    startTurnTimer() {
-        if (this.turnTimer) clearTimeout(this.turnTimer);
+    async setRoomStatus(status) {
+      try {
+        const room = await jsonFetch(
+          `${this.backendHttp}/rooms/${encodeURIComponent(this.roomId)}/status`,
+          {
+            method: 'POST',
+            body: {
+              hostId: this.playerId,
+              status
+            }
+          }
+        );
+        this.roomData = room;
+        this.onRoomUpdate(room);
+      } catch (err) {
+        this.onError(err);
+        throw err;
+      }
+    }
 
-        if (this.gameState.currentTurn === this.currentUser.uid) {
-            this.turnTimer = setTimeout(() => {
-                // Auto-fold/pass if player doesn't act
-                this.submitAction({
-                    type: 'timeout',
-                    playerId: this.currentUser.uid,
-                    timestamp: Date.now()
-                });
-            }, this.config.turnTimeout);
+    /**
+     * Get latest game state from backend (HTTP).
+     */
+    async fetchState() {
+      try {
+        const state = await jsonFetch(
+          `${this.backendHttp}/rooms/${encodeURIComponent(this.roomId)}/state`,
+          { method: 'GET' }
+        );
+        this.gameState = state;
+        this.onStateUpdate(state);
+        return state;
+      } catch (err) {
+        this.onError(err);
+        throw err;
+      }
+    }
+
+    /**
+     * Set game state (HTTP + broadcast via server).
+     * Typically host uses this, but your game can decide.
+     */
+    async setState(stateObj) {
+      try {
+        await jsonFetch(
+          `${this.backendHttp}/rooms/${encodeURIComponent(this.roomId)}/state`,
+          {
+            method: 'POST',
+            body: stateObj
+          }
+        );
+        // Backend will broadcast a "stateUpdate" via WebSocket,
+        // which will call onStateUpdate, so we don't have to here.
+      } catch (err) {
+        this.onError(err);
+        throw err;
+      }
+    }
+
+    /**
+     * Send a game action over WebSocket.
+     *
+     * @param {string} actionType  - e.g. 'submitAnswer', 'vote', 'fold', etc.
+     * @param {Object} payload     - arbitrary JSON serializable object
+     */
+    sendAction(actionType, payload = {}) {
+      if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+        this.onLog('sendAction called but websocket is not open');
+        return;
+      }
+
+      const msg = {
+        type: 'action',
+        actionType,
+        payload
+      };
+
+      this.ws.send(JSON.stringify(msg));
+    }
+
+    /**
+     * Send chat or emoji over WebSocket.
+     */
+    sendChat(message) {
+      if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+        this.onLog('sendChat called but websocket is not open');
+        return;
+      }
+
+      const msg = {
+        type: 'chat',
+        message: message
+      };
+
+      this.ws.send(JSON.stringify(msg));
+    }
+
+    /**
+     * Whether we *think* we're connected.
+     */
+    isConnected() {
+      return this.connected && this.ws && this.ws.readyState === WebSocket.OPEN;
+    }
+
+    // ===== Static helpers (for lobby, etc.) =====
+
+    /**
+     * Fetch list of rooms (for lobby UI).
+     */
+    static async fetchRooms(backendHttp = BACKEND_HTTP) {
+      return jsonFetch(`${backendHttp}/rooms`, { method: 'GET' });
+    }
+
+    /**
+     * Fetch a specific room (id = 'room1' etc.).
+     */
+    static async fetchRoom(roomId, backendHttp = BACKEND_HTTP) {
+      return jsonFetch(`${backendHttp}/rooms/${encodeURIComponent(roomId)}`, { method: 'GET' });
+    }
+
+    // ===== Internal implementation =====
+
+    async joinRoomRest() {
+      this.onLog('Joining room via REST...', { roomId: this.roomId, playerId: this.playerId });
+      const data = await jsonFetch(
+        `${this.backendHttp}/rooms/${encodeURIComponent(this.roomId)}/join`,
+        {
+          method: 'POST',
+          body: {
+            playerId: this.playerId,
+            playerName: this.playerName
+          }
         }
+      );
+      this.onLog('Joined room.', data);
+      return data;
     }
 
-    /**
-     * Update game state (host only for critical updates)
-     */
-    async updateGameState(updates, requireHost = false) {
-        if (requireHost && !this.isHost) {
-            throw new Error('Only host can perform this action');
+    async leaveRoomRest() {
+      this.onLog('Leaving room via REST...', { roomId: this.roomId, playerId: this.playerId });
+      const data = await jsonFetch(
+        `${this.backendHttp}/rooms/${encodeURIComponent(this.roomId)}/leave`,
+        {
+          method: 'POST',
+          body: {
+            playerId: this.playerId
+          }
         }
-
-        return this.gameStateRef.update(updates);
+      );
+      this.onLog('Left room.', data);
+      return data;
     }
 
-    /**
-     * Set game state (complete replacement)
-     */
-    async setGameState(state, requireHost = false) {
-        if (requireHost && !this.isHost) {
-            throw new Error('Only host can perform this action');
-        }
+    async openWebSocket() {
+      return new Promise((resolve, reject) => {
+        const ws = new WebSocket(this.backendWs);
 
-        return this.gameStateRef.set(state);
-    }
+        this.ws = ws;
+        this._manualClose = false;
 
-    /**
-     * Update player data
-     */
-    async updatePlayerData(playerId, updates) {
-        if (playerId !== this.currentUser.uid && !this.isHost) {
-            throw new Error('Can only update own player data');
-        }
-
-        return this.playersRef.child(playerId).update(updates);
-    }
-
-    /**
-     * Submit player action
-     */
-    async submitAction(action) {
-        const actionData = {
-            ...action,
-            playerId: this.currentUser.uid,
-            timestamp: Date.now()
+        ws.onopen = () => {
+          this.onLog('WebSocket opened, sending hello...');
+          // identify ourselves: room + player
+          ws.send(JSON.stringify({
+            type: 'hello',
+            roomId: this.roomId,
+            playerId: this.playerId,
+            playerName: this.playerName
+          }));
         };
 
-        // Push to actions log
-        await this.roomRef.child('actions').push(actionData);
+        ws.onmessage = (event) => {
+          let msg;
+          try {
+            msg = JSON.parse(event.data);
+          } catch (e) {
+            this.onLog('WebSocket received invalid JSON', event.data);
+            return;
+          }
 
-        // Clear turn timer
-        if (this.turnTimer) {
-            clearTimeout(this.turnTimer);
-            this.turnTimer = null;
+          switch (msg.type) {
+            case 'helloAck':
+              this.onLog('WebSocket helloAck received.');
+              this.connected = true;
+              this.reconnectAttempts = 0;
+              this.onConnected();
+              resolve();
+              break;
+
+            case 'roomUpdate':
+              this.roomData = msg.room;
+              this.onRoomUpdate(msg.room);
+              break;
+
+            case 'stateUpdate':
+              this.gameState = msg.state;
+              this.onStateUpdate(msg.state);
+              break;
+
+            case 'action':
+              this.onAction({
+                roomId: msg.roomId,
+                playerId: msg.playerId,
+                action: msg.action
+              });
+              break;
+
+            case 'chat':
+              this.onChat({
+                roomId: msg.roomId,
+                playerId: msg.playerId,
+                message: msg.message,
+                timestamp: msg.timestamp
+              });
+              break;
+
+            case 'error':
+              this.onError(new Error(msg.error || 'Unknown server error'));
+              break;
+
+            default:
+              this.onLog('Unknown WebSocket message type', msg);
+          }
+        };
+
+        ws.onerror = (event) => {
+          this.onLog('WebSocket error', event);
+          // we still rely on onclose to handle reconnect
+        };
+
+        ws.onclose = (event) => {
+          this.onLog('WebSocket closed', event);
+          const wasConnected = this.connected;
+          this.connected = false;
+
+          this.onDisconnected({
+            reason: 'ws-close',
+            code: event.code,
+            wasConnected
+          });
+
+          if (!this._manualClose) {
+            this.tryReconnect();
+          }
+        };
+      });
+    }
+
+    async tryReconnect() {
+      if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+        this.onLog('Max reconnect attempts reached, giving up.');
+        return;
+      }
+
+      this.reconnectAttempts++;
+      const delay = this.reconnectDelayMs * this.reconnectAttempts;
+      this.onLog(`Attempting reconnect #${this.reconnectAttempts} in ${delay}ms...`);
+
+      setTimeout(async () => {
+        try {
+          // Re-join the room via REST (in case backend reset)
+          const joinedRoom = await this.joinRoomRest();
+          this.roomData = joinedRoom;
+          this.onRoomUpdate(joinedRoom);
+
+          await this.openWebSocket();
+          this.onLog('Reconnected successfully.');
+        } catch (err) {
+          this.onError(err);
+          this.tryReconnect();
         }
-
-        return actionData;
+      }, delay);
     }
+  }
 
-    /**
-     * Send chat message (emoji)
-     */
-    async sendEmoji(emoji) {
-        return this.roomRef.child('chat').push({
-            playerId: this.currentUser.uid,
-            playerName: this.localPlayerData.name,
-            emoji: emoji,
-            timestamp: Date.now()
-        });
-    }
+  // Expose globally
+  global.MultiplayerGame = MultiplayerGame;
 
-    /**
-     * Set player ready status
-     */
-    async setReady(ready = true) {
-        await this.updatePlayerData(this.currentUser.uid, { ready });
-
-        // Check if all players ready (anyone can trigger this check, but only host starts)
-        if (ready) {
-            // Wait a moment for Firebase to sync
-            setTimeout(() => {
-                if (this.isHost) {
-                    const allReady = Object.values(this.allPlayers).every(p => p.connected && p.ready);
-                    const enoughPlayers = Object.keys(this.allPlayers).filter(id => this.allPlayers[id].connected).length >= this.config.minPlayers;
-                    
-                    if (allReady && enoughPlayers) {
-                        this.startGame();
-                    }
-                }
-            }, 500); // Give Firebase time to sync
-        }
-    }
-
-    /**
-     * Start the game (host only)
-     */
-    async startGame() {
-        if (!this.isHost) {
-            throw new Error('Only host can start the game');
-        }
-
-        return this.updateGameState({
-            started: true,
-            startedAt: Date.now()
-        }, true);
-    }
-
-    /**
-     * End the game
-     */
-    async endGame(results) {
-        if (!this.isHost) {
-            throw new Error('Only host can end the game');
-        }
-
-        // Calculate winnings and update Firestore balances
-        for (const [playerId, result] of Object.entries(results)) {
-            if (result.winnings > 0) {
-                await this.firestore.collection('users').doc(playerId).update({
-                    gunnercoins: this.firebase.firestore.FieldValue.increment(result.winnings)
-                });
-            }
-        }
-
-        await this.updateGameState({
-            finished: true,
-            finishedAt: Date.now(),
-            results: results
-        }, true);
-
-        // Mark room as finished
-        await this.roomRef.update({ status: 'finished' });
-    }
-
-    /**
-     * Set player presence
-     */
-    async setPlayerPresence(connected) {
-        return this.playersRef.child(this.currentUser.uid).update({
-            connected,
-            lastSeen: Date.now()
-        });
-    }
-
-    /**
-     * Leave room
-     */
-    async leaveRoom() {
-        await this.setPlayerPresence(false);
-        
-        // If host, transfer host or close room
-        if (this.isHost) {
-            const otherPlayers = Object.keys(this.allPlayers).filter(id => id !== this.currentUser.uid);
-            
-            if (otherPlayers.length > 0) {
-                // Transfer host to next player
-                await this.roomRef.update({
-                    hostId: otherPlayers[0],
-                    hostName: this.allPlayers[otherPlayers[0]].name
-                });
-            } else {
-                // No other players, mark room as finished
-                await this.roomRef.update({ status: 'finished' });
-            }
-        }
-
-        // Remove player from room
-        await this.playersRef.child(this.currentUser.uid).remove();
-
-        // Refund remaining chips to Firestore balance
-        if (this.localPlayerData && this.localPlayerData.chips > 0) {
-            await this.firestore.collection('users').doc(this.currentUser.uid).update({
-                gunnercoins: this.firebase.firestore.FieldValue.increment(this.localPlayerData.chips)
-            });
-        }
-
-        this.cleanup();
-    }
-
-    /**
-     * Get player count
-     */
-    getPlayerCount() {
-        return Object.keys(this.allPlayers).filter(id => this.allPlayers[id].connected).length;
-    }
-
-    /**
-     * Get player by ID
-     */
-    getPlayer(playerId) {
-        return this.allPlayers[playerId];
-    }
-
-    /**
-     * Check if current player is active
-     */
-    isMyTurn() {
-        return this.gameState.currentTurn === this.currentUser.uid;
-    }
-
-    /**
-     * Get ordered list of players
-     */
-    getPlayerOrder() {
-        return Object.entries(this.allPlayers)
-            .filter(([_, p]) => p.connected)
-            .sort(([_, a], [__, b]) => a.joinedAt - b.joinedAt)
-            .map(([id, _]) => id);
-    }
-
-    /**
-     * Clean up listeners
-     */
-    cleanup() {
-        if (this.turnTimer) {
-            clearTimeout(this.turnTimer);
-        }
-
-        this.listeners.forEach(({ ref, event, callback }) => {
-            ref.off(event, callback);
-        });
-
-        this.listeners = [];
-    }
-
-    /**
-     * Destroy multiplayer instance
-     */
-    destroy() {
-        this.cleanup();
-        this.currentUser = null;
-        this.roomRef = null;
-        this.gameStateRef = null;
-        this.playersRef = null;
-    }
-}
-
-// ====== UTILITY FUNCTIONS ======
-
-/**
- * Generate unique action ID
- */
-function generateActionId() {
-    return `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-}
-
-/**
- * Shuffle array (for deck shuffling, etc)
- */
-function shuffleArray(array) {
-    const shuffled = [...array];
-    for (let i = shuffled.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-    }
-    return shuffled;
-}
-
-/**
- * Get URL parameter
- */
-function getUrlParameter(name) {
-    const params = new URLSearchParams(window.location.search);
-    return params.get(name);
-}
-
-/**
- * Format currency
- */
-function formatCurrency(amount) {
-    return amount.toLocaleString();
-}
-
-/**
- * Delay helper
- */
-function delay(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-// Export for use in games
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { MultiplayerGame, generateActionId, shuffleArray, getUrlParameter, formatCurrency, delay };
-}
+})(window);
