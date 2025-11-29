@@ -183,7 +183,7 @@ btnSignup.addEventListener("click", async () => {
         return;
     }
 
-    try:
+    try { 
         const { data, error } = await supabase.auth.signUp({
             email,
             password: pass,
