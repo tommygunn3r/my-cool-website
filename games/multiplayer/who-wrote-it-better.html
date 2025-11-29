@@ -2,1007 +2,1114 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <title>Who Wrote It Better? - Multiplayer</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GunnersGames Multiplayer</title>
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:wght@300;400;600&display=swap" rel="stylesheet">
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
 
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Cinzel:wght@400;700&display=swap" rel="stylesheet">
+
+    <style>
         :root {
-            --gold: #d4af37;
-            --gold-dark: #b8941f;
-            --gold-light: #f4e5a7;
-            --cream: #f5f3e8;
-            --dark: #1a1410;
-            --red: #8b0000;
-            --green: #0a4a2e;
+            --bg: #050509;
+            --bg-alt: #131321;
+            --card-bg: #171728;
+            --gold: #f5c25c;
+            --gold-soft: #fbe1a5;
+            --accent: #36c2ff;
+            --accent-soft: rgba(54, 194, 255, 0.12);
+            --danger: #ff4d4d;
+            --success: #4dff8a;
+            --text-main: #f5f5f5;
+            --text-soft: #b0b0c0;
+        }
+
+        * {
+            box-sizing: border-box;
         }
 
         body {
-            font-family: 'Cormorant Garamond', serif;
-            background: linear-gradient(135deg, var(--dark) 0%, #2a1f1a 100%);
-            color: var(--cream);
-            min-height: 100vh;
-            overflow-x: hidden;
+            margin: 0;
+            background: radial-gradient(circle at top, #202040 0%, #050509 60%);
+            color: var(--text-main);
+            font-family: "Roboto", sans-serif;
         }
 
-        /* Header */
         .header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 1.5rem 3rem;
-            background: rgba(0,0,0,0.4);
-            backdrop-filter: blur(10px);
-            border-bottom: 2px solid var(--gold);
+            padding: 1.2rem 1.8rem;
+            background: linear-gradient(to right, #0b0b14, #17172a);
+            border-bottom: 1px solid rgba(245, 194, 92, 0.3);
+            box-shadow: 0 4px 18px rgba(0,0,0,0.5);
         }
 
         .logo {
-            font-family: 'Cinzel', serif;
-            font-size: 2rem;
-            font-weight: 700;
-            color: var(--gold);
-            letter-spacing: 0.15em;
-            text-shadow: 0 0 20px rgba(212, 175, 55, 0.6);
-        }
-
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 2rem;
-        }
-
-        .balance {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-size: 1.3rem;
-            font-weight: 600;
-        }
-
-        .coin-icon {
-            width: 35px;
-            height: 35px;
-            background: radial-gradient(circle, var(--gold-light) 0%, var(--gold) 100%);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            color: var(--dark);
-            font-size: 1.1rem;
-            box-shadow: 0 2px 10px rgba(212, 175, 55, 0.5);
-        }
-
-        .username {
-            font-family: 'Cinzel', serif;
-            color: var(--gold);
-            font-size: 1.2rem;
-        }
-
-        /* Main Content */
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 3rem 2rem;
-        }
-
-        .page-title {
-            font-family: 'Cinzel', serif;
-            font-size: 3rem;
-            text-align: center;
-            color: var(--gold);
-            margin-bottom: 1rem;
-            text-shadow: 0 0 30px rgba(212, 175, 55, 0.5);
-        }
-
-        .page-subtitle {
-            text-align: center;
-            font-size: 1.2rem;
-            color: var(--gold-light);
-            margin-bottom: 3rem;
-            opacity: 0.8;
-        }
-
-        /* Tabs */
-        .tabs {
-            display: flex;
-            justify-content: center;
-            gap: 2rem;
-            margin-bottom: 3rem;
-        }
-
-        .tab-btn {
-            font-family: 'Cinzel', serif;
-            font-size: 1.2rem;
-            padding: 1rem 3rem;
-            background: transparent;
-            color: var(--gold-light);
-            border: 2px solid var(--gold-dark);
-            border-radius: 50px;
-            cursor: pointer;
-            transition: all 0.3s;
-            letter-spacing: 0.1em;
-        }
-
-        .tab-btn:hover {
-            background: var(--gold-dark);
-            color: var(--dark);
-            box-shadow: 0 5px 20px rgba(212, 175, 55, 0.4);
-        }
-
-        .tab-btn.active {
-            background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
-            color: var(--dark);
-            box-shadow: 0 5px 20px rgba(212, 175, 55, 0.6);
-        }
-
-        /* Tab Content */
-        .tab-content {
-            display: none;
-        }
-
-        .tab-content.active {
-            display: block;
-        }
-
-        /* Room Grid */
-        .room-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-            gap: 2rem;
-            margin-bottom: 2rem;
-        }
-
-        .room-card {
-            background: rgba(0,0,0,0.6);
-            border: 2px solid var(--gold-dark);
-            border-radius: 15px;
-            padding: 1.5rem;
-            transition: all 0.3s;
-            cursor: pointer;
-        }
-
-        .room-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 30px rgba(212, 175, 55, 0.3);
-            border-color: var(--gold);
-        }
-
-        .room-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-        }
-
-        .room-game {
-            font-family: 'Cinzel', serif;
+            font-family: "Cinzel", serif;
             font-size: 1.5rem;
+            letter-spacing: 0.18em;
             color: var(--gold);
-            font-weight: 600;
         }
 
-        .room-status {
-            padding: 0.3rem 0.8rem;
-            border-radius: 20px;
+        .header-right {
+            display: flex;
+            gap: 1.2rem;
+            align-items: center;
+        }
+
+        .room-pill {
+            padding: 0.4rem 0.9rem;
+            border-radius: 999px;
+            background: rgba(0,0,0,0.4);
+            border: 1px solid rgba(255,255,255,0.2);
+            font-size: 0.85rem;
+        }
+
+        .host-tag {
+            padding: 0.2rem 0.6rem;
+            border-radius: 999px;
+            border: 1px solid var(--gold);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+        }
+
+        .main {
+            max-width: 1100px;
+            margin: 1.8rem auto 3rem;
+            padding: 0 1rem;
+            display: grid;
+            grid-template-columns: minmax(0, 2fr) minmax(0, 1.2fr);
+            gap: 1.5rem;
+        }
+
+        @media (max-width: 900px) {
+            .main {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Left Panel (Game Area) */
+        .game-card {
+            background: linear-gradient(145deg, #15152a, #1c1c38);
+            border-radius: 14px;
+            padding: 1.4rem 1.6rem;
+            box-shadow: 0 6px 24px rgba(0,0,0,0.75);
+            border: 1px solid rgba(255,255,255,0.08);
+            min-height: 420px;
+        }
+
+        .game-title {
+            font-family: "Cinzel", serif;
+            font-size: 1.8rem;
+            letter-spacing: 0.12em;
+            margin-bottom: 0.2rem;
+        }
+
+        .game-subtitle {
+            font-size: 0.95rem;
+            color: var(--text-soft);
+            margin-bottom: 1.2rem;
+        }
+
+        .phase-tag {
+            display: inline-block;
+            padding: 0.25rem 0.6rem;
+            border-radius: 999px;
+            border: 1px solid rgba(255,255,255,0.25);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            margin-bottom: 0.7rem;
+        }
+
+        .phase-submit { border-color: var(--accent); color: var(--accent); }
+        .phase-vote { border-color: var(--gold); color: var(--gold-soft); }
+        .phase-results { border-color: var(--success); color: var(--success); }
+        .phase-lobby { border-color: var(--text-soft); color: var(--text-soft); }
+
+        .prompt-box {
+            background: rgba(4,4,12,0.92);
+            border-radius: 10px;
+            padding: 1.1rem 1rem;
+            border: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 1rem;
+        }
+
+        .prompt-source {
+            font-size: 0.8rem;
+            color: var(--text-soft);
+            margin-bottom: 0.4rem;
+        }
+
+        .prompt-text {
+            font-size: 1.1rem;
+            line-height: 1.4;
+        }
+
+        .round-label {
             font-size: 0.9rem;
-            font-weight: 600;
+            color: var(--text-soft);
+            margin-bottom: 0.5rem;
         }
 
-        .room-status.waiting {
-            background: rgba(255, 165, 0, 0.2);
-            color: #ffa500;
-            border: 1px solid #ffa500;
-        }
-
-        .room-status.playing {
-            background: rgba(0, 255, 0, 0.2);
-            color: #00ff00;
-            border: 1px solid #00ff00;
-        }
-
-        .room-status.full {
-            background: rgba(255, 0, 0, 0.2);
-            color: #ff4444;
-            border: 1px solid #ff4444;
-        }
-
-        .room-info {
+        .row {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 0.5rem;
-            color: var(--cream);
-            font-size: 1.1rem;
-        }
-
-        .room-players {
-            display: flex;
-            gap: 0.5rem;
             align-items: center;
+            gap: 0.8rem;
+            margin-bottom: 0.7rem;
         }
 
-        .room-buy-in {
-            color: var(--gold);
-            font-weight: 600;
-        }
-
-        .room-host {
-            font-size: 0.9rem;
-            color: var(--gold-light);
-            opacity: 0.7;
-        }
-
-        /* Create Room Section */
-        .create-room-section {
-            background: rgba(0,0,0,0.6);
-            border: 2px solid var(--gold);
-            border-radius: 15px;
-            padding: 2rem;
-            max-width: 600px;
-            margin: 0 auto;
-        }
-
-        .section-title {
-            font-family: 'Cinzel', serif;
-            font-size: 1.8rem;
-            color: var(--gold);
-            margin-bottom: 1.5rem;
-            text-align: center;
-        }
-
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
-
-        .form-label {
-            display: block;
-            font-family: 'Cinzel', serif;
-            color: var(--gold-light);
-            margin-bottom: 0.5rem;
-            font-size: 1.1rem;
-        }
-
-        .form-select, .form-input {
-            width: 100%;
-            padding: 0.8rem;
+        .timer {
+            padding: 0.25rem 0.6rem;
+            border-radius: 999px;
             background: rgba(0,0,0,0.4);
-            border: 1px solid var(--gold-dark);
-            border-radius: 8px;
-            color: var(--cream);
-            font-family: 'Cormorant Garamond', serif;
-            font-size: 1.1rem;
+            border: 1px solid rgba(255,255,255,0.25);
+            font-size: 0.8rem;
         }
 
-        .form-select:focus, .form-input:focus {
+        .status-msg {
+            font-size: 0.85rem;
+            color: var(--text-soft);
+        }
+
+        /* Answer input */
+        .answer-input-area {
+            margin-top: 1.0rem;
+        }
+
+        .answer-input {
+            width: 100%;
+            min-height: 70px;
+            padding: 0.7rem;
+            border-radius: 8px;
+            border: 1px solid rgba(255,255,255,0.25);
+            background: rgba(5,5,15,0.95);
+            color: var(--text-main);
+            resize: vertical;
+            font-family: inherit;
+        }
+
+        .answer-input:focus {
             outline: none;
-            border-color: var(--gold);
-            box-shadow: 0 0 10px rgba(212, 175, 55, 0.3);
+            border-color: var(--accent);
+            box-shadow: 0 0 0 1px rgba(54, 194, 255, 0.5);
         }
 
-        .toggle-group {
+        .answer-buttons {
             display: flex;
-            gap: 1rem;
+            justify-content: space-between;
             align-items: center;
+            margin-top: 0.6rem;
+            gap: 0.6rem;
+            flex-wrap: wrap;
         }
 
-        .toggle-btn {
-            flex: 1;
-            padding: 0.8rem;
-            background: rgba(0,0,0,0.4);
-            border: 2px solid var(--gold-dark);
-            border-radius: 8px;
-            color: var(--cream);
-            font-family: 'Cinzel', serif;
-            cursor: pointer;
-            transition: all 0.3s;
-            text-align: center;
-        }
-
-        .toggle-btn:hover {
-            border-color: var(--gold);
-        }
-
-        .toggle-btn.active {
-            background: var(--gold);
-            color: var(--dark);
-            border-color: var(--gold);
-        }
-
-        .create-btn {
-            width: 100%;
-            padding: 1rem;
-            background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
+        .btn {
+            border-radius: 999px;
+            padding: 0.55rem 1.2rem;
             border: none;
-            border-radius: 50px;
-            color: var(--dark);
-            font-family: 'Cinzel', serif;
-            font-size: 1.3rem;
-            font-weight: 600;
+            font-size: 0.9rem;
             cursor: pointer;
-            letter-spacing: 0.1em;
-            transition: all 0.3s;
+            font-weight: 500;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            transition: transform 0.12s ease, box-shadow 0.12s ease, opacity 0.12s ease;
+        }
+
+        .btn-primary {
+            background: radial-gradient(circle at top, var(--gold-soft), var(--gold));
+            color: #2b1c08;
+            box-shadow: 0 4px 14px rgba(245, 194, 92, 0.5);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(245, 194, 92, 0.6);
+        }
+
+        .btn-accent {
+            background: radial-gradient(circle at top, var(--accent), #0477b3);
+            color: #021218;
+            box-shadow: 0 4px 14px rgba(54, 194, 255, 0.4);
+        }
+
+        .btn-accent:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 18px rgba(54, 194, 255, 0.5);
+        }
+
+        .btn-ghost {
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.35);
+            color: var(--text-soft);
+        }
+
+        .btn[disabled] {
+            opacity: 0.55;
+            cursor: not-allowed;
+            box-shadow: none;
+            transform: none;
+        }
+
+        /* Answer list / voting */
+        .answers-list {
             margin-top: 1rem;
         }
 
-        .create-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 30px rgba(212, 175, 55, 0.6);
-        }
-
-        /* Empty State */
-        .empty-state {
-            text-align: center;
-            padding: 4rem 2rem;
-            color: var(--gold-light);
-            font-size: 1.2rem;
-        }
-
-        .empty-state-icon {
-            font-size: 4rem;
-            margin-bottom: 1rem;
-            opacity: 0.5;
-        }
-
-        /* Loading */
-        .loading {
-            text-align: center;
-            padding: 4rem 2rem;
-            color: var(--gold);
-            font-family: 'Cinzel', serif;
-            font-size: 1.5rem;
-        }
-
-        .spinner {
-            width: 50px;
-            height: 50px;
-            border: 4px solid rgba(212, 175, 55, 0.2);
-            border-top-color: var(--gold);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 2rem auto;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        /* Modal */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.9);
-            z-index: 1000;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .modal.active {
-            display: flex;
-        }
-
-        .modal-content {
-            background: linear-gradient(135deg, var(--dark) 0%, #2a1f1a 100%);
-            border: 2px solid var(--gold);
-            border-radius: 15px;
-            padding: 2rem;
-            max-width: 500px;
-            width: 90%;
-        }
-
-        .modal-title {
-            font-family: 'Cinzel', serif;
-            font-size: 1.8rem;
-            color: var(--gold);
-            margin-bottom: 1rem;
-            text-align: center;
-        }
-
-        .modal-text {
-            color: var(--cream);
-            font-size: 1.1rem;
-            margin-bottom: 1.5rem;
-            text-align: center;
-        }
-
-        .modal-buttons {
-            display: flex;
-            gap: 1rem;
-        }
-
-        .modal-btn {
-            flex: 1;
-            padding: 0.8rem;
-            border: none;
-            border-radius: 8px;
-            font-family: 'Cinzel', serif;
-            font-size: 1.1rem;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .modal-btn.primary {
-            background: var(--gold);
-            color: var(--dark);
-        }
-
-        .modal-btn.secondary {
-            background: transparent;
-            color: var(--gold);
-            border: 2px solid var(--gold);
-        }
-
-        .modal-btn:hover {
-            transform: translateY(-2px);
-        }
-
-        /* Room Code Display */
-        .room-code-display {
-            background: rgba(0,0,0,0.4);
-            border: 2px dashed var(--gold);
+        .answer-card {
+            background: rgba(5,5,15,0.95);
             border-radius: 10px;
-            padding: 1rem;
-            text-align: center;
-            margin: 1rem 0;
+            padding: 0.8rem 0.9rem;
+            border: 1px solid rgba(255,255,255,0.13);
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+            transition: border-color 0.12s ease, background 0.12s ease, transform 0.12s ease;
         }
 
-        .room-code {
-            font-family: 'Cinzel', serif;
-            font-size: 2rem;
-            color: var(--gold);
-            letter-spacing: 0.3em;
-            font-weight: 700;
+        .answer-card:hover {
+            border-color: var(--accent);
+            background: rgba(10, 18, 30, 0.9);
+            transform: translateY(-1px);
         }
 
-        .copy-hint {
+        .answer-card.selected {
+            border-color: var(--gold);
+            box-shadow: 0 0 10px rgba(245, 194, 92, 0.5);
+        }
+
+        .answer-card.disabled {
+            cursor: default;
+            opacity: 0.7;
+        }
+
+        .answer-author {
+            font-size: 0.75rem;
+            color: var(--text-soft);
+            margin-top: 0.3rem;
+        }
+
+        .results-line {
             font-size: 0.9rem;
-            color: var(--gold-light);
-            margin-top: 0.5rem;
+            margin: 0.2rem 0;
         }
 
-        /* Mobile Responsive */
-        @media (max-width: 768px) {
-            .header {
-                padding: 1rem 1.5rem;
-            }
+        .winner-tag {
+            color: var(--gold-soft);
+            font-weight: 600;
+        }
 
-            .logo {
-                font-size: 1.5rem;
-            }
+        /* Right Panel (Players / Scores / Log) */
+        .side-card {
+            background: rgba(12,12,24,0.95);
+            border-radius: 14px;
+            padding: 1rem 1.2rem;
+            border: 1px solid rgba(255,255,255,0.12);
+            box-shadow: 0 6px 24px rgba(0,0,0,0.7);
+            margin-bottom: 1rem;
+        }
 
-            .page-title {
-                font-size: 2rem;
-            }
+        .side-title {
+            font-size: 1rem;
+            font-weight: 500;
+            margin-bottom: 0.6rem;
+        }
 
-            .tabs {
-                flex-direction: column;
-                gap: 1rem;
-            }
+        .player-list {
+            font-size: 0.88rem;
+        }
 
-            .tab-btn {
-                width: 100%;
-            }
+        .player-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.35rem;
+        }
 
-            .room-grid {
-                grid-template-columns: 1fr;
-            }
+        .player-name {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .player-badge {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #4dff8a;
+        }
+
+        .player-host-label {
+            font-size: 0.7rem;
+            padding: 0.1rem 0.4rem;
+            border-radius: 999px;
+            border: 1px solid var(--gold);
+        }
+
+        .score-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.35rem;
+            font-size: 0.88rem;
+        }
+
+        .log-box {
+            max-height: 150px;
+            overflow-y: auto;
+            font-size: 0.8rem;
+            color: var(--text-soft);
+        }
+
+        .log-line {
+            margin-bottom: 0.3rem;
+        }
+
+        #connectionStatus {
+            font-size: 0.8rem;
+            color: var(--text-soft);
+            margin-top: 0.4rem;
         }
     </style>
 </head>
 <body>
-    <!-- Header -->
+
     <div class="header">
-        <div class="logo">GUNNERSGAMES</div>
-        <div class="user-info">
-            <div class="balance">
-                <div class="coin-icon">G</div>
-                <span id="userBalance">0</span>
-            </div>
-            <div class="username" id="username">Guest</div>
+        <div class="logo">WHO WROTE IT BETTER?</div>
+        <div class="header-right">
+            <div class="room-pill" id="roomInfo">Room: ?</div>
+            <div class="host-tag" id="hostTag">PLAYER</div>
         </div>
     </div>
 
-    <!-- Main Content -->
-    <div class="container">
-        <h1 class="page-title">MULTIPLAYER LOBBY</h1>
-        <p class="page-subtitle">Join a table or create your own room</p>
+    <div class="main">
+        <!-- LEFT: GAME AREA -->
+        <div class="game-card">
+            <div class="game-title">ROUND <span id="roundNumber">0</span></div>
+            <div class="game-subtitle" id="phaseDescription">Waiting for game to start...</div>
 
-        <!-- Tabs -->
-        <div class="tabs">
-            <button class="tab-btn active" data-tab="browse">BROWSE ROOMS</button>
-            <button class="tab-btn" data-tab="create">CREATE ROOM</button>
-            <button class="tab-btn" data-tab="join">JOIN PRIVATE</button>
-        </div>
+            <div id="phaseTag" class="phase-tag phase-lobby">LOBBY</div>
 
-        <!-- Browse Rooms Tab -->
-        <div class="tab-content active" id="browse-tab">
-            <div id="roomsLoading" class="loading">
-                <div class="spinner"></div>
-                Loading rooms...
+            <div class="prompt-box">
+                <div class="prompt-source" id="promptSource">Prompt source will appear here.</div>
+                <div class="prompt-text" id="promptText">Waiting for host to start the game.</div>
             </div>
-            <div id="roomsContainer" class="room-grid" style="display: none;"></div>
-            <div id="emptyRooms" class="empty-state" style="display: none;">
-                <div class="empty-state-icon">🎰</div>
-                <div>No active rooms found</div>
-                <div style="margin-top: 1rem; opacity: 0.7;">Be the first to create one!</div>
+
+            <div class="row">
+                <div class="round-label" id="roundLabel">Phase: Lobby</div>
+                <div class="timer" id="timerDisplay">⏱ 0s</div>
             </div>
-        </div>
 
-        <!-- Create Room Tab -->
-        <div class="tab-content" id="create-tab">
-            <div class="create-room-section">
-                <h2 class="section-title">CREATE NEW ROOM</h2>
-                
-                <div class="form-group">
-                    <label class="form-label">Game Type</label>
-                    <select class="form-select" id="gameType">
-                        <option value="texas-holdem">Texas Hold'em Poker</option>
-                        <option value="who-wrote-it-better">Who Wrote It Better? 🎵</option>
-                        <option value="roulette" disabled>Roulette (Coming Soon)</option>
-                        <option value="blackjack" disabled>Blackjack (Coming Soon)</option>
-                        <option value="liars-dice" disabled>Liar's Dice (Coming Soon)</option>
-                    </select>
+            <div class="status-msg" id="statusMessage">
+                Waiting for host to start the first round.
+            </div>
+
+            <!-- SUBMIT PHASE UI -->
+            <div id="submitArea" class="answer-input-area" style="display:none;">
+                <textarea id="answerInput" class="answer-input" placeholder="Rewrite the lyric / quote..."></textarea>
+                <div class="answer-buttons">
+                    <button id="randomAnswerBtn" class="btn btn-ghost" type="button">
+                        🎲 Random Answer
+                    </button>
+                    <button id="submitAnswerBtn" class="btn btn-primary" type="button">
+                        SUBMIT ANSWER
+                    </button>
                 </div>
+            </div>
 
-                <div class="form-group">
-                    <label class="form-label">Buy-In Amount</label>
-                    <select class="form-select" id="buyIn">
-                        <option value="500">500 GunnerCoins</option>
-                        <option value="1000">1,000 GunnerCoins</option>
-                        <option value="2000" selected>2,000 GunnerCoins</option>
-                        <option value="5000">5,000 GunnerCoins</option>
-                        <option value="10000">10,000 GunnerCoins</option>
-                    </select>
-                </div>
+            <!-- VOTE / RESULTS PHASE UI -->
+            <div id="answersArea" class="answers-list" style="display:none;"></div>
 
-                <div class="form-group">
-                    <label class="form-label">Room Privacy</label>
-                    <div class="toggle-group">
-                        <button class="toggle-btn active" data-privacy="public">PUBLIC</button>
-                        <button class="toggle-btn" data-privacy="private">PRIVATE</button>
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">Max Players</label>
-                    <select class="form-select" id="maxPlayers">
-                        <option value="2">2 Players</option>
-                        <option value="3">3 Players</option>
-                        <option value="4" selected>4 Players</option>
-                        <option value="6">6 Players</option>
-                        <option value="8">8 Players</option>
-                    </select>
-                </div>
-
-                <button class="create-btn" id="createRoomBtn">CREATE ROOM</button>
+            <!-- HOST CONTROLS -->
+            <div style="margin-top: 1.2rem;">
+                <button id="hostStartBtn" class="btn btn-accent" type="button" style="display:none;">
+                    START GAME / NEXT ROUND
+                </button>
             </div>
         </div>
 
-        <!-- Join Private Room Tab -->
-        <div class="tab-content" id="join-tab">
-            <div class="create-room-section">
-                <h2 class="section-title">JOIN PRIVATE ROOM</h2>
-                
-                <div class="form-group">
-                    <label class="form-label">Enter Room Code</label>
-                    <input type="text" class="form-input" id="roomCodeInput" placeholder="ABCD-1234" maxlength="9" style="text-transform: uppercase; text-align: center; font-size: 1.5rem; letter-spacing: 0.2em;">
-                </div>
+        <!-- RIGHT: PLAYERS / SCORES / LOG -->
+        <div>
+            <div class="side-card">
+                <div class="side-title">Players</div>
+                <div id="playersList" class="player-list">No players yet.</div>
+            </div>
 
-                <button class="create-btn" id="joinPrivateBtn">JOIN ROOM</button>
+            <div class="side-card">
+                <div class="side-title">Scores</div>
+                <div id="scoresList">
+                    No scores yet.
+                </div>
+            </div>
+
+            <div class="side-card">
+                <div class="side-title">Game Log</div>
+                <div id="logBox" class="log-box"></div>
+                <div id="connectionStatus">Connecting...</div>
             </div>
         </div>
     </div>
 
-    <!-- Room Code Modal -->
-    <div class="modal" id="roomCodeModal">
-        <div class="modal-content">
-            <h2 class="modal-title">ROOM CREATED!</h2>
-            <p class="modal-text">Share this code with your friends:</p>
-            <div class="room-code-display">
-                <div class="room-code" id="displayRoomCode">XXXX-XXXX</div>
-                <div class="copy-hint">Click to copy</div>
-            </div>
-            <p class="modal-text" style="font-size: 0.9rem; opacity: 0.7;">Waiting for players to join...</p>
-            <div class="modal-buttons">
-                <button class="modal-btn secondary" id="cancelRoomBtn">CANCEL</button>
-                <button class="modal-btn primary" id="enterRoomBtn">ENTER ROOM</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Firebase -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
-
+    <script src="multiplayer-core.js"></script>
     <script>
-        // ====== FIREBASE CONFIG ======
-        // TODO: Replace with your actual Firebase config
-        const firebaseConfig = {
-        apiKey: "AIzaSyDjdo3U9qg_h4TKvplsFoZgxVNepAbCpFA",
-        authDomain: "gunners-games.firebaseapp.com",
-        projectId: "gunners-games",
-        storageBucket: "gunners-games.firebasestorage.app",
-        messagingSenderId: "644077315462",
-        appId: "1:644077315462:web:431dd985426f3dbe02f807",
-        measurementId: "G-RWNL900X43"
+        // === CONFIG ===
+        const BACKEND = "https://gunnersgames-backend.onrender.com";
+
+        const SUBMIT_SECONDS = 40;   // time to write answers
+        const VOTE_SECONDS   = 25;   // time to vote
+        const RESULTS_SECONDS = 8;   // show results, then auto next
+
+        // === State ===
+        let game = null;
+        let roomId = null;
+        let playerId = null;
+        let playerName = null;
+        let isHost = false;
+
+        let prompts = [];
+        let answers = [];
+        let oneWordAnswers = [];
+
+        let currentState = {
+            phase: "lobby",   // lobby | submit | vote | results
+            round: 0,
+            prompt: null,
+            submissions: {},  // { playerId: { text, name } }
+            votes: {},        // { voterId: targetPlayerId }
+            scores: {},       // { playerId: score }
+            lastResults: null,
+            timerEnd: null,
+            voteOrder: []     // array of { playerId, name, text }
         };
 
-        firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
-        const database = firebase.database(); // Realtime Database for rooms
-        const firestore = firebase.firestore(); // Firestore for user balance
+        let hasSubmitted = false;
+        let hasVoted = false;
+        let countdownInterval = null;
 
-        console.log('Firebase initialized');
-        console.log('Auth domain:', firebaseConfig.authDomain);
-
-        // ====== STATE ======
-        let currentUser = null;
-        let userBalance = 0;
-        let roomsListener = null;
-        let selectedPrivacy = 'public';
-
-        // ====== INIT ======
-        console.log('Waiting for auth state...');
-        auth.onAuthStateChanged(user => {
-            console.log('Auth state changed:', user ? user.email : 'No user');
-            if (user) {
-                currentUser = user;
-                document.getElementById('username').innerText = user.displayName || user.email?.split('@')[0] || 'Player';
-                loadUserBalance();
-                loadRooms();
-            } else {
-                // Not authenticated - show message instead of redirect for debugging
-                console.log('No user logged in');
-                document.getElementById('username').innerText = 'Not Logged In';
-                document.getElementById('userBalance').innerText = '0';
-                
-                // Uncomment this line once Firebase config is correct:
-                // window.location.href = '/index.html';
-            }
-        });
-
-        function loadUserBalance() {
-            // Load balance from Firestore (where your GunnerCoins are stored)
-            firestore.collection('users').doc(currentUser.uid).get().then(doc => {
-                if (doc.exists) {
-                    userBalance = doc.data().gunnercoins || 0;
-                } else {
-                    userBalance = 0;
-                }
-                document.getElementById('userBalance').innerText = userBalance.toLocaleString();
-            }).catch(error => {
-                console.error('Error loading balance:', error);
-                userBalance = 0;
-                document.getElementById('userBalance').innerText = '0';
-            });
+        // === Helpers ===
+        function getQueryParam(name) {
+            const params = new URLSearchParams(window.location.search);
+            return params.get(name);
         }
 
-        // ====== TAB SYSTEM ======
-        document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const tab = btn.dataset.tab;
-                
-                // Update buttons
-                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                
-                // Update content
-                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-                document.getElementById(`${tab}-tab`).classList.add('active');
-            });
-        });
+        function log(message) {
+            const box = document.getElementById("logBox");
+            const line = document.createElement("div");
+            line.className = "log-line";
+            line.textContent = "[" + new Date().toLocaleTimeString() + "] " + message;
+            box.appendChild(line);
+            box.scrollTop = box.scrollHeight;
+        }
 
-        // ====== PRIVACY TOGGLE ======
-        document.querySelectorAll('[data-privacy]').forEach(btn => {
-            btn.addEventListener('click', () => {
-                selectedPrivacy = btn.dataset.privacy;
-                document.querySelectorAll('[data-privacy]').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-            });
-        });
+        function setConnectionStatus(msg) {
+            document.getElementById("connectionStatus").innerText = msg;
+        }
 
-        // ====== LOAD ROOMS ======
-        function loadRooms() {
-            // Clean up old listener
-            if (roomsListener) {
-                database.ref('rooms').off('value', roomsListener);
-            }
+        function setPhaseUI(phase) {
+            const tag = document.getElementById("phaseTag");
+            tag.className = "phase-tag phase-" + phase;
+            tag.innerText = phase.toUpperCase();
 
-            document.getElementById('roomsLoading').style.display = 'block';
-            document.getElementById('roomsContainer').style.display = 'none';
-            document.getElementById('emptyRooms').style.display = 'none';
+            const submitArea = document.getElementById("submitArea");
+            const answersArea = document.getElementById("answersArea");
+            const hostStartBtn = document.getElementById("hostStartBtn");
 
-            // Listen for room changes
-            roomsListener = database.ref('rooms').on('value', snapshot => {
-                const rooms = snapshot.val();
-                document.getElementById('roomsLoading').style.display = 'none';
-                
-                if (!rooms) {
-                    document.getElementById('emptyRooms').style.display = 'block';
-                    return;
+            submitArea.style.display = "none";
+            answersArea.style.display = "none";
+            hostStartBtn.style.display = "none";
+
+            const phaseDescription = document.getElementById("phaseDescription");
+            const roundLabel = document.getElementById("roundLabel");
+            const statusMessage = document.getElementById("statusMessage");
+
+            if (phase === "lobby") {
+                phaseDescription.innerText = "Waiting for the host to start the game.";
+                roundLabel.innerText = "Phase: Lobby";
+                statusMessage.innerText = isHost
+                    ? "You are the host. Click START GAME to begin."
+                    : "Waiting for host to start...";
+                if (isHost) hostStartBtn.style.display = "inline-block";
+            } else if (phase === "submit") {
+                phaseDescription.innerText = "Rewrite the lyric, quote, or line.";
+                roundLabel.innerText = "Phase: Answer Submission";
+                statusMessage.innerText = "Type your answer and hit SUBMIT. Timer is running.";
+                submitArea.style.display = "block";
+            } else if (phase === "vote") {
+                phaseDescription.innerText = "Vote for your favorite answer.";
+                roundLabel.innerText = "Phase: Voting";
+                statusMessage.innerText = "Pick the best answer. You can't vote for yourself.";
+            } else if (phase === "results") {
+                phaseDescription.innerText = "Round results.";
+                roundLabel.innerText = "Phase: Results";
+                statusMessage.innerText = "Scores updated. Next round will begin automatically.";
+                if (isHost) {
+                    hostStartBtn.style.display = "inline-block";
+                    hostStartBtn.innerText = "START NEXT ROUND NOW";
                 }
+            }
+        }
 
-                // Clean up old rooms (older than 1 hour or finished with no players)
+        function updateTimerDisplay() {
+            const el = document.getElementById("timerDisplay");
+            if (!currentState.timerEnd) {
+                el.innerText = "⏱ 0s";
+                return;
+            }
+            const now = Date.now();
+            const remaining = Math.max(0, Math.round((currentState.timerEnd - now) / 1000));
+            el.innerText = "⏱ " + remaining + "s";
+        }
+
+        function startCountdown(phase) {
+            if (countdownInterval) clearInterval(countdownInterval);
+            updateTimerDisplay();
+            countdownInterval = setInterval(() => {
+                const before = currentState.timerEnd;
+                updateTimerDisplay();
+                if (!currentState.timerEnd) return;
                 const now = Date.now();
-                const ONE_HOUR = 60 * 60 * 1000;
-                
-                Object.entries(rooms).forEach(([roomId, room]) => {
-                    const roomAge = now - (room.createdAt || 0);
-                    const hasPlayers = room.players && Object.keys(room.players).length > 0;
-                    
-                    // Delete if: finished with no players, or older than 1 hour
-                    if ((room.status === 'finished' && !hasPlayers) || roomAge > ONE_HOUR) {
-                        database.ref(`rooms/${roomId}`).remove();
-                        console.log(`Cleaned up old room: ${roomId}`);
+                if (now >= currentState.timerEnd) {
+                    clearInterval(countdownInterval);
+                    countdownInterval = null;
+                    // Host drives phase transitions
+                    if (isHost) {
+                        handlePhaseTimeout(phase);
                     }
-                });
-
-                const container = document.getElementById('roomsContainer');
-                container.innerHTML = '';
-                container.style.display = 'grid';
-
-                // Filter and display public rooms
-                Object.entries(rooms).forEach(([roomId, room]) => {
-                    if (room.privacy === 'public' && room.status !== 'finished') {
-                        container.appendChild(createRoomCard(roomId, room));
-                    }
-                });
-
-                if (container.children.length === 0) {
-                    container.style.display = 'none';
-                    document.getElementById('emptyRooms').style.display = 'block';
                 }
+            }, 1000);
+        }
+
+        function handlePhaseTimeout(phase) {
+            if (!isHost) return;
+
+            if (phase === "submit") {
+                // Move to voting or results depending on submissions
+                const submissions = currentState.submissions || {};
+                const submitters = Object.keys(submissions);
+
+                if (submitters.length === 0) {
+                    // No answers: show "no submissions" and move to results
+                    currentState.lastResults = {
+                        message: "No submissions this round.",
+                        details: []
+                    };
+                    currentState.phase = "results";
+                    currentState.timerEnd = Date.now() + RESULTS_SECONDS * 1000;
+                    log("No submissions. Moving to results.");
+                    game.setState(currentState);
+                } else if (submitters.length === 1) {
+                    // Only one answer: declare them winner by default
+                    const pid = submitters[0];
+                    const scores = currentState.scores || {};
+                    scores[pid] = (scores[pid] || 0) + 1;
+                    currentState.scores = scores;
+
+                    currentState.lastResults = {
+                        message: "Only one submission. Auto-win!",
+                        details: [
+                            {
+                                playerId: pid,
+                                name: submissions[pid].name,
+                                text: submissions[pid].text,
+                                votes: 1
+                            }
+                        ]
+                    };
+                    currentState.phase = "results";
+                    currentState.timerEnd = Date.now() + RESULTS_SECONDS * 1000;
+                    log("Single submission. Auto-win for " + submissions[pid].name);
+                    game.setState(currentState);
+                } else {
+                    // Enough answers: build voteOrder and go to voting
+                    const voteOrder = submitters.map(pid => ({
+                        playerId: pid,
+                        name: submissions[pid].name,
+                        text: submissions[pid].text
+                    }));
+                    // Shuffle order
+                    for (let i = voteOrder.length - 1; i > 0; i--) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        [voteOrder[i], voteOrder[j]] = [voteOrder[j], voteOrder[i]];
+                    }
+                    currentState.voteOrder = voteOrder;
+                    currentState.votes = {};
+                    currentState.phase = "vote";
+                    currentState.timerEnd = Date.now() + VOTE_SECONDS * 1000;
+                    log("Submissions in. Moving to voting.");
+                    game.setState(currentState);
+                }
+            } else if (phase === "vote") {
+                // Tally votes and move to results
+                const votes = currentState.votes || {};
+                const submissions = currentState.submissions || {};
+                const scores = currentState.scores || {};
+
+                const voteCount = {};
+                Object.values(votes).forEach(targetId => {
+                    if (!targetId) return;
+                    voteCount[targetId] = (voteCount[targetId] || 0) + 1;
+                });
+
+                const details = [];
+                let maxVotes = 0;
+                for (const [pid, sub] of Object.entries(submissions)) {
+                    const count = voteCount[pid] || 0;
+                    details.push({
+                        playerId: pid,
+                        name: sub.name,
+                        text: sub.text,
+                        votes: count
+                    });
+                    if (count > maxVotes) maxVotes = count;
+                }
+
+                // Update scores: 1 point per vote here
+                for (const [pid, count] of Object.entries(voteCount)) {
+                    scores[pid] = (scores[pid] || 0) + count;
+                }
+
+                currentState.scores = scores;
+                currentState.lastResults = {
+                    message: Object.keys(votes).length === 0
+                        ? "No votes cast this round."
+                        : "Round complete.",
+                    details: details
+                };
+                currentState.phase = "results";
+                currentState.timerEnd = Date.now() + RESULTS_SECONDS * 1000;
+                log("Votes tallied. Moving to results.");
+                game.setState(currentState);
+            } else if (phase === "results") {
+                // Auto-start next round
+                log("Results phase done. Auto-starting next round.");
+                hostStartNewRound();
+            }
+        }
+
+        // === Prompt & Answer selection ===
+        function pickRandomPrompt() {
+            if (!prompts.length) return null;
+            const idx = Math.floor(Math.random() * prompts.length);
+            return prompts[idx];
+        }
+
+        function pickRandomAnswerText() {
+            const pool = [];
+            if (answers && answers.length) {
+                pool.push(...answers.map(a => a.text));
+            }
+            if (oneWordAnswers && oneWordAnswers.length) {
+                pool.push(...oneWordAnswers.map(a => a.text));
+            }
+            if (!pool.length) return "";
+            const idx = Math.floor(Math.random() * pool.length);
+            return pool[idx];
+        }
+
+        // === UI render functions ===
+        function renderPrompt() {
+            const pEl = document.getElementById("promptText");
+            const sEl = document.getElementById("promptSource");
+            if (!currentState.prompt) {
+                pEl.innerText = "Waiting for host to start the game.";
+                sEl.innerText = "";
+                return;
+            }
+            const p = currentState.prompt;
+            pEl.innerText = p.text || "[blank prompt]";
+            let source = "";
+            if (p.category) source += p.category.toUpperCase();
+            if (p.source) source += (source ? " • " : "") + p.source;
+            if (p.pack) source += (source ? " • " : "") + p.pack;
+            if (p.rating) source += (source ? " • " : "") + "Rated " + p.rating;
+            sEl.innerText = source || "Prompt";
+        }
+
+        function renderPlayers(roomData) {
+            const listEl = document.getElementById("playersList");
+            if (!roomData || !roomData.players || !roomData.players.length) {
+                listEl.innerText = "No players yet.";
+                return;
+            }
+            listEl.innerHTML = "";
+            roomData.players.forEach(p => {
+                const row = document.createElement("div");
+                row.className = "player-row";
+
+                const left = document.createElement("div");
+                left.className = "player-name";
+
+                const badge = document.createElement("div");
+                badge.className = "player-badge";
+                left.appendChild(badge);
+
+                const nameSpan = document.createElement("span");
+                nameSpan.innerText = p.player_name || "Unknown";
+                left.appendChild(nameSpan);
+
+                if (roomData.room && roomData.room.host_id === p.player_id) {
+                    const hostLabel = document.createElement("span");
+                    hostLabel.className = "player-host-label";
+                    hostLabel.innerText = "HOST";
+                    left.appendChild(hostLabel);
+                }
+
+                const right = document.createElement("div");
+                right.innerText = "";
+
+                row.appendChild(left);
+                row.appendChild(right);
+
+                listEl.appendChild(row);
             });
         }
 
-        function createRoomCard(roomId, room) {
-            const card = document.createElement('div');
-            card.className = 'room-card';
-            
-            const playerCount = room.players ? Object.keys(room.players).length : 0;
-            const statusClass = room.status === 'playing' ? 'playing' : 
-                               playerCount >= room.maxPlayers ? 'full' : 'waiting';
-            const statusText = room.status === 'playing' ? 'IN GAME' : 
-                              playerCount >= room.maxPlayers ? 'FULL' : 'WAITING';
-
-            card.innerHTML = `
-                <div class="room-header">
-                    <div class="room-game">${getGameName(room.gameType)}</div>
-                    <div class="room-status ${statusClass}">${statusText}</div>
-                </div>
-                <div class="room-info">
-                    <div class="room-players">
-                        <span>👥</span>
-                        <span>${playerCount}/${room.maxPlayers}</span>
-                    </div>
-                    <div class="room-buy-in">💰 ${room.buyIn.toLocaleString()}</div>
-                </div>
-                <div class="room-host">Host: ${room.hostName}</div>
-            `;
-
-            if (statusClass !== 'full' && room.status !== 'playing') {
-                card.addEventListener('click', () => joinRoom(roomId, room));
-            } else {
-                card.style.cursor = 'not-allowed';
-                card.style.opacity = '0.6';
+        function renderScores() {
+            const scoresEl = document.getElementById("scoresList");
+            const scores = currentState.scores || {};
+            const entries = Object.entries(scores);
+            if (!entries.length) {
+                scoresEl.innerText = "No scores yet.";
+                return;
             }
-
-            return card;
+            scoresEl.innerHTML = "";
+            entries.sort((a, b) => b[1] - a[1]);
+            entries.forEach(([pid, score]) => {
+                const row = document.createElement("div");
+                row.className = "score-row";
+                const name = pid === playerId ? (playerName + " (You)") : pid;
+                row.innerHTML = `<span>${name}</span><span>${score}</span>`;
+                scoresEl.appendChild(row);
+            });
         }
 
-        function getGameName(type) {
-            const names = {
-                'texas-holdem': 'Texas Hold\'em',
-                'who-wrote-it-better': 'Who Wrote It Better?',
-                'roulette': 'Roulette',
-                'blackjack': 'Blackjack',
-                'liars-dice': 'Liar\'s Dice'
-            };
-            return names[type] || type;
-        }
-
-        // ====== CREATE ROOM ======
-        document.getElementById('createRoomBtn').addEventListener('click', createRoom);
-
-        async function createRoom() {
-            const gameType = document.getElementById('gameType').value;
-            const buyIn = parseInt(document.getElementById('buyIn').value);
-            const maxPlayers = parseInt(document.getElementById('maxPlayers').value);
-
-            // Validate balance
-            if (userBalance < buyIn) {
-                alert(`Insufficient funds! You need ${buyIn.toLocaleString()} GunnerCoins.`);
+        function renderVotingAnswers() {
+            const container = document.getElementById("answersArea");
+            container.innerHTML = "";
+            const phase = currentState.phase;
+            if (phase !== "vote" && phase !== "results") {
+                container.style.display = "none";
                 return;
             }
 
-            // Generate room code for private rooms
-            const roomCode = selectedPrivacy === 'private' ? generateRoomCode() : null;
+            const voteOrder = currentState.voteOrder || [];
+            if (!voteOrder.length) {
+                container.innerHTML = "<div style='font-size:0.9rem; color:var(--text-soft);'>No answers to show.</div>";
+                container.style.display = "block";
+                return;
+            }
 
-            // Create room in database
-            const roomRef = database.ref('rooms').push();
-            const roomData = {
-                gameType,
-                buyIn,
-                maxPlayers,
-                privacy: selectedPrivacy,
-                roomCode,
-                hostId: currentUser.uid,
-                hostName: currentUser.displayName || 'Player',
-                status: 'waiting',
-                createdAt: Date.now(),
-                players: {
-                    [currentUser.uid]: {
-                        name: currentUser.displayName || 'Player',
-                        chips: buyIn,
-                        ready: false,
-                        joinedAt: Date.now()
+            container.style.display = "block";
+
+            const votes = currentState.votes || {};
+            const myVote = votes[playerId] || null;
+            hasVoted = !!myVote;
+
+            const last = currentState.lastResults;
+
+            voteOrder.forEach(entry => {
+                const card = document.createElement("div");
+                card.className = "answer-card";
+
+                const main = document.createElement("div");
+                main.innerText = entry.text;
+                card.appendChild(main);
+
+                const author = document.createElement("div");
+                author.className = "answer-author";
+                let label = entry.name || "Player";
+                if (entry.playerId === playerId) label += " (You)";
+                author.innerText = label;
+                card.appendChild(author);
+
+                const isMe = entry.playerId === playerId;
+
+                if (phase === "vote") {
+                    if (isMe) {
+                        card.classList.add("disabled");
+                        card.style.opacity = "0.6";
+                    } else {
+                        card.addEventListener("click", () => {
+                            handleVote(entry.playerId, card);
+                        });
+                    }
+                    if (myVote === entry.playerId) {
+                        card.classList.add("selected");
                     }
                 }
+
+                if (phase === "results" && last && last.details) {
+                    const detail = last.details.find(d => d.playerId === entry.playerId);
+                    if (detail) {
+                        const rLine = document.createElement("div");
+                        rLine.className = "results-line";
+                        rLine.innerText = `Votes: ${detail.votes}`;
+                        if (detail.votes === Math.max(...last.details.map(d => d.votes))) {
+                            rLine.classList.add("winner-tag");
+                            rLine.innerText += "  ← Winner";
+                        }
+                        card.appendChild(rLine);
+                    }
+                    card.classList.add("disabled");
+                }
+
+                container.appendChild(card);
+            });
+        }
+
+        // === Actions ===
+        function handleSubmit() {
+            if (hasSubmitted) {
+                alert("You already submitted this round.");
+                return;
+            }
+            if (currentState.phase !== "submit") {
+                alert("It's not submission time right now.");
+                return;
+            }
+            const input = document.getElementById("answerInput");
+            const text = input.value.trim();
+            if (!text) {
+                alert("Type an answer first.");
+                return;
+            }
+
+            hasSubmitted = true;
+            document.getElementById("submitAnswerBtn").disabled = true;
+            input.disabled = true;
+
+            game.sendAction("submitAnswer", { text });
+            log("You submitted an answer.");
+        }
+
+        function handleVote(targetPlayerId, cardElem) {
+            if (hasVoted) {
+                alert("You already voted this round.");
+                return;
+            }
+            if (currentState.phase !== "vote") {
+                alert("It's not voting time right now.");
+                return;
+            }
+            if (!targetPlayerId) return;
+
+            hasVoted = true;
+            game.sendAction("voteAnswer", { targetPlayerId });
+            log("You cast your vote.");
+
+            // Highlight selection locally
+            const all = document.querySelectorAll(".answer-card");
+            all.forEach(c => c.classList.remove("selected"));
+            cardElem.classList.add("selected");
+        }
+
+        function hostStartNewRound() {
+            if (!isHost) return;
+
+            const nextRound = (currentState.round || 0) + 1;
+            const prompt = pickRandomPrompt();
+            if (!prompt) {
+                alert("No prompts loaded yet.");
+                return;
+            }
+
+            const now = Date.now();
+            currentState = {
+                phase: "submit",
+                round: nextRound,
+                prompt: prompt,
+                submissions: {},
+                votes: {},
+                scores: currentState.scores || {},
+                lastResults: null,
+                timerEnd: now + SUBMIT_SECONDS * 1000,
+                voteOrder: []
             };
 
-            try {
-                await roomRef.set(roomData);
-                
-                // Deduct buy-in from Firestore balance
-                await firestore.collection('users').doc(currentUser.uid).update({
-                    gunnercoins: firebase.firestore.FieldValue.increment(-buyIn)
-                });
-                userBalance -= buyIn;
-                document.getElementById('userBalance').innerText = userBalance.toLocaleString();
+            game.setRoomStatus("playing").catch(() => {});
+            log("Starting round " + nextRound + " as host.");
+            game.setState(currentState);
+        }
 
-                if (selectedPrivacy === 'private') {
-                    // Show room code modal
-                    document.getElementById('displayRoomCode').innerText = roomCode;
-                    document.getElementById('roomCodeModal').classList.add('active');
-                    
-                    // Set up modal buttons
-                    document.getElementById('cancelRoomBtn').onclick = async () => {
-                        await roomRef.remove();
-                        // Refund buy-in to Firestore
-                        await firestore.collection('users').doc(currentUser.uid).update({
-                            gunnercoins: firebase.firestore.FieldValue.increment(buyIn)
-                        });
-                        userBalance += buyIn;
-                        document.getElementById('userBalance').innerText = userBalance.toLocaleString();
-                        document.getElementById('roomCodeModal').classList.remove('active');
-                    };
-                    
-                    document.getElementById('enterRoomBtn').onclick = () => {
-                        document.getElementById('roomCodeModal').classList.remove('active');
-                        enterGameRoom(roomRef.key, gameType);
-                    };
+        // === Apply state from backend ===
+        function applyState(state) {
+            if (!state || !state.phase) {
+                currentState.phase = "lobby";
+                currentState.round = 0;
+                currentState.prompt = null;
+                currentState.submissions = {};
+                currentState.votes = {};
+                currentState.scores = {};
+                currentState.lastResults = null;
+                currentState.timerEnd = null;
+                currentState.voteOrder = [];
+            } else {
+                currentState = state;
+            }
 
-                    // Copy code on click
-                    document.getElementById('displayRoomCode').onclick = () => {
-                        navigator.clipboard.writeText(roomCode);
-                        const hint = document.querySelector('.copy-hint');
-                        hint.innerText = 'Copied!';
-                        setTimeout(() => hint.innerText = 'Click to copy', 2000);
-                    };
+            document.getElementById("roundNumber").innerText = currentState.round || 0;
+
+            setPhaseUI(currentState.phase);
+            renderPrompt();
+            renderScores();
+            renderVotingAnswers();
+
+            // Reset local flags each round
+            if (currentState.phase === "submit") {
+                hasSubmitted = !!(currentState.submissions && currentState.submissions[playerId]);
+                const input = document.getElementById("answerInput");
+                const submitBtn = document.getElementById("submitAnswerBtn");
+                if (hasSubmitted) {
+                    input.disabled = true;
+                    submitBtn.disabled = true;
                 } else {
-                    // Public room - enter immediately
-                    enterGameRoom(roomRef.key, gameType);
+                    input.disabled = false;
+                    submitBtn.disabled = false;
+                    input.value = "";
                 }
-            } catch (error) {
-                console.error('Error creating room:', error);
-                alert('Failed to create room. Please try again.');
+            }
+
+            if (currentState.phase === "vote") {
+                const myVote = (currentState.votes && currentState.votes[playerId]) || null;
+                hasVoted = !!myVote;
+            }
+
+            if (currentState.phase === "results" && currentState.lastResults) {
+                const msg = currentState.lastResults.message || "Round complete.";
+                document.getElementById("statusMessage").innerText = msg;
+            }
+
+            if (currentState.phase === "lobby" || !currentState.timerEnd) {
+                if (countdownInterval) clearInterval(countdownInterval);
+                document.getElementById("timerDisplay").innerText = "⏱ 0s";
+            } else {
+                startCountdown(currentState.phase);
             }
         }
 
-        function generateRoomCode() {
-            const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-            let code = '';
-            for (let i = 0; i < 8; i++) {
-                if (i === 4) code += '-';
-                code += chars[Math.floor(Math.random() * chars.length)];
-            }
-            return code;
-        }
+        // === Init ===
+        async function init() {
+            // Room / player info from lobby
+            roomId = getQueryParam("room") || sessionStorage.getItem("currentRoom") || "room1";
+            playerId = sessionStorage.getItem("currentPlayerId") || localStorage.getItem("gg_playerId");
+            playerName = sessionStorage.getItem("currentPlayerName") || localStorage.getItem("gg_playerName") || "Player";
 
-        // ====== JOIN ROOM ======
-        async function joinRoom(roomId, room) {
-            // Validate balance
-            if (userBalance < room.buyIn) {
-                alert(`Insufficient funds! You need ${room.buyIn.toLocaleString()} GunnerCoins.`);
-                return;
+            if (!playerId) {
+                playerId = "p_" + Math.random().toString(36).substr(2, 9);
+                localStorage.setItem("gg_playerId", playerId);
             }
 
+            document.getElementById("roomInfo").innerText = "Room: " + roomId;
+            log("Joining " + roomId + " as " + playerName);
+
+            // Load data
             try {
-                // Add player to room
-                await database.ref(`rooms/${roomId}/players/${currentUser.uid}`).set({
-                    name: currentUser.displayName || 'Player',
-                    chips: room.buyIn,
-                    ready: false,
-                    joinedAt: Date.now()
-                });
-
-                // Deduct buy-in from Firestore
-                await firestore.collection('users').doc(currentUser.uid).update({
-                    gunnercoins: firebase.firestore.FieldValue.increment(-room.buyIn)
-                });
-                userBalance -= room.buyIn;
-                document.getElementById('userBalance').innerText = userBalance.toLocaleString();
-
-                // Enter game room
-                enterGameRoom(roomId, room.gameType);
-            } catch (error) {
-                console.error('Error joining room:', error);
-                alert('Failed to join room. Please try again.');
-            }
-        }
-
-        // ====== JOIN PRIVATE ROOM ======
-        document.getElementById('joinPrivateBtn').addEventListener('click', async () => {
-            const code = document.getElementById('roomCodeInput').value.trim().toUpperCase();
-            
-            if (!code || code.length < 8) {
-                alert('Please enter a valid room code.');
-                return;
+                const [p, a, o] = await Promise.all([
+                    fetch("data/prompts.json").then(r => r.json()),
+                    fetch("data/answers.json").then(r => r.json()),
+                    fetch("data/one_word_answers.json")
+                        .then(r => r.json())
+                        .catch(() => ({ oneWordAnswers: [] }))
+                ]);
+                prompts = p.prompts || [];
+                answers = a.answers || [];
+                oneWordAnswers = o.oneWordAnswers || [];
+                log(`Loaded ${prompts.length} prompts, ${answers.length} answers, ${oneWordAnswers.length} one-word answers.`);
+            } catch (err) {
+                console.error(err);
+                log("Error loading prompt/answer data.");
             }
 
+            // Setup multiplayer game
+            game = new MultiplayerGame({
+                roomId,
+                playerId,
+                playerName,
+                onLog: (msg, extra) => {
+                    if (extra) log(msg + " " + JSON.stringify(extra));
+                    else log(msg);
+                },
+                onError: (err) => {
+                    console.error(err);
+                    log("Error: " + err.message);
+                    setConnectionStatus("Error: " + err.message);
+                },
+                onConnected: () => {
+                    log("WebSocket connected.");
+                    setConnectionStatus("Connected.");
+                },
+                onDisconnected: (info) => {
+                    log("Disconnected: " + JSON.stringify(info));
+                    setConnectionStatus("Disconnected. Trying to reconnect...");
+                },
+                onRoomUpdate: (roomData) => {
+                    if (!roomData || !roomData.room) return;
+                    const r = roomData.room;
+                    const hostId = r.host_id;
+                    isHost = (hostId === playerId);
+                    document.getElementById("hostTag").innerText = isHost ? "HOST" : "PLAYER";
+                    renderPlayers(roomData);
+
+                    // If backend sends state as part of room data
+                    if (roomData.state) {
+                        applyState(roomData.state);
+                    }
+                },
+                onStateUpdate: (state) => {
+                    applyState(state);
+                },
+                onAction: ({ playerId: fromId, action }) => {
+                    if (!action) return;
+                    if (action.actionType === "submitAnswer") {
+                        const text = (action.payload && action.payload.text) || "";
+                        if (!text) return;
+                        // We don't know the name here; host gets it from room players or store last
+                        // For simplicity, non-host just logs it; host updates canonical state.
+                        if (isHost && currentState.phase === "submit") {
+                            // Find player name from last room players snapshot? We'll approximate:
+                            const name = (fromId === playerId) ? playerName : ("Player " + fromId.substr(0, 4));
+                            currentState.submissions[fromId] = {
+                                text,
+                                name
+                            };
+                            game.setState(currentState);
+                        }
+                    } else if (action.actionType === "voteAnswer") {
+                        const target = (action.payload && action.payload.targetPlayerId) || null;
+                        if (isHost && currentState.phase === "vote" && target) {
+                            currentState.votes[fromId] = target;
+                            game.setState(currentState);
+                        }
+                    }
+                }
+            });
+
+            document.getElementById("hostStartBtn").addEventListener("click", () => {
+                if (!isHost) {
+                    alert("Only the host can start rounds.");
+                    return;
+                }
+                hostStartNewRound();
+            });
+
+            document.getElementById("submitAnswerBtn").addEventListener("click", handleSubmit);
+            document.getElementById("randomAnswerBtn").addEventListener("click", () => {
+                const input = document.getElementById("answerInput");
+                input.value = pickRandomAnswerText();
+            });
+
+            await game.connect();
+
+            // Get latest state on join
             try {
-                // Search for room with this code
-                const snapshot = await database.ref('rooms')
-                    .orderByChild('roomCode')
-                    .equalTo(code)
-                    .once('value');
-
-                const rooms = snapshot.val();
-                
-                if (!rooms) {
-                    alert('Room not found. Please check the code and try again.');
-                    return;
-                }
-
-                const roomId = Object.keys(rooms)[0];
-                const room = rooms[roomId];
-
-                if (room.status === 'finished') {
-                    alert('This room has ended.');
-                    return;
-                }
-
-                const playerCount = room.players ? Object.keys(room.players).length : 0;
-                if (playerCount >= room.maxPlayers) {
-                    alert('This room is full.');
-                    return;
-                }
-
-                await joinRoom(roomId, room);
-            } catch (error) {
-                console.error('Error finding room:', error);
-                alert('Failed to find room. Please try again.');
+                const state = await game.fetchState();
+                applyState(state);
+            } catch (err) {
+                log("No existing game state. Waiting for host.");
             }
-        });
-
-        // ====== ENTER GAME ROOM ======
-        function enterGameRoom(roomId, gameType) {
-            // Store room info in session storage
-            sessionStorage.setItem('currentRoom', roomId);
-            
-            // Redirect to appropriate game
-            const gameUrls = {
-                'texas-holdem': '/games/multiplayer/texas-holdem.html',
-                'who-wrote-it-better': '/games/multiplayer/who-wrote-it-better.html',
-                'roulette': '/games/multiplayer/roulette.html',
-                'blackjack': '/games/multiplayer/blackjack.html'
-            };
-
-            window.location.href = `${gameUrls[gameType]}?room=${roomId}`;
         }
 
-        // ====== CLEANUP ======
-        window.addEventListener('beforeunload', () => {
-            if (roomsListener) {
-                database.ref('rooms').off('value', roomsListener);
-            }
-        });
+        window.addEventListener("load", init);
     </script>
 </body>
 </html>
