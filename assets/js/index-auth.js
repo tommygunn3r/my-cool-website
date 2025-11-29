@@ -59,7 +59,7 @@ function updateProfileUI(profile) {
 //  FETCH OR CREATE PROFILE
 // ---------------------------------------------------------
 async function fetchOrCreateProfile(user) {
-    // Fetch existing profile
+    // Try to fetch existing profile
     const { data: existing } = await supabase
         .from("profiles")
         .select("*")
@@ -68,13 +68,15 @@ async function fetchOrCreateProfile(user) {
 
     if (existing) return existing;
 
-    // Create new profile
+    // New player starting balance
+    const STARTING_COINS = 5000;
+
     const { data, error } = await supabase
         .from("profiles")
         .insert({
             id: user.id,
             player_name: user.user_metadata.display_name ?? "Player",
-            gunnercoins: 0
+            gunnercoins: STARTING_COINS
         })
         .select()
         .single();
