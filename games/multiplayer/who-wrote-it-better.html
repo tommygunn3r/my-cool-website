@@ -27,10 +27,10 @@
         
         h1 {
             text-align: center;
-            font-size: 3em;
+            font-size: 2em;
             color: #FFD700;
             text-shadow: 3px 3px 6px rgba(0,0,0,0.5);
-            margin-bottom: 30px;
+            margin-bottom: 20px;
         }
         
         /* Waiting Room */
@@ -39,9 +39,9 @@
         }
         
         .waiting-title {
-            font-size: 2em;
+            font-size: 1.5em;
             color: #FFD700;
-            margin-bottom: 30px;
+            margin-bottom: 20px;
         }
         
         .players-grid {
@@ -353,18 +353,18 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 30px;
+            margin-bottom: 15px;
             flex-wrap: wrap;
-            gap: 20px;
+            gap: 10px;
         }
         
         .round-info {
-            font-size: 1.5em;
+            font-size: 1em;
             color: #FFD700;
         }
         
         .timer {
-            font-size: 2em;
+            font-size: 1.3em;
             color: #f44336;
             font-weight: bold;
         }
@@ -571,13 +571,13 @@
         }
         
         .player-status {
-            padding: 8px 16px;
+            padding: 6px 12px;
             background: rgba(255,255,255,0.1);
             border-radius: 20px;
-            font-size: 0.9em;
+            font-size: 0.8em;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
         }
         
         .player-status.submitted {
@@ -604,8 +604,8 @@
         .score-item {
             display: flex;
             justify-content: space-between;
-            padding: 10px;
-            margin: 5px 0;
+            padding: 6px;
+            margin: 3px 0;
             background: rgba(255,255,255,0.05);
             border-radius: 5px;
         }
@@ -616,12 +616,12 @@
         }
         
         .player-name-score {
-            font-size: 1.2em;
+            font-size: 0.9em;
             color: #fff;
         }
         
         .player-score {
-            font-size: 1.2em;
+            font-size: 0.9em;
             color: #4CAF50;
             font-weight: bold;
         }
@@ -692,14 +692,27 @@
             padding: 15px 25px;
             border-radius: 15px;
             font-size: 1.5em;
-            animation: fadeInOut 3s forwards;
+            animation: riseAndFade 3s forwards;
+            pointer-events: none;
         }
         
-        @keyframes fadeInOut {
-            0% { opacity: 0; transform: translateY(20px); }
-            10% { opacity: 1; transform: translateY(0); }
-            90% { opacity: 1; transform: translateY(0); }
-            100% { opacity: 0; transform: translateY(-20px); }
+        @keyframes riseAndFade {
+            0% { 
+                opacity: 0; 
+                transform: translateY(20px) scale(0.8);
+            }
+            10% { 
+                opacity: 1; 
+                transform: translateY(0) scale(1);
+            }
+            90% { 
+                opacity: 1; 
+                transform: translateY(-200px) scale(1);
+            }
+            100% { 
+                opacity: 0; 
+                transform: translateY(-250px) scale(0.8);
+            }
         }
         
         .hidden {
@@ -1162,6 +1175,30 @@
                     updatePlayerStatus(newState, newState.phase);
                 }
                 
+                // Auto-advance when all players have submitted/voted
+                if (mpGame.isHost) {
+                    if (newState.phase === 'selection' && newState.submissions) {
+                        const connectedPlayers = Object.keys(mpGame.allPlayers).filter(id => mpGame.allPlayers[id].connected);
+                        const submittedCount = Object.keys(newState.submissions).length;
+                        console.log(`Selection auto-check: ${submittedCount}/${connectedPlayers.length}`);
+                        
+                        if (submittedCount === connectedPlayers.length && submittedCount > 0) {
+                            console.log('All players submitted! Auto-advancing to reveal...');
+                            setTimeout(() => startRevealPhase(), 1500);
+                        }
+                    } else if (newState.phase === 'voting' && newState.votes) {
+                        const submittedPlayers = Object.keys(newState.submissions || {});
+                        const votingPlayers = submittedPlayers; // Everyone who submitted votes
+                        const votedCount = Object.keys(newState.votes).length;
+                        console.log(`Voting auto-check: ${votedCount}/${votingPlayers.length}`);
+                        
+                        if (votedCount === votingPlayers.length && votedCount > 0) {
+                            console.log('All players voted! Auto-ending round...');
+                            setTimeout(() => endRound(), 1500);
+                        }
+                    }
+                }
+                
                 if (newState.phase === 'selection') {
                     showSelectionPhase(newState);
                 } else if (newState.phase === 'reveal') {
@@ -1468,17 +1505,6 @@
                 document.querySelectorAll('.answer-card').forEach(card => {
                     card.style.pointerEvents = 'none';
                 });
-                
-                // Check if all players submitted
-                const connectedPlayers = Object.keys(mpGame.allPlayers).filter(id => mpGame.allPlayers[id].connected);
-                console.log(`Selection check: ${Object.keys(submissions).length}/${connectedPlayers.length} submitted`);
-                
-                if (Object.keys(submissions).length === connectedPlayers.length) {
-                    console.log('All players submitted! Host advancing to reveal...');
-                    if (mpGame.isHost) {
-                        setTimeout(() => startRevealPhase(), 1000);
-                    }
-                }
             } else if (currentState.phase === 'voting') {
                 // Submit vote
                 const votes = currentState.votes || {};
@@ -1493,20 +1519,6 @@
                 document.querySelectorAll('.answer-card').forEach(card => {
                     card.style.pointerEvents = 'none';
                 });
-                
-                // Check if all players voted (excluding the players whose cards are shown)
-                const connectedPlayers = Object.keys(mpGame.allPlayers).filter(id => mpGame.allPlayers[id].connected);
-                const submittedPlayers = Object.keys(currentState.submissions);
-                const votingPlayers = connectedPlayers.filter(id => submittedPlayers.includes(id));
-                
-                console.log(`Voting check: ${Object.keys(votes).length}/${votingPlayers.length} voted`);
-                
-                if (Object.keys(votes).length === votingPlayers.length) {
-                    console.log('All players voted! Host ending round...');
-                    if (mpGame.isHost) {
-                        setTimeout(() => endRound(), 1000);
-                    }
-                }
             }
         });
         
