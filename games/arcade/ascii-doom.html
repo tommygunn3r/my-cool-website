@@ -6,32 +6,49 @@
 <title>ASCII DOOM</title>
 
 <style>
-    body {
+    html, body {
+        margin: 0;
+        padding: 0;
+        overflow: hidden !important;
+        background: black;
+        height: 100%;
+    }
+
+    /* FIXED TERMINAL GRID */
+    #gameContainer {
+        position: absolute;
+        top: 0;
+        left: 0;
+
+        /* Hardcoded ASCII DOOM grid size */
+        width: calc(80 * 8.4px);   /* 80 columns */
+        height: calc(40 * 14px);   /* 40 rows */
+
         background: black;
         color: lime;
-        font-family: monospace;
-        margin: 0;
-        overflow: hidden;
-    }
-    #gameContainer {
-        width: 100%;
-        height: 100vh;
-        white-space: pre;
-        font-size: 14px;
-        line-height: 14px;
+
+        white-space: pre !important;
+        font-family: monospace !important;
+
+        font-size: 14px !important;
+        line-height: 14px !important;
+
+        overflow: hidden !important;
         padding: 10px;
         box-sizing: border-box;
-        overflow: hidden;
     }
+
     #ui {
         position: absolute;
         top: 10px;
-        left: 10px;
+        left: calc(80 * 8.6px); /* Slight offset to appear right of grid */
         color: lime;
-        font-size: 16px;
-        z-index: 10;
+        font-family: monospace;
+        font-size: 18px;
         text-shadow: 0 0 5px lime;
+        z-index: 10;
     }
+
     #gameOver {
         position: absolute;
         top: 50%;
@@ -45,13 +62,14 @@
         display: none;
         z-index: 50;
     }
+
     #gameOver button {
         margin-top: 15px;
         padding: 10px 20px;
         background: lime;
         color: black;
-        font-weight: bold;
         border: none;
+        font-weight: bold;
         cursor: pointer;
     }
 </style>
@@ -74,7 +92,7 @@
 
 <script type="module">
 /* =========================================================
-    SUPABASE AUTH + SCORE SUBMISSION (REPLACES FIREBASE)
+    SUPABASE AUTH + SCORE SUBMISSION
    ========================================================= */
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -85,51 +103,42 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 class ScoreManager {
     constructor(gameName) {
         this.gameName = gameName;
-        this.sessionStart = null;
-        this.user = null;
-    }
-
-    start() {
         this.sessionStart = Date.now();
-    }
-
-    getTimePlayed() {
-        if (!this.sessionStart) return 0;
-        return Math.floor((Date.now() - this.sessionStart) / 1000);
+        this.user = null;
+        this.loadUser();
     }
 
     async loadUser() {
         const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
-            console.log("ASCII DOOM running with NO Supabase user — scores local only.");
-            return;
-        }
-        this.user = user;
+        this.user = user || null;
+        if (!user) console.log("ASCII DOOM running without Supabase user — local only.");
+    }
+
+    getTimePlayed() {
+        return Math.floor((Date.now() - this.sessionStart) / 1000);
     }
 
     async submitScore(score) {
-        if (!this.user || !score) return;
+        if (!this.user || score <= 0) return;
 
-        const timePlayed = this.getTimePlayed();
-
-        await supabase.from('stats').insert({
+        const payload = {
             user_id: this.user.id,
             game: this.gameName,
             score: score,
-            time_played: timePlayed
-        }).then(({ error }) => {
-            if (error) console.warn("Stats submit error:", error.message);
-            else console.log("ASCII DOOM score submitted:", score);
-        });
+            time_played: this.getTimePlayed()
+        };
+
+        const { error } = await supabase.from("stats").insert(payload);
+
+        if (error) console.warn("Supabase insert failed:", error.message);
+        else console.log("ASCII DOOM score saved:", payload);
     }
 }
 
 const scoreManager = new ScoreManager("ascii-doom");
-scoreManager.start();
-scoreManager.loadUser();
 
 /* =========================================================
-    ASCII DOOM GAME ENGINE 
+    ASCII DOOM GAME ENGINE
    ========================================================= */
 const gameContainer = document.getElementById("gameContainer");
 
@@ -147,7 +156,6 @@ let gameState = {
 };
 
 function render() {
-    let output = "";
     let grid = Array.from({ length: gameState.height }, () =>
         Array(gameState.width).fill(" ")
     );
@@ -155,16 +163,14 @@ function render() {
     grid[gameState.playerY][gameState.playerX] = "@";
 
     gameState.enemies.forEach(e => {
-        if (e.alive)
-            grid[e.y][e.x] = "D";
+        if (e.alive) grid[e.y][e.x] = "D";
     });
 
     gameState.bullets.forEach(b => {
         grid[b.y][b.x] = "-";
     });
 
-    output = grid.map(r => r.join("")).join("\n");
-    gameContainer.textContent = output;
+    gameContainer.textContent = grid.map(r => r.join("")).join("\n");
 
     document.getElementById("kills").textContent = gameState.kills;
     document.getElementById("health").textContent = gameState.health;
@@ -212,14 +218,14 @@ function updateBullets() {
             }
         });
     });
+
     gameState.bullets = gameState.bullets.filter(b => b.x < gameState.width);
 }
 
 function endGame() {
     gameState.running = false;
-    const score = gameState.kills;
 
-    // Remote Supabase save
+    const score = gameState.kills;
     scoreManager.submitScore(score);
 
     document.getElementById("finalScore").textContent =
@@ -241,7 +247,7 @@ window.restartGame = function() {
         bullets: [],
         running: true
     };
-    scoreManager.start();
+    scoreManager.sessionStart = Date.now();
     document.getElementById("gameOver").style.display = "none";
 };
 
