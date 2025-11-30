@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Arcade Games - Gunner's Games</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -12,7 +13,7 @@
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Rajdhani', sans-serif;
             background: #000000;
             color: #e0e0e0;
             min-height: 100vh;
@@ -122,10 +123,12 @@
         }
 
         .title {
-            font-size: 3rem;
-            font-weight: bold;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 3.5rem;
+            font-weight: 900;
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 40px;
+            margin-top: -60px;
             color: #fff;
             text-shadow: 
                 0 0 10px rgba(233, 69, 96, 0.8),
@@ -139,11 +142,11 @@
             position: relative;
             width: 100%;
             max-width: 1400px;
-            height: 450px;
+            height: 500px;
             display: flex;
             align-items: center;
             justify-content: center;
-            perspective: 1200px;
+            perspective: 2000px;
             overflow: hidden;
         }
 
@@ -158,105 +161,88 @@
 
         .game-card {
             position: absolute;
-            width: 300px;
-            height: 300px;
-            background: rgba(10, 10, 10, 0.95);
-            border: 2px solid #1a1a1a;
-            border-radius: 20px;
-            overflow: hidden;
+            width: 320px;
+            height: 420px;
+            left: 50%;
+            top: 50%;
+            margin-left: -160px;
+            margin-top: -210px;
+            background: rgba(10, 10, 10, 0.9);
+            border: 2px solid #e94560;
+            border-radius: 15px;
+            padding: 20px;
             cursor: pointer;
             transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.9);
+            box-shadow: 0 10px 40px rgba(233, 69, 96, 0.3);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
             transform-style: preserve-3d;
         }
 
+        .game-card:hover {
+            transform: translateZ(50px) scale(1.05);
+            box-shadow: 0 20px 60px rgba(233, 69, 96, 0.6);
+        }
+
         .game-card.center {
-            width: 350px;
-            height: 350px;
             z-index: 10;
-            border-color: #e94560;
-            box-shadow: 
-                0 15px 60px rgba(233, 69, 96, 0.4),
-                0 0 40px rgba(233, 69, 96, 0.3);
-            filter: blur(0);
+            transform: translateZ(0) scale(1.1);
         }
 
         .game-card.left-1 {
-            transform: translateX(-380px) scale(0.85);
-            z-index: 9;
+            transform: translateX(-400px) translateZ(-200px) rotateY(25deg) scale(0.9);
             opacity: 0.7;
-            filter: blur(2px);
+            z-index: 9;
         }
 
         .game-card.left-2 {
-            transform: translateX(-700px) scale(0.7);
-            z-index: 8;
+            transform: translateX(-700px) translateZ(-400px) rotateY(35deg) scale(0.75);
             opacity: 0.4;
-            filter: blur(4px);
+            z-index: 8;
         }
 
         .game-card.right-1 {
-            transform: translateX(380px) scale(0.85);
-            z-index: 9;
+            transform: translateX(400px) translateZ(-200px) rotateY(-25deg) scale(0.9);
             opacity: 0.7;
-            filter: blur(2px);
+            z-index: 9;
         }
 
         .game-card.right-2 {
-            transform: translateX(700px) scale(0.7);
-            z-index: 8;
+            transform: translateX(700px) translateZ(-400px) rotateY(-35deg) scale(0.75);
             opacity: 0.4;
-            filter: blur(4px);
+            z-index: 8;
         }
 
         .game-card.hidden {
             opacity: 0;
-            transform: scale(0.5);
             pointer-events: none;
         }
 
-        .game-image {
+        .game-thumbnail {
             width: 100%;
-            height: 100%;
-            background: #000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-            position: relative;
-        }
-
-        .game-image img {
-            width: 100%;
-            height: 100%;
+            height: 250px;
+            border-radius: 10px;
             object-fit: cover;
+            border: 2px solid rgba(233, 69, 96, 0.5);
+            margin-bottom: 15px;
+            cursor: pointer;
+            transition: transform 0.3s ease, border-color 0.3s ease;
         }
 
-        .game-image::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(to bottom, transparent 60%, rgba(0, 0, 0, 0.8));
+        .game-thumbnail:hover {
+            transform: scale(1.02);
+            border-color: #e94560;
+            box-shadow: 0 0 15px rgba(233, 69, 96, 0.5);
         }
 
-        .game-info {
-            padding: 20px;
+        .game-description {
+            font-size: 1rem;
+            color: #aaa;
             text-align: center;
-        }
-
-        .game-title {
-            font-size: 1.4rem;
-            font-weight: bold;
-            color: #fff;
-            margin-bottom: 10px;
-            text-shadow: 0 0 10px rgba(233, 69, 96, 0.5);
-        }
-
-        .game-card.center .game-title {
-            font-size: 1.6rem;
+            margin-bottom: 15px;
+            flex-grow: 1;
         }
 
         /* Navigation Arrows */
@@ -642,15 +628,15 @@
 
     <script>
         const games = [
-            { title: 'ASCII Doom', file: 'ascii-doom.html', image: 'games/assets/arcade/ascii-doom.png' },
-            { title: 'Space Shooter', file: 'shooter.html', image: 'games/assets/arcade/shooter.png' },
-            { title: 'Square Bird', file: 'square-bird.html', image: 'games/assets/arcade/square-bird.png' },
-            { title: 'Square Man', file: 'square-man.html', image: 'games/assets/arcade/square-man.png' },
-            { title: 'Squario', file: 'squario.html', image: 'games/assets/arcade/squario.png' },
-            { title: 'Squartris', file: 'squartris.html', image: 'games/assets/arcade/squartris.png' },
-            { title: 'The Water Game', file: 'water.html', image: 'games/assets/arcade/water.png' },
-            { title: 'Word Slider', file: 'word_slider.html', image: 'games/assets/arcade/word_slider.png' },
-            { title: 'Word Rush', file: 'wordrush.html', image: 'games/assets/arcade/wordrush.png' }
+            { title: 'ASCII Doom', file: 'ascii-doom.html', image: 'games/assets/arcade/ascii-doom.png', description: 'Classic shooter reimagined with ASCII art' },
+            { title: 'Space Shooter', file: 'shooter.html', image: 'games/assets/arcade/shooter.png', description: 'Blast through waves of alien invaders' },
+            { title: 'Square Bird', file: 'square-bird.html', image: 'games/assets/arcade/square-bird.png', description: 'Tap to flap through endless obstacles' },
+            { title: 'Square Man', file: 'square-man.html', image: 'games/assets/arcade/square-man.png', description: 'Eat dots and dodge colorful ghosts' },
+            { title: 'Squario', file: 'squario.html', image: 'games/assets/arcade/squario.png', description: 'Platform through 20 challenging levels' },
+            { title: 'Squartris', file: 'squartris.html', image: 'games/assets/arcade/squartris.png', description: 'Stack falling blocks to clear lines' },
+            { title: 'The Water Game', file: 'water.html', image: 'games/assets/arcade/water.png', description: 'Puzzle physics with flowing liquids' },
+            { title: 'Word Slider', file: 'word_slider.html', image: 'games/assets/arcade/word_slider.png', description: 'Slide tiles to form words quickly' },
+            { title: 'Word Rush', file: 'wordrush.html', image: 'games/assets/arcade/wordrush.png', description: 'Race against time to find hidden words' }
         ];
 
         let currentIndex = 0;
@@ -664,9 +650,8 @@
                 const card = document.createElement('div');
                 card.className = 'game-card';
                 card.innerHTML = `
-                    <div class="game-image">
-                        <img src="${game.image}" alt="${game.title}" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22300%22 height=%22300%22%3E%3Crect fill=%22%23000%22 width=%22300%22 height=%22300%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 font-size=%2224%22 fill=%22%23e94560%22 text-anchor=%22middle%22 dy=%22.3em%22%3E${game.title}%3C/text%3E%3C/svg%3E'">
-                    </div>
+                    <img class="game-thumbnail" src="${game.image}" alt="${game.title}" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22280%22 height=%22250%22%3E%3Crect fill=%22%23000%22 width=%22280%22 height=%22250%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 font-size=%2220%22 fill=%22%23e94560%22 text-anchor=%22middle%22 dy=%22.3em%22%3E${game.title}%3C/text%3E%3C/svg%3E'">
+                    <div class="game-description">${game.description}</div>
                 `;
                 card.onclick = () => launchGame(index);
                 carousel.appendChild(card);
