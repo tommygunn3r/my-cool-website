@@ -5,36 +5,33 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Arcade Games - Gunner's Games</title>
 
-<link rel="stylesheet" href="assets/css/arcade.css">
+<!-- CORRECTED CSS PATH -->
+<link rel="stylesheet" href="/assets/css/arcade.css">
+
 </head>
 
 <body>
 
-<!-- GLOBAL PLAYER BAR (contains ALL modals, all auth UI) -->
+<!-- GLOBAL PLAYER BAR (includes all modals) -->
 <div id="playerbar"></div>
 
-<!-- PARALLAX HERO / HEADER IMAGE -->
+<!-- PARALLAX HEADER -->
 <div class="parallax"></div>
-
-<!-- ================================
-     ARCADE GAME SELECTION
-     ================================ -->
 
 <h1 class="section-title">Arcade</h1>
 
+<!-- CAROUSEL -->
 <div class="carousel-container">
     <button class="carousel-btn left" onclick="moveCarousel(-1)">&#10094;</button>
 
     <div class="carousel-wrapper">
-        <div id="carousel" class="carousel">
-            <!-- Filled dynamically -->
-        </div>
+        <div id="carousel" class="carousel"></div>
     </div>
 
     <button class="carousel-btn right" onclick="moveCarousel(1)">&#10095;</button>
 </div>
 
-<!-- GAME PLAYER OVERLAY -->
+<!-- GAME OVERLAY -->
 <div id="gameOverlay" class="overlay">
     <div class="overlay-header">
         <button class="close-btn" onclick="closeGame()">Close Game</button>
@@ -43,30 +40,29 @@
 </div>
 
 
-<!-- ================================
-     SCRIPTS
-     ================================ -->
-
-<!-- REQUIRED: Attach Supabase client to window -->
+<!-- SUPABASE CLIENT (needed BEFORE anything else) -->
 <script type="module">
-    import { supabase as client } from "/assets/js/supabaseClient.js";
-    window.supabase = client;
+    import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+    window.supabase = createClient(
+        "https://pknhslxhpohrzgsfkisr.supabase.co",
+        "sb_publishable_-zZw-pi_3q1sdNGhITKuhQ_ECyDARzc"
+    );
 </script>
 
 
 <script>
 // ===============================
-// GAME LIST
+// FIXED GAME LIST — CORRECT PATHS
 // ===============================
 const games = [
-    { name: "Square Man", file: "square-man.html", img: "previews/arcade-square-man.png" },
-    { name: "Squario", file: "squario.html", img: "previews/arcade-squario.png" },
-    { name: "Squartri", file: "squartri.html", img: "previews/arcade-squartri.png" },
-    { name: "Shooter", file: "shooter.html", img: "previews/arcade-shooter.png" },
-    { name: "Water Flow", file: "water.html", img: "previews/arcade-water.png" },
-    { name: "Word Slider", file: "word_slider.html", img: "previews/arcade-word_slider.png" },
-    { name: "Word Rush", file: "wordrush.html", img: "previews/arcade-wordrush.png" },
-    { name: "Square Bird", file: "square-bird.html", img: "previews/arcade-square-bird.png" }
+    { name: "Square Man", file: "square-man.html", img: "/previews/arcade-square-man.png" },
+    { name: "Squario", file: "squario.html", img: "/previews/arcade-squario.png" },
+    { name: "Squartri", file: "squartri.html", img: "/previews/arcade-squartri.png" },
+    { name: "Shooter", file: "shooter.html", img: "/previews/arcade-shooter.png" },
+    { name: "Water Flow", file: "water.html", img: "/previews/arcade-water.png" },
+    { name: "Word Slider", file: "word_slider.html", img: "/previews/arcade-word_slider.png" },
+    { name: "Word Rush", file: "wordrush.html", img: "/previews/arcade-wordrush.png" },
+    { name: "Square Bird", file: "square-bird.html", img: "/previews/arcade-square-bird.png" }
 ];
 
 
@@ -81,7 +77,7 @@ function buildCarousel() {
         const d = document.createElement("div");
         d.className = "carousel-item";
         d.innerHTML = `
-            <img src="/${g.img}" alt="${g.name}">
+            <img src="${g.img}" alt="${g.name}">
             <p>${g.name}</p>
         `;
         d.onclick = () => launchGame(i);
@@ -89,51 +85,53 @@ function buildCarousel() {
     });
 }
 
+
 // ===============================
-// CAROUSEL MOVEMENT
+// CAROUSEL NAV
 // ===============================
 let carouselIndex = 0;
-function moveCarousel(direction) {
+function moveCarousel(dir) {
     const items = document.querySelectorAll(".carousel-item");
-    carouselIndex += direction;
+    carouselIndex += dir;
 
     if (carouselIndex < 0) carouselIndex = items.length - 1;
     if (carouselIndex >= items.length) carouselIndex = 0;
 
-    const wrapper = document.querySelector(".carousel");
-    wrapper.style.transform = `translateX(-${carouselIndex * 220}px)`;
+    document.querySelector(".carousel")
+        .style.transform = `translateX(-${carouselIndex * 220}px)`;
 }
 
 
 // ===============================
-// AUTH HELPERS
+// GET USER
 // ===============================
 async function getCurrentUser() {
-    if (!window.supabase) return null;
     const { data:{ session } } = await supabase.auth.getSession();
     return session?.user ?? null;
 }
+
 
 // ===============================
 // COIN DEDUCTION (1 coin to play)
 // ===============================
 async function chargeOneCoin() {
     const { data:{ session } } = await supabase.auth.getSession();
+
     if (!session?.user) {
-        openModal(); // open login modal
+        openModal(); // global login modal
         return false;
     }
 
     const user = session.user;
 
-    const { data, error } = await supabase
+    const { data } = await supabase
         .from("profiles")
         .select("gunnercoins")
         .eq("id", user.id)
         .single();
 
-    if (error || !data) {
-        alert("Unable to check coins.");
+    if (!data) {
+        alert("Unable to load coins.");
         return false;
     }
 
@@ -142,21 +140,15 @@ async function chargeOneCoin() {
         return false;
     }
 
-    const newBalance = data.gunnercoins - 1;
+    const newAmount = data.gunnercoins - 1;
 
-    const { error:updateErr } = await supabase
+    await supabase
         .from("profiles")
-        .update({ gunnercoins: newBalance })
+        .update({ gunnercoins: newAmount })
         .eq("id", user.id);
 
-    if (updateErr) {
-        alert("Failed to deduct coin.");
-        return false;
-    }
-
-    // Update playerbar live if loaded
     const coinSpan = document.getElementById("pb-player-coins");
-    if (coinSpan) coinSpan.textContent = newBalance;
+    if (coinSpan) coinSpan.textContent = newAmount;
 
     return true;
 }
@@ -165,12 +157,10 @@ async function chargeOneCoin() {
 // ===============================
 // LAUNCH GAME
 // ===============================
-async function launchGame(index) {
-    const ok = await chargeOneCoin();
-    if (!ok) return;
+async function launchGame(i) {
+    if (!(await chargeOneCoin())) return;
 
-    const game = games[index];
-
+    const game = games[i];
     document.getElementById("gameFrame").src = `/games/arcade/${game.file}`;
     document.getElementById("gameOverlay").classList.add("active");
 }
@@ -190,14 +180,13 @@ document.addEventListener("DOMContentLoaded", () => {
 </script>
 
 
-<!-- ===============================
-     LOAD GLOBAL PLAYER BAR (modals included)
-     =============================== -->
+<!-- LOAD GLOBAL PLAYERBAR.HTML (contains modals + settings + authed UI) -->
 <script>
 async function loadPlayerBar(){
     try {
-        const res = await fetch("playerbar.html");
+        const res = await fetch("/playerbar.html");
         const html = await res.text();
+
         const container = document.getElementById("playerbar");
         const temp = document.createElement("div");
         temp.innerHTML = html;
@@ -212,9 +201,9 @@ async function loadPlayerBar(){
                 container.appendChild(node);
             }
         });
+
     } catch (e) { console.error(e); }
 }
-
 document.addEventListener("DOMContentLoaded", loadPlayerBar);
 </script>
 
