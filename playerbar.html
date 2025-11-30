@@ -1,7 +1,6 @@
 <!-- =======================
      GLOBAL PLAYER BAR
      + GLOBAL AUTH MODALS
-     + ARCADE COIN SYSTEM
      ======================= -->
 
 <div id="player-bar-wrapper" style="
@@ -93,7 +92,7 @@
         <h2 style="text-align:center; color:#e94560;">Login</h2>
 
         <div class="input-group">
-            <label>Email   </label>
+            <label>Email</label>
             <input id="loginEmail" class="input-field" type="email">
         </div>
         <div class="input-group">
@@ -198,25 +197,6 @@
     </div>
 </div>
 
-<!-- LOW COINS WARNING MODAL -->
-<div id="lowCoinsModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.88); z-index:99999; align-items:center; justify-content:center;">
-    <div class="modal-content" style="background:#111; padding:28px; width:90%; max-width:380px; border-radius:12px; border:2px solid #ffd700; position:relative;">
-        <span class="close-modal" onclick="closeLowCoinsModal()" style="position:absolute; top:10px; right:14px; font-size:28px; cursor:pointer;">×</span>
-
-        <h2 style="text-align:center; color:#ffd700;">⚠️ Not Enough GunnerCoins!</h2>
-        
-        <p style="text-align:center; color:#fff; margin:20px 0;">
-            You need <strong>1 GunnerCoin</strong> to play arcade games.<br>
-            Play casino games to earn more coins!
-        </p>
-
-        <button type="button" onclick="closeLowCoinsModal()" class="submit-btn"
-            style="width:100%; padding:12px; background:#ffd700; color:#111; border:none; border-radius:6px; margin-top:10px; font-weight:bold;">
-            OK
-        </button>
-    </div>
-</div>
-
 
 <!-- ================================
      PLAYER BAR + MODAL JS
@@ -245,9 +225,6 @@ function openChangeName() {
 }
 function closeChangeName() {
     document.getElementById("changeNameModal").style.display = "none";
-}
-function closeLowCoinsModal() {
-    document.getElementById("lowCoinsModal").style.display = "none";
 }
 
 
@@ -309,115 +286,6 @@ async function pbLogout() {
     window.location.reload();
 }
 
-
-/* ============================================
-   ARCADE COIN DEDUCTION SYSTEM
-   ============================================ */
-
-/**
- * Deduct 1 GunnerCoin for playing an arcade game
- * Returns true if successful, false if not enough coins
- */
-async function deductArcadeCoin() {
-    const session = await pbGetSession();
-    
-    // If not logged in, allow free play as guest
-    if (!session) {
-        console.log("Guest play - no coins deducted");
-        return true;
-    }
-
-    try {
-        // Get current coin balance
-        const { data: profile, error: fetchError } = await supabase
-            .from("profiles")
-            .select("gunnercoins")
-            .eq("id", session.user.id)
-            .single();
-
-        if (fetchError) throw fetchError;
-
-        const currentCoins = profile.gunnercoins ?? 0;
-
-        // Check if player has enough coins
-        if (currentCoins < 1) {
-            console.log("Not enough coins!");
-            document.getElementById("lowCoinsModal").style.display = "flex";
-            return false;
-        }
-
-        // Deduct 1 coin
-        const { error: updateError } = await supabase
-            .from("profiles")
-            .update({ gunnercoins: currentCoins - 1 })
-            .eq("id", session.user.id);
-
-        if (updateError) throw updateError;
-
-        // Update UI immediately
-        document.getElementById("pb-player-coins").textContent = currentCoins - 1;
-        
-        console.log(`Coin deducted! ${currentCoins - 1} coins remaining`);
-        return true;
-
-    } catch (error) {
-        console.error("Error deducting coin:", error);
-        return false;
-    }
-}
-
-/**
- * Add coins (for casino winnings, rewards, etc.)
- */
-async function addGunnerCoins(amount) {
-    const session = await pbGetSession();
-    if (!session) return false;
-
-    try {
-        const { data: profile } = await supabase
-            .from("profiles")
-            .select("gunnercoins")
-            .eq("id", session.user.id)
-            .single();
-
-        const newBalance = (profile.gunnercoins ?? 0) + amount;
-
-        await supabase
-            .from("profiles")
-            .update({ gunnercoins: newBalance })
-            .eq("id", session.user.id);
-
-        document.getElementById("pb-player-coins").textContent = newBalance;
-        return true;
-    } catch (error) {
-        console.error("Error adding coins:", error);
-        return false;
-    }
-}
-
-/**
- * Get current coin balance
- */
-async function getCurrentCoins() {
-    const session = await pbGetSession();
-    if (!session) return 0;
-
-    try {
-        const { data } = await supabase
-            .from("profiles")
-            .select("gunnercoins")
-            .eq("id", session.user.id)
-            .single();
-
-        return data?.gunnercoins ?? 0;
-    } catch (error) {
-        console.error("Error getting coins:", error);
-        return 0;
-    }
-}
-
-
-/* ---------- Initialize ---------- */
 pbLoadPlayerData();
 setInterval(pbLoadPlayerData, 15000);
 </script>
