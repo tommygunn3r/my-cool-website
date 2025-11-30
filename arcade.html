@@ -576,7 +576,10 @@
         }
     </style>
 </head>
- <body>
+<body>
+    <!-- Playerbar Container -->
+    <div id="playerbar"></div>
+
     <!-- Parallax Background -->
     <div class="parallax-container">
         <div class="parallax-layer layer-1"></div>
@@ -701,14 +704,35 @@
             updateCarousel();
         }
 
+        function launchGame(index) {
+            // This will be replaced with the async version below
+        }
+
         async function launchGame(index) {
-            const success = await deductArcadeCoin();
-            if (!success) return;
+            // Wait for deductArcadeCoin to be available
+            let attempts = 0;
+            while (typeof deductArcadeCoin === 'undefined' && attempts < 50) {
+                await new Promise(r => setTimeout(r, 100));
+                attempts++;
+            }
             
+            if (typeof deductArcadeCoin === 'undefined') {
+                alert('Error: Playerbar not loaded. Please refresh the page.');
+                return;
+            }
+            
+            // Check coin before launching game
+            const success = await deductArcadeCoin();
+            if (!success) {
+                return; // User either not logged in or not enough coins
+            }
+            
+            // Launch the game
             const game = games[index];
             gameFrame.src = `games/arcade/${game.file}`;
             gameOverlay.classList.add('active');
         }
+
         function closeGame() {
             gameOverlay.classList.remove('active');
             setTimeout(() => {
@@ -764,16 +788,27 @@
             }
         });
     </script>
+
+    <!-- Supabase Initialization & Playerbar Loader -->
+    <script type="module">
+        import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+        const SUPABASE_URL = "https://pknhslxhpohrzgsfkisr.supabase.co";
+        const SUPABASE_ANON_KEY = "sb_publishable_-zZw-pi_3q1sdNGhITKuhQ_ECyDARzc";
+        window.supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        // Load playerbar
+        async function loadPlayerBar() {
+            try {
+                const response = await fetch('playerbar.html');
+                const html = await response.text();
+                document.getElementById('playerbar').innerHTML = html;
+                console.log('✅ Playerbar loaded successfully!');
+            } catch (error) {
+                console.error('❌ Error loading playerbar:', error);
+            }
+        }
+        
+        loadPlayerBar();
+    </script>
 </body>
-<div id="playerbar"></div>
-<script type="module">
-    import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-    const SUPABASE_URL = "https://pknhslxhpohrzgsfkisr.supabase.co";
-    const SUPABASE_ANON_KEY = "sb_publishable_-zZw-pi_3q1sdNGhITKuhQ_ECyDARzc";
-    window.supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    
-    fetch('playerbar.html')
-        .then(r => r.text())
-        .then(html => document.getElementById('playerbar').innerHTML = html);
-</script>
 </html>
