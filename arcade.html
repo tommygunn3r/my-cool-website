@@ -576,7 +576,7 @@
         }
     </style>
 </head>
-<body>
+ <body>
     <!-- Parallax Background -->
     <div class="parallax-container">
         <div class="parallax-layer layer-1"></div>
@@ -701,12 +701,14 @@
             updateCarousel();
         }
 
-        function launchGame(index) {
+        async function launchGame(index) {
+            const success = await deductArcadeCoin();
+            if (!success) return;
+            
             const game = games[index];
             gameFrame.src = `games/arcade/${game.file}`;
             gameOverlay.classList.add('active');
         }
-
         function closeGame() {
             gameOverlay.classList.remove('active');
             setTimeout(() => {
@@ -763,4 +765,15 @@
         });
     </script>
 </body>
+<div id="playerbar"></div>
+<script type="module">
+    import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+    const SUPABASE_URL = "https://pknhslxhpohrzgsfkisr.supabase.co";
+    const SUPABASE_ANON_KEY = "sb_publishable_-zZw-pi_3q1sdNGhITKuhQ_ECyDARzc";
+    window.supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    
+    fetch('playerbar.html')
+        .then(r => r.text())
+        .then(html => document.getElementById('playerbar').innerHTML = html);
+</script>
 </html>
