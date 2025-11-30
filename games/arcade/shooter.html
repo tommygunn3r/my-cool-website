@@ -1,15 +1,15 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Space Shooter</title>
     <style>
         /* Retro Green Screen Styling */
         :root {
-            --game-color: #00FF00; /* Bright Green */
+            --game-color: #00ff00;
             --bg-color: #000000;
-            --font-family: 'Courier New', monospace;
+            --font-family: "Courier New", monospace;
         }
 
         body {
@@ -22,10 +22,9 @@
             align-items: center;
             height: 100vh;
             overflow: hidden;
-            padding-bottom: 20px; /* Space for controls */
+            padding-bottom: 20px;
         }
 
-        /* Scoreboard */
         #scoreboard {
             width: 800px;
             margin-bottom: 10px;
@@ -35,17 +34,15 @@
             font-size: 1.2em;
             border-bottom: 1px solid var(--game-color);
         }
-        
-        /* Game Canvas */
+
         #gameCanvas {
             border: 2px solid var(--game-color);
-            box-shadow: 0 0 15px var(--game-color); /* Glow effect */
-            cursor: none; /* Hide default cursor */
+            box-shadow: 0 0 15px var(--game-color);
+            cursor: none;
             width: 800px;
             height: 600px;
         }
-        
-        /* Modal Popups (Start/End Game) */
+
         .modal {
             position: absolute;
             top: 0;
@@ -77,33 +74,24 @@
             font-family: var(--font-family);
             font-size: 1em;
             cursor: pointer;
-            transition: background-color 0.1s;
         }
 
-        .modal-content button:hover {
-            background-color: var(--bg-color);
-            color: var(--game-color);
-            border: 1px solid var(--game-color);
-        }
-        
-        /* New button for iOS permission */
         #motionPermissionButton {
             display: none;
             margin-top: 15px;
-            background-color: #FF6600; /* Orange for attention */
+            background-color: #ff6600;
             color: var(--bg-color);
             border-radius: 5px;
             padding: 10px 20px;
             cursor: pointer;
         }
 
-        /* --- MOBILE CONTROLS STYLING (Simplified for Tilt) --- */
         #controls {
-            display: none; /* Hidden by default on desktop */
+            display: none;
             width: 100%;
             max-width: 800px;
             margin-top: 15px;
-            justify-content: space-around; /* Space for Thrust and Fire */
+            justify-content: space-around;
             padding: 0 10px;
             box-sizing: border-box;
             align-items: flex-end;
@@ -125,20 +113,16 @@
             align-items: center;
             justify-content: center;
             border-radius: 8px;
-            box-shadow: 0 0 5px var(--game-color);
         }
 
         .control-btn.fire {
             width: 90px;
             height: 90px;
             font-size: 1.5em;
-            background-color: #FF0000; /* Red for fire */
-            color: var(--game-color);
-            border-color: #FF0000;
-            box-shadow: 0 0 10px #FF0000;
+            background-color: #ff0000;
+            border-color: #ff0000;
         }
-        
-        /* Responsive adjustments for mobile */
+
         @media (max-width: 820px) {
             #scoreboard {
                 width: 95%;
@@ -146,20 +130,18 @@
             }
             #gameCanvas {
                 width: 95%;
-                height: 70vw; 
+                height: 70vw;
             }
             #controls {
-                display: flex; /* Show controls on mobile */
+                display: flex;
             }
             .control-btn {
                 width: 60px;
                 height: 60px;
-                font-size: 1em;
             }
             .control-btn.fire {
                 width: 80px;
                 height: 80px;
-                font-size: 1.2em;
             }
         }
     </style>
@@ -173,20 +155,19 @@
     </div>
 
     <canvas id="gameCanvas" width="800" height="600"></canvas>
-    
+
     <div id="controls">
         <div class="control-btn" data-key="KeyW" data-virtual-key="ArrowUp">THRUST</div>
         <div class="control-btn fire" data-key="Space">FIRE</div>
     </div>
-    <button id="motionPermissionButton" onclick="requestMotionPermission()">Enable Tilt Control</button>
 
+    <button id="motionPermissionButton" onclick="requestMotionPermission()">Enable Tilt Control</button>
 
     <div id="startModal" class="modal">
         <div class="modal-content">
             <h2>SPACE SHOOTER</h2>
-            <p><strong>Desktop:</strong> WASD/Arrows to move, Spacebar to shoot.</p>
-            <p><strong>Mobile:</strong> **Tilt device** to turn, **THRUST** button to move, **FIRE** button to shoot.</p>
-            <p>Destroy large ships to break them down!</p>
+            <p><strong>Desktop:</strong> WASD/Arrows move, Space fires.</p>
+            <p><strong>Mobile:</strong> Tilt to turn. Buttons to thrust/fire.</p>
             <button onclick="startGame()">START GAME</button>
         </div>
     </div>
@@ -199,181 +180,127 @@
         </div>
     </div>
 
+    <!-- ======================= SUPABASE + GAME CODE ======================= -->
     <script type="module">
-        // ===== UPDATED FIREBASE & AUTH LOGIC =====
-        import { db } from '/firebase-config.js';
-        import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
-        import { collection, addDoc, serverTimestamp, doc, setDoc, increment } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+        import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-        let auth = null;
+        const SUPABASE_URL = "https://pknhslxhpohrzgsfkisr.supabase.co";
+        const SUPABASE_ANON_KEY = "sb_publishable_-zZw-pi_3q1sdNGhITKuhQ_ECyDARzc";
+
+        const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
         let currentUser = null;
 
+        // ---------------- AUTH (LOGIN REQUIRED) ----------------
         async function initGameAuth() {
             try {
-                auth = getAuth(db.app);
-                onAuthStateChanged(auth, (user) => {
-                    if (user) {
-                        console.log("Pilot Identified:", user.displayName);
-                        currentUser = user;
-                        scoreManager.playerName = user.displayName || "Unknown Pilot";
-                    } else {
-                        // Not logged in? Kick back to the portal
-                        window.location.href = '/index.html';
-                    }
-                });
-            } catch (error) {
-                console.error("Auth failed:", error);
-            }
-        }
+                const { data: { user } } = await supabase.auth.getUser();
 
-        // GameScoreManager class
-        class GameScoreManager {
-            constructor(gameName, hasScore = true) {
-                this.gameName = gameName;
-                this.hasScore = hasScore;
-                this.sessionStartTime = null;
-                this.playerName = "Loading...";
-            }
-
-            startSession() {
-                this.sessionStartTime = Date.now();
-            }
-
-            getElapsedTime() {
-                if (!this.sessionStartTime) return 0;
-                return Math.floor((Date.now() - this.sessionStartTime) / 1000);
-            }
-
-            getElapsedTimeFormatted() {
-                const seconds = this.getElapsedTime();
-                if (seconds < 60) return `${seconds}s`;
-                const mins = Math.floor(seconds / 60);
-                const secs = seconds % 60;
-                return `${mins}m ${secs}s`;
-            }
-
-            async submitGameResult(score = 0) {
-                if (!currentUser) return;
-
-                const timePlayed = this.getElapsedTime();
-                
-                try {
-                    // 1. Public Leaderboard
-                    await addDoc(collection(db, 'scores'), {
-                        gameName: this.gameName,
-                        playerName: this.playerName,
-                        score: this.hasScore ? score : 0,
-                        timePlayed: timePlayed,
-                        timestamp: serverTimestamp(),
-                        uid: currentUser.uid
-                    });
-
-                    // 2. Update Career Stats (Total Score for Portal)
-                    const userRef = doc(db, 'users', currentUser.uid);
-                    await setDoc(userRef, {
-                        lastActive: serverTimestamp(),
-                        totalArcadeScore: increment(parseInt(score)),
-                        [`gamesPlayed_${this.gameName}`]: increment(1),
-                        totalTimePlayed: increment(timePlayed)
-                    }, { merge: true });
-
-                    console.log('Score submitted & Career updated');
-                } catch (error) {
-                    console.warn('Failed to submit score:', error.message);
+                if (!user) {
+                    console.log("Not logged in. Redirecting.");
+                    window.location.href = "/index.html";
+                    return;
                 }
+
+                currentUser = user;
+                console.log("Authenticated:", user.email);
+
+            } catch (err) {
+                console.error("Supabase auth error:", err);
+                window.location.href = "/index.html";
             }
         }
-        
-        // Initialize Score Manager
-        const scoreManager = new GameScoreManager('shooter', true);
-        
-        // Start Auth Logic Immediately
+
         initGameAuth();
-        
-        // --- CONFIGURATION ---
+
+        // ---------------- SCORE SUBMISSION ----------------
+        async function submitHighScore(score) {
+            if (!currentUser) return;
+
+            const { error } = await supabase.from("game_highscores").insert({
+                user_id: currentUser.id,
+                game_id: "shooter",
+                score: Math.floor(score)
+            });
+
+            if (error) console.warn("Score submit failed:", error.message);
+            else console.log("Score submitted OK:", score);
+        }
+
+        // =====================================================================
+        // ============================ GAME LOGIC =============================
+        // =====================================================================
+
         const SOUND_PATHS = {
-            shoot: './sounds/laser_pew.wav', 
-            upgrade: './sounds/upgrade_collect.wav', 
-            engineLoop: './sounds/engine_loop.wav', 
+            shoot: './sounds/laser_pew.wav',
+            upgrade: './sounds/upgrade_collect.wav',
+            engineLoop: './sounds/engine_loop.wav',
             gameOver: './sounds/game_over_jingle.wav',
-            explosion: './sounds/explosion.wav' 
+            explosion: './sounds/explosion.wav'
         };
 
-        const canvas = document.getElementById('gameCanvas');
-        const ctx = canvas.getContext('2d');
+        const canvas = document.getElementById("gameCanvas");
+        const ctx = canvas.getContext("2d");
+
         const GAME_WIDTH = canvas.width;
         const GAME_HEIGHT = canvas.height;
-        
-        const GAME_COLOR = getComputedStyle(document.documentElement).getPropertyValue('--game-color').trim();
+
+        const GAME_COLOR = getComputedStyle(document.documentElement)
+            .getPropertyValue("--game-color")
+            .trim();
 
         let gameRunning = false;
         let score = 0;
         let salvage = 0;
+
         let ship;
         let bullets = [];
         let enemies = [];
         let debris = [];
-        let explosions = []; 
-        const keyMap = {};
+        let explosions = [];
+
         let lastBulletTime = 0;
+        const keyMap = {};
 
-        // --- TILT CONTROL STATE ---
-        let tiltGamma = 0; // Left/right tilt (-90 to 90)
-        let tiltMax = 45; // Maximum tilt angle (in degrees) used for full turn rate
+        // Tilt
+        let tiltGamma = 0;
+        let tiltMax = 45;
 
-        // --- SOUND UTILITIES ---
-        let engineSound;
+        let engineSound = null;
 
-        function initializeEngineSound() {}
-        initializeEngineSound();
-
-        function playSound(src, volume = 1.0) {
-            if (src && engineSound && !engineSound.paused) { 
-                const audio = new Audio(src);
-                audio.volume = volume;
-                audio.play().catch(e => {
-                    console.error("Local audio failed to load/play:", src, e.message);
-                });
-            }
+        function playSound(src, vol = 1) {
+            const a = new Audio(src);
+            a.volume = vol;
+            a.play().catch(() => {});
         }
 
-        // --- DEVICE ORIENTATION (TILT) SETUP ---
-
+        // Tilt controls
         function handleDeviceOrientation(event) {
-            // Gamma is the front-to-back tilt (for movement direction)
-            // Beta is the side-to-side tilt (for turning)
-            
-            // We use gamma for side-to-side turning (tilting the device left/right)
-            // Clamp gamma between -tiltMax and tiltMax for responsive control
             tiltGamma = Math.max(-tiltMax, Math.min(tiltMax, event.gamma || 0));
         }
 
-        window.requestMotionPermission = async function() {
-            if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+        window.requestMotionPermission = async function () {
+            if (typeof DeviceOrientationEvent.requestPermission === "function") {
                 const permissionState = await DeviceOrientationEvent.requestPermission();
-                if (permissionState === 'granted') {
-                    window.addEventListener('deviceorientation', handleDeviceOrientation);
-                    document.getElementById('motionPermissionButton').style.display = 'none';
-                } else {
-                    console.warn("Motion sensor permission denied.");
+                if (permissionState === "granted") {
+                    window.addEventListener("deviceorientation", handleDeviceOrientation);
+                    document.getElementById("motionPermissionButton").style.display = "none";
                 }
             } else {
-                // Non-iOS device, permission not required
-                window.addEventListener('deviceorientation', handleDeviceOrientation);
-                document.getElementById('motionPermissionButton').style.display = 'none';
+                window.addEventListener("deviceorientation", handleDeviceOrientation);
+                document.getElementById("motionPermissionButton").style.display = "none";
             }
-        }
+        };
 
-        // Check if we need the permission button (typically iOS 13+)
-        if (typeof DeviceOrientationEvent.requestPermission === 'function') {
-            document.getElementById('motionPermissionButton').style.display = 'block';
+        if (typeof DeviceOrientationEvent.requestPermission !== "function") {
+            window.addEventListener("deviceorientation", handleDeviceOrientation);
         } else {
-            // Automatically start listening for orientation on non-iOS
-            window.addEventListener('deviceorientation', handleDeviceOrientation);
+            document.getElementById("motionPermissionButton").style.display = "block";
         }
 
-        // --- GAME OBJECTS ---
-
+        // -------------------------------------------------------
+        // GAME OBJECT CREATORS
+        // -------------------------------------------------------
         function createShip() {
             return {
                 x: GAME_WIDTH / 2,
@@ -382,348 +309,325 @@
                 velY: 0,
                 angle: 0,
                 radius: 15,
-                // Upgradeable Stats
+
                 maxSpeed: 5,
                 thrust: 0.15,
                 turnRate: 0.05,
-                fireRate: 150, 
+                fireRate: 150,
                 bulletSpeed: 7,
+
                 hullHP: 3,
-                maxHP: 3,
+                maxHP: 3
             };
         }
 
-        // Modified Create Enemy to support Sizes (Tiers)
-        // tier 3 = Large, tier 2 = Medium, tier 1 = Small
-        function createEnemy(spawnX = null, spawnY = null, tier = 3) {
-            let x, y;
-            
-            // If spawn coordinates provided (breakup logic), use them
-            if (spawnX !== null && spawnY !== null) {
-                x = spawnX;
-                y = spawnY;
+        function createEnemy(x = null, y = null, tier = 3) {
+            let ex, ey;
+
+            if (x !== null) {
+                ex = x;
+                ey = y;
             } else {
-                // Spawn on edge
-                const edge = Math.floor(Math.random() * 4); 
-                if (edge === 0) { x = Math.random() * GAME_WIDTH; y = 0; }
-                else if (edge === 1) { x = GAME_WIDTH; y = Math.random() * GAME_HEIGHT; }
-                else if (edge === 2) { x = Math.random() * GAME_WIDTH; y = GAME_HEIGHT; }
-                else { x = 0; y = Math.random() * GAME_HEIGHT; }
+                const edge = Math.floor(Math.random() * 4);
+                if (edge === 0) {
+                    ex = Math.random() * GAME_WIDTH;
+                    ey = 0;
+                } else if (edge === 1) {
+                    ex = GAME_WIDTH;
+                    ey = Math.random() * GAME_HEIGHT;
+                } else if (edge === 2) {
+                    ex = Math.random() * GAME_WIDTH;
+                    ey = GAME_HEIGHT;
+                } else {
+                    ex = 0;
+                    ey = Math.random() * GAME_HEIGHT;
+                }
             }
 
-            // Calculate stats based on Tier
             let radius, speed, hp, scoreValue;
 
             if (tier === 3) {
                 radius = 35;
-                speed = 0.8 + Math.random() * 0.5; // Slow
+                speed = 1.1;
                 hp = 4;
                 scoreValue = 100;
             } else if (tier === 2) {
                 radius = 20;
-                speed = 1.5 + Math.random(); // Medium
+                speed = 2;
                 hp = 2;
                 scoreValue = 50;
             } else {
                 radius = 10;
-                speed = 2.5 + Math.random() * 1.5; // Fast
+                speed = 3.3;
                 hp = 1;
                 scoreValue = 25;
             }
 
-            // Calculate Velocity
-            let angle;
-            if (spawnX !== null) {
-                // Scatter effect for broken ships
-                angle = Math.random() * Math.PI * 2;
-            } else {
-                // Move towards player
-                angle = Math.atan2(ship.y - y, ship.x - x);
-            }
-            
-            const shapes = ['square', 'triangle', 'diamond'];
+            let angle = x !== null ? Math.random() * Math.PI * 2 : Math.atan2(ship.y - ey, ship.x - ex);
+
+            const shapes = ["square", "triangle", "diamond"];
             const shape = shapes[Math.floor(Math.random() * shapes.length)];
 
             return {
-                x, y,
+                x: ex,
+                y: ey,
                 velX: Math.cos(angle) * speed,
                 velY: Math.sin(angle) * speed,
-                radius: radius, 
-                hp: hp,
-                tier: tier, // Store the tier
-                scoreValue: scoreValue,
-                shape: shape, 
+                radius,
+                hp,
+                tier,
+                scoreValue,
+                shape
             };
         }
 
         function createDebris(x, y) {
-            const types = ['motor', 'armour']; 
+            const types = ["motor", "armour"];
             const type = types[Math.floor(Math.random() * types.length)];
-            
+
             return {
-                x, y, 
-                radius: type === 'armour' ? 10 : 8,
-                type: type,
-                velX: Math.random() * 2 - 1, 
-                velY: Math.random() * 2 - 1,
+                x,
+                y,
+                radius: type === "armour" ? 10 : 8,
+                type,
+                velX: Math.random() * 2 - 1,
+                velY: Math.random() * 2 - 1
             };
         }
-        
-        function createExplosion(x, y, numParticles = 10, maxRadius = 3) {
+
+        function createExplosion(x, y, parts = 10, maxR = 3) {
             playSound(SOUND_PATHS.explosion, 0.6);
 
-            for (let i = 0; i < numParticles; i++) {
+            for (let i = 0; i < parts; i++) {
                 const angle = Math.random() * Math.PI * 2;
                 const speed = Math.random() * 5 + 1;
 
                 explosions.push({
-                    x: x,
-                    y: y,
+                    x,
+                    y,
                     velX: Math.cos(angle) * speed,
                     velY: Math.sin(angle) * speed,
-                    radius: maxRadius, 
-                    life: 60, 
-                    maxLife: 60,
+                    radius: maxR,
+                    life: 60,
+                    maxLife: 60
                 });
             }
         }
-        
-        // --- INPUTS (KEYBOARD) ---
-        document.addEventListener('keydown', (event) => { keyMap[event.code] = true; });
-        document.addEventListener('keyup', (event) => { keyMap[event.code] = false; });
 
-        // --- INPUTS (TOUCH CONTROLS) ---
-        function setupTouchControls() {
-            document.querySelectorAll('.control-btn').forEach(button => {
-                const key = button.getAttribute('data-key');
-                
-                const press = () => {
-                    keyMap[key] = true;
-                    const virtualKey = button.getAttribute('data-virtual-key');
-                    if (virtualKey) keyMap[virtualKey] = true; 
-                    button.style.filter = 'brightness(1.5)';
-                };
+        document.addEventListener("keydown", (e) => (keyMap[e.code] = true));
+        document.addEventListener("keyup", (e) => (keyMap[e.code] = false));
 
-                const release = () => {
-                    keyMap[key] = false;
-                    const virtualKey = button.getAttribute('data-virtual-key');
-                    if (virtualKey) keyMap[virtualKey] = false;
-                    button.style.filter = 'brightness(1.0)';
-                };
+        // -------------------------------------------------------
+        // TOUCH CONTROLS
+        // -------------------------------------------------------
+        document.querySelectorAll(".control-btn").forEach((btn) => {
+            const key = btn.dataset.key;
 
-                button.addEventListener('touchstart', (e) => {
-                    e.preventDefault(); 
-                    press();
-                }, { passive: false });
+            const press = () => {
+                keyMap[key] = true;
+                const vkey = btn.dataset.virtualKey;
+                if (vkey) keyMap[vkey] = true;
+            };
+            const release = () => {
+                keyMap[key] = false;
+                const vkey = btn.dataset.virtualKey;
+                if (vkey) keyMap[vkey] = false;
+            };
 
-                button.addEventListener('touchend', release);
-                button.addEventListener('mousedown', press);
-                button.addEventListener('mouseup', release);
-                button.addEventListener('mouseleave', (e) => {
-                    if (keyMap[key]) release();
-                });
+            btn.addEventListener("touchstart", (e) => {
+                e.preventDefault();
+                press();
             });
-        }
-        
-        setupTouchControls();
+            btn.addEventListener("touchend", release);
+            btn.addEventListener("mousedown", press);
+            btn.addEventListener("mouseup", release);
+        });
 
-        // --- GAME LOGIC ---
-
+        // -------------------------------------------------------
+        // UPDATE LOOP
+        // -------------------------------------------------------
         function update() {
             if (!gameRunning) return;
-            
-            const isThrusting = keyMap['ArrowUp'] || keyMap['KeyW'];
-            
-            // 1. SHIP MOVEMENT
-            
-            // --- NEW: TILT CONTROL FOR TURNING ---
-            const tiltFactor = tiltGamma / tiltMax; // Normalized value between -1 and 1
-            if (Math.abs(tiltFactor) > 0.1) { // Apply turning if tilted more than 10%
-                 ship.angle += ship.turnRate * tiltFactor;
-            }
-            
-            // Fallback for keyboard turning (for desktop play)
-            if (keyMap['ArrowLeft'] || keyMap['KeyA']) { ship.angle -= ship.turnRate; }
-            if (keyMap['ArrowRight'] || keyMap['KeyD']) { ship.angle += ship.turnRate; }
-            
-            // Handle thrusting
+
+            const isThrusting = keyMap["ArrowUp"] || keyMap["KeyW"];
+
+            // Turning, tilt first
+            const tiltNorm = tiltGamma / tiltMax;
+            if (Math.abs(tiltNorm) > 0.1) ship.angle += ship.turnRate * tiltNorm;
+
+            if (keyMap["ArrowLeft"] || keyMap["KeyA"]) ship.angle -= ship.turnRate;
+            if (keyMap["ArrowRight"] || keyMap["KeyD"]) ship.angle += ship.turnRate;
+
             if (isThrusting) {
                 ship.velX += Math.cos(ship.angle) * ship.thrust;
                 ship.velY += Math.sin(ship.angle) * ship.thrust;
             } else {
-                // Friction/Drag
                 ship.velX *= 0.99;
                 ship.velY *= 0.99;
             }
-            
-            // Engine volume adjusts based on thrust
-            if (engineSound) {
-                engineSound.volume = isThrusting ? 0.5 : 0.2; 
-            }
-            
-            // Limit Speed
-            let speed = Math.sqrt(ship.velX**2 + ship.velY**2);
-            if (speed > ship.maxSpeed) {
-                let ratio = ship.maxSpeed / speed;
-                ship.velX *= ratio;
-                ship.velY *= ratio;
+
+            // Speed limit
+            const spd = Math.hypot(ship.velX, ship.velY);
+            if (spd > ship.maxSpeed) {
+                const r = ship.maxSpeed / spd;
+                ship.velX *= r;
+                ship.velY *= r;
             }
 
-            // Update Position & Wraparound
+            // Move + wrap
             ship.x += ship.velX;
             ship.y += ship.velY;
+
             if (ship.x < 0) ship.x = GAME_WIDTH;
             if (ship.x > GAME_WIDTH) ship.x = 0;
             if (ship.y < 0) ship.y = GAME_HEIGHT;
             if (ship.y > GAME_HEIGHT) ship.y = 0;
 
-            // 2. SHOOTING
-            if ((keyMap['Space'] || keyMap['KeyF']) && Date.now() - lastBulletTime > ship.fireRate) {
+            // Shooting
+            if ((keyMap["Space"] || keyMap["KeyF"]) && Date.now() - lastBulletTime > ship.fireRate) {
                 bullets.push({
-                    x: ship.x + Math.cos(ship.angle) * ship.radius, 
+                    x: ship.x + Math.cos(ship.angle) * ship.radius,
                     y: ship.y + Math.sin(ship.angle) * ship.radius,
                     velX: Math.cos(ship.angle) * ship.bulletSpeed + ship.velX,
                     velY: Math.sin(ship.angle) * ship.bulletSpeed + ship.velY,
-                    radius: 3,
+                    radius: 3
                 });
                 lastBulletTime = Date.now();
-                playSound(SOUND_PATHS.shoot, 0.4); 
+                playSound(SOUND_PATHS.shoot, 0.4);
             }
 
-            // 3. UPDATE BULLETS, ENEMIES, AND DEBRIS
-            bullets.forEach(b => { b.x += b.velX; b.y += b.velY; });
-            bullets = bullets.filter(b => b.x > 0 && b.x < GAME_WIDTH && b.y > 0 && b.y < GAME_HEIGHT);
+            bullets.forEach((b) => ((b.x += b.velX), (b.y += b.velY)));
+            bullets = bullets.filter(
+                (b) => b.x > 0 && b.x < GAME_WIDTH && b.y > 0 && b.y < GAME_HEIGHT
+            );
 
-            enemies.forEach(e => { e.x += e.velX; e.y += e.velY; });
-            enemies.forEach(e => {
+            enemies.forEach((e) => ((e.x += e.velX), (e.y += e.velY)));
+            enemies.forEach((e) => {
                 if (e.x < 0) e.x = GAME_WIDTH;
                 if (e.x > GAME_WIDTH) e.x = 0;
                 if (e.y < 0) e.y = GAME_HEIGHT;
                 if (e.y > GAME_HEIGHT) e.y = 0;
             });
 
-            debris.forEach(d => { d.x += d.velX; d.y += d.velY; d.velX *= 0.99; d.velY *= 0.99; });
+            debris.forEach((d) => {
+                d.x += d.velX;
+                d.y += d.velY;
+                d.velX *= 0.99;
+                d.velY *= 0.99;
+            });
 
-            // Update explosions (particles)
-            explosions.forEach(p => {
+            explosions.forEach((p) => {
                 p.x += p.velX;
                 p.y += p.velY;
                 p.life--;
                 p.velX *= 0.95;
                 p.velY *= 0.95;
             });
-            explosions = explosions.filter(p => p.life > 0); 
+            explosions = explosions.filter((p) => p.life > 0);
 
-
-            // 4. COLLISIONS (Bullet vs. Enemy)
+            // BULLET vs ENEMY
+            let newEnemies = [];
             let newDebris = [];
-            let newEnemies = []; // Temp array for children enemies
 
-            bullets = bullets.filter(b => {
+            bullets = bullets.filter((b) => {
                 let hit = false;
-                enemies = enemies.filter(e => {
-                    const dist = Math.sqrt((b.x - e.x)**2 + (b.y - e.y)**2);
+
+                enemies = enemies.filter((e) => {
+                    const dist = Math.hypot(b.x - e.x, b.y - e.y);
                     if (dist < b.radius + e.radius) {
                         e.hp--;
                         hit = true;
+
                         if (e.hp <= 0) {
-                            // Enemy Destroyed
                             score += e.scoreValue;
-                            createExplosion(e.x, e.y, e.tier * 5); // Bigger boom for bigger ship
-                            
-                            // SPAWN CHILDREN LOGIC
+                            createExplosion(e.x, e.y, e.tier * 5);
+
                             if (e.tier > 1) {
-                                // Spawn 2 smaller enemies
                                 newEnemies.push(createEnemy(e.x, e.y, e.tier - 1));
                                 newEnemies.push(createEnemy(e.x, e.y, e.tier - 1));
                             }
 
-                            // Chance for drop (Only from Tier 2 or 3 to prevent farming tiny ones)
-                            if (Math.random() < 0.2 && e.tier > 1) { 
+                            if (Math.random() < 0.2 && e.tier > 1) {
                                 newDebris.push(createDebris(e.x, e.y));
                             }
-                            return false; // Remove from enemies array
-                        }
-                        return true; 
-                    }
-                    return true; 
-                });
-                return !hit; 
-            });
-            
-            debris.push(...newDebris);
-            enemies.push(...newEnemies); // Add the children to the main array
 
-            // 5. COLLISIONS (Player vs. Enemy) - Take Damage
-            enemies = enemies.filter(e => {
-                const dist = Math.sqrt((ship.x - e.x)**2 + (ship.y - e.y)**2);
-                if (dist < ship.radius + e.radius) {
-                    ship.hullHP--;
-                    createExplosion(e.x, e.y, 5, 2); 
-                    if (ship.hullHP <= 0) {
-                        endGame();
+                            return false;
+                        }
+
+                        return true;
                     }
-                    return false; // Enemy is destroyed on impact
+                    return true;
+                });
+
+                return !hit;
+            });
+
+            enemies.push(...newEnemies);
+            debris.push(...newDebris);
+
+            // PLAYER COLLISIONS
+            enemies = enemies.filter((e) => {
+                const d = Math.hypot(ship.x - e.x, ship.y - e.y);
+                if (d < ship.radius + e.radius) {
+                    ship.hullHP--;
+                    createExplosion(e.x, e.y, 5, 2);
+
+                    if (ship.hullHP <= 0) endGame();
+                    return false;
                 }
                 return true;
             });
-            
-            // 6. COLLISIONS (Player vs. Debris) - Salvage/Upgrade
-            debris = debris.filter(d => {
-                const dist = Math.sqrt((ship.x - d.x)**2 + (ship.y - d.y)**2);
+
+            debris = debris.filter((d) => {
+                const dist = Math.hypot(ship.x - d.x, ship.y - d.y);
                 if (dist < ship.radius + d.radius) {
                     salvage++;
-                    
-                    if (d.type === 'motor') {
+
+                    if (d.type === "motor") {
                         ship.thrust += 0.02;
                         ship.maxSpeed += 0.5;
-                        playSound(SOUND_PATHS.upgrade);
-                    } else if (d.type === 'armour') {
+                    } else {
                         ship.maxHP += 1;
-                        ship.hullHP = ship.maxHP; 
-                        playSound(SOUND_PATHS.upgrade); 
+                        ship.hullHP = ship.maxHP;
                     }
 
-                    return false; 
+                    playSound(SOUND_PATHS.upgrade);
+                    return false;
                 }
                 return true;
             });
 
-            // 7. ENEMY SPAWN (Simple Wave Logic)
-            // Reduced spawn rate slightly because breaking enemies creates more clutter
             if (enemies.length < 2 + Math.floor(score / 1000)) {
-                enemies.push(createEnemy()); // Spawns a default tier 3
+                enemies.push(createEnemy());
             }
 
-            // 8. UPDATE SCOREBOARD
-            document.getElementById('scoreValue').textContent = score;
-            document.getElementById('hpValue').textContent = ship.hullHP;
-            document.getElementById('maxHpValue').textContent = ship.maxHP;
-            document.getElementById('salvageValue').textContent = salvage;
+            document.getElementById("scoreValue").textContent = score;
+            document.getElementById("hpValue").textContent = ship.hullHP;
+            document.getElementById("maxHpValue").textContent = ship.maxHP;
+            document.getElementById("salvageValue").textContent = salvage;
         }
 
-        // --- DRAWING FUNCTIONS ---
-
+        // -------------------------------------------------------
+        // DRAW FUNCTIONS
+        // -------------------------------------------------------
         function drawShip() {
             ctx.strokeStyle = GAME_COLOR;
             ctx.lineWidth = 2;
-            
+
             ctx.save();
             ctx.translate(ship.x, ship.y);
             ctx.rotate(ship.angle);
-            
-            // Draw a triangle for the ship (Asteroids style)
+
             ctx.beginPath();
-            ctx.moveTo(ship.radius, 0); // Nose
+            ctx.moveTo(ship.radius, 0);
             ctx.lineTo(-ship.radius * 0.8, -ship.radius * 0.8);
-            ctx.lineTo(-ship.radius * 0.6, 0); // Base of the flame
+            ctx.lineTo(-ship.radius * 0.6, 0);
             ctx.lineTo(-ship.radius * 0.8, ship.radius * 0.8);
             ctx.closePath();
             ctx.stroke();
 
-            // Draw a small flame when thrusting
-            if (keyMap['ArrowUp'] || keyMap['KeyW']) {
-                ctx.fillStyle = 'yellow';
+            if (keyMap["ArrowUp"] || keyMap["KeyW"]) {
+                ctx.fillStyle = "yellow";
                 ctx.beginPath();
                 ctx.moveTo(-ship.radius * 0.6, -ship.radius * 0.4);
                 ctx.lineTo(-ship.radius * 1.5, 0);
@@ -735,148 +639,126 @@
         }
 
         function drawEnemy(e) {
-            ctx.strokeStyle = GAME_COLOR; 
+            ctx.strokeStyle = GAME_COLOR;
             ctx.lineWidth = 2;
+
             ctx.save();
             ctx.translate(e.x, e.y);
-            
-            // Draw different shapes based on the enemy type
-            if (e.shape === 'square') {
-                const size = e.radius * 1.4;
-                ctx.strokeRect(-size / 2, -size / 2, size, size);
-            } else if (e.shape === 'triangle') {
+
+            if (e.shape === "square") {
+                const s = e.radius * 1.4;
+                ctx.strokeRect(-s / 2, -s / 2, s, s);
+            } else if (e.shape === "triangle") {
                 ctx.beginPath();
                 ctx.moveTo(e.radius, 0);
                 ctx.lineTo(-e.radius / 2, e.radius * 0.866);
                 ctx.lineTo(-e.radius / 2, -e.radius * 0.866);
                 ctx.closePath();
                 ctx.stroke();
-            } else if (e.shape === 'diamond') {
-                const size = e.radius * 1.2;
+            } else if (e.shape === "diamond") {
+                const s = e.radius * 1.2;
                 ctx.beginPath();
-                ctx.moveTo(size, 0);
-                ctx.lineTo(0, size);
-                ctx.lineTo(-size, 0);
-                ctx.lineTo(0, -size);
+                ctx.moveTo(s, 0);
+                ctx.lineTo(0, s);
+                ctx.lineTo(-s, 0);
+                ctx.lineTo(0, -s);
                 ctx.closePath();
                 ctx.stroke();
             } else {
-                // Default to circle
                 ctx.beginPath();
                 ctx.arc(0, 0, e.radius, 0, Math.PI * 2);
                 ctx.stroke();
             }
-            
+
             ctx.restore();
-            
-            // HP Indicator (Only for large ships to reduce clutter)
+
             if (e.tier > 1) {
-                ctx.font = '12px Courier New';
+                ctx.font = "12px Courier New";
                 ctx.fillText(`HP:${e.hp}`, e.x - 15, e.y - e.radius - 5);
             }
         }
 
         function draw() {
-            // Clear the screen
-            ctx.fillStyle = 'black'; 
+            ctx.fillStyle = "black";
             ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
 
             drawShip();
-            
-            // Draw Bullets
-            ctx.fillStyle = GAME_COLOR; // Green color
-            bullets.forEach(b => {
+
+            ctx.fillStyle = GAME_COLOR;
+            bullets.forEach((b) => {
                 ctx.beginPath();
                 ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
                 ctx.fill();
             });
 
-            // Draw Enemies
-            enemies.forEach(e => {
-                drawEnemy(e);
-            });
+            enemies.forEach(drawEnemy);
 
-            // Draw Debris 
-            debris.forEach(d => {
-                // Set color based on type
-                ctx.fillStyle = d.type === 'motor' ? 'yellow' : 'cyan';
-                
+            debris.forEach((d) => {
+                ctx.fillStyle = d.type === "motor" ? "yellow" : "cyan";
                 ctx.fillRect(d.x - d.radius / 2, d.y - d.radius / 2, d.radius, d.radius);
             });
-            
-            // Draw Explosions (Particles)
-            explosions.forEach(p => {
-                const ratio = p.life / p.maxLife; 
-                const size = p.radius * ratio;
-                
-                ctx.fillStyle = ratio > 0.5 ? 'yellow' : 'orange'; 
-                ctx.fillRect(p.x - size / 2, p.y - size / 2, size, size);
+
+            explosions.forEach((p) => {
+                const ratio = p.life / p.maxLife;
+                const sz = p.radius * ratio;
+
+                ctx.fillStyle = ratio > 0.5 ? "yellow" : "orange";
+                ctx.fillRect(p.x - sz / 2, p.y - sz / 2, sz, sz);
             });
         }
-        
-        // --- GAME CONTROL ---
 
+        // -------------------------------------------------------
+        // GAME CONTROL
+        // -------------------------------------------------------
         function gameLoop() {
             update();
             draw();
-            if (gameRunning) {
-                requestAnimationFrame(gameLoop);
-            }
+            if (gameRunning) requestAnimationFrame(gameLoop);
         }
 
-        window.startGame = function() {
-            // Initialization
+        window.startGame = function () {
             ship = createShip();
             score = 0;
             salvage = 0;
-            enemies = [];
-            bullets = [];
-            debris = [];
-            explosions = []; 
-            gameRunning = true;
-            
-            // Start tracking time
-            scoreManager.startSession();
 
-            // FIX: Create the Audio object and start playback ONLY HERE, 
-            // inside the function tied to the user's click event.
+            bullets = [];
+            enemies = [];
+            debris = [];
+            explosions = [];
+
+            gameRunning = true;
+
             if (!engineSound) {
                 engineSound = new Audio(SOUND_PATHS.engineLoop);
                 engineSound.loop = true;
-                engineSound.volume = 0.3; 
+                engineSound.volume = 0.3;
                 document.body.appendChild(engineSound);
             }
 
-            // --- START ENGINE SOUND (Browser should allow this since it's user-initiated) ---
-            engineSound.play().catch(e => console.error("Engine sound blocked:", e)); 
+            engineSound.play().catch(() => {});
 
-            // Hide the start modal and start the loop
-            document.getElementById('startModal').style.display = 'none';
+            document.getElementById("startModal").style.display = "none";
             gameLoop();
-        }
+        };
 
         function endGame() {
             gameRunning = false;
-            
-            // Submit score to leaderboard
-            scoreManager.submitGameResult(score);
-            
-            // --- STOP ENGINE AND PLAY GAME OVER SOUND ---
+
+            submitHighScore(score);
+
             if (engineSound) {
                 engineSound.pause();
-                engineSound.currentTime = 0; 
+                engineSound.currentTime = 0;
             }
+
             playSound(SOUND_PATHS.gameOver);
 
-            const playTime = scoreManager.getElapsedTimeFormatted();
-            document.getElementById('endModal').style.display = 'flex';
-            document.getElementById('finalScore').textContent = score + ' | Time: ' + playTime;
+            document.getElementById("finalScore").textContent = score;
+            document.getElementById("endModal").style.display = "flex";
         }
 
-        // Initial settings for canvas text
-        ctx.font = '16px var(--font-family)';
+        ctx.font = "16px var(--font-family)";
         ctx.fillStyle = GAME_COLOR;
-
     </script>
 </body>
 </html>
