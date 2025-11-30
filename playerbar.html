@@ -12,30 +12,49 @@
     top:0;
     z-index:2000;
 ">
-
     <div style="display:flex; align-items:center; gap:12px;">
         <span id="pb-player-name" style="font-size:1.2rem; font-weight:bold;">
             PLAYER
         </span>
-
         <span style="font-size:1.2rem;">🪙</span>
         <span id="pb-player-coins" style="font-size:1.1rem;">
             0
         </span>
     </div>
 
-    <button type="button" onclick="togglePBMenu()" 
-        style="
-            padding:8px 16px;
-            background:rgba(233,69,96,0.2);
-            border:2px solid #e94560;
-            color:white;
-            border-radius:8px;
-            cursor:pointer;
-            font-weight:bold;
-        ">
-        ⚙ Settings
-    </button>
+    <div style="display:flex; align-items:center; gap:8px;">
+        <!-- LOGIN button for guests -->
+        <button id="pb-login-btn" type="button"
+            style="
+                padding:8px 14px;
+                background:rgba(233,69,96,0.2);
+                border:2px solid #e94560;
+                color:white;
+                border-radius:8px;
+                cursor:pointer;
+                font-weight:bold;
+                display:none;
+            "
+            onclick="pbOpenLogin()">
+            Login
+        </button>
+
+        <!-- SETTINGS button for logged-in users -->
+        <button type="button" class="pb-settings-btn"
+            style="
+                padding:8px 16px;
+                background:rgba(233,69,96,0.2);
+                border:2px solid #e94560;
+                color:white;
+                border-radius:8px;
+                cursor:pointer;
+                font-weight:bold;
+                display:none;
+            "
+            onclick="togglePBMenu(event)">
+            ⚙ Settings
+        </button>
+    </div>
 
     <div id="pb-settings-menu" style="
         position:absolute;
@@ -58,75 +77,121 @@
 
 <script>
 async function pbGetSession() {
-    const raw = localStorage.getItem("supabase.auth.token");
-    if (!raw) return null;
-    try { 
-        return JSON.parse(raw).currentSession;
-    } catch { 
-        return null; 
+    try {
+        if (typeof supabase === "undefined") return null;
+        const { data: { session } } = await supabase.auth.getSession();
+        return session;
+    } catch (e) {
+        console.error("pbGetSession error", e);
+        return null;
     }
 }
 
 async function pbLoadPlayerData() {
-    const session = await pbGetSession();
     const nameSpan = document.getElementById("pb-player-name");
     const coinSpan = document.getElementById("pb-player-coins");
+    const loginBtn = document.getElementById("pb-login-btn");
+    const settingsBtn = document.querySelector(".pb-settings-btn");
+
+    if (!nameSpan || !coinSpan) return;
+
+    const session = await pbGetSession();
 
     if (!session) {
+        // guest
         nameSpan.textContent = "GUEST";
         coinSpan.textContent = "0";
+        if (loginBtn) loginBtn.style.display = "inline-flex";
+        if (settingsBtn) settingsBtn.style.display = "none";
         return;
     }
 
-    const userId = session.user.id;
+    if (typeof supabase === "undefined") {
+        nameSpan.textContent = "PLAYER";
+        if (loginBtn) loginBtn.style.display = "none";
+        if (settingsBtn) settingsBtn.style.display = "inline-flex";
+        return;
+    }
 
-    if (typeof supabase === "undefined") return;
-
-    const { data } = await supabase
+    const { data, error } = await supabase
         .from("profiles")
         .select("player_name, gunnercoins")
-        .eq("id", userId)
+        .eq("id", session.user.id)
         .single();
 
-    if (data) {
-        nameSpan.textContent = data.player_name;
-        coinSpan.textContent = data.gunnercoins ?? 0;
+    if (error || !data) {
+        console.error("pbLoadPlayerData profile error", error);
+        nameSpan.textContent = "PLAYER";
+        coinSpan.textContent = "0";
+    } else {
+        nameSpan.textContent = data.player_name || "PLAYER";
+        coinSpan.textContent = data.gunnercoins != null ? data.gunnercoins : 0;
     }
+
+    if (loginBtn) loginBtn.style.display = "none";
+    if (settingsBtn) settingsBtn.style.display = "inline-flex";
 }
 
-function togglePBMenu() {
+function togglePBMenu(e) {
+    e.stopPropagation(); // don't trigger document click
     const menu = document.getElementById("pb-settings-menu");
+    if (!menu) return;
     menu.style.display = (menu.style.display === "block") ? "none" : "block";
 }
 
 document.addEventListener("click", (e) => {
-    if (!e.target.closest("#pb-settings-menu") && !e.target.closest("button")) {
-        document.getElementById("pb-settings-menu").style.display = "none";
+    const menu = document.getElementById("pb-settings-menu");
+    if (!menu) return;
+    if (!e.target.closest("#pb-settings-menu") &&
+        !e.target.closest(".pb-settings-btn")) {
+        menu.style.display = "none";
     }
 });
 
+// Actions wired into your existing functions on index.html
+function pbOpenLogin() {
+    if (typeof openModal === "function") {
+        openModal("login");
+    } else {
+        window.location.href = "index.html";
+    }
+}
+
 function pbOpenChangeName() {
-    if (typeof openChangeName === "function") openChangeName();
-    else window.location.href = "index.html";
+    if (typeof openChangeName === "function") {
+        openChangeName();
+    } else {
+        window.location.href = "index.html";
+    }
 }
 
 function pbOpenResetPassword() {
-    if (typeof openResetPasswordModal === "function") openResetPasswordModal();
-    else window.location.href = "index.html";
+    if (typeof openResetPasswordModal === "function") {
+        openResetPasswordModal();
+    } else {
+        window.location.href = "index.html";
+    }
 }
 
 function pbDeleteAccount() {
-    if (typeof confirmDeleteAccount === "function") confirmDeleteAccount();
-    else window.location.href = "index.html";
+    if (typeof confirmDeleteAccount === "function") {
+        confirmDeleteAccount();
+    } else {
+        window.location.href = "index.html";
+    }
 }
 
 async function pbLogout() {
-    if (typeof handleLogout === "function") handleLogout();
-    else if (typeof supabase !== "undefined") await supabase.auth.signOut();
+    if (typeof handleLogout === "function") {
+        await handleLogout();
+    } else if (typeof supabase !== "undefined") {
+        await supabase.auth.signOut();
+    }
     localStorage.removeItem("supabase.auth.token");
     window.location.href = "index.html";
 }
 
+// periodically refresh display
 pbLoadPlayerData();
 setInterval(pbLoadPlayerData, 15000);
 </script>

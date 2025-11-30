@@ -425,13 +425,29 @@ async function loadPlayerBar(){
     try {
         const res = await fetch("playerbar.html");
         const html = await res.text();
-        document.getElementById("playerbar").innerHTML = html;
+        const container = document.getElementById("playerbar");
+
+        const temp = document.createElement("div");
+        temp.innerHTML = html;
+
+        // move non-script nodes in
+        Array.from(temp.children).forEach(node => {
+            if (node.tagName && node.tagName.toLowerCase() === "script") {
+                const s = document.createElement("script");
+                if (node.src) s.src = node.src;
+                else s.textContent = node.textContent;
+                document.body.appendChild(s);
+            } else {
+                container.appendChild(node);
+            }
+        });
     } catch (e) {
         console.error("Failed to load playerbar", e);
     }
 }
 document.addEventListener("DOMContentLoaded", loadPlayerBar);
 </script>
+
 
 </body>
 </html>
