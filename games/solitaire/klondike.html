@@ -315,6 +315,7 @@
                 return `${mins}:${secs.toString().padStart(2, '0')}`;
             }
         }
+        const scoreManager = new GameScoreManager('Klondike Solitaire');
 
         // --- Assets & Constants ---
         const ICONS = { spades: '♠', hearts: '♥', clubs: '♣', diamonds: '♦' };
