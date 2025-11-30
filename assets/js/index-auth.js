@@ -12,6 +12,9 @@ const SUPABASE_ANON_KEY = "sb_publishable_-zZw-pi_3q1sdNGhITKuhQ_ECyDARzc";
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+// expose globally for other scripts
+window.supabase = supabase;
+
 // ---------------------------------------------------------
 //  UI ELEMENTS
 // ---------------------------------------------------------
@@ -56,14 +59,22 @@ function lockGamesUI() {
 }
 
 function updateProfileUI(profile) {
-    const name = (profile?.player_name || "PLAYER").toUpperCase();
+    const name  = (profile?.player_name || "PLAYER").toUpperCase();
     const coins = Number(profile?.gunnercoins ?? 0);
 
-    displayNameEl.textContent = name;
-    displayBalanceEl.textContent = coins.toLocaleString();
+    if (typeof displayNameEl !== "undefined" && displayNameEl) {
+        displayNameEl.textContent = name;
+    }
+    if (typeof displayBalanceEl !== "undefined" && displayBalanceEl) {
+        displayBalanceEl.textContent = coins.toLocaleString();
+    }
 
-    localStorage.setItem("playerName", name);
-    localStorage.setItem("gunnercoins", coins);
+    try {
+        localStorage.setItem("playerName", name);
+        localStorage.setItem("gunnercoins", coins);
+    } catch (e) {
+        console.warn("localStorage not available for profile UI", e);
+    }
 }
 
 
@@ -167,16 +178,24 @@ async function initAuthState() {
     } = await supabase.auth.getSession();
 
     if (!session) {
-        loggedOutView.style.display = "flex";
-        loggedInView.style.display  = "none";
+        if (typeof loggedOutView !== "undefined" && loggedOutView) {
+            loggedOutView.style.display = "flex";
+        }
+        if (typeof loggedInView !== "undefined" && loggedInView) {
+            loggedInView.style.display = "none";
+        }
         lockGamesUI();
         return;
     }
 
     const user = session.user;
 
-    loggedOutView.style.display = "none";
-    loggedInView.style.display  = "flex";
+    if (typeof loggedOutView !== "undefined" && loggedOutView) {
+        loggedOutView.style.display = "none";
+    }
+    if (typeof loggedInView !== "undefined" && loggedInView) {
+        loggedInView.style.display = "flex";
+    }
 
     let profile = await fetchOrCreateProfile(user);
 
@@ -191,9 +210,6 @@ async function initAuthState() {
     profile = refreshed || profile;
 
     updateProfileUI(profile);
-    unlockGamesUI();
-
-    subscribeToProfile(user.id);
 }
 
 
@@ -399,11 +415,16 @@ window.confirmDeleteAccount = async function () {
 window.handleLogout = async function () {
     await supabase.auth.signOut();
 
-    loggedOutView.style.display="flex";
-    loggedInView.style.display ="none";
+    if (typeof loggedOutView !== "undefined" && loggedOutView) {
+        loggedOutView.style.display = "flex";
+    }
+    if (typeof loggedInView !== "undefined" && loggedInView) {
+        loggedInView.style.display = "none";
+    }
 
     lockGamesUI();
 };
+
 
 
 // ---------------------------------------------------------

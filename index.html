@@ -426,12 +426,12 @@ async function loadPlayerBar(){
         const res = await fetch("playerbar.html");
         const html = await res.text();
         const container = document.getElementById("playerbar");
+        if (!container) return;
 
         const temp = document.createElement("div");
         temp.innerHTML = html;
 
-        // move non-script nodes in
-        Array.from(temp.children).forEach(node => {
+        Array.from(temp.childNodes).forEach(node => {
             if (node.tagName && node.tagName.toLowerCase() === "script") {
                 const s = document.createElement("script");
                 if (node.src) s.src = node.src;
@@ -447,7 +447,5 @@ async function loadPlayerBar(){
 }
 document.addEventListener("DOMContentLoaded", loadPlayerBar);
 </script>
-
-
 </body>
 </html>

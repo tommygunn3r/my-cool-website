@@ -23,7 +23,6 @@
     </div>
 
     <div style="display:flex; align-items:center; gap:8px;">
-        <!-- LOGIN button for guests -->
         <button id="pb-login-btn" type="button"
             style="
                 padding:8px 14px;
@@ -39,7 +38,6 @@
             Login
         </button>
 
-        <!-- SETTINGS button for logged-in users -->
         <button type="button" class="pb-settings-btn"
             style="
                 padding:8px 16px;
@@ -98,7 +96,6 @@ async function pbLoadPlayerData() {
     const session = await pbGetSession();
 
     if (!session) {
-        // guest
         nameSpan.textContent = "GUEST";
         coinSpan.textContent = "0";
         if (loginBtn) loginBtn.style.display = "inline-flex";
@@ -133,7 +130,7 @@ async function pbLoadPlayerData() {
 }
 
 function togglePBMenu(e) {
-    e.stopPropagation(); // don't trigger document click
+    e.stopPropagation();
     const menu = document.getElementById("pb-settings-menu");
     if (!menu) return;
     menu.style.display = (menu.style.display === "block") ? "none" : "block";
@@ -148,7 +145,6 @@ document.addEventListener("click", (e) => {
     }
 });
 
-// Actions wired into your existing functions on index.html
 function pbOpenLogin() {
     if (typeof openModal === "function") {
         openModal("login");
@@ -187,11 +183,12 @@ async function pbLogout() {
     } else if (typeof supabase !== "undefined") {
         await supabase.auth.signOut();
     }
-    localStorage.removeItem("supabase.auth.token");
+    try {
+        localStorage.removeItem("supabase.auth.token");
+    } catch (e) {}
     window.location.href = "index.html";
 }
 
-// periodically refresh display
 pbLoadPlayerData();
 setInterval(pbLoadPlayerData, 15000);
 </script>

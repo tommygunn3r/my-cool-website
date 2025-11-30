@@ -580,6 +580,12 @@
     <!-- GLOBAL PLAYER BAR -->
     <div id="playerbar"></div>
 
+    <script type="module">
+        import { supabase as client } from "/assets/js/supabaseClient.js";
+        window.supabase = client;
+    </script>
+
+
     <!-- Parallax Background -->
     <div class="parallax-container">
         <div class="parallax-layer layer-1"></div>
@@ -831,32 +837,31 @@
 
     <!-- Load global player bar HTML into #playerbar -->
     <script>
-async function loadPlayerBar(){
-    try {
-        const res = await fetch("playerbar.html");
-        const html = await res.text();
-        const container = document.getElementById("playerbar");
+    async function loadPlayerBar(){
+        try {
+            const res = await fetch("playerbar.html");
+            const html = await res.text();
+            const container = document.getElementById("playerbar");
+            if (!container) return;
 
-        const temp = document.createElement("div");
-        temp.innerHTML = html;
+            const temp = document.createElement("div");
+            temp.innerHTML = html;
 
-        // move non-script nodes in
-        Array.from(temp.children).forEach(node => {
-            if (node.tagName && node.tagName.toLowerCase() === "script") {
-                const s = document.createElement("script");
-                if (node.src) s.src = node.src;
-                else s.textContent = node.textContent;
-                document.body.appendChild(s);
-            } else {
-                container.appendChild(node);
-            }
-        });
-    } catch (e) {
-        console.error("Failed to load playerbar", e);
+            Array.from(temp.childNodes).forEach(node => {
+                if (node.tagName && node.tagName.toLowerCase() === "script") {
+                    const s = document.createElement("script");
+                    if (node.src) s.src = node.src;
+                    else s.textContent = node.textContent;
+                    document.body.appendChild(s);
+                } else {
+                    container.appendChild(node);
+                }
+            });
+        } catch (e) {
+            console.error("Failed to load playerbar", e);
+        }
     }
-}
-document.addEventListener("DOMContentLoaded", loadPlayerBar);
-</script>
-
+    document.addEventListener("DOMContentLoaded", loadPlayerBar);
+    </script>
 </body>
 </html>
