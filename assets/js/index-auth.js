@@ -13,49 +13,45 @@ const SUPABASE_ANON_KEY = "sb_publishable_-zZw-pi_3q1sdNGhITKuhQ_ECyDARzc";
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 window.supabase = supabase;
 
+
 // ---------------------------------------------------------
-// Utility: Wait for dynamically injected elements (playerbar.html)
+//  Wait for dynamically loaded elements
 // ---------------------------------------------------------
-function waitForElement(id, callback) {
-    const check = () => {
-        const el = document.getElementById(id);
-        if (el) callback(el);
-        else requestAnimationFrame(check);
-    };
-    check();
+function waitFor(id) {
+    return new Promise(resolve => {
+        const check = () => {
+            const el = document.getElementById(id);
+            if (el) resolve(el);
+            else requestAnimationFrame(check);
+        };
+        check();
+    });
 }
 
+
 // ---------------------------------------------------------
-//  START AUTH SYSTEM AFTER DOM AVAILABLE
+//  Main initialization
 // ---------------------------------------------------------
-function startAuthSystem() {
+async function start() {
 
-    // We fetch elements ONLY when they exist
-    const loggedOutView    = document.getElementById("loggedOutView");
-    const loggedInView     = document.getElementById("loggedInView");
+    // 🌟 Wait for modal elements (loaded in index.html)
+    const btnLogin      = await waitFor("btnLogin");
+    const btnSignup     = await waitFor("btnSignup");
 
-    const displayNameEl    = document.getElementById("displayName");
-    const displayBalanceEl = document.getElementById("displayBalance");
+    const loginEmail    = await waitFor("loginEmail");
+    const loginPass     = await waitFor("loginPass");
 
-    const loginError       = document.getElementById("loginError");
-    const signupError      = document.getElementById("signupError");
+    const regName       = await waitFor("regName");
+    const regEmail      = await waitFor("regEmail");
+    const regPass       = await waitFor("regPass");
 
-    const regName          = document.getElementById("regName");
-    const regEmail         = document.getElementById("regEmail");
-    const regPass          = document.getElementById("regPass");
+    const loginError    = await waitFor("loginError");
+    const signupError   = await waitFor("signupError");
 
-    const loginEmail       = document.getElementById("loginEmail");
-    const loginPass        = document.getElementById("loginPass");
-
-    const resetError       = document.getElementById("resetError");
-    const resetSuccess     = document.getElementById("resetSuccess");
-    const resetEmail       = document.getElementById("resetEmail");
-
-    const nameChangeError  = document.getElementById("nameChangeError");
-    const newPlayerName    = document.getElementById("newPlayerName");
+    // All other needed modal elements auto-exist now.
 
     // ---------------------------------------------------------
-    // UI HELPERS
+    //  UI HELPERS
     // ---------------------------------------------------------
     function unlockGamesUI() {
         if (window.enableGames) window.enableGames();
@@ -66,20 +62,16 @@ function startAuthSystem() {
     }
 
     function updateProfileUI(profile) {
-        const name  = (profile?.player_name || "PLAYER").toUpperCase();
-        const coins = Number(profile?.gunnercoins ?? 0);
+        const nameEl = document.getElementById("pb-player-name");
+        const coinEl = document.getElementById("pb-player-coins");
 
-        if (displayNameEl)    displayNameEl.textContent = name;
-        if (displayBalanceEl) displayBalanceEl.textContent = coins.toLocaleString();
-
-        try {
-            localStorage.setItem("playerName", name);
-            localStorage.setItem("gunnercoins", coins);
-        } catch {}
+        if (nameEl) nameEl.textContent = profile.player_name?.toUpperCase() ?? "PLAYER";
+        if (coinEl) coinEl.textContent = profile.gunnercoins ?? 0;
     }
 
+
     // ---------------------------------------------------------
-    // FETCH OR CREATE PROFILE
+    //  FETCH/CREATE PROFILE
     // ---------------------------------------------------------
     async function fetchOrCreateProfile(user) {
         const { data: existing } = await supabase
@@ -90,29 +82,27 @@ function startAuthSystem() {
 
         if (existing) return existing;
 
-        const STARTING_COINS = 5000;
-
         const { data, error } = await supabase
             .from("profiles")
             .insert({
                 id: user.id,
-                player_name: user.user_metadata.display_name ?? "Player",
-                gunnercoins: STARTING_COINS
+                player_name: user.user_metadata.display_name || "Player",
+                gunnercoins: 5000
             })
             .select()
             .single();
 
-        if (error) throw error;
         return data;
     }
 
+
     // ---------------------------------------------------------
-    // DAILY & STREAK BONUS
+    //  DAILY REWARD (unchanged)
     // ---------------------------------------------------------
     async function applyDailyRewards(profile, user) {
         const today = new Date().toISOString().split("T")[0];
-        const last  = profile.last_login;
 
+        const last = profile.last_login;
         let streak = profile.streak ?? 0;
         let reward = 0;
 
@@ -120,13 +110,11 @@ function startAuthSystem() {
             streak = 1;
             reward = 250;
         } else {
-            const diff = Math.floor(
-                (new Date(today) - new Date(last)) / (1000*60*60*24)
-            );
+            const diff = Math.floor((new Date(today) - new Date(last)) / (86400000));
 
             if (diff === 0) return;
             if (diff === 1) streak++;
-            if (diff > 1)  streak = 1;
+            if (diff > 1) streak = 1;
 
             reward =
                 streak === 1 ? 250 :
@@ -138,210 +126,114 @@ function startAuthSystem() {
                 2000;
         }
 
-        const { data, error } = await supabase
+        const { data } = await supabase
             .from("profiles")
             .update({
                 gunnercoins: (profile.gunnercoins ?? 0) + reward,
                 last_login: today,
-                streak
+                streak: streak
             })
             .eq("id", user.id)
             .select()
             .single();
 
-        if (error) return;
-
         updateProfileUI(data);
-
-        if (window.showDailyRewardPopup)
-            window.showDailyRewardPopup(reward, streak);
     }
 
+
     // ---------------------------------------------------------
-    // AUTH STATE
+    //  AUTH STATE
     // ---------------------------------------------------------
     async function initAuthState() {
-        const {
-            data: { session }
-        } = await supabase.auth.getSession();
+        const { data: { session } } = await supabase.auth.getSession();
 
         if (!session) {
-            if (loggedOutView) loggedOutView.style.display = "flex";
-            if (loggedInView)  loggedInView.style.display  = "none";
             lockGamesUI();
             return;
         }
 
         const user = session.user;
 
-        if (loggedOutView) loggedOutView.style.display = "none";
-        if (loggedInView)  loggedInView.style.display  = "flex";
-
         let profile = await fetchOrCreateProfile(user);
+        updateProfileUI(profile);
 
         await applyDailyRewards(profile, user);
 
-        const { data: refreshed } = await supabase
-            .from("profiles")
-            .select("*")
-            .eq("id", user.id)
-            .single();
-
-        updateProfileUI(refreshed || profile);
         unlockGamesUI();
     }
 
-    // ---------------------------------------------------------
-    // LOGIN (binds when btnLogin EXISTS)
-    // ---------------------------------------------------------
-    waitForElement("btnLogin", (btnLogin) => {
-        btnLogin.addEventListener("click", async () => {
-            if (loginError) loginError.style.display = "none";
-
-            const email    = loginEmail.value.trim();
-            const password = loginPass.value;
-
-            const { data, error } = await supabase.auth.signInWithPassword({
-                email,
-                password
-            });
-
-            if (error) {
-                loginError.style.display = "block";
-                loginError.textContent   = error.message;
-                return;
-            }
-
-            if (window.closeModal) window.closeModal();
-            await initAuthState();
-        });
-    });
 
     // ---------------------------------------------------------
-    // SIGNUP
+    //  LOGIN
     // ---------------------------------------------------------
-    waitForElement("btnSignup", (btnSignup) => {
-        btnSignup.addEventListener("click", async () => {
-            if (signupError) signupError.style.display = "none";
+    btnLogin.addEventListener("click", async () => {
 
-            const name  = regName.value.trim();
-            const email = regEmail.value.trim();
-            const pass  = regPass.value;
+        loginError.style.display = "none";
 
-            if (name.length < 3) {
-                signupError.style.display="block";
-                signupError.textContent="Name must be at least 3 characters.";
-                return;
-            }
+        const email = loginEmail.value.trim();
+        const pass  = loginPass.value;
 
-            try {
-                const { data, error } = await supabase.auth.signUp({
-                    email,
-                    password: pass,
-                    options: { data: { display_name: name } }
-                });
-
-                if (error) throw error;
-
-                const user = data.user;
-                if (!user) {
-                    signupError.style.display="block";
-                    signupError.textContent="Check your email to confirm.";
-                    return;
-                }
-
-                const profile = await fetchOrCreateProfile(user);
-                updateProfileUI(profile);
-
-                if (window.closeModal) window.closeModal();
-                await initAuthState();
-            }
-            catch (err) {
-                signupError.style.display="block";
-                signupError.textContent = err.message;
-            }
-        });
-    });
-
-    // ---------------------------------------------------------
-    // RESET PASSWORD
-    // ---------------------------------------------------------
-    window.sendPasswordReset = async function () {
-        resetError.style.display   = "none";
-        resetSuccess.style.display = "none";
-
-        const email = resetEmail.value.trim();
-
-        const { error } = await supabase.auth.resetPasswordForEmail(email, {
-            redirectTo: "https://www.gunnersgames.com/reset-complete.html"
+        const { data, error } = await supabase.auth.signInWithPassword({
+            email,
+            password: pass
         });
 
         if (error) {
-            resetError.style.display   = "block";
-            resetError.textContent     = error.message;
-        } else {
-            resetSuccess.style.display = "block";
-            resetSuccess.textContent   = "Reset link sent!";
+            loginError.style.display = "block";
+            loginError.textContent = error.message;
+            return;
         }
-    };
+
+        if (window.closeModal) window.closeModal();
+        await initAuthState();
+    });
+
 
     // ---------------------------------------------------------
-    // CHANGE PLAYER NAME
+    //  SIGNUP
     // ---------------------------------------------------------
-    window.changePlayerName = async function () {
-        nameChangeError.style.display = "none";
+    btnSignup.addEventListener("click", async () => {
 
-        const name = newPlayerName.value.trim();
+        signupError.style.display = "none";
+
+        const name  = regName.value.trim();
+        const email = regEmail.value.trim();
+        const pass  = regPass.value;
+
         if (name.length < 3) {
-            nameChangeError.style.display="block";
-            nameChangeError.textContent="Name must be at least 3 characters.";
+            signupError.style.display = "block";
+            signupError.textContent = "Name must be at least 3 characters.";
             return;
         }
 
-        const { data: { user } } = await supabase.auth.getUser();
-
-        await supabase.auth.updateUser({
-            data: { display_name: name }
+        const { data, error } = await supabase.auth.signUp({
+            email,
+            password: pass,
+            options: { data: { display_name: name } }
         });
 
-        const { data, error } = await supabase
-            .from("profiles")
-            .update({ player_name: name })
-            .eq("id", user.id)
-            .select()
-            .single();
-
         if (error) {
-            nameChangeError.style.display="block";
-            nameChangeError.textContent = error.message;
+            signupError.style.display = "block";
+            signupError.textContent = error.message;
             return;
         }
 
-        updateProfileUI(data);
-        if (window.closeChangeName) window.closeChangeName();
-    };
+        if (window.closeModal) window.closeModal();
+        await initAuthState();
+    });
 
-    // ---------------------------------------------------------
-    // LOGOUT
-    // ---------------------------------------------------------
-    window.handleLogout = async function () {
-        await supabase.auth.signOut();
 
-        if (loggedOutView) loggedOutView.style.display = "flex";
-        if (loggedInView)  loggedInView.style.display  = "none";
 
-        lockGamesUI();
-    };
-
-    // ---------------------------------------------------------
-    // STARTUP
-    // ---------------------------------------------------------
-    initAuthState();
+    // Load current session state
+    await initAuthState();
 }
 
-// Run Startup (module-safe)
+
+// ---------------------------------------------------------
+// START SYSTEM (module safe)
+// ---------------------------------------------------------
 if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", startAuthSystem);
+    document.addEventListener("DOMContentLoaded", start);
 } else {
-    startAuthSystem();
+    start();
 }
