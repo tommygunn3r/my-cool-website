@@ -36,61 +36,6 @@ header {
     height:auto;
 }
 
-/* (Old user-bar styles kept) */
-.user-bar {
-    position:absolute;
-    top:15px;
-    right:15px;
-    display:flex;
-    align-items:center;
-    gap:10px;
-    z-index:30;
-}
-.auth-btn {
-    background:transparent;
-    border:2px solid #e94560;
-    color:#e94560;
-    padding:6px 14px;
-    border-radius:6px;
-    cursor:pointer;
-    font-size:0.85rem;
-    font-weight:bold;
-}
-.user-bar-auth {
-    display:flex;
-    align-items:center;
-    gap:12px;
-    background:#111;
-    border:1px solid #333;
-    padding:6px 14px;
-    border-radius:40px;
-}
-.settings-btn {
-    cursor:pointer;
-    font-size:20px;
-    color:#e94560;
-}
-#settingsMenu {
-    position:absolute;
-    top:55px;
-    right:0px;
-    width:180px;
-    background:#111;
-    border:1px solid #333;
-    border-radius:10px;
-    display:none;
-    flex-direction:column;
-    z-index:90;
-}
-#settingsMenu div {
-    padding:10px 16px;
-    cursor:pointer;
-}
-#settingsMenu div:hover {
-    background:#222;
-    color:#e94560;
-}
-
 /* GAME GRID */
 main {
     width:100%;
@@ -148,71 +93,12 @@ footer a {
 }
 footer a:hover { color:#e94560; }
 
-/* AUTH MODALS (unchanged) */
-#authModal, #resetPasswordModal, #changeNameModal {
-    position:fixed;
-    inset:0;
-    display:none;
-    align-items:center;
-    justify-content:center;
-    background:rgba(0,0,0,0.88);
-    z-index:999999;
-}
-.modal-content {
-    background:#111;
-    padding:28px;
-    width:90%;
-    max-width:380px;
-    border-radius:12px;
-    border:2px solid #e94560;
-    position:relative;
-}
-.close-modal {
-    position:absolute;
-    top:10px;
-    right:14px;
-    font-size:28px;
-    cursor:pointer;
-}
-.modal-content h2 {
-    text-align:center;
-    color:#e94560;
-    margin-bottom:18px;
-}
-
-.input-group { margin-bottom:12px; }
-label { display:block; margin-bottom:4px; color:#aaa; }
-.input-field {
-    width:100%;
-    padding:10px;
-    background:#000;
-    border:1px solid #333;
-    color:white;
-    border-radius:6px;
-}
-
-.submit-btn {
-    width:100%;
-    padding:12px;
-    background:#e94560;
-    color:white;
-    border:none;
-    border-radius:6px;
-    margin-top:10px;
-    cursor:pointer;
-    font-size:1.1rem;
-}
-
-.switch-link { text-align:center; margin-top:12px; color:#bbb; }
-.switch-link span { color:#e94560; cursor:pointer; }
-
-.error-msg { color:#ff4444; display:none; margin-top:4px; }
 </style>
 </head>
 
 <body>
 
-<!-- GLOBAL PLAYER BAR -->
+<!-- GLOBAL PLAYER BAR (now contains all MODALS) -->
 <div id="playerbar"></div>
 
 <!-- HEADER -->
@@ -253,11 +139,10 @@ label { display:block; margin-bottom:4px; color:#aaa; }
     <a href="terms.html">Terms</a>
 </footer>
 
-<!-- LOGIN/SIGNUP MODALS (unchanged) -->
-
+<!-- AUTH LOGIC (index-auth.js handles login/signup/reset/change) -->
 <script type="module" src="/assets/js/index-auth.js"></script>
 
-<!-- 🔥 FIX: Make Supabase session available immediately -->
+<!-- SESSION SYNC FIX -->
 <script>
 document.addEventListener("DOMContentLoaded", async () => {
     if (typeof supabase === "undefined") return;
@@ -281,7 +166,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 </script>
 
-<!-- Original page-local JS -->
+<!-- ENABLE/DISABLE GAME TILES -->
 <script>
 function enableGames() {
     document.querySelectorAll(".game-card").forEach(c=>c.classList.remove("disabled"));
@@ -291,11 +176,9 @@ function disableGames() {
 }
 window.enableGames = enableGames;
 window.disableGames = disableGames;
-
-/* Modal functions remain unchanged */
 </script>
 
-<!-- Load playerbar -->
+<!-- LOAD PLAYERBAR (contains ALL modals now) -->
 <script>
 async function loadPlayerBar(){
     try {
@@ -304,6 +187,7 @@ async function loadPlayerBar(){
         const container = document.getElementById("playerbar");
         const temp = document.createElement("div");
         temp.innerHTML = html;
+
         Array.from(temp.childNodes).forEach(node => {
             if (node.tagName === "SCRIPT") {
                 const s = document.createElement("script");

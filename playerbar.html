@@ -1,3 +1,8 @@
+<!-- =======================
+     GLOBAL PLAYER BAR
+     + GLOBAL AUTH MODALS
+     ======================= -->
+
 <div id="player-bar-wrapper" style="
     width:100%;
     padding:12px 22px;
@@ -34,7 +39,7 @@
                 font-weight:bold;
                 display:none;
             "
-            onclick="pbOpenLogin()">
+            onclick="openModal()">
             Login
         </button>
 
@@ -66,23 +71,168 @@
         width:200px;
         z-index:3000;
     ">
-        <div onclick="pbOpenChangeName()" style="padding:10px 16px; cursor:pointer;">Change Player Name</div>
-        <div onclick="pbOpenResetPassword()" style="padding:10px 16px; cursor:pointer;">Reset Password</div>
+        <div onclick="openChangeName()" style="padding:10px 16px; cursor:pointer;">Change Player Name</div>
+        <div onclick="openResetPasswordModal()" style="padding:10px 16px; cursor:pointer;">Reset Password</div>
         <div onclick="pbDeleteAccount()" style="padding:10px 16px; cursor:pointer;">Delete Account</div>
         <div onclick="pbLogout()" style="padding:10px 16px; cursor:pointer;">Log Out</div>
     </div>
 </div>
 
+
+
+<!-- ================================
+     GLOBAL AUTH MODALS LIVE HERE NOW
+     ================================ -->
+
+<!-- LOGIN MODAL -->
+<div id="authModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.88); z-index:99999; align-items:center; justify-content:center;">
+    <div class="modal-content" style="background:#111; padding:28px; width:90%; max-width:380px; border-radius:12px; border:2px solid #e94560; position:relative;">
+        <span class="close-modal" onclick="closeModal()" style="position:absolute; top:10px; right:14px; font-size:28px; cursor:pointer;">×</span>
+
+        <h2 style="text-align:center; color:#e94560;">Login</h2>
+
+        <div class="input-group">
+            <label>Email</label>
+            <input id="loginEmail" class="input-field" type="email">
+        </div>
+        <div class="input-group">
+            <label>Password</label>
+            <input id="loginPass" class="input-field" type="password">
+        </div>
+
+        <div id="loginError" style="color:#ff4444; display:none;"></div>
+
+        <button id="btnLogin" type="button" class="submit-btn"
+            style="width:100%; padding:12px; background:#e94560; color:white; border:none; border-radius:6px; margin-top:10px;">
+            LOGIN
+        </button>
+
+        <div class="switch-link" style="text-align:center; margin-top:12px;">
+            <span style="color:#bbb;">No account? </span>
+            <span style="color:#e94560; cursor:pointer;" onclick="openSignup()">Create one</span>
+        </div>
+
+        <div style="text-align:center; margin-top:12px;">
+            <span style="color:#e94560; cursor:pointer;" onclick="openResetPasswordModal()">Forgot Password?</span>
+        </div>
+    </div>
+</div>
+
+<!-- SIGNUP MODAL -->
+<div id="signupModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.88); z-index:99999; align-items:center; justify-content:center;">
+    <div class="modal-content" style="background:#111; padding:28px; width:90%; max-width:380px; border-radius:12px; border:2px solid #e94560; position:relative;">
+        <span class="close-modal" onclick="closeModal()" style="position:absolute; top:10px; right:14px; font-size:28px; cursor:pointer;">×</span>
+
+        <h2 style="text-align:center; color:#e94560;">Create Account</h2>
+
+        <div class="input-group">
+            <label>Name</label>
+            <input id="regName" class="input-field">
+        </div>
+
+        <div class="input-group">
+            <label>Email</label>
+            <input id="regEmail" class="input-field" type="email">
+        </div>
+
+        <div class="input-group">
+            <label>Password</label>
+            <input id="regPass" class="input-field" type="password">
+        </div>
+
+        <div id="signupError" style="color:#ff4444; display:none;"></div>
+
+        <button id="btnSignup" type="button" class="submit-btn"
+            style="width:100%; padding:12px; background:#e94560; color:white; border:none; border-radius:6px; margin-top:10px;">
+            CREATE ACCOUNT
+        </button>
+
+        <div class="switch-link" style="text-align:center; margin-top:12px;">
+            <span style="color:#bbb;">Already have an account? </span>
+            <span style="color:#e94560; cursor:pointer;" onclick="openModal()">Login</span>
+        </div>
+    </div>
+</div>
+
+<!-- RESET PASSWORD MODAL -->
+<div id="resetPasswordModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.88); z-index:99999; align-items:center; justify-content:center;">
+    <div class="modal-content" style="background:#111; padding:28px; width:90%; max-width:380px; border-radius:12px; border:2px solid #e94560; position:relative;">
+        <span class="close-modal" onclick="closeResetPasswordModal()" style="position:absolute; top:10px; right:14px; font-size:28px; cursor:pointer;">×</span>
+
+        <h2 style="text-align:center; color:#e94560;">Reset Password</h2>
+
+        <div class="input-group">
+            <label>Email</label>
+            <input id="resetEmail" class="input-field" type="email">
+        </div>
+
+        <div id="resetError" style="color:#ff4444; display:none;"></div>
+        <div id="resetSuccess" style="color:#44ff44; display:none;"></div>
+
+        <button type="button" onclick="sendPasswordReset()" class="submit-btn"
+            style="width:100%; padding:12px; background:#e94560; color:white; border:none; border-radius:6px; margin-top:10px;">
+            Send Reset Email
+        </button>
+    </div>
+</div>
+
+<!-- CHANGE NAME MODAL -->
+<div id="changeNameModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.88); z-index:99999; align-items:center; justify-content:center;">
+    <div class="modal-content" style="background:#111; padding:28px; width:90%; max-width:380px; border-radius:12px; border:2px solid #e94560; position:relative;">
+        <span class="close-modal" onclick="closeChangeName()" style="position:absolute; top:10px; right:14px; font-size:28px; cursor:pointer;">×</span>
+
+        <h2 style="text-align:center; color:#e94560;">Change Name</h2>
+
+        <div class="input-group">
+            <label>New Name</label>
+            <input id="newPlayerName" class="input-field">
+        </div>
+
+        <div id="nameChangeError" style="color:#ff4444; display:none;"></div>
+
+        <button type="button" onclick="changePlayerName()" class="submit-btn"
+            style="width:100%; padding:12px; background:#e94560; color:white; border:none; border-radius:6px; margin-top:10px;">
+            Update Name
+        </button>
+    </div>
+</div>
+
+
+<!-- ================================
+     PLAYER BAR + MODAL JS
+     ================================ -->
+
 <script>
+/* ---------- UI Open/Close Functions ---------- */
+function openModal() {
+    document.getElementById("authModal").style.display = "flex";
+}
+function closeModal() {
+    document.getElementById("authModal").style.display = "none";
+    document.getElementById("signupModal").style.display = "none";
+}
+function openSignup() {
+    document.getElementById("signupModal").style.display = "flex";
+}
+function openResetPasswordModal() {
+    document.getElementById("resetPasswordModal").style.display = "flex";
+}
+function closeResetPasswordModal() {
+    document.getElementById("resetPasswordModal").style.display = "none";
+}
+function openChangeName() {
+    document.getElementById("changeNameModal").style.display = "flex";
+}
+function closeChangeName() {
+    document.getElementById("changeNameModal").style.display = "none";
+}
+
+
+/* ---------- Player Bar Logic ---------- */
 async function pbGetSession() {
-    try {
-        if (typeof supabase === "undefined") return null;
-        const { data: { session } } = await supabase.auth.getSession();
-        return session;
-    } catch (e) {
-        console.error("pbGetSession error", e);
-        return null;
-    }
+    if (typeof supabase === "undefined") return null;
+    const { data: { session } } = await supabase.auth.getSession();
+    return session;
 }
 
 async function pbLoadPlayerData() {
@@ -91,102 +241,49 @@ async function pbLoadPlayerData() {
     const loginBtn = document.getElementById("pb-login-btn");
     const settingsBtn = document.querySelector(".pb-settings-btn");
 
-    if (!nameSpan || !coinSpan) return;
-
     const session = await pbGetSession();
 
     if (!session) {
         nameSpan.textContent = "GUEST";
         coinSpan.textContent = "0";
-        if (loginBtn) loginBtn.style.display = "inline-flex";
-        if (settingsBtn) settingsBtn.style.display = "none";
+        loginBtn.style.display = "inline-flex";
+        settingsBtn.style.display = "none";
         return;
     }
 
-    if (typeof supabase === "undefined") {
-        nameSpan.textContent = "PLAYER";
-        if (loginBtn) loginBtn.style.display = "none";
-        if (settingsBtn) settingsBtn.style.display = "inline-flex";
-        return;
-    }
-
-    const { data, error } = await supabase
+    const { data } = await supabase
         .from("profiles")
         .select("player_name, gunnercoins")
         .eq("id", session.user.id)
         .single();
 
-    if (error || !data) {
-        console.error("pbLoadPlayerData profile error", error);
-        nameSpan.textContent = "PLAYER";
-        coinSpan.textContent = "0";
-    } else {
+    if (data) {
         nameSpan.textContent = data.player_name || "PLAYER";
-        coinSpan.textContent = data.gunnercoins != null ? data.gunnercoins : 0;
+        coinSpan.textContent = data.gunnercoins ?? 0;
     }
 
-    if (loginBtn) loginBtn.style.display = "none";
-    if (settingsBtn) settingsBtn.style.display = "inline-flex";
+    loginBtn.style.display = "none";
+    settingsBtn.style.display = "inline-flex";
 }
 
 function togglePBMenu(e) {
     e.stopPropagation();
     const menu = document.getElementById("pb-settings-menu");
-    if (!menu) return;
     menu.style.display = (menu.style.display === "block") ? "none" : "block";
 }
 
 document.addEventListener("click", (e) => {
     const menu = document.getElementById("pb-settings-menu");
-    if (!menu) return;
     if (!e.target.closest("#pb-settings-menu") &&
         !e.target.closest(".pb-settings-btn")) {
         menu.style.display = "none";
     }
 });
 
-function pbOpenLogin() {
-    if (typeof openModal === "function") {
-        openModal("login");
-    } else {
-        window.location.href = "index.html";
-    }
-}
-
-function pbOpenChangeName() {
-    if (typeof openChangeName === "function") {
-        openChangeName();
-    } else {
-        window.location.href = "index.html";
-    }
-}
-
-function pbOpenResetPassword() {
-    if (typeof openResetPasswordModal === "function") {
-        openResetPasswordModal();
-    } else {
-        window.location.href = "index.html";
-    }
-}
-
-function pbDeleteAccount() {
-    if (typeof confirmDeleteAccount === "function") {
-        confirmDeleteAccount();
-    } else {
-        window.location.href = "index.html";
-    }
-}
-
 async function pbLogout() {
-    if (typeof handleLogout === "function") {
-        await handleLogout();
-    } else if (typeof supabase !== "undefined") {
-        await supabase.auth.signOut();
-    }
-    try {
-        localStorage.removeItem("supabase.auth.token");
-    } catch (e) {}
-    window.location.href = "index.html";
+    await supabase.auth.signOut();
+    localStorage.removeItem("supabase.auth.token");
+    window.location.reload();
 }
 
 pbLoadPlayerData();
