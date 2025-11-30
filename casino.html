@@ -134,7 +134,7 @@
         .game-card {
             position: absolute;
             width: 320px;
-            height: 420px;
+            height: 350px;
             left: 50%;
             top: 50%;
             margin-left: -160px;
@@ -206,15 +206,6 @@
             transform: scale(1.02);
             border-color: #FFD700;
             box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
-        }
-
-        .game-title {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: #FFD700;
-            margin-bottom: 10px;
-            text-align: center;
         }
 
         .game-description {
@@ -454,42 +445,36 @@
                 <!-- 1. Blackjack -->
                 <div class="game-card center" data-game="blackjack">
                     <img src="/games/assets/casino/blackjack.png" alt="Blackjack" class="game-thumbnail" onclick="launchGame('games/casino/blackjack.html')" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22320%22 height=%22250%22%3E%3Crect fill=%22%23111%22 width=%22320%22 height=%22250%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 font-family=%22Arial%22 font-size=%2224%22 fill=%22%23FFD700%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22%3E🃏 BLACKJACK%3C/text%3E%3C/svg%3E'">
-                    <div class="game-title">BLACKJACK</div>
                     <div class="game-description">Beat the dealer in classic 21! Hit, stand, or double down to win big.</div>
                 </div>
 
                 <!-- 2. Texas Hold'em -->
                 <div class="game-card" data-game="texas_holdem">
                     <img src="/games/assets/casino/texas_holdem.png" alt="Texas Hold'em" class="game-thumbnail" onclick="launchGame('games/casino/texas_holdem.html')" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22320%22 height=%22250%22%3E%3Crect fill=%22%230a3d0a%22 width=%22320%22 height=%22250%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 font-family=%22Arial%22 font-size=%2224%22 fill=%22%23FFD700%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22%3E♣️ TEXAS HOLDEM%3C/text%3E%3C/svg%3E'">
-                    <div class="game-title">TEXAS HOLD'EM</div>
                     <div class="game-description">Go all-in against the house! Master your poker face and claim the pot.</div>
                 </div>
 
                 <!-- 3. Squario Slots -->
                 <div class="game-card" data-game="squario-slots">
                     <img src="/games/assets/casino/squario-slots.png" alt="Squario Slots" class="game-thumbnail" onclick="launchGame('games/casino/squario-slots.html')" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22320%22 height=%22250%22%3E%3Crect fill=%22%238b0000%22 width=%22320%22 height=%22250%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 font-family=%22Arial%22 font-size=%2224%22 fill=%22%23fff%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22%3E🍄 SQUARIO SLOTS%3C/text%3E%3C/svg%3E'">
-                    <div class="game-title">SQUARIO SLOTS</div>
                     <div class="game-description">Spin to win with everyone's favorite blocky plumber! Match the mushrooms.</div>
                 </div>
 
                 <!-- 4. Squareman Slots -->
                 <div class="game-card" data-game="squareman-slots">
                     <img src="/games/assets/casino/squareman-slots.png" alt="Squareman Slots" class="game-thumbnail" onclick="launchGame('games/casino/squareman-slots.html')" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22320%22 height=%22250%22%3E%3Crect fill=%22%23CCCC00%22 width=%22320%22 height=%22250%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 font-family=%22Arial%22 font-size=%2224%22 fill=%22%23000%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22%3E👻 SQUAREMAN SLOTS%3C/text%3E%3C/svg%3E'">
-                    <div class="game-title">SQUAREMAN SLOTS</div>
                     <div class="game-description">Dot-eating action meets the one-armed bandit! Avoid the ghosts and hit 777.</div>
                 </div>
 
                 <!-- 5. Squarebird Slots -->
                 <div class="game-card" data-game="squarebird-slots">
                     <img src="/games/assets/casino/squarebird-slots.png" alt="Squarebird Slots" class="game-thumbnail" onclick="launchGame('games/casino/squarebird-slots.html')" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22320%22 height=%22250%22%3E%3Crect fill=%22%23004d00%22 width=%22320%22 height=%22250%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 font-family=%22Arial%22 font-size=%2224%22 fill=%22%23fff%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22%3E🐦 SQUAREBIRD SLOTS%3C/text%3E%3C/svg%3E'">
-                    <div class="game-title">SQUAREBIRD SLOTS</div>
                     <div class="game-description">Flap your way to the jackpot! Navigate the pipes and line up the birds.</div>
                 </div>
 
                 <!-- 6. GunnerCoin Drop -->
                 <div class="game-card" data-game="gunnercoin-drop">
                     <img src="/games/assets/casino/gunnercoin-drop.png" alt="GunnerCoin Drop" class="game-thumbnail" onclick="launchGame('games/casino/gunnercoin-drop.html')" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22320%22 height=%22250%22%3E%3Crect fill=%22%234B0082%22 width=%22320%22 height=%22250%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 font-family=%22Arial%22 font-size=%2224%22 fill=%22%23FFD700%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22%3E🪙 COIN DROP%3C/text%3E%3C/svg%3E'">
-                    <div class="game-title">GUNNERCOIN DROP</div>
                     <div class="game-description">A physics-based Plinko style game. Drop the coin and watch it bounce!</div>
                 </div>
 
