@@ -1,68 +1,132 @@
-<div id="player-bar-container" style="
+<div id="player-bar-wrapper" style="
     width:100%;
-    padding:12px 20px;
-    background:rgba(10,10,10,0.85);
-    border-bottom:2px solid #e94560;
+    padding:12px 22px;
+    background:rgba(10,10,10,0.92);
+    border-bottom:3px solid #e94560;
     display:flex;
     justify-content:space-between;
     align-items:center;
-    font-family:'Segoe UI',sans-serif;
     color:#fff;
-    z-index:5000;
+    font-family:'Segoe UI', sans-serif;
+    position:sticky;
+    top:0;
+    z-index:2000;
 ">
 
     <div style="display:flex; align-items:center; gap:12px;">
-        <span id="pb-player-name" style="font-weight:bold; font-size:1.1rem;">
-            Player
+        <span id="pb-player-name" style="font-size:1.2rem; font-weight:bold;">
+            PLAYER
         </span>
 
-        <span style="font-size:1.2rem;">💰</span>
-        <span id="pb-coin-amount" style="font-size:1.1rem;">
+        <span style="font-size:1.2rem;">🪙</span>
+        <span id="pb-player-coins" style="font-size:1.1rem;">
             0
         </span>
     </div>
 
-    <button onclick="window.location.href='settings.html'"
+    <button type="button" onclick="togglePBMenu()" 
         style="
-            padding:8px 18px;
+            padding:8px 16px;
             background:rgba(233,69,96,0.2);
             border:2px solid #e94560;
+            color:white;
             border-radius:8px;
-            color:#fff;
             cursor:pointer;
             font-weight:bold;
         ">
         ⚙ Settings
     </button>
+
+    <div id="pb-settings-menu" style="
+        position:absolute;
+        top:56px;
+        right:22px;
+        background:#111;
+        border:1px solid #333;
+        border-radius:10px;
+        padding:8px 0;
+        display:none;
+        width:200px;
+        z-index:3000;
+    ">
+        <div onclick="pbOpenChangeName()" style="padding:10px 16px; cursor:pointer;">Change Player Name</div>
+        <div onclick="pbOpenResetPassword()" style="padding:10px 16px; cursor:pointer;">Reset Password</div>
+        <div onclick="pbDeleteAccount()" style="padding:10px 16px; cursor:pointer;">Delete Account</div>
+        <div onclick="pbLogout()" style="padding:10px 16px; cursor:pointer;">Log Out</div>
+    </div>
 </div>
 
 <script>
-async function pbLoadData() {
-    // get user session
-    const token = localStorage.getItem("supabase.auth.token");
-    if(!token) return;
-
-    let session;
-    try { session = JSON.parse(token).currentSession; } catch { return; }
-    if(!session) return;
-
-    const userid = session.user.id;
-
-    // load player profile
-    const { data, error } = await supabase
-        .from("profiles")
-        .select("player_name, gunnercoins")
-        .eq("id", userid)
-        .single();
-
-    if (!error && data) {
-        document.getElementById("pb-player-name").textContent = data.player_name;
-        document.getElementById("pb-coin-amount").textContent = data.gunnercoins;
+async function pbGetSession() {
+    const raw = localStorage.getItem("supabase.auth.token");
+    if (!raw) return null;
+    try { 
+        return JSON.parse(raw).currentSession;
+    } catch { 
+        return null; 
     }
 }
-pbLoadData();
 
-// refresh coins every 10 seconds (optional)
-setInterval(pbLoadData, 10000);
+async function pbLoadPlayerData() {
+    const session = await pbGetSession();
+    const nameSpan = document.getElementById("pb-player-name");
+    const coinSpan = document.getElementById("pb-player-coins");
+
+    if (!session) {
+        nameSpan.textContent = "GUEST";
+        coinSpan.textContent = "0";
+        return;
+    }
+
+    const userId = session.user.id;
+
+    if (typeof supabase === "undefined") return;
+
+    const { data } = await supabase
+        .from("profiles")
+        .select("player_name, gunnercoins")
+        .eq("id", userId)
+        .single();
+
+    if (data) {
+        nameSpan.textContent = data.player_name;
+        coinSpan.textContent = data.gunnercoins ?? 0;
+    }
+}
+
+function togglePBMenu() {
+    const menu = document.getElementById("pb-settings-menu");
+    menu.style.display = (menu.style.display === "block") ? "none" : "block";
+}
+
+document.addEventListener("click", (e) => {
+    if (!e.target.closest("#pb-settings-menu") && !e.target.closest("button")) {
+        document.getElementById("pb-settings-menu").style.display = "none";
+    }
+});
+
+function pbOpenChangeName() {
+    if (typeof openChangeName === "function") openChangeName();
+    else window.location.href = "index.html";
+}
+
+function pbOpenResetPassword() {
+    if (typeof openResetPasswordModal === "function") openResetPasswordModal();
+    else window.location.href = "index.html";
+}
+
+function pbDeleteAccount() {
+    if (typeof confirmDeleteAccount === "function") confirmDeleteAccount();
+    else window.location.href = "index.html";
+}
+
+async function pbLogout() {
+    if (typeof handleLogout === "function") handleLogout();
+    else if (typeof supabase !== "undefined") await supabase.auth.signOut();
+    localStorage.removeItem("supabase.auth.token");
+    window.location.href = "index.html";
+}
+
+pbLoadPlayerData();
+setInterval(pbLoadPlayerData, 15000);
 </script>
-
