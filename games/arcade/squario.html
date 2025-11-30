@@ -131,39 +131,20 @@
     </div>
 
     <script type="module">
-        // ===== UPDATED FIREBASE & SCORE MANAGER =====
-        import { db } from '/firebase-config.js';
-        import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
-        import { collection, addDoc, serverTimestamp, doc, setDoc, increment } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+        // ===== SUPABASE + SCORE MANAGER (REPLACES FIREBASE) =====
+        import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-        let auth = null;
-        let currentUser = null;
+        const SUPABASE_URL = "https://pknhslxhpohrzgsfkisr.supabase.co";
+        const SUPABASE_ANON_KEY = "sb_publishable_-zZw-pi_3q1sdNGhITKuhQ_ECyDARzc";
 
-        // Gatekeeper: Check if logged in
-        async function initGameAuth() {
-            try {
-                auth = getAuth(db.app);
-                onAuthStateChanged(auth, (user) => {
-                    if (user) {
-                        console.log("Pilot Identified:", user.displayName);
-                        currentUser = user;
-                        scoreManager.playerName = user.displayName || "Unknown Pilot";
-                    } else {
-                        // Not logged in? Kick back to the portal
-                        window.location.href = '/index.html';
-                    }
-                });
-            } catch (error) {
-                console.error("Auth failed:", error);
-            }
-        }
+        const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // Score Manager
         class GameScoreManager {
             constructor(gameName) {
                 this.gameName = gameName;
                 this.sessionStartTime = null;
-                this.playerName = "Loading...";
+                this.playerName = "PLAYER";
+                this.user = null;   // Supabase user
             }
 
             startSession() {
@@ -184,39 +165,53 @@
             }
 
             async submitGameResult(score = 0) {
-                if (!currentUser) return;
+                // No user or no meaningful score -> skip remote write
+                if (!this.user || !score || score <= 0) return;
 
                 const timePlayed = this.getElapsedTime();
-                
+
                 try {
-                    // 1. Public Leaderboard
-                    await addDoc(collection(db, 'scores'), {
-                        gameName: this.gameName,
-                        playerName: this.playerName,
-                        score: score,
-                        timePlayed: timePlayed,
-                        timestamp: serverTimestamp(),
-                        uid: currentUser.uid
+                    const { error } = await supabase.from("stats").insert({
+                        user_id: this.user.id,
+                        game: this.gameName,
+                        score: Math.floor(score),
+                        time_played: timePlayed
                     });
 
-                    // 2. Update Career Stats
-                    const userRef = doc(db, 'users', currentUser.uid);
-                    await setDoc(userRef, {
-                        lastActive: serverTimestamp(),
-                        totalArcadeScore: increment(parseInt(score)),
-                        [`gamesPlayed_${this.gameName}`]: increment(1),
-                        totalTimePlayed: increment(timePlayed)
-                    }, { merge: true });
-
-                    console.log('Score submitted & Career updated');
-                } catch (error) {
-                    console.warn('Failed to submit score:', error.message);
+                    if (error) {
+                        console.warn("Supabase stats insert failed:", error.message);
+                    } else {
+                        console.log("Supabase stats saved for", this.gameName, score);
+                    }
+                } catch (err) {
+                    console.warn("Supabase error while saving stats:", err.message || err);
                 }
             }
         }
-        
-        // Initialize
-        const scoreManager = new GameScoreManager('squario');
+
+        const scoreManager = new GameScoreManager("squario");
+
+        async function initGameAuth() {
+            try {
+                const { data: { user } } = await supabase.auth.getUser();
+                if (!user) {
+                    console.log("No Supabase user in Squario iframe – scores will stay local only.");
+                    return;
+                }
+
+                scoreManager.user = user;
+
+                // Prefer Supabase metadata, fall back to cached profile name if needed
+                const metaName = user.user_metadata?.display_name;
+                const cachedName = localStorage.getItem("playerName");
+                scoreManager.playerName = (metaName || cachedName || "Player").toString();
+                console.log("Supabase player:", scoreManager.playerName);
+            } catch (err) {
+                console.error("Supabase auth init failed in Squario:", err.message || err);
+            }
+        }
+
+        // Kick off Supabase auth lookup (non-blocking for gameplay)
         initGameAuth();
 
         // ===== GAME LOGIC =====
@@ -244,7 +239,7 @@
 
         const music = new Audio('music/theme.mp3');
         music.loop = true; music.volume = 0.2; 
-
+        
         function playSound(name) {
             if (sounds[name]) {
                 sounds[name].currentTime = 0;
@@ -570,6 +565,7 @@
             gameState.gameRunning = false; stopMusic();
             if (timerInterval) clearInterval(timerInterval); 
             
+            // Remote Supabase stats (if logged in)
             scoreManager.submitGameResult(gameState.score);
             
             const endDiv = document.getElementById('gameOver');
@@ -578,6 +574,7 @@
             const playTime = scoreManager.getElapsedTimeFormatted();
             document.getElementById('finalScore').textContent = `Final Score: ${gameState.score} | Time: ${playTime}`;
             
+            // Local high score (unchanged behavior)
             if (gameState.score > gameState.highScore) {
                 gameState.highScore = gameState.score;
                 localStorage.setItem('squarioHighScore', gameState.highScore);
