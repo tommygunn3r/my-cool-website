@@ -18,7 +18,7 @@ html, body {
 }
 
 /* PURE BLACK */
-header, main, footer, .game-card, #gameWrapper, #gameFrame {
+header, main, footer, .game-card {
     background:#000 !important;
 }
 
@@ -155,40 +155,6 @@ footer a {
 }
 footer a:hover { color:#e94560; }
 
-/* FULLSCREEN GAME */
-#gameWrapper {
-    position:fixed;
-    inset:0;
-    display:none;
-    background:#000;
-    z-index:99999;
-}
-#gameFrame {
-    width:100vw;
-    height:100vh;
-    border:none;
-}
-.close-game-btn {
-    position:fixed;
-    top:20px;
-    left:20px;
-    background:#e94560;
-    color:white;
-    border:none;
-    padding:10px 14px;
-    border-radius:8px;
-    cursor:pointer;
-    z-index:100000;
-}
-
-/* Fullscreen mode hides layout */
-body.game-open header,
-body.game-open footer,
-body.game-open main {
-    display:none !important;
-}
-body.game-open { overflow:hidden !important; }
-
 /* AUTH MODAL */
 #authModal, #resetPasswordModal, #changeNameModal {
     position:fixed;
@@ -288,31 +254,24 @@ label { display:block; margin-bottom:4px; color:#aaa; }
 <main id="gameContainer">
     <div class="game-categories">
 
-        <div class="game-card disabled" data-game="arcade.html">
+        <div class="game-card" data-game="arcade.html" onclick="location.href='arcade.html'">
             <div class="game-image"><img src="assets/arcade.png"></div>
         </div>
 
-        <div class="game-card disabled" data-game="casino.html">
+        <div class="game-card" data-game="casino.html" onclick="location.href='casino.html'">
             <div class="game-image"><img src="assets/casino.png"></div>
         </div>
 
-        <div class="game-card disabled" data-game="solitaire.html">
+        <div class="game-card" data-game="solitaire.html" onclick="location.href='solitaire.html'">
             <div class="game-image"><img src="assets/solitaire.png"></div>
         </div>
 
-        <div class="game-card disabled" data-game="multiplayer/index.html">
+        <div class="game-card" data-game="multiplayer/index.html" onclick="location.href='multiplayer/index.html'">
             <div class="game-image"><img src="assets/multiplayer.png"></div>
         </div>
 
     </div>
 </main>
-
-<!-- FULLSCREEN GAME -->
-<div id="gameWrapper">
-    <button class="close-game-btn" onclick="closeGame()">BACK</button>
-    <iframe id="gameFrame"
-    sandbox="allow-same-origin allow-scripts allow-pointer-lock allow-popups allow-modals"></iframe>
-</div>
 
 <!-- FOOTER -->
 <footer>
@@ -425,29 +384,16 @@ label { display:block; margin-bottom:4px; color:#aaa; }
 function enableGames() {
     document.querySelectorAll(".game-card").forEach(c=>{
         c.classList.remove("disabled");
-        c.onclick = ()=> openGame(c.dataset.game);
     });
 }
 function disableGames() {
     document.querySelectorAll(".game-card").forEach(c=>{
         c.classList.add("disabled");
-        c.onclick = ()=> openModal("login");
     });
 }
 
 window.enableGames = enableGames;
 window.disableGames = disableGames;
-
-function openGame(url){
-    document.body.classList.add("game-open");
-    gameWrapper.style.display="block";
-    gameFrame.src=url;
-}
-function closeGame(){
-    document.body.classList.remove("game-open");
-    gameFrame.src="";
-    gameWrapper.style.display="none";
-}
 
 function openModal(form="login"){
     authModal.style.display="flex";
