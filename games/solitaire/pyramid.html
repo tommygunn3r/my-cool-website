@@ -436,34 +436,9 @@
         </div>
     </div>
 
-    <script type="module">
-        import { db } from '/firebase-config.js';
-        import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
-        import { collection, addDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+    <script>
 
-        let auth = null;
-        let currentUser = null;
-
-        // Gatekeeper: Check if logged in
-        async function initGameAuth() {
-            try {
-                auth = getAuth(db.app);
-                onAuthStateChanged(auth, (user) => {
-                    if (user) {
-                        console.log("Player Identified:", user.displayName || user.email);
-                        currentUser = user;
-                    } else {
-                        // Not logged in? Kick back to the portal
-                        console.log("No user detected, redirecting to index...");
-                        window.location.href = '/index.html';
-                    }
-                });
-            } catch (error) {
-                console.error("Auth failed:", error);
-            }
-        }
-        initGameAuth();
-
+        // Theme system
         // Theme system
         const THEMES = {
             green: '/games/assets/solitaire/greentop.png',

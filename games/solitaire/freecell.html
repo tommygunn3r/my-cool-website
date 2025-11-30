@@ -314,40 +314,13 @@
 
     <div id="messageToast" class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-black bg-opacity-90 text-gold border border-gold px-6 py-4 rounded-lg pointer-events-none opacity-0 transition-opacity duration-300 z-50 text-center font-bold text-xl shadow-xl font-cinzel" style="color: var(--gold); border-color: var(--gold);">Message</div>
 
-    <script type="module">
-        import { db } from '/firebase-config.js';
-        import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
-        import { collection, addDoc, serverTimestamp, doc, setDoc, increment } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
-        let auth = null;
-        let currentUser = null;
-
-        // Gatekeeper: Check if logged in
-        async function initGameAuth() {
-            try {
-                auth = getAuth(db.app);
-                onAuthStateChanged(auth, (user) => {
-                    if (user) {
-                        console.log("Player Identified:", user.displayName);
-                        currentUser = user;
-                        scoreManager.playerName = user.displayName || "Unknown Player";
-                    } else {
-                        // Not logged in? Kick back to the portal
-                        window.location.href = '/index.html';
-                    }
-                });
-            } catch (error) {
-                console.error("Auth failed:", error);
-            }
-        }
-        initGameAuth();
-
-        // --- Score Manager ---
+    <script>
+        // --- Score Manager (Local Only) ---
         class GameScoreManager {
             constructor(gameName) {
                 this.gameName = gameName;
                 this.sessionStartTime = null;
-                this.playerName = "Loading...";
             }
 
             startSession() {
@@ -365,31 +338,6 @@
                 const mins = Math.floor(seconds / 60);
                 const secs = seconds % 60;
                 return `${mins}:${secs.toString().padStart(2, '0')}`;
-            }
-
-            async submitGameResult(moves = 0) {
-                if (!currentUser) return;
-
-                const timePlayed = this.getElapsedTime();
-                // For FreeCell, lower moves = better score
-                const score = Math.max(0, 1000 - moves);
-                
-                try {
-                    // Public Leaderboard
-                    await addDoc(collection(db, 'scores'), {
-                        gameName: this.gameName,
-                        playerName: this.playerName,
-                        score: score,
-                        moves: moves,
-                        timePlayed: timePlayed,
-                        timestamp: serverTimestamp(),
-                        uid: currentUser.uid
-                    });
-
-                    console.log(`✅ Score submitted: ${score} (${moves} moves) for ${this.gameName}`);
-                } catch (error) {
-                    console.error("Score submission failed:", error);
-                }
             }
         }
         const scoreManager = new GameScoreManager('FreeCell Solitaire');
@@ -997,7 +945,7 @@
                 document.getElementById('finalTimeDisplay').textContent = scoreManager.getElapsedTimeFormatted();
                 document.getElementById('winModal').classList.remove('hidden');
                 startConfetti();
-                scoreManager.submitGameResult(state.moves);
+                
             }
         }
 
