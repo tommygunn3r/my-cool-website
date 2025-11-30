@@ -1,280 +1,1198 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ASCII DOOM</title>
-
-<style>
-    html, body {
-        margin: 0;
-        padding: 0;
-        overflow: hidden !important;
-        background: black;
-        height: 100%;
-    }
-
-    /* FIXED TERMINAL GRID */
-    #gameContainer {
-        position: absolute;
-        top: 0;
-        left: 0;
-
-        /* Hardcoded ASCII DOOM grid size */
-        width: calc(80 * 8.4px);   /* 80 columns */
-        height: calc(40 * 14px);   /* 40 rows */
-
-        background: black;
-        color: lime;
-
-        white-space: pre !important;
-        font-family: monospace !important;
-
-        font-size: 14px !important;
-        line-height: 14px !important;
-
-        overflow: hidden !important;
-        padding: 10px;
-        box-sizing: border-box;
-    }
-
-    #ui {
-        position: absolute;
-        top: 10px;
-        left: calc(80 * 8.6px); /* Slight offset to appear right of grid */
-        color: lime;
-        font-family: monospace;
-        font-size: 18px;
-        text-shadow: 0 0 5px lime;
-        z-index: 10;
-    }
-
-    #gameOver {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        padding: 30px;
-        background: rgba(0, 0, 0, 0.85);
-        border: 2px solid lime;
-        color: lime;
-        text-align: center;
-        display: none;
-        z-index: 50;
-    }
-
-    #gameOver button {
-        margin-top: 15px;
-        padding: 10px 20px;
-        background: lime;
-        color: black;
-        border: none;
-        font-weight: bold;
-        cursor: pointer;
-    }
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASCII DOOM</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #000;
+            color: #0f0;
+            font-family: monospace;
+            overflow: hidden;
+            cursor: crosshair;
+        }
+        #game-container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            width: 100vw;
+        }
+        #game-screen {
+            background-color: #000;
+            color: #0f0;
+            font-size: 14px;
+            line-height: 14px;
+            white-space: pre;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            overflow: hidden;
+        }
+        
+        /* Color classes for different elements */
+        .enemy-color { color: #ff0000; } /* BRIGHT RED for easy visibility */
+        .wall-color { color: #00ff00; }
+        .item-color { color: #ffff00; }
+        .weapon-color { color: #00ffff; }
+        #hud {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            font-size: 18px;
+            color: #f00;
+            user-select: none;
+            text-shadow: 0 0 5px #000;
+        }
+        #enemy-radar {
+            position: fixed;
+            bottom: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 150px;
+            height: 150px;
+            background-color: rgba(0, 50, 0, 0.7);
+            border: 2px solid #0f0;
+            border-radius: 50%;
+            z-index: 1000;
+        }
+        
+        .radar-blip {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background-color: #f00;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+        }
+        
+        .radar-player {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: #0f0;
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        
+        .radar-direction {
+            position: absolute;
+            width: 2px;
+            height: 40px;
+            background-color: rgba(0, 255, 0, 0.7);
+            top: 50%;
+            left: 50%;
+            transform-origin: center bottom;
+        }
+        #start-screen, #game-over-screen, #level-complete-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: #0f0;
+            font-size: 24px;
+            text-align: center;
+            z-index: 100;
+        }
+        .button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #333;
+            color: #0f0;
+            border: 2px solid #0f0;
+            cursor: pointer;
+            font-family: monospace;
+            font-size: 18px;
+        }
+        .button:hover {
+            background-color: #0f0;
+            color: #000;
+        }
+        #weapon-display {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            font-size: 18px;
+            color: #f00;
+            user-select: none;
+            text-shadow: 0 0 5px #000;
+        }
+        #message {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #f00;
+            font-size: 24px;
+            text-align: center;
+            text-shadow: 0 0 5px #000;
+            opacity: 0;
+            transition: opacity 0.5s;
+        }
+        #minimap {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: rgba(0, 0, 0, 0.7);
+            border: 1px solid #0f0;
+            padding: 5px;
+            font-size: 10px;
+            line-height: 10px;
+        }
+        #leaderboard {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background-color: rgba(0, 0, 0, 0.9);
+            border: 2px solid #0f0;
+            padding: 15px;
+            max-width: 300px;
+            max-height: 400px;
+            overflow-y: auto;
+            z-index: 200;
+        }
+        #leaderboard h3 {
+            margin: 0 0 10px 0;
+            color: #0f0;
+            border-bottom: 1px solid #0f0;
+            padding-bottom: 5px;
+        }
+        .leaderboard-entry {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+            color: #0f0;
+            font-size: 14px;
+        }
+        .leaderboard-entry.current-player {
+            color: #ff0;
+            font-weight: bold;
+        }
+        .close-leaderboard {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            cursor: pointer;
+            color: #f00;
+            font-size: 20px;
+            font-weight: bold;
+        }
+        .difficulty-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .difficulty-tab {
+            padding: 5px 10px;
+            background-color: #333;
+            border: 1px solid #0f0;
+            cursor: pointer;
+            color: #0f0;
+        }
+        .difficulty-tab.active {
+            background-color: #0f0;
+            color: #000;
+        }
+        #view-leaderboard-btn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            padding: 10px 15px;
+            background-color: rgba(0, 50, 0, 0.8);
+            border: 2px solid #0f0;
+            color: #0f0;
+            cursor: pointer;
+            font-family: monospace;
+            z-index: 50;
+        }
+        #view-leaderboard-btn:hover {
+            background-color: #0f0;
+            color: #000;
+        }
+        .score-display {
+            margin-top: 20px;
+            font-size: 32px;
+            color: #ff0;
+        }
+        .name-input-container {
+            margin-top: 20px;
+        }
+        .name-input-container input {
+            padding: 10px;
+            font-size: 18px;
+            background-color: #000;
+            border: 2px solid #0f0;
+            color: #0f0;
+            font-family: monospace;
+            text-align: center;
+        }
+        .name-input-container input:focus {
+            outline: none;
+            border-color: #ff0;
+        }
+        @keyframes scroll-up {
+            from {
+                transform: translateY(100vh);
+            }
+            to {
+                transform: translateY(-100%);
+            }
+        }
+        #credits-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #000;
+            color: #0f0;
+            overflow: hidden;
+            z-index: 150;
+        }
+    </style>
 </head>
 <body>
+    <div id="game-container">
+        <pre id="game-screen"></pre>
+        <div id="hud">Health: 100 | Ammo: 50 | Enemies: 0 | Level: 1</div>
+        <div id="weapon-display">Weapon: Pistol</div>
+        <div id="crosshair">⊕</div>
+        <div id="message"></div>
+        <pre id="minimap"></pre>
+        <div id="enemy-radar" style="display: none;">
+            <div class="radar-player"></div>
+            <div class="radar-direction"></div>
+        </div>
+    </div>
 
-<div id="ui">
-    <div>Kills: <span id="kills">0</span></div>
-    <div>Health: <span id="health">100</span></div>
-    <div>Level: <span id="level">1</span></div>
-</div>
+    <div id="view-leaderboard-btn" onclick="showLeaderboard()">🏆 Leaderboard</div>
 
-<div id="gameContainer"></div>
+    <div id="leaderboard" style="display: none;">
+        <span class="close-leaderboard" onclick="hideLeaderboard()">✕</span>
+        <h3>🏆 HIGH SCORES</h3>
+        <div class="difficulty-tabs">
+            <div class="difficulty-tab active" onclick="switchLeaderboardDifficulty('easy')">EASY</div>
+            <div class="difficulty-tab" onclick="switchLeaderboardDifficulty('medium')">MEDIUM</div>
+            <div class="difficulty-tab" onclick="switchLeaderboardDifficulty('hard')">HARD</div>
+        </div>
+        <div id="leaderboard-content">Loading...</div>
+    </div>
 
-<div id="gameOver">
-    <h1>GAME OVER</h1>
-    <div id="finalScore"></div>
-    <button onclick="restartGame()">Restart</button>
-</div>
+    <div id="start-screen">
+        <pre>
+    _    ____   ____ ___ ___    ____   ___   ___  __  __ 
+   / \  / ___| / ___|_ _|_ _|  |  _ \ / _ \ / _ \|  \/  |
+  / _ \ \___ \| |    | | | |   | | | | | | | | | | |\/| |
+ / ___ \ ___) | |___ | | | |   | |_| | |_| | |_| | |  | |
+/_/   \_\____/ \____|___|___|  |____/ \___/ \___/|_|  |_|
+        </pre>
+        <p>WASD to move, Mouse to look, Click to shoot</p>
+        <div class="button" id="start-easy">EASY</div>
+        <div class="button" id="start-medium">MEDIUM</div>
+        <div class="button" id="start-hard">HARD</div>
+    </div>
 
-<script type="module">
-/* =========================================================
-    SUPABASE AUTH + SCORE SUBMISSION
-   ========================================================= */
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+    <div id="game-over-screen" style="display: none;">
+        <pre>
+  ____    _    __  __ _____    _____     _______ ____  
+ / ___|  / \  |  \/  | ____|  / _ \ \   / / ____|  _ \ 
+| |  _  / _ \ | |\/| |  _|   | | | \ \ / /|  _| | |_) |
+| |_| |/ ___ \| |  | | |___  | |_| |\ V / | |___|  _ < 
+ \____/_/   \_\_|  |_|_____|  \___/  \_/  |_____|_| \_\
+        </pre>
+        <div class="score-display">Score: <span id="final-score">0</span></div>
+        <div class="name-input-container">
+            <input type="text" id="player-name" placeholder="Enter your name" maxlength="20" />
+        </div>
+        <div class="button" id="submit-score">SUBMIT SCORE</div>
+    </div>
 
-const SUPABASE_URL = "https://pknhslxhpohrzgsfkisr.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_-zZw-pi_3q1sdNGhITKuhQ_ECyDARzc";
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    <div id="credits-screen" style="display: none;">
+        <div style="text-align: center; animation: scroll-up 15s linear;">
+            <pre style="font-size: 20px; color: #ff0;">
+  ____    _    __  __ _____    _____     _______ ____  
+ / ___|  / \  |  \/  | ____|  / _ \ \   / / ____|  _ \ 
+| |  _  / _ \ | |\/| |  _|   | | | \ \ / /|  _| | |_) |
+| |_| |/ ___ \| |  | | |___  | |_| |\ V / | |___|  _ < 
+ \____/_/   \_\_|  |_|_____|  \___/  \_/  |_____|_| \_\
+            </pre>
+            
+            <div style="margin: 40px 0; font-size: 32px; color: #ff0;">
+                <p>FINAL SCORE</p>
+                <p id="credits-score" style="font-size: 48px; color: #0f0;">0</p>
+            </div>
+            
+            <div style="margin: 40px 0; font-size: 24px; line-height: 2;">
+                <p style="color: #0ff;">━━━━━━━━━━━━━━━━━━━━</p>
+                <p style="color: #ff0;">LEVEL REACHED</p>
+                <p id="credits-level" style="color: #0f0; font-size: 36px;">1</p>
+                <p style="color: #0ff;">━━━━━━━━━━━━━━━━━━━━</p>
+            </div>
+            
+            <div style="margin: 60px 0; font-size: 20px; line-height: 1.8; color: #0f0;">
+                <p style="color: #ff0; font-size: 24px;">CREDITS</p>
+                <p style="margin-top: 30px;">LEAD PROGRAMMER</p>
+                <p style="color: #0ff;">TOM</p>
+                
+                <p style="margin-top: 30px;">GAME DESIGN</p>
+                <p style="color: #0ff;">GUNNERSGAMES</p>
+                
+                <p style="margin-top: 30px;">SPECIAL THANKS</p>
+                <p style="color: #0ff;">ALL PLAYERS</p>
+                
+                <p style="margin-top: 50px; color: #ff0; font-size: 18px;">© 2024 GUNNERSGAMES</p>
+                <p style="margin-top: 20px; font-size: 16px; color: #888;">INSERT COIN TO CONTINUE</p>
+            </div>
+        </div>
+    </div>
 
-class ScoreManager {
-    constructor(gameName) {
-        this.gameName = gameName;
-        this.sessionStart = Date.now();
-        this.user = null;
-        this.loadUser();
-    }
+    <div id="level-complete-screen" style="display: none;">
+        <pre>
+ _     _______     _______ _       ____  ___  _   _ _____ 
+| |   | ____\ \   / / ____| |     |  _ \/ _ \| \ | | ____|
+| |   |  _|  \ \ / /|  _| | |     | | | | | | |  \| |  _|  
+| |___| |___  \ V / | |___| |___  | |_| | |_| | |\  | |___ 
+|_____|_____|  \_/  |_____|_____| |____/ \___/|_| \_|_____|
+        </pre>
+        <div class="button" id="next-level">NEXT LEVEL</div>
+    </div>
+    
+    <audio id="sound-start" src="game_start.mp3" preload="auto"></audio>
+    <audio id="sound-fire" src="laser_shot.mp3" preload="auto"></audio>
+    <audio id="sound-hit" src="hit.mp3" preload="auto"></audio>
+    <audio id="sound-death" src="death.mp3" preload="auto"></audio>
+    <audio id="sound-item" src="item_pickup.mp3" preload="auto"></audio>
 
-    async loadUser() {
-        const { data: { user } } = await supabase.auth.getUser();
-        this.user = user || null;
-        if (!user) console.log("ASCII DOOM running without Supabase user — local only.");
-    }
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        // Supabase configuration
+        const SUPABASE_URL = 'https://your-project.supabase.co';
+        const SUPABASE_ANON_KEY = 'your-anon-key';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    getTimePlayed() {
-        return Math.floor((Date.now() - this.sessionStart) / 1000);
-    }
-
-    async submitScore(score) {
-        if (!this.user || score <= 0) return;
-
-        const payload = {
-            user_id: this.user.id,
-            game: this.gameName,
-            score: score,
-            time_played: this.getTimePlayed()
+        const gameScreen = document.getElementById('game-screen');
+        const hud = document.getElementById('hud');
+        const weaponDisplay = document.getElementById('weapon-display');
+        const startScreen = document.getElementById('start-screen');
+        const gameOverScreen = document.getElementById('game-over-screen');
+        const levelCompleteScreen = document.getElementById('level-complete-screen');
+        const startEasyButton = document.getElementById('start-easy');
+        const startMediumButton = document.getElementById('start-medium');
+        const startHardButton = document.getElementById('start-hard');
+        const nextLevelButton = document.getElementById('next-level');
+        const submitScoreButton = document.getElementById('submit-score');
+        const finalScoreDisplay = document.getElementById('final-score');
+        const playerNameInput = document.getElementById('player-name');
+        
+        const SCREEN_WIDTH = 80;
+        const SCREEN_HEIGHT = 40;
+        const FOV = Math.PI / 3;
+        const MAX_DEPTH = 20;
+        
+        let gameState = {
+            isRunning: false,
+            player: {
+                x: 5,
+                y: 5,
+                angle: 0,
+                health: 100,
+                ammo: 50,
+                weapon: 'pistol',
+                score: 0
+            },
+            enemies: [],
+            items: [],
+            level: 1,
+            totalEnemiesKilled: 0
         };
-
-        const { error } = await supabase.from("stats").insert(payload);
-
-        if (error) console.warn("Supabase insert failed:", error.message);
-        else console.log("ASCII DOOM score saved:", payload);
-    }
-}
-
-const scoreManager = new ScoreManager("ascii-doom");
-
-/* =========================================================
-    ASCII DOOM GAME ENGINE
-   ========================================================= */
-const gameContainer = document.getElementById("gameContainer");
-
-let gameState = {
-    width: 80,
-    height: 40,
-    playerX: 40,
-    playerY: 20,
-    kills: 0,
-    health: 100,
-    level: 1,
-    enemies: [],
-    bullets: [],
-    running: true
-};
-
-function render() {
-    let grid = Array.from({ length: gameState.height }, () =>
-        Array(gameState.width).fill(" ")
-    );
-
-    grid[gameState.playerY][gameState.playerX] = "@";
-
-    gameState.enemies.forEach(e => {
-        if (e.alive) grid[e.y][e.x] = "D";
-    });
-
-    gameState.bullets.forEach(b => {
-        grid[b.y][b.x] = "-";
-    });
-
-    gameContainer.textContent = grid.map(r => r.join("")).join("\n");
-
-    document.getElementById("kills").textContent = gameState.kills;
-    document.getElementById("health").textContent = gameState.health;
-    document.getElementById("level").textContent = gameState.level;
-}
-
-function spawnEnemy() {
-    gameState.enemies.push({
-        x: Math.floor(Math.random() * gameState.width),
-        y: Math.floor(Math.random() * gameState.height),
-        alive: true
-    });
-}
-
-function shoot() {
-    gameState.bullets.push({
-        x: gameState.playerX,
-        y: gameState.playerY
-    });
-}
-
-function updateEnemies() {
-    gameState.enemies.forEach(e => {
-        if (!e.alive) return;
-
-        if (e.x < gameState.playerX) e.x++;
-        if (e.x > gameState.playerX) e.x--;
-        if (e.y < gameState.playerY) e.y++;
-        if (e.y > gameState.playerY) e.y--;
-
-        if (e.x === gameState.playerX && e.y === gameState.playerY) {
-            gameState.health -= 10;
-            if (gameState.health <= 0) endGame();
+        
+        let config = {
+            difficulty: 'medium',
+            enemyHealth: { easy: 1, medium: 2, hard: 3 },
+            enemySpeed: { easy: 0.01, medium: 0.02, hard: 0.03 },
+            enemyDamage: { easy: 5, medium: 10, hard: 15 }
+        };
+        
+        // Game map (1 = wall, 0 = empty space)
+        let map = [];
+        
+        const keys = {
+            w: false,
+            a: false,
+            s: false,
+            d: false
+        };
+        
+        // Weapons configuration
+        const weapons = {
+            pistol: { damage: 1, ammo: Infinity, fireRate: 500 },
+            shotgun: { damage: 3, ammo: 20, fireRate: 800 },
+            rifle: { damage: 2, ammo: 100, fireRate: 200 }
+        };
+        
+        let lastFireTime = 0;
+        let currentLeaderboardDifficulty = 'easy';
+        
+        function generateMap(level) {
+            const size = 20 + (level * 2);
+            map = Array(size).fill(0).map(() => Array(size).fill(0));
+            
+            // Create borders
+            for (let i = 0; i < size; i++) {
+                map[0][i] = 1;
+                map[size-1][i] = 1;
+                map[i][0] = 1;
+                map[i][size-1] = 1;
+            }
+            
+            // Create random walls
+            const wallCount = level * 10;
+            for (let i = 0; i < wallCount; i++) {
+                const x = Math.floor(Math.random() * (size - 2)) + 1;
+                const y = Math.floor(Math.random() * (size - 2)) + 1;
+                
+                // Don't place walls near player spawn
+                if (Math.abs(x - 5) > 3 || Math.abs(y - 5) > 3) {
+                    map[y][x] = 1;
+                }
+            }
+            
+            // Create rooms
+            const roomCount = 3 + level;
+            for (let i = 0; i < roomCount; i++) {
+                const roomWidth = Math.floor(Math.random() * 4) + 3;
+                const roomHeight = Math.floor(Math.random() * 4) + 3;
+                const roomX = Math.floor(Math.random() * (size - roomWidth - 2)) + 1;
+                const roomY = Math.floor(Math.random() * (size - roomHeight - 2)) + 1;
+                
+                for (let y = roomY; y < roomY + roomHeight; y++) {
+                    for (let x = roomX; x < roomX + roomWidth; x++) {
+                        if (y > 0 && y < size - 1 && x > 0 && x < size - 1) {
+                            map[y][x] = 0;
+                        }
+                    }
+                }
+            }
         }
-    });
-}
-
-function updateBullets() {
-    gameState.bullets.forEach(b => {
-        b.x++;
-        gameState.enemies.forEach(e => {
-            if (e.alive && e.x === b.x && e.y === b.y) {
-                e.alive = false;
-                gameState.kills++;
+        
+        function initGame(difficulty) {
+            config.difficulty = difficulty;
+            gameState.isRunning = true;
+            gameState.level = 1;
+            gameState.totalEnemiesKilled = 0;
+            gameState.player = {
+                x: 5,
+                y: 5,
+                angle: 0,
+                health: 100,
+                ammo: 50,
+                weapon: 'pistol',
+                score: 0
+            };
+            
+            generateMap(gameState.level);
+            spawnEnemies();
+            spawnItems();
+            
+            document.getElementById('enemy-radar').style.display = 'block';
+            
+            gameLoop();
+        }
+        
+        function spawnEnemies() {
+            gameState.enemies = [];
+            const enemyCount = 5 + (gameState.level * 2);
+            
+            for (let i = 0; i < enemyCount; i++) {
+                let x, y;
+                do {
+                    x = Math.floor(Math.random() * map[0].length);
+                    y = Math.floor(Math.random() * map.length);
+                } while (map[y][x] === 1 || (Math.abs(x - gameState.player.x) < 5 && Math.abs(y - gameState.player.y) < 5));
+                
+                gameState.enemies.push({
+                    x: x + 0.5,
+                    y: y + 0.5,
+                    health: config.enemyHealth[config.difficulty],
+                    lastAttackTime: 0
+                });
+            }
+        }
+        
+        function spawnItems() {
+            gameState.items = [];
+            const itemCount = 3 + gameState.level;
+            
+            const itemTypes = ['health', 'ammo', 'shotgun', 'rifle'];
+            
+            for (let i = 0; i < itemCount; i++) {
+                let x, y;
+                do {
+                    x = Math.floor(Math.random() * map[0].length);
+                    y = Math.floor(Math.random() * map.length);
+                } while (map[y][x] === 1);
+                
+                gameState.items.push({
+                    x: x + 0.5,
+                    y: y + 0.5,
+                    type: itemTypes[Math.floor(Math.random() * itemTypes.length)],
+                    active: true
+                });
+            }
+        }
+        
+        function castRay(angle) {
+            const rayDirX = Math.cos(angle);
+            const rayDirY = Math.sin(angle);
+            
+            let distance = 0;
+            let hitWall = false;
+            
+            while (!hitWall && distance < MAX_DEPTH) {
+                distance += 0.1;
+                
+                const testX = Math.floor(gameState.player.x + rayDirX * distance);
+                const testY = Math.floor(gameState.player.y + rayDirY * distance);
+                
+                if (testX < 0 || testX >= map[0].length || testY < 0 || testY >= map.length) {
+                    hitWall = true;
+                    distance = MAX_DEPTH;
+                } else if (map[testY][testX] === 1) {
+                    hitWall = true;
+                }
+            }
+            
+            return distance;
+        }
+        
+        function render() {
+            let output = '';
+            
+            // Render 3D view
+            for (let y = 0; y < SCREEN_HEIGHT; y++) {
+                for (let x = 0; x < SCREEN_WIDTH; x++) {
+                    if (y < SCREEN_HEIGHT / 2) {
+                        // Sky
+                        output += ' ';
+                    } else if (y === Math.floor(SCREEN_HEIGHT / 2)) {
+                        // Horizon line
+                        output += '-';
+                    } else {
+                        // Floor
+                        output += ' ';
+                    }
+                }
+                output += '\n';
+            }
+            
+            // Convert output to array for manipulation
+            const screenArray = output.split('\n').map(line => line.split(''));
+            
+            // Ray casting
+            for (let x = 0; x < SCREEN_WIDTH; x++) {
+                const rayAngle = (gameState.player.angle - FOV / 2) + (x / SCREEN_WIDTH) * FOV;
+                const distance = castRay(rayAngle);
+                
+                const ceiling = Math.floor((SCREEN_HEIGHT / 2) - SCREEN_HEIGHT / distance);
+                const floor = SCREEN_HEIGHT - ceiling;
+                
+                for (let y = 0; y < SCREEN_HEIGHT; y++) {
+                    if (y <= ceiling) {
+                        screenArray[y][x] = ' ';
+                    } else if (y > ceiling && y <= floor) {
+                        // Wall shading based on distance
+                        const shadeChar = distance < 2 ? '█' : distance < 4 ? '▓' : distance < 6 ? '▒' : distance < 10 ? '░' : ' ';
+                        screenArray[y][x] = shadeChar;
+                    } else {
+                        // Floor shading
+                        const floorDist = (y - SCREEN_HEIGHT / 2);
+                        screenArray[y][x] = floorDist < 5 ? '.' : floorDist < 10 ? '·' : ' ';
+                    }
+                }
+            }
+            
+            // Render enemies
+            for (const enemy of gameState.enemies) {
+                if (enemy.health <= 0) continue;
+                
+                const enemyAngle = Math.atan2(enemy.y - gameState.player.y, enemy.x - gameState.player.x);
+                let angleDiff = enemyAngle - gameState.player.angle;
+                
+                // Normalize angle difference
+                while (angleDiff > Math.PI) angleDiff -= 2 * Math.PI;
+                while (angleDiff < -Math.PI) angleDiff += 2 * Math.PI;
+                
+                if (Math.abs(angleDiff) < FOV / 2) {
+                    const enemyDist = Math.sqrt(
+                        Math.pow(enemy.x - gameState.player.x, 2) + 
+                        Math.pow(enemy.y - gameState.player.y, 2)
+                    );
+                    
+                    const enemyScreenX = Math.floor((angleDiff + FOV / 2) / FOV * SCREEN_WIDTH);
+                    const enemySize = Math.max(1, Math.floor(SCREEN_HEIGHT / enemyDist));
+                    const enemyTop = Math.floor(SCREEN_HEIGHT / 2 - enemySize / 2);
+                    
+                    if (enemyScreenX >= 0 && enemyScreenX < SCREEN_WIDTH) {
+                        for (let i = 0; i < enemySize; i++) {
+                            const y = enemyTop + i;
+                            if (y >= 0 && y < SCREEN_HEIGHT) {
+                                screenArray[y][enemyScreenX] = 'X';
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Render items
+            for (const item of gameState.items) {
+                if (!item.active) continue;
+                
+                const itemAngle = Math.atan2(item.y - gameState.player.y, item.x - gameState.player.x);
+                let angleDiff = itemAngle - gameState.player.angle;
+                
+                while (angleDiff > Math.PI) angleDiff -= 2 * Math.PI;
+                while (angleDiff < -Math.PI) angleDiff += 2 * Math.PI;
+                
+                if (Math.abs(angleDiff) < FOV / 2) {
+                    const itemDist = Math.sqrt(
+                        Math.pow(item.x - gameState.player.x, 2) + 
+                        Math.pow(item.y - gameState.player.y, 2)
+                    );
+                    
+                    const itemScreenX = Math.floor((angleDiff + FOV / 2) / FOV * SCREEN_WIDTH);
+                    const itemY = Math.floor(SCREEN_HEIGHT / 2 + SCREEN_HEIGHT / (itemDist * 2));
+                    
+                    if (itemScreenX >= 0 && itemScreenX < SCREEN_WIDTH && itemY >= 0 && itemY < SCREEN_HEIGHT) {
+                        const itemChar = item.type === 'health' ? '+' : item.type === 'ammo' ? 'A' : 'W';
+                        screenArray[itemY][itemScreenX] = itemChar;
+                    }
+                }
+            }
+            
+            gameScreen.innerHTML = screenArray.map(row => row.join('')).join('\n');
+        }
+        
+        function updateEnemies() {
+            const currentTime = Date.now();
+            
+            for (const enemy of gameState.enemies) {
+                if (enemy.health <= 0) continue;
+                
+                // Calculate direction to player
+                const dx = gameState.player.x - enemy.x;
+                const dy = gameState.player.y - enemy.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                
+                if (dist > 0.5) {
+                    // Move towards player
+                    const moveX = (dx / dist) * config.enemySpeed[config.difficulty];
+                    const moveY = (dy / dist) * config.enemySpeed[config.difficulty];
+                    
+                    const newX = enemy.x + moveX;
+                    const newY = enemy.y + moveY;
+                    
+                    // Check collision
+                    if (map[Math.floor(newY)][Math.floor(newX)] === 0) {
+                        enemy.x = newX;
+                        enemy.y = newY;
+                    }
+                } else {
+                    // Attack player
+                    if (currentTime - enemy.lastAttackTime > 1000) {
+                        gameState.player.health -= config.enemyDamage[config.difficulty];
+                        enemy.lastAttackTime = currentTime;
+                        
+                        if (gameState.player.health <= 0) {
+                            gameOver();
+                        }
+                    }
+                }
+            }
+        }
+        
+        function updatePlayer() {
+            const moveSpeed = 0.1;
+            const rotateSpeed = 0.05;
+            
+            let newX = gameState.player.x;
+            let newY = gameState.player.y;
+            
+            if (keys.w) {
+                newX += Math.cos(gameState.player.angle) * moveSpeed;
+                newY += Math.sin(gameState.player.angle) * moveSpeed;
+            }
+            if (keys.s) {
+                newX -= Math.cos(gameState.player.angle) * moveSpeed;
+                newY -= Math.sin(gameState.player.angle) * moveSpeed;
+            }
+            if (keys.a) {
+                newX += Math.sin(gameState.player.angle) * moveSpeed;
+                newY -= Math.cos(gameState.player.angle) * moveSpeed;
+            }
+            if (keys.d) {
+                newX -= Math.sin(gameState.player.angle) * moveSpeed;
+                newY += Math.cos(gameState.player.angle) * moveSpeed;
+            }
+            
+            // Check collision
+            if (map[Math.floor(newY)][Math.floor(newX)] === 0) {
+                gameState.player.x = newX;
+                gameState.player.y = newY;
+            }
+            
+            // Check item pickup
+            for (const item of gameState.items) {
+                if (!item.active) continue;
+                
+                const dx = item.x - gameState.player.x;
+                const dy = item.y - gameState.player.y;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+                
+                if (dist < 0.5) {
+                    pickupItem(item);
+                }
+            }
+        }
+        
+        function pickupItem(item) {
+            item.active = false;
+            
+            switch (item.type) {
+                case 'health':
+                    gameState.player.health = Math.min(100, gameState.player.health + 25);
+                    showMessage("Health +25", 2000);
+                    break;
+                case 'ammo':
+                    gameState.player.ammo += 30;
+                    showMessage("Ammo +30", 2000);
+                    break;
+                case 'shotgun':
+                    gameState.player.weapon = 'shotgun';
+                    gameState.player.ammo = 20;
+                    showMessage("Shotgun acquired!", 2000);
+                    break;
+                case 'rifle':
+                    gameState.player.weapon = 'rifle';
+                    gameState.player.ammo = 100;
+                    showMessage("Rifle acquired!", 2000);
+                    break;
+            }
+        }
+        
+        function fireWeapon() {
+            const currentTime = Date.now();
+            const weapon = weapons[gameState.player.weapon];
+            
+            if (currentTime - lastFireTime < weapon.fireRate) return;
+            
+            if (gameState.player.weapon !== 'pistol' && gameState.player.ammo <= 0) {
+                showMessage("Out of ammo!", 2000);
+                return;
+            }
+            
+            lastFireTime = currentTime;
+            if (gameState.player.weapon !== 'pistol') {
+                gameState.player.ammo--;
+            }
+            
+            // Check if we hit an enemy
+            for (const enemy of gameState.enemies) {
+                if (enemy.health <= 0) continue;
+                
+                const enemyAngle = Math.atan2(enemy.y - gameState.player.y, enemy.x - gameState.player.x);
+                let angleDiff = enemyAngle - gameState.player.angle;
+                
+                while (angleDiff > Math.PI) angleDiff -= 2 * Math.PI;
+                while (angleDiff < -Math.PI) angleDiff += 2 * Math.PI;
+                
+                if (Math.abs(angleDiff) < 0.1) {
+                    enemy.health -= weapon.damage;
+                    
+                    if (enemy.health <= 0) {
+                        const points = config.difficulty === 'easy' ? 100 : config.difficulty === 'medium' ? 150 : 200;
+                        gameState.player.score += points;
+                        gameState.totalEnemiesKilled++;
+                        showMessage(`+${points} points`, 1000);
+                    }
+                    break;
+                }
+            }
+        }
+        
+        function updateHUD() {
+            const aliveEnemies = gameState.enemies.filter(e => e.health > 0).length;
+            hud.textContent = `Health: ${gameState.player.health} | Ammo: ${gameState.player.weapon === 'pistol' ? '∞' : gameState.player.ammo} | Enemies: ${aliveEnemies} | Level: ${gameState.level} | Score: ${gameState.player.score}`;
+            weaponDisplay.textContent = `Weapon: ${gameState.player.weapon.toUpperCase()}`;
+            
+            // Check if level complete
+            if (aliveEnemies === 0 && gameState.isRunning) {
+                levelComplete();
+            }
+        }
+        
+        function levelComplete() {
+            gameState.isRunning = false;
+            levelCompleteScreen.style.display = 'flex';
+            document.getElementById('enemy-radar').style.display = 'none';
+        }
+        
+        function nextLevel() {
+            levelCompleteScreen.style.display = 'none';
+            gameState.level++;
+            gameState.player.health = Math.min(100, gameState.player.health + 50);
+            
+            generateMap(gameState.level);
+            spawnEnemies();
+            spawnItems();
+            
+            gameState.isRunning = true;
+            document.getElementById('enemy-radar').style.display = 'block';
+        }
+        
+        function gameOver() {
+            gameState.isRunning = false;
+            gameOverScreen.style.display = 'flex';
+            finalScoreDisplay.textContent = gameState.player.score;
+            document.getElementById('enemy-radar').style.display = 'none';
+            playerNameInput.value = '';
+            playerNameInput.focus();
+        }
+        
+        function showMessage(text, duration) {
+            const messageEl = document.getElementById('message');
+            messageEl.textContent = text;
+            messageEl.style.opacity = '1';
+            
+            setTimeout(() => {
+                messageEl.style.opacity = '0';
+            }, duration);
+        }
+        
+        function gameLoop() {
+            if (!gameState.isRunning) return;
+            
+            updatePlayer();
+            updateEnemies();
+            render();
+            updateHUD();
+            updateRadar();
+            
+            requestAnimationFrame(gameLoop);
+        }
+        
+        // Supabase leaderboard functions
+        async function submitScore() {
+            const playerName = playerNameInput.value.trim();
+            
+            if (!playerName) {
+                showMessage("Please enter your name", 2000);
+                return;
+            }
+            
+            try {
+                const { data, error } = await supabase
+                    .from('arcade_leaderboard')
+                    .insert([
+                        {
+                            game_name: 'ASCII DOOM',
+                            player_name: playerName,
+                            score: gameState.player.score,
+                            difficulty: config.difficulty,
+                            level_reached: gameState.level,
+                            enemies_killed: gameState.totalEnemiesKilled
+                        }
+                    ]);
+                
+                if (error) throw error;
+                
+                showMessage("Score submitted!", 2000);
+                
+                // Show credits screen
+                setTimeout(() => {
+                    showCredits();
+                }, 1500);
+                
+            } catch (error) {
+                console.error('Error submitting score:', error);
+                showMessage("Error submitting score", 2000);
+            }
+        }
+        
+        function showCredits() {
+            gameOverScreen.style.display = 'none';
+            const creditsScreen = document.getElementById('credits-screen');
+            document.getElementById('credits-score').textContent = gameState.player.score;
+            document.getElementById('credits-level').textContent = gameState.level;
+            creditsScreen.style.display = 'block';
+            
+            // Redirect to arcade after credits finish (15 seconds)
+            setTimeout(() => {
+                window.location.href = 'arcade.html';
+            }, 15000);
+        }
+        
+        async function loadLeaderboard(difficulty) {
+            try {
+                const { data, error } = await supabase
+                    .from('arcade_leaderboard')
+                    .select('*')
+                    .eq('game_name', 'ASCII DOOM')
+                    .eq('difficulty', difficulty)
+                    .order('score', { ascending: false })
+                    .limit(10);
+                
+                if (error) throw error;
+                
+                displayLeaderboard(data);
+                
+            } catch (error) {
+                console.error('Error loading leaderboard:', error);
+                document.getElementById('leaderboard-content').innerHTML = '<p>Error loading leaderboard</p>';
+            }
+        }
+        
+        function displayLeaderboard(entries) {
+            const content = document.getElementById('leaderboard-content');
+            
+            if (!entries || entries.length === 0) {
+                content.innerHTML = '<p style="color: #888;">No scores yet. Be the first!</p>';
+                return;
+            }
+            
+            let html = '';
+            entries.forEach((entry, index) => {
+                const date = new Date(entry.created_at).toLocaleDateString();
+                const isCurrent = entry.score === gameState.player.score && 
+                                 entry.created_at && 
+                                 (Date.now() - new Date(entry.created_at).getTime()) < 5000;
+                
+                html += `
+                    <div class="leaderboard-entry ${isCurrent ? 'current-player' : ''}">
+                        <span>${index + 1}. ${entry.player_name}</span>
+                        <span>${entry.score} pts (Lvl ${entry.level_reached})</span>
+                    </div>
+                `;
+            });
+            
+            content.innerHTML = html;
+        }
+        
+        function showLeaderboard() {
+            document.getElementById('leaderboard').style.display = 'block';
+            loadLeaderboard(currentLeaderboardDifficulty);
+        }
+        
+        function hideLeaderboard() {
+            document.getElementById('leaderboard').style.display = 'none';
+        }
+        
+        function switchLeaderboardDifficulty(difficulty) {
+            currentLeaderboardDifficulty = difficulty;
+            
+            // Update tab styling
+            document.querySelectorAll('.difficulty-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            loadLeaderboard(difficulty);
+        }
+        
+        // Keyboard controls
+        document.addEventListener('keydown', function(event) {
+            const key = event.key.toLowerCase();
+            if (keys.hasOwnProperty(key)) {
+                keys[key] = true;
             }
         });
-    });
+        
+        document.addEventListener('keyup', function(event) {
+            const key = event.key.toLowerCase();
+            if (keys.hasOwnProperty(key)) {
+                keys[key] = false;
+            }
+        });
+        
+        // Mouse movement with pointer lock
+        document.addEventListener('pointerlockchange', lockChangeHandler, false);
+        document.addEventListener('mozpointerlockchange', lockChangeHandler, false);
+        document.addEventListener('webkitpointerlockchange', lockChangeHandler, false);
+        
+        function lockChangeHandler() {
+            if (document.pointerLockElement === gameScreen || 
+                document.mozPointerLockElement === gameScreen || 
+                document.webkitPointerLockElement === gameScreen) {
+                document.addEventListener('mousemove', updateRotation, false);
+            } else {
+                document.removeEventListener('mousemove', updateRotation, false);
+            }
+        }
+        
+        function updateRotation(e) {
+            if (!gameState.isRunning) return;
+            
+            const movementX = e.movementX || e.mozMovementX || e.webkitMovementX || 0;
+            const sensitivity = 0.003;
+            gameState.player.angle -= movementX * sensitivity;
+            
+            if (gameState.player.angle < 0) {
+                gameState.player.angle += Math.PI * 2;
+            } else if (gameState.player.angle >= Math.PI * 2) {
+                gameState.player.angle -= Math.PI * 2;
+            }
+        }
+        
+        document.addEventListener('click', function(event) {
+            if (!gameState.isRunning) return;
+            fireWeapon();
+        });
+        
+        document.addEventListener('contextmenu', function(event) {
+            event.preventDefault();
+        });
+        
+        // Button event listeners
+        startEasyButton.addEventListener('click', function() {
+            startScreen.style.display = 'none';
+            initGame('easy');
+            requestPointerLock();
+        });
+        
+        startMediumButton.addEventListener('click', function() {
+            startScreen.style.display = 'none';
+            initGame('medium');
+            requestPointerLock();
+        });
+        
+        startHardButton.addEventListener('click', function() {
+            startScreen.style.display = 'none';
+            initGame('hard');
+            requestPointerLock();
+        });
+        
+        function requestPointerLock() {
+            if (document.pointerLockElement !== gameScreen && 
+                document.mozPointerLockElement !== gameScreen && 
+                document.webkitPointerLockElement !== gameScreen) {
+                
+                gameScreen.requestPointerLock = gameScreen.requestPointerLock || 
+                                             gameScreen.mozRequestPointerLock || 
+                                             gameScreen.webkitRequestPointerLock;
+                
+                if (typeof gameScreen.requestPointerLock === 'function') {
+                    setTimeout(() => {
+                        gameScreen.requestPointerLock();
+                        showMessage("Click game to capture mouse", 3000);
+                    }, 100);
+                }
+            }
+        }
+        
+        submitScoreButton.addEventListener('click', submitScore);
+        
+        playerNameInput.addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                submitScore();
+            }
+        });
+        
+        nextLevelButton.addEventListener('click', function() {
+            nextLevel();
+        });
+        
+        // Update enemy radar
+        function updateRadar() {
+            try {
+                const radar = document.getElementById('enemy-radar');
+                const radarSize = 150;
+                const radarRange = 10;
+                
+                const existingBlips = document.querySelectorAll('.radar-blip');
+                existingBlips.forEach(blip => blip.remove());
+                
+                const directionIndicator = document.querySelector('.radar-direction');
+                if (directionIndicator) {
+                    const indicatorAngle = gameState.player.angle + Math.PI / 2; 
+                    directionIndicator.style.transform = `rotate(${indicatorAngle}rad) translate(-50%, 0)`;
+                }
+                
+                for (const enemy of gameState.enemies) {
+                    if (enemy.health <= 0) continue;
+                    
+                    const dx = enemy.x - gameState.player.x;
+                    const dy = enemy.y - gameState.player.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    
+                    if (dist > radarRange) continue;
+                    
+                    const angleToEnemy = Math.atan2(dy, dx);
+                    const angleDifference = angleToEnemy - gameState.player.angle - (Math.PI / 2); 
+                    
+                    const blipX = 50 + Math.sin(angleDifference) * (dist / radarRange) * 50;
+                    const blipY = 50 + Math.cos(angleDifference) * (dist / radarRange) * 50;
+                    
+                    const blip = document.createElement('div');
+                    blip.className = 'radar-blip';
+                    blip.style.left = blipX + '%';
+                    blip.style.top = blipY + '%';
+                    
+                    const blipSize = Math.max(4, 10 - dist * 0.5);
+                    blip.style.width = blipSize + 'px';
+                    blip.style.height = blipSize + 'px';
+                    blip.style.opacity = Math.max(0.4, 1 - dist / radarRange);
+                    
+                    if (dist < 2) {
+                        blip.style.animation = 'pulse 0.5s infinite alternate';
+                    }
+                    
+                    radar.appendChild(blip);
+                }
+            } catch (error) {
+                console.error("Error updating radar:", error);
+            }
+        }
+        
+        function setupAnimations() {
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes pulse {
+                    from { transform: translate(-50%, -50%) scale(1); }
+                    to { transform: translate(-50%, -50%) scale(1.5); }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+        
+        window.addEventListener('load', setupAnimations);
+        
+        gameScreen.addEventListener('click', function() {
+            if (document.pointerLockElement !== gameScreen && 
+                document.mozPointerLockElement !== gameScreen && 
+                document.webkitPointerLockElement !== gameScreen) {
+                
+                gameScreen.requestPointerLock = gameScreen.requestPointerLock || 
+                                                gameScreen.mozRequestPointerLock || 
+                                                gameScreen.webkitRequestPointerLock;
+                
+                if (typeof gameScreen.requestPointerLock === 'function') {
+                    gameScreen.requestPointerLock();
+                }
+            }
+        });
 
-    gameState.bullets = gameState.bullets.filter(b => b.x < gameState.width);
-}
-
-function endGame() {
-    gameState.running = false;
-
-    const score = gameState.kills;
-    scoreManager.submitScore(score);
-
-    document.getElementById("finalScore").textContent =
-        `Final Score: ${score} Kills`;
-
-    document.getElementById("gameOver").style.display = "block";
-}
-
-window.restartGame = function() {
-    gameState = {
-        width: 80,
-        height: 40,
-        playerX: 40,
-        playerY: 20,
-        kills: 0,
-        health: 100,
-        level: gameState.level,
-        enemies: [],
-        bullets: [],
-        running: true
-    };
-    scoreManager.sessionStart = Date.now();
-    document.getElementById("gameOver").style.display = "none";
-};
-
-document.addEventListener("keydown", (e) => {
-    if (!gameState.running) return;
-
-    if (e.key === "w" && gameState.playerY > 0) gameState.playerY--;
-    if (e.key === "s" && gameState.playerY < gameState.height - 1) gameState.playerY++;
-    if (e.key === "a" && gameState.playerX > 0) gameState.playerX--;
-    if (e.key === "d" && gameState.playerX < gameState.width - 1) gameState.playerX++;
-    if (e.key === " ") shoot();
-});
-
-setInterval(() => {
-    if (!gameState.running) return;
-    updateEnemies();
-    updateBullets();
-    render();
-}, 100);
-
-setInterval(() => {
-    if (!gameState.running) return;
-    spawnEnemy();
-}, 2000);
-
-render();
-</script>
-
+        console.log("ASCII DOOM is ready to start");
+    </script>
 </body>
 </html>
