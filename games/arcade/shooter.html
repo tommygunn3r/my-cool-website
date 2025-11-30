@@ -144,6 +144,15 @@
                 height: 80px;
             }
         }
+
+        @keyframes scroll-up {
+            from {
+                transform: translateY(100vh);
+            }
+            to {
+                transform: translateY(-100%);
+            }
+        }
     </style>
 </head>
 <body>
@@ -176,7 +185,50 @@
         <div class="modal-content">
             <h2>GAME OVER!</h2>
             <p>Final Score: <span id="finalScore">0</span></p>
-            <button onclick="window.location.reload()">PLAY AGAIN</button>
+            <div style="margin-top: 20px;">
+                <input type="text" id="playerName" placeholder="Enter your name" maxlength="20" 
+                    style="padding: 10px; font-size: 16px; background-color: #000; border: 2px solid #0f0; color: #0f0; font-family: monospace; text-align: center;">
+            </div>
+            <button onclick="submitAndShowCredits()">SUBMIT SCORE</button>
+        </div>
+    </div>
+
+    <div id="creditsScreen" class="modal" style="display:none;">
+        <div style="text-align: center; animation: scroll-up 15s linear; width: 100%;">
+            <pre style="font-size: 20px; color: #ff0; margin: 20px 0;">
+  _____ ____   _    ____ _____   ____  _   _  ___   ___ _____ _____ ____  
+ / ____|  _ \ / \  / ___| ____| / ___|| | | |/ _ \ / _ \_   _| ____|  _ \ 
+ \___ \| |_) / _ \| |   |  _|   \___ \| |_| | | | | | | || | |  _| | |_) |
+  ___) |  __/ ___ \ |___| |___   ___) |  _  | |_| | |_| || | | |___|  _ < 
+ |____/|_| /_/   \_\____|_____| |____/|_| |_|\___/ \___/ |_| |_____|_| \_\
+            </pre>
+            
+            <div style="margin: 40px 0; font-size: 32px; color: #ff0;">
+                <p>FINAL SCORE</p>
+                <p id="creditsScore" style="font-size: 48px; color: #0f0;">0</p>
+            </div>
+            
+            <div style="margin: 40px 0; font-size: 24px; line-height: 2;">
+                <p style="color: #0ff;">━━━━━━━━━━━━━━━━━━━━</p>
+                <p style="color: #ff0;">SALVAGE COLLECTED</p>
+                <p id="creditsSalvage" style="color: #0f0; font-size: 36px;">0</p>
+                <p style="color: #0ff;">━━━━━━━━━━━━━━━━━━━━</p>
+            </div>
+            
+            <div style="margin: 60px 0; font-size: 20px; line-height: 1.8; color: #0f0;">
+                <p style="color: #ff0; font-size: 24px;">CREDITS</p>
+                <p style="margin-top: 30px;">LEAD PROGRAMMER</p>
+                <p style="color: #0ff;">TOM</p>
+                
+                <p style="margin-top: 30px;">GAME DESIGN</p>
+                <p style="color: #0ff;">GUNNERSGAMES</p>
+                
+                <p style="margin-top: 30px;">SPECIAL THANKS</p>
+                <p style="color: #0ff;">ALL PLAYERS</p>
+                
+                <p style="margin-top: 50px; color: #ff0; font-size: 18px;">© 2024 GUNNERSGAMES</p>
+                <p style="margin-top: 20px; font-size: 16px; color: #888;">INSERT COIN TO CONTINUE</p>
+            </div>
         </div>
     </div>
 
@@ -214,18 +266,43 @@
         initGameAuth();
 
         // ---------------- SCORE SUBMISSION ----------------
-        async function submitHighScore(score) {
+        async function submitHighScore(score, playerName) {
             if (!currentUser) return;
 
             const { error } = await supabase.from("game_highscores").insert({
                 user_id: currentUser.id,
                 game_id: "shooter",
-                score: Math.floor(score)
+                score: Math.floor(score),
+                player_name: playerName
             });
 
             if (error) console.warn("Score submit failed:", error.message);
             else console.log("Score submitted OK:", score);
         }
+
+        // Global function for submit and show credits
+        window.submitAndShowCredits = async function() {
+            const playerName = document.getElementById('playerName').value.trim();
+            
+            if (!playerName) {
+                alert("Please enter your name!");
+                return;
+            }
+
+            const finalScore = parseInt(document.getElementById('finalScore').textContent);
+            await submitHighScore(finalScore, playerName);
+
+            // Show credits
+            document.getElementById('endModal').style.display = 'none';
+            document.getElementById('creditsScore').textContent = finalScore;
+            document.getElementById('creditsSalvage').textContent = salvage;
+            document.getElementById('creditsScreen').style.display = 'flex';
+
+            // Redirect to arcade after 15 seconds
+            setTimeout(() => {
+                window.location.href = 'arcade.html';
+            }, 15000);
+        };
 
         // =====================================================================
         // ============================ GAME LOGIC =============================
@@ -744,8 +821,6 @@
         function endGame() {
             gameRunning = false;
 
-            submitHighScore(score);
-
             if (engineSound) {
                 engineSound.pause();
                 engineSound.currentTime = 0;
@@ -755,7 +830,20 @@
 
             document.getElementById("finalScore").textContent = score;
             document.getElementById("endModal").style.display = "flex";
+            document.getElementById('playerName').focus();
         }
+
+        // Add enter key support for name input
+        document.addEventListener('DOMContentLoaded', function() {
+            const nameInput = document.getElementById('playerName');
+            if (nameInput) {
+                nameInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        submitAndShowCredits();
+                    }
+                });
+            }
+        });
 
         ctx.font = "16px var(--font-family)";
         ctx.fillStyle = GAME_COLOR;

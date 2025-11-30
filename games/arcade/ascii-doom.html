@@ -378,9 +378,33 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
         // Supabase configuration
-        const SUPABASE_URL = 'https://your-project.supabase.co';
-        const SUPABASE_ANON_KEY = 'your-anon-key';
+        const SUPABASE_URL = 'https://pknhslxhpohrzgsfkisr.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_-zZw-pi_3q1sdNGhITKuhQ_ECyDARzc';
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        let currentUser = null;
+
+        // Authentication check
+        async function initGameAuth() {
+            try {
+                const { data: { user } } = await supabase.auth.getUser();
+
+                if (!user) {
+                    console.log("Not logged in. Redirecting.");
+                    window.location.href = "/index.html";
+                    return;
+                }
+
+                currentUser = user;
+                console.log("Authenticated:", user.email);
+
+            } catch (err) {
+                console.error("Supabase auth error:", err);
+                window.location.href = "/index.html";
+            }
+        }
+
+        initGameAuth();
 
         const gameScreen = document.getElementById('game-screen');
         const hud = document.getElementById('hud');
@@ -902,13 +926,23 @@
             }
             
             try {
+                // Get current user
+                const { data: { user } } = await supabase.auth.getUser();
+                
+                if (!user) {
+                    console.log("Not logged in");
+                    showMessage("Please log in to submit score", 2000);
+                    return;
+                }
+
                 const { data, error } = await supabase
-                    .from('arcade_leaderboard')
+                    .from('game_highscores')
                     .insert([
                         {
-                            game_name: 'ASCII DOOM',
-                            player_name: playerName,
+                            user_id: user.id,
+                            game_id: 'ascii-doom',
                             score: gameState.player.score,
+                            player_name: playerName,
                             difficulty: config.difficulty,
                             level_reached: gameState.level,
                             enemies_killed: gameState.totalEnemiesKilled
@@ -946,9 +980,9 @@
         async function loadLeaderboard(difficulty) {
             try {
                 const { data, error } = await supabase
-                    .from('arcade_leaderboard')
+                    .from('game_highscores')
                     .select('*')
-                    .eq('game_name', 'ASCII DOOM')
+                    .eq('game_id', 'ascii-doom')
                     .eq('difficulty', difficulty)
                     .order('score', { ascending: false })
                     .limit(10);
@@ -978,10 +1012,12 @@
                                  entry.created_at && 
                                  (Date.now() - new Date(entry.created_at).getTime()) < 5000;
                 
+                const levelReached = entry.level_reached || 'N/A';
+                
                 html += `
                     <div class="leaderboard-entry ${isCurrent ? 'current-player' : ''}">
                         <span>${index + 1}. ${entry.player_name}</span>
-                        <span>${entry.score} pts (Lvl ${entry.level_reached})</span>
+                        <span>${entry.score} pts (Lvl ${levelReached})</span>
                     </div>
                 `;
             });
