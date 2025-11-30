@@ -1,239 +1,766 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Arcade Games - Gunner's Games</title>
-
-<style>
-/* ——— YOUR ORIGINAL CSS (UNCHANGED) ——— */
-* { margin:0; padding:0; box-sizing:border-box; }
-
-body {
-    font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background:#000;
-    color:#e0e0e0;
-    min-height:100vh;
-    overflow-x:hidden;
-    position:relative;
-}
-
-/* (KEEPING ALL YOUR ORIGINAL PARALLAX + ANIMATION CSS EXACTLY AS UPLOADED) */
-</style>
-</head>
-
-<body>
-
-<!-- ⭐ NEW: GLOBAL PLAYER BAR (login, coins, modals) -->
-<div id="playerbar"></div>
-
-
-<!-- ⭐ YOUR ORIGINAL PARALLAX BACKGROUND (unchanged) -->
-<div class="parallax-container">
-    <div class="parallax-layer layer-1"></div>
-    <div class="parallax-layer layer-2"></div>
-    <div class="parallax-layer layer-3">
-        <div class="neon-shape"></div>
-        <div class="neon-shape"></div>
-        <div class="neon-shape"></div>
-    </div>
-</div>
-
-
-<!-- ⭐ YOUR ORIGINAL PAGE CONTENT (unchanged) -->
-<div class="content">
-    <h1 class="title">ARCADE GAMES</h1>
-
-    <div class="carousel-container">
-        <div class="nav-arrow left" onclick="moveCarousel(-1)">‹</div>
-        <div class="nav-arrow right" onclick="moveCarousel(1)">›</div>
-
-        <div class="carousel" id="carousel"></div>
-    </div>
-</div>
-
-
-<!-- ⭐ FIXED NAVIGATION (unchanged) -->
-<div class="fixed-nav">
-    <a href="arcade-leaderboard.html" class="nav-button">
-        <span>🏆</span><span>Leaderboard</span>
-    </a>
-    <a href="index.html" class="nav-button">
-        <span>🏠</span><span>Home</span>
-    </a>
-</div>
-
-
-<!-- ⭐ GAME OVERLAY (unchanged) -->
-<div class="game-overlay" id="gameOverlay">
-    <iframe class="game-frame" id="gameFrame" src=""></iframe>
-</div>
-
-<div class="game-nav-overlay">
-    <button class="game-nav-btn" onclick="closeGame()">
-        <span>←</span><span>Back to Arcade</span>
-    </button>
-    <a href="index.html" class="game-nav-btn">
-        <span>🏠</span><span>Home</span>
-    </a>
-</div>
-
-
-<!-- ⭐ NEW: Supabase client -->
-<script type="module">
-    import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-    window.supabase = createClient(
-        "https://pknhslxhpohrzgsfkisr.supabase.co",
-        "sb_publishable_-zZw-pi_3q1sdNGhITKuhQ_ECyDARzc"
-    );
-</script>
-
-
-<!-- ⭐ UPDATED SCRIPT — retains all your code, adds coin deductions + login modal trigger -->
-<script>
-/* ——— YOUR ORIGINAL GAME LIST ——— */
-const games = [
-    { title:'ASCII Doom',   file:'ascii-doom.html',   image:'games/assets/arcade/ascii-doom.png' },
-    { title:'Space Shooter', file:'shooter.html',      image:'games/assets/arcade/shooter.png' },
-    { title:'Square Bird',   file:'square-bird.html',  image:'games/assets/arcade/square-bird.png' },
-    { title:'Square Man',    file:'square-man.html',   image:'games/assets/arcade/square-man.png' },
-    { title:'Squario',       file:'squario.html',      image:'games/assets/arcade/squario.png' },
-    { title:'Squartris',     file:'squartris.html',    image:'games/assets/arcade/squartris.png' },
-    { title:'The Water Game', file:'water.html',        image:'games/assets/arcade/water.png' },
-    { title:'Word Slider',   file:'word_slider.html',  image:'games/assets/arcade/word_slider.png' },
-    { title:'Word Rush',     file:'wordrush.html',     image:'games/assets/arcade/wordrush.png' }
-];
-
-
-/* ——— YOUR ORIGINAL CAROUSEL LOGIC (unchanged) ——— */
-let currentIndex = 0;
-const carousel = document.getElementById('carousel');
-const gameOverlay = document.getElementById('gameOverlay');
-const gameFrame   = document.getElementById('gameFrame');
-
-function createGameCards() {
-    carousel.innerHTML = '';
-    games.forEach((game, index) => {
-        const card = document.createElement('div');
-        card.className = 'game-card';
-        card.innerHTML = `
-            <div class="game-image">
-                <img src="${game.image}" alt="${game.title}">
-            </div>
-            <div class="game-info">
-                <div class="game-title">${game.title}</div>
-            </div>`;
-        card.onclick = () => attemptLaunchGame(index);
-        carousel.appendChild(card);
-    });
-    updateCarousel();
-}
-
-function updateCarousel() {
-    const cards = carousel.querySelectorAll('.game-card');
-    const total = games.length;
-
-    cards.forEach((card, index) => {
-        card.className = 'game-card';
-        const pos = (index - currentIndex + total) % total;
-
-        if      (pos === 0) card.classList.add('center');
-        else if (pos === 1) card.classList.add('right-1');
-        else if (pos === total-1) card.classList.add('left-1');
-        else if (pos === 2) card.classList.add('right-2');
-        else if (pos === total-2) card.classList.add('left-2');
-        else card.classList.add('hidden');
-    });
-}
-
-function moveCarousel(d) {
-    currentIndex = (currentIndex + d + games.length) % games.length;
-    updateCarousel();
-}
-
-
-/* ⭐ NEW: Coin deduction + login requirement */
-async function chargeOneCoin() {
-    const { data:{ session } } = await supabase.auth.getSession();
-    if (!session?.user) {
-        openModal(); // from global playerbar
-        return false;
-    }
-
-    const { data } = await supabase
-        .from("profiles")
-        .select("gunnercoins")
-        .eq("id", session.user.id)
-        .single();
-
-    if (!data || data.gunnercoins <= 0) {
-        alert("Not enough Gunnercoins!");
-        return false;
-    }
-
-    await supabase
-        .from("profiles")
-        .update({ gunnercoins: data.gunnercoins - 1 })
-        .eq("id", session.user.id);
-
-    const coinSpan = document.getElementById("pb-player-coins");
-    if (coinSpan) coinSpan.textContent = data.gunnercoins - 1;
-
-    return true;
-}
-
-
-/* ⭐ UPDATED LAUNCH GAME */
-async function attemptLaunchGame(index) {
-    if (!(await chargeOneCoin())) return;
-
-    launchGame(index);
-}
-
-function launchGame(index) {
-    const game = games[index];
-    gameFrame.src = `games/arcade/${game.file}`;
-    gameOverlay.classList.add('active');
-}
-
-function closeGame() {
-    gameOverlay.classList.remove('active');
-    setTimeout(()=>gameFrame.src='', 500);
-}
-
-
-/* ——— REMAINING ORIGINAL CODE (mousewheel, keyboard, parallax, etc.) ——— */
-createGameCards();
-
-window.addEventListener('message', e=>{
-    if (e.data === 'closeGame') closeGame();
-});
-</script>
-
-
-<!-- ⭐ LOAD GLOBAL PLAYERBAR (with modals + login UI) -->
-<script>
-async function loadPlayerBar(){
-    const res = await fetch("/playerbar.html");
-    const html = await res.text();
-
-    const container = document.getElementById("playerbar");
-    const temp = document.createElement("div");
-    temp.innerHTML = html;
-
-    Array.from(temp.childNodes).forEach(node=>{
-        if (node.tagName === "SCRIPT") {
-            const s=document.createElement("script");
-            if (node.src) s.src=node.src;
-            else s.textContent=node.textContent;
-            document.body.appendChild(s);
-        } else {
-            container.appendChild(node);
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arcade Games - Gunner's Games</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-    });
-}
-document.addEventListener("DOMContentLoaded", loadPlayerBar);
-</script>
 
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #000000;
+            color: #e0e0e0;
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+            margin: 0;
+            padding: 0;
+            width: 100%;
+        }
+
+        /* Parallax Background Layers */
+        .parallax-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .parallax-layer {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Layer 1 - Deep background with grid */
+        .layer-1 {
+            background: 
+                linear-gradient(0deg, transparent 24%, rgba(233, 69, 96, 0.05) 25%, rgba(233, 69, 96, 0.05) 26%, transparent 27%, transparent 74%, rgba(233, 69, 96, 0.05) 75%, rgba(233, 69, 96, 0.05) 76%, transparent 77%, transparent),
+                linear-gradient(90deg, transparent 24%, rgba(233, 69, 96, 0.05) 25%, rgba(233, 69, 96, 0.05) 26%, transparent 27%, transparent 74%, rgba(233, 69, 96, 0.05) 75%, rgba(233, 69, 96, 0.05) 76%, transparent 77%, transparent);
+            background-size: 50px 50px;
+            animation: gridMove 20s linear infinite;
+        }
+
+        @keyframes gridMove {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(50px); }
+        }
+
+        /* Layer 2 - Floating neon particles */
+        .layer-2 {
+            background-image: 
+                radial-gradient(circle at 20% 30%, rgba(233, 69, 96, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(243, 156, 18, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 50% 50%, rgba(233, 69, 96, 0.08) 0%, transparent 50%);
+            animation: floatParticles 15s ease-in-out infinite;
+        }
+
+        @keyframes floatParticles {
+            0%, 100% { transform: translate(0, 0); }
+            50% { transform: translate(30px, -20px); }
+        }
+
+        /* Layer 3 - Geometric neon shapes */
+        .neon-shape {
+            position: absolute;
+            border: 2px solid rgba(233, 69, 96, 0.3);
+            border-radius: 50%;
+            animation: rotate 30s linear infinite;
+        }
+
+        .neon-shape:nth-child(1) {
+            width: 300px;
+            height: 300px;
+            top: 10%;
+            left: 10%;
+            box-shadow: 0 0 20px rgba(233, 69, 96, 0.2);
+        }
+
+        .neon-shape:nth-child(2) {
+            width: 200px;
+            height: 200px;
+            top: 60%;
+            right: 15%;
+            animation-duration: 25s;
+            animation-direction: reverse;
+            box-shadow: 0 0 15px rgba(243, 156, 18, 0.2);
+            border-color: rgba(243, 156, 18, 0.3);
+        }
+
+        .neon-shape:nth-child(3) {
+            width: 150px;
+            height: 150px;
+            bottom: 20%;
+            left: 30%;
+            animation-duration: 35s;
+            box-shadow: 0 0 10px rgba(233, 69, 96, 0.2);
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* Main Content */
+        .content {
+            position: relative;
+            z-index: 1;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+        }
+
+        .title {
+            font-size: 4rem;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 60px;
+            color: #fff;
+            text-shadow: 
+                0 0 10px rgba(233, 69, 96, 0.8),
+                0 0 20px rgba(233, 69, 96, 0.6),
+                0 0 30px rgba(233, 69, 96, 0.4);
+            letter-spacing: 4px;
+        }
+
+        /* Carousel Container */
+        .carousel-container {
+            position: relative;
+            width: 100%;
+            max-width: 1400px;
+            height: 500px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            perspective: 1200px;
+            overflow: hidden;
+        }
+
+        .carousel {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .game-card {
+            position: absolute;
+            width: 300px;
+            height: 400px;
+            background: rgba(10, 10, 10, 0.95);
+            border: 2px solid #1a1a1a;
+            border-radius: 20px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.9);
+            transform-style: preserve-3d;
+        }
+
+        .game-card.center {
+            width: 350px;
+            height: 450px;
+            z-index: 10;
+            border-color: #e94560;
+            box-shadow: 
+                0 15px 60px rgba(233, 69, 96, 0.4),
+                0 0 40px rgba(233, 69, 96, 0.3);
+            filter: blur(0);
+        }
+
+        .game-card.left-1 {
+            transform: translateX(-380px) scale(0.85);
+            z-index: 9;
+            opacity: 0.7;
+            filter: blur(2px);
+        }
+
+        .game-card.left-2 {
+            transform: translateX(-700px) scale(0.7);
+            z-index: 8;
+            opacity: 0.4;
+            filter: blur(4px);
+        }
+
+        .game-card.right-1 {
+            transform: translateX(380px) scale(0.85);
+            z-index: 9;
+            opacity: 0.7;
+            filter: blur(2px);
+        }
+
+        .game-card.right-2 {
+            transform: translateX(700px) scale(0.7);
+            z-index: 8;
+            opacity: 0.4;
+            filter: blur(4px);
+        }
+
+        .game-card.hidden {
+            opacity: 0;
+            transform: scale(0.5);
+            pointer-events: none;
+        }
+
+        .game-image {
+            width: 100%;
+            height: 70%;
+            background: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .game-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .game-image::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(to bottom, transparent 60%, rgba(0, 0, 0, 0.8));
+        }
+
+        .game-info {
+            padding: 20px;
+            text-align: center;
+        }
+
+        .game-title {
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: #fff;
+            margin-bottom: 10px;
+            text-shadow: 0 0 10px rgba(233, 69, 96, 0.5);
+        }
+
+        .game-card.center .game-title {
+            font-size: 1.6rem;
+        }
+
+        /* Navigation Arrows */
+        .nav-arrow {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 60px;
+            height: 60px;
+            background: rgba(233, 69, 96, 0.2);
+            border: 2px solid #e94560;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 100;
+            transition: all 0.3s ease;
+            color: #e94560;
+            font-size: 2rem;
+            user-select: none;
+        }
+
+        .nav-arrow:hover {
+            background: rgba(233, 69, 96, 0.4);
+            box-shadow: 0 0 20px rgba(233, 69, 96, 0.6);
+        }
+
+        .nav-arrow.left {
+            left: 20px;
+        }
+
+        .nav-arrow.right {
+            right: 20px;
+        }
+
+        /* Fixed Navigation Buttons */
+        .fixed-nav {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            display: flex;
+            gap: 15px;
+            z-index: 1000;
+        }
+
+        .nav-button {
+            padding: 15px 30px;
+            background: rgba(10, 10, 10, 0.95);
+            border: 2px solid #e94560;
+            border-radius: 10px;
+            color: #fff;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(233, 69, 96, 0.3);
+        }
+
+        .nav-button:hover {
+            background: rgba(233, 69, 96, 0.2);
+            box-shadow: 0 0 25px rgba(233, 69, 96, 0.6);
+            transform: translateY(-2px);
+        }
+
+        /* Game Launcher Overlay */
+        .game-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 2000;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        .game-overlay.active {
+            display: block;
+            opacity: 1;
+        }
+
+        .game-frame {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        /* Game Navigation Overlay Buttons */
+        .game-nav-overlay {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            display: none;
+            gap: 15px;
+            z-index: 2001;
+            flex-direction: row;
+        }
+
+        .game-overlay.active ~ .game-nav-overlay {
+            display: flex;
+        }
+
+        .game-nav-btn {
+            padding: 15px 30px;
+            background: rgba(10, 10, 10, 0.95);
+            border: 2px solid #e94560;
+            border-radius: 10px;
+            color: #fff;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(233, 69, 96, 0.3);
+        }
+
+        .game-nav-btn:hover {
+            background: rgba(233, 69, 96, 0.2);
+            box-shadow: 0 0 25px rgba(233, 69, 96, 0.6);
+            transform: translateY(-2px);
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 1024px) {
+            .title {
+                font-size: 2.5rem;
+                margin-bottom: 40px;
+                padding: 0 20px;
+            }
+
+            .carousel-container {
+                height: 400px;
+                max-width: 100%;
+            }
+
+            .game-card {
+                width: 250px;
+                height: 350px;
+            }
+
+            .game-card.center {
+                width: 280px;
+                height: 380px;
+            }
+
+            .game-card.left-1 {
+                transform: translateX(-300px) scale(0.8);
+            }
+
+            .game-card.left-2 {
+                transform: translateX(-550px) scale(0.65);
+            }
+
+            .game-card.right-1 {
+                transform: translateX(300px) scale(0.8);
+            }
+
+            .game-card.right-2 {
+                transform: translateX(550px) scale(0.65);
+            }
+
+            .nav-arrow {
+                width: 50px;
+                height: 50px;
+                font-size: 1.5rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            html, body {
+                overflow-x: hidden;
+                width: 100%;
+                position: relative;
+            }
+
+            .title {
+                font-size: 1.8rem;
+                margin-bottom: 30px;
+                padding: 0 10px;
+            }
+
+            .content {
+                padding: 20px 10px;
+            }
+
+            .carousel-container {
+                height: 320px;
+                width: 100%;
+                max-width: 100vw;
+                overflow: hidden;
+            }
+
+            .carousel {
+                width: 100%;
+            }
+
+            .game-card {
+                width: 180px;
+                height: 260px;
+            }
+
+            .game-card.center {
+                width: 200px;
+                height: 280px;
+            }
+
+            /* Hide far cards and adjust close cards on mobile */
+            .game-card.left-1,
+            .game-card.right-1 {
+                transform: translateX(-200px) scale(0.7);
+                opacity: 0.4;
+                filter: blur(3px);
+            }
+
+            .game-card.right-1 {
+                transform: translateX(200px) scale(0.7);
+            }
+
+            .game-card.left-2,
+            .game-card.right-2 {
+                display: none;
+                transform: scale(0);
+                opacity: 0;
+            }
+
+            .fixed-nav {
+                bottom: 15px;
+                right: 15px;
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .nav-button {
+                padding: 10px 18px;
+                font-size: 0.85rem;
+            }
+
+            .nav-arrow {
+                width: 40px;
+                height: 40px;
+                font-size: 1.2rem;
+            }
+
+            .nav-arrow.left {
+                left: 5px;
+            }
+
+            .nav-arrow.right {
+                right: 5px;
+            }
+
+            /* Game navigation overlay mobile */
+            .game-nav-overlay {
+                bottom: 15px;
+                right: 15px;
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .game-nav-btn {
+                padding: 10px 18px;
+                font-size: 0.85rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .title {
+                font-size: 1.5rem;
+                margin-bottom: 20px;
+            }
+
+            .carousel-container {
+                height: 280px;
+            }
+
+            .game-card {
+                width: 160px;
+                height: 220px;
+            }
+
+            .game-card.center {
+                width: 180px;
+                height: 240px;
+            }
+
+            .game-card.left-1,
+            .game-card.right-1 {
+                transform: translateX(-180px) scale(0.65);
+                opacity: 0.3;
+            }
+
+            .game-card.right-1 {
+                transform: translateX(180px) scale(0.65);
+            }
+
+            .nav-button, .game-nav-btn {
+                padding: 8px 15px;
+                font-size: 0.75rem;
+                gap: 5px;
+            }
+
+            .nav-arrow {
+                width: 35px;
+                height: 35px;
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Parallax Background -->
+    <div class="parallax-container">
+        <div class="parallax-layer layer-1"></div>
+        <div class="parallax-layer layer-2"></div>
+        <div class="parallax-layer layer-3">
+            <div class="neon-shape"></div>
+            <div class="neon-shape"></div>
+            <div class="neon-shape"></div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="content">
+        <h1 class="title">ARCADE GAMES</h1>
+        
+        <div class="carousel-container">
+            <!-- Navigation Arrows -->
+            <div class="nav-arrow left" onclick="moveCarousel(-1)">‹</div>
+            <div class="nav-arrow right" onclick="moveCarousel(1)">›</div>
+
+            <!-- Carousel -->
+            <div class="carousel" id="carousel">
+                <!-- Game cards will be inserted here by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Fixed Navigation -->
+    <div class="fixed-nav">
+        <a href="arcade-leaderboard.html" class="nav-button">
+            <span>🏆</span>
+            <span>Leaderboard</span>
+        </a>
+        <a href="arcade.html" class="nav-button" style="display: none;">
+            <span>←</span>
+            <span>Back to Arcade</span>
+        </a>
+        <a href="index.html" class="nav-button">
+            <span>🏠</span>
+            <span>Home</span>
+        </a>
+    </div>
+
+    <!-- Game Launcher Overlay -->
+    <div class="game-overlay" id="gameOverlay">
+        <iframe class="game-frame" id="gameFrame" src=""></iframe>
+    </div>
+
+    <!-- Navigation buttons that appear over games -->
+    <div class="game-nav-overlay">
+        <button class="game-nav-btn" onclick="closeGame()">
+            <span>←</span>
+            <span>Back to Arcade</span>
+        </button>
+        <a href="index.html" class="game-nav-btn">
+            <span>🏠</span>
+            <span>Home</span>
+        </a>
+    </div>
+
+    <script>
+        const games = [
+            { title: 'ASCII Doom', file: 'ascii-doom.html', image: 'games/assets/arcade/ascii-doom.png' },
+            { title: 'Space Shooter', file: 'shooter.html', image: 'games/assets/arcade/shooter.png' },
+            { title: 'Square Bird', file: 'square-bird.html', image: 'games/assets/arcade/square-bird.png' },
+            { title: 'Square Man', file: 'square-man.html', image: 'games/assets/arcade/square-man.png' },
+            { title: 'Squario', file: 'squario.html', image: 'games/assets/arcade/squario.png' },
+            { title: 'Squartris', file: 'squartris.html', image: 'games/assets/arcade/squartris.png' },
+            { title: 'The Water Game', file: 'water.html', image: 'games/assets/arcade/water.png' },
+            { title: 'Word Slider', file: 'word_slider.html', image: 'games/assets/arcade/word_slider.png' },
+            { title: 'Word Rush', file: 'wordrush.html', image: 'games/assets/arcade/wordrush.png' }
+        ];
+
+        let currentIndex = 0;
+        const carousel = document.getElementById('carousel');
+        const gameOverlay = document.getElementById('gameOverlay');
+        const gameFrame = document.getElementById('gameFrame');
+
+        function createGameCards() {
+            carousel.innerHTML = '';
+            games.forEach((game, index) => {
+                const card = document.createElement('div');
+                card.className = 'game-card';
+                card.innerHTML = `
+                    <div class="game-image">
+                        <img src="${game.image}" alt="${game.title}" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22300%22 height=%22300%22%3E%3Crect fill=%22%23000%22 width=%22300%22 height=%22300%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 font-size=%2224%22 fill=%22%23e94560%22 text-anchor=%22middle%22 dy=%22.3em%22%3E${game.title}%3C/text%3E%3C/svg%3E'">
+                    </div>
+                    <div class="game-info">
+                        <div class="game-title">${game.title}</div>
+                    </div>
+                `;
+                card.onclick = () => launchGame(index);
+                carousel.appendChild(card);
+            });
+            updateCarousel();
+        }
+
+        function updateCarousel() {
+            const cards = carousel.querySelectorAll('.game-card');
+            const totalGames = games.length;
+
+            cards.forEach((card, index) => {
+                card.className = 'game-card';
+                
+                const position = (index - currentIndex + totalGames) % totalGames;
+                
+                if (position === 0) {
+                    card.classList.add('center');
+                } else if (position === 1 || position === totalGames - 1) {
+                    card.classList.add(position === 1 ? 'right-1' : 'left-1');
+                } else if (position === 2 || position === totalGames - 2) {
+                    card.classList.add(position === 2 ? 'right-2' : 'left-2');
+                } else {
+                    card.classList.add('hidden');
+                }
+            });
+        }
+
+        function moveCarousel(direction) {
+            const totalGames = games.length;
+            currentIndex = (currentIndex + direction + totalGames) % totalGames;
+            updateCarousel();
+        }
+
+        function launchGame(index) {
+            const game = games[index];
+            gameFrame.src = `games/arcade/${game.file}`;
+            gameOverlay.classList.add('active');
+        }
+
+        function closeGame() {
+            gameOverlay.classList.remove('active');
+            setTimeout(() => {
+                gameFrame.src = '';
+            }, 500);
+        }
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (gameOverlay.classList.contains('active')) {
+                if (e.key === 'Escape') {
+                    closeGame();
+                }
+            } else {
+                if (e.key === 'ArrowLeft') {
+                    moveCarousel(-1);
+                } else if (e.key === 'ArrowRight') {
+                    moveCarousel(1);
+                } else if (e.key === 'Enter') {
+                    launchGame(currentIndex);
+                }
+            }
+        });
+
+        // Mouse wheel navigation
+        carousel.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            if (e.deltaY > 0) {
+                moveCarousel(1);
+            } else {
+                moveCarousel(-1);
+            }
+        }, { passive: false });
+
+        // Parallax effect on mouse move
+        document.addEventListener('mousemove', (e) => {
+            const x = e.clientX / window.innerWidth;
+            const y = e.clientY / window.innerHeight;
+
+            document.querySelector('.layer-2').style.transform = 
+                `translate(${x * 20}px, ${y * 20}px)`;
+            document.querySelector('.layer-3').style.transform = 
+                `translate(${x * 40}px, ${y * 40}px)`;
+        });
+
+        // Initialize
+        createGameCards();
+
+        // Listen for messages from game iframes to close overlay
+        window.addEventListener('message', (e) => {
+            if (e.data === 'closeGame') {
+                closeGame();
+            }
+        });
+    </script>
 </body>
 </html>
