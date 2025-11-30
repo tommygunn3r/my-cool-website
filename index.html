@@ -36,7 +36,7 @@ header {
     height:auto;
 }
 
-/* USER BAR */
+/* (Old user-bar styles kept in case index-auth.js references them, but unused now) */
 .user-bar {
     position:absolute;
     top:15px;
@@ -46,8 +46,6 @@ header {
     gap:10px;
     z-index:30;
 }
-
-/* Logged-out button */
 .auth-btn {
     background:transparent;
     border:2px solid #e94560;
@@ -58,8 +56,6 @@ header {
     font-size:0.85rem;
     font-weight:bold;
 }
-
-/* Logged-in compact badge */
 .user-bar-auth {
     display:flex;
     align-items:center;
@@ -69,13 +65,11 @@ header {
     padding:6px 14px;
     border-radius:40px;
 }
-
 .settings-btn {
     cursor:pointer;
     font-size:20px;
     color:#e94560;
 }
-
 #settingsMenu {
     position:absolute;
     top:55px;
@@ -219,32 +213,11 @@ label { display:block; margin-bottom:4px; color:#aaa; }
 
 <body>
 
+<!-- GLOBAL PLAYER BAR (loaded from playerbar.html) -->
+<div id="playerbar"></div>
+
 <!-- HEADER -->
 <header>
-    <div class="user-bar">
-
-        <!-- LOGGED OUT -->
-        <div id="loggedOutView">
-            <button class="auth-btn" onclick="openModal('login')">LOGIN</button>
-        </div>
-
-        <!-- LOGGED IN -->
-        <div id="loggedInView" class="user-bar-auth" style="display:none;">
-            <span id="displayName">PLAYER</span>
-            <span>🪙 <span id="displayBalance">0</span></span>
-
-            <span id="settingsBtn" class="settings-btn" onclick="toggleSettings()">⚙</span>
-
-            <div id="settingsMenu">
-                <div onclick="openChangeName()">Change Player Name</div>
-                <div onclick="openResetPasswordModal()">Reset Password</div>
-                <div onclick="confirmDeleteAccount()">Delete Account</div>
-                <div onclick="handleLogout()">Log Out</div>
-            </div>
-        </div>
-
-    </div>
-
     <div class="banner">
         <img src="assets/banner.png">
     </div>
@@ -425,13 +398,18 @@ function closeChangeName(){
     changeNameModal.style.display="none";
 }
 
+// Old settings menu safety (no-op now)
 function toggleSettings(){
-    settingsMenu.style.display =
-        (settingsMenu.style.display==="flex") ? "none" : "flex";
+    const menu = document.getElementById("settingsMenu");
+    if (!menu) return;
+    menu.style.display =
+        (menu.style.display==="flex") ? "none" : "flex";
 }
 document.addEventListener("click", e=>{
+    const menu = document.getElementById("settingsMenu");
+    if (!menu) return;
     if(!e.target.closest("#settingsMenu") && !e.target.closest("#settingsBtn")){
-        settingsMenu.style.display="none";
+        menu.style.display="none";
     }
 });
 
@@ -439,6 +417,20 @@ function showDailyRewardPopup(reward, streak){
     alert(`Daily Reward: +${reward} GunnerCoins\nStreak: ${streak} days`);
 }
 window.showDailyRewardPopup = showDailyRewardPopup;
+</script>
+
+<!-- Load global player bar HTML into #playerbar -->
+<script>
+async function loadPlayerBar(){
+    try {
+        const res = await fetch("playerbar.html");
+        const html = await res.text();
+        document.getElementById("playerbar").innerHTML = html;
+    } catch (e) {
+        console.error("Failed to load playerbar", e);
+    }
+}
+document.addEventListener("DOMContentLoaded", loadPlayerBar);
 </script>
 
 </body>

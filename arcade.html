@@ -577,6 +577,9 @@
     </style>
 </head>
 <body>
+    <!-- GLOBAL PLAYER BAR -->
+    <div id="playerbar"></div>
+
     <!-- Parallax Background -->
     <div class="parallax-container">
         <div class="parallax-layer layer-1"></div>
@@ -591,7 +594,7 @@
     <!-- Main Content -->
     <div class="content">
         <h1 class="title">ARCADE GAMES</h1>
-        
+
         <div class="carousel-container">
             <!-- Navigation Arrows -->
             <div class="nav-arrow left" onclick="moveCarousel(-1)">‹</div>
@@ -639,7 +642,6 @@
 
     <script>
         const games = [
-            { title: 'ASCII Doom', file: 'ascii-doom.html', image: 'games/assets/arcade/ascii-doom.png' },
             { title: 'Space Shooter', file: 'shooter.html', image: 'games/assets/arcade/shooter.png' },
             { title: 'Square Bird', file: 'square-bird.html', image: 'games/assets/arcade/square-bird.png' },
             { title: 'Square Man', file: 'square-man.html', image: 'games/assets/arcade/square-man.png' },
@@ -680,9 +682,9 @@
 
             cards.forEach((card, index) => {
                 card.className = 'game-card';
-                
+
                 const position = (index - currentIndex + totalGames) % totalGames;
-                
+
                 if (position === 0) {
                     card.classList.add('center');
                 } else if (position === 1 || position === totalGames - 1) {
@@ -701,7 +703,71 @@
             updateCarousel();
         }
 
-        function launchGame(index) {
+        async function getUser() {
+            const raw = localStorage.getItem("supabase.auth.token");
+            if (!raw) return null;
+            try {
+                const parsed = JSON.parse(raw);
+                return parsed.currentSession ? parsed.currentSession.user : null;
+            } catch (e) {
+                console.error("getUser parse error", e);
+                return null;
+            }
+        }
+
+        async function chargeOneCoin() {
+            const user = await getUser();
+            if (!user) {
+                alert("You must be logged in to play.");
+                return false;
+            }
+
+            if (typeof supabase === "undefined") {
+                alert("Coin system not ready (Supabase client missing).");
+                return false;
+            }
+
+            const { data, error } = await supabase
+                .from("profiles")
+                .select("gunnercoins")
+                .eq("id", user.id)
+                .single();
+
+            if (error) {
+                console.error(error);
+                alert("Coin check failed.");
+                return false;
+            }
+
+            if (!data || data.gunnercoins == null || data.gunnercoins <= 0) {
+                alert("You do not have enough Gunnercoins!");
+                return false;
+            }
+
+            const newBalance = data.gunnercoins - 1;
+
+            const { error: updateErr } = await supabase
+                .from("profiles")
+                .update({ gunnercoins: newBalance })
+                .eq("id", user.id);
+
+            if (updateErr) {
+                console.error(updateErr);
+                alert("Failed to deduct coin.");
+                return false;
+            }
+
+            // Also update playerbar display if present
+            const coinSpan = document.getElementById("pb-player-coins");
+            if (coinSpan) coinSpan.textContent = newBalance;
+
+            return true;
+        }
+
+        async function launchGame(index) {
+            const ok = await chargeOneCoin();
+            if (!ok) return;
+
             const game = games[index];
             gameFrame.src = `games/arcade/${game.file}`;
             gameOverlay.classList.add('active');
@@ -761,6 +827,20 @@
                 closeGame();
             }
         });
+    </script>
+
+    <!-- Load global player bar HTML into #playerbar -->
+    <script>
+    async function loadPlayerBar(){
+        try {
+            const res = await fetch("playerbar.html");
+            const html = await res.text();
+            document.getElementById("playerbar").innerHTML = html;
+        } catch (e) {
+            console.error("Failed to load playerbar", e);
+        }
+    }
+    document.addEventListener("DOMContentLoaded", loadPlayerBar);
     </script>
 </body>
 </html>

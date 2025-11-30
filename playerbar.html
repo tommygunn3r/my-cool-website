@@ -1,0 +1,68 @@
+<div id="player-bar-container" style="
+    width:100%;
+    padding:12px 20px;
+    background:rgba(10,10,10,0.85);
+    border-bottom:2px solid #e94560;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    font-family:'Segoe UI',sans-serif;
+    color:#fff;
+    z-index:5000;
+">
+
+    <div style="display:flex; align-items:center; gap:12px;">
+        <span id="pb-player-name" style="font-weight:bold; font-size:1.1rem;">
+            Player
+        </span>
+
+        <span style="font-size:1.2rem;">💰</span>
+        <span id="pb-coin-amount" style="font-size:1.1rem;">
+            0
+        </span>
+    </div>
+
+    <button onclick="window.location.href='settings.html'"
+        style="
+            padding:8px 18px;
+            background:rgba(233,69,96,0.2);
+            border:2px solid #e94560;
+            border-radius:8px;
+            color:#fff;
+            cursor:pointer;
+            font-weight:bold;
+        ">
+        ⚙ Settings
+    </button>
+</div>
+
+<script>
+async function pbLoadData() {
+    // get user session
+    const token = localStorage.getItem("supabase.auth.token");
+    if(!token) return;
+
+    let session;
+    try { session = JSON.parse(token).currentSession; } catch { return; }
+    if(!session) return;
+
+    const userid = session.user.id;
+
+    // load player profile
+    const { data, error } = await supabase
+        .from("profiles")
+        .select("player_name, gunnercoins")
+        .eq("id", userid)
+        .single();
+
+    if (!error && data) {
+        document.getElementById("pb-player-name").textContent = data.player_name;
+        document.getElementById("pb-coin-amount").textContent = data.gunnercoins;
+    }
+}
+pbLoadData();
+
+// refresh coins every 10 seconds (optional)
+setInterval(pbLoadData, 10000);
+</script>
+
