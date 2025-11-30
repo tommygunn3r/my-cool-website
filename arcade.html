@@ -795,14 +795,45 @@
         const SUPABASE_URL = "https://pknhslxhpohrzgsfkisr.supabase.co";
         const SUPABASE_ANON_KEY = "sb_publishable_-zZw-pi_3q1sdNGhITKuhQ_ECyDARzc";
         window.supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        console.log('✅ Supabase initialized');
         
-        // Load playerbar
+        // Load playerbar properly (execute scripts)
         async function loadPlayerBar() {
             try {
                 const response = await fetch('playerbar.html');
                 const html = await response.text();
-                document.getElementById('playerbar').innerHTML = html;
+                const container = document.getElementById('playerbar');
+                
+                // Create temporary div to parse HTML
+                const temp = document.createElement('div');
+                temp.innerHTML = html;
+                
+                // Move all nodes to container
+                Array.from(temp.childNodes).forEach(node => {
+                    if (node.tagName === 'SCRIPT') {
+                        // Scripts need to be recreated to execute
+                        const script = document.createElement('script');
+                        if (node.src) {
+                            script.src = node.src;
+                        } else {
+                            script.textContent = node.textContent;
+                        }
+                        document.body.appendChild(script);
+                    } else {
+                        container.appendChild(node);
+                    }
+                });
+                
                 console.log('✅ Playerbar loaded successfully!');
+                
+                // Wait a bit for scripts to initialize, then load player data
+                setTimeout(() => {
+                    if (typeof pbLoadPlayerData === 'function') {
+                        pbLoadPlayerData();
+                        console.log('✅ Player data loaded');
+                    }
+                }, 500);
+                
             } catch (error) {
                 console.error('❌ Error loading playerbar:', error);
             }
