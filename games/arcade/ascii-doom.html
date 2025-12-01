@@ -234,10 +234,9 @@
         </div>
         <div>Level Reached: <span id="final-level">1</span></div>
         <div>Enemies Eliminated: <span id="final-kills">0</span></div>
-        <div class="name-input-container">
-            <input type="text" id="player-name" placeholder="Enter your name" maxlength="20">
+        <div style="margin-top: 30px;">
+            <button class="button" id="submit-score">Continue to Credits</button>
         </div>
-        <button class="button" id="submit-score">Submit Score</button>
     </div>
 
     <div id="level-complete-screen" style="display: none;">
@@ -393,7 +392,6 @@
         const startHardButton = document.getElementById('start-hard');
         const nextLevelButton = document.getElementById('next-level');
         const submitScoreButton = document.getElementById('submit-score');
-        const playerNameInput = document.getElementById('player-name');
         const finalScoreDisplay = document.getElementById('final-score');
 
         // Character sets for rendering
@@ -968,6 +966,7 @@
 
         // Game over
         function gameOver() {
+        function gameOver() {
             gameState.isRunning = false;
             gameOverScreen.style.display = 'flex';
             document.getElementById('final-score').textContent = gameState.player.score;
@@ -975,7 +974,6 @@
             document.getElementById('final-kills').textContent = gameState.totalEnemiesKilled || 0;
             document.getElementById('enemy-radar').style.display = 'none';
             playSound('sound-die'); // Play player death sound
-            document.getElementById('player-name').focus();
             
             // Hide navigation buttons if they exist
             try {
@@ -1625,13 +1623,6 @@
 
         // Score submission and credits functions
         async function submitScore() {
-            const playerName = document.getElementById('player-name').value.trim();
-            
-            if (!playerName) {
-                showMessage("Please enter your name", 2000);
-                return;
-            }
-            
             try {
                 const { data, error } = await supabase
                     .from('game_highscores')
@@ -1639,8 +1630,7 @@
                         {
                             user_id: currentUser.id,
                             game_id: 'ascii-doom',
-                            score: gameState.player.score,
-                            player_name: playerName
+                            score: gameState.player.score
                         }
                     ]);
                 
@@ -1656,7 +1646,12 @@
             } catch (error) {
                 console.error('Error submitting score:', error);
                 showMessage("Error submitting score", 2000);
+                // Still show credits even if score submission fails
+                setTimeout(() => {
+                    showCredits();
+                }, 2000);
             }
+        }
         }
 
         
@@ -1685,11 +1680,6 @@
 
         // Event listeners for score submission
         document.getElementById('submit-score').addEventListener('click', submitScore);
-        document.getElementById('player-name').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                submitScore();
-            }
-        });
 
         console.log("Game is ready to start");
     </script>
