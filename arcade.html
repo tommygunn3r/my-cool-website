@@ -643,6 +643,7 @@
         const carousel = document.getElementById('carousel');
         const gameOverlay = document.getElementById('gameOverlay');
         const gameFrame = document.getElementById('gameFrame');
+        const gameNavOverlay = document.querySelector('.game-nav-overlay');
 
         function createGameCards() {
             carousel.innerHTML = '';
@@ -713,10 +714,17 @@
             const game = games[index];
             gameFrame.src = `games/arcade/${game.file}`;
             gameOverlay.classList.add('active');
+            // Reset nav overlay display (let CSS handle showing it)
+            if (gameNavOverlay) {
+                gameNavOverlay.style.display = '';
+            }
         }
 
         function closeGame() {
             gameOverlay.classList.remove('active');
+            if (gameNavOverlay) {
+                gameNavOverlay.style.display = 'none';
+            }
             setTimeout(() => {
                 gameFrame.src = '';
             }, 500);
