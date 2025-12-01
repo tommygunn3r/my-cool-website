@@ -1640,10 +1640,7 @@
                             user_id: currentUser.id,
                             game_id: 'ascii-doom',
                             score: gameState.player.score,
-                            player_name: playerName,
-                            difficulty: config.difficulty,
-                            level_reached: gameState.level,
-                            enemies_killed: gameState.totalEnemiesKilled
+                            player_name: playerName
                         }
                     ]);
                 
@@ -1661,6 +1658,7 @@
                 showMessage("Error submitting score", 2000);
             }
         }
+
         
         function showCredits() {
             gameOverScreen.style.display = 'none';
