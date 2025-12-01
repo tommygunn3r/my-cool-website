@@ -105,9 +105,23 @@
             font-weight: bold;
         }
 
+        #coinsDisplay {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            font-size: 18px;
+            color: #FFD700;
+            text-shadow: 2px 2px 0 #333;
+            z-index: 5;
+            font-weight: bold;
+        }
+
         #finalScore {
-            font-size: 32px;
+            font-size: 20px;
             margin: 20px 0;
+            white-space: pre-line;
+            line-height: 1.6;
+            text-align: center;
         }
 
         .instruction {
@@ -119,6 +133,26 @@
         #gameOverScreen {
             display: none;
         }
+
+        .credits {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            font-size: 14px;
+            max-width: 300px;
+        }
+
+        .credits p {
+            margin: 5px 0;
+            opacity: 0.8;
+        }
+
+        .credits .earn-info {
+            color: #FFD700;
+            font-weight: bold;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
@@ -126,6 +160,7 @@
         <canvas id="gameCanvas"></canvas>
         <div id="score">Score: 0</div>
         <div id="highScore">Best: 0</div>
+        <div id="coinsDisplay">💰 0</div>
         
         <div id="startScreen">
             <h1>SQUARE BIRD</h1>
@@ -137,49 +172,35 @@
         <div id="gameOverScreen">
             <h1>GAME OVER</h1>
             <div id="finalScore"></div>
+            <div class="credits">
+                <p>🎮 Square Bird - A GunnersGames Classic</p>
+                <p>Developed by Tom</p>
+                <p>Inspired by Flappy Bird</p>
+                <p class="earn-info">💰 Earn GunnerCoins by playing!</p>
+            </div>
             <button class="button" onclick="restartGame()">PLAY AGAIN</button>
+            <button class="button" onclick="window.location.href='/'">MAIN MENU</button>
         </div>
     </div>
 
 
     <script type="module">
-        // ===== EMBEDDED FIREBASE CONFIGURATION AND SCORE MANAGER =====
-        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-        import { getAuth, signInAnonymously } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
-        import { getFirestore, collection, addDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+        // ===== SUPABASE CONFIGURATION =====
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/+esm';
 
-        // Firebase configuration - You need to replace this with your actual Firebase config
-        // Get this from your Firebase Console > Project Settings > General > Your apps
-       const firebaseConfig = {
-  apiKey: "AIzaSyDjdo3U9qg_h4TKvplsFoZgxVNepAbCpFA",
-  authDomain: "gunners-games.firebaseapp.com",
-  projectId: "gunners-games",
-  storageBucket: "gunners-games.firebasestorage.app",
-  messagingSenderId: "644077315462",
-  appId: "1:644077315462:web:431dd985426f3dbe02f807",
-  measurementId: "G-RWNL900X43"
-};
+        const SUPABASE_URL = 'https://your-project.supabase.co';
+        const SUPABASE_ANON_KEY = 'your-anon-key';
 
-        // Initialize Firebase
-        let db = null;
-        let auth = null;
-        let firebaseInitialized = false;
+        let supabase;
+        let supabaseInitialized = false;
 
-        async function initFirebase() {
-            try {
-                const app = initializeApp(firebaseConfig);
-                db = getFirestore(app);
-                auth = getAuth(app);
-                await signInAnonymously(auth);
-                firebaseInitialized = true;
-                console.log('Firebase initialized successfully');
-            } catch (error) {
-                console.warn('Firebase not available, game will work without leaderboard:', error.message);
-            }
+        try {
+            supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            supabaseInitialized = true;
+            console.log('Supabase initialized successfully');
+        } catch (error) {
+            console.warn('Supabase not available, game will work without leaderboard:', error.message);
         }
-
-        // Initialize Firebase (non-blocking)
-        initFirebase();
 
         // Embedded GameScoreManager class
         class GameScoreManager {
@@ -216,7 +237,7 @@
             }
 
             async submitGameResult(score = 0) {
-                if (!firebaseInitialized || !db) {
+                if (!supabaseInitialized || !supabase) {
                     console.log('Leaderboard unavailable - playing offline');
                     return;
                 }
@@ -224,13 +245,17 @@
                 const timePlayed = this.getElapsedTime();
                 
                 try {
-                    await addDoc(collection(db, 'scores'), {
-                        gameName: this.gameName,
-                        playerName: this.playerName,
-                        score: this.hasScore ? score : 0,
-                        timePlayed: timePlayed,
-                        timestamp: serverTimestamp()
-                    });
+                    const { data, error } = await supabase
+                        .from('arcade_scores')
+                        .insert([{
+                            game_name: this.gameName,
+                            player_name: this.playerName,
+                            score: this.hasScore ? score : 0,
+                            time_played: timePlayed,
+                            created_at: new Date().toISOString()
+                        }]);
+                    
+                    if (error) throw error;
                     console.log('Score submitted to leaderboard');
                 } catch (error) {
                     console.warn('Failed to submit score:', error.message);
@@ -238,6 +263,63 @@
             }
         }
         // ===== END EMBEDDED CODE =====
+
+        // ===== GUNNERCOINS INTEGRATION =====
+        class GunnerCoinsManager {
+            constructor() {
+                this.coinsKey = 'gunnerCoins';
+                this.lastGameKey = 'lastSquareBirdGame';
+            }
+
+            getCoins() {
+                return parseInt(localStorage.getItem(this.coinsKey)) || 0;
+            }
+
+            addCoins(amount) {
+                const current = this.getCoins();
+                const newTotal = current + amount;
+                localStorage.setItem(this.coinsKey, newTotal);
+                return newTotal;
+            }
+
+            canEarnCoins() {
+                const lastGame = localStorage.getItem(this.lastGameKey);
+                if (!lastGame) return true;
+                
+                const lastGameTime = parseInt(lastGame);
+                const hoursSinceLastGame = (Date.now() - lastGameTime) / (1000 * 60 * 60);
+                return hoursSinceLastGame >= 1; // Can earn once per hour
+            }
+
+            recordGame() {
+                localStorage.setItem(this.lastGameKey, Date.now().toString());
+            }
+
+            calculateCoinsEarned(score) {
+                if (!this.canEarnCoins()) return 0;
+                
+                // Base coins: 1 coin per point
+                let coins = score;
+                
+                // Bonus for milestones
+                if (score >= 50) coins += 25;
+                if (score >= 25) coins += 10;
+                if (score >= 10) coins += 5;
+                
+                return coins;
+            }
+
+            awardCoins(score) {
+                const coins = this.calculateCoinsEarned(score);
+                if (coins > 0) {
+                    this.recordGame();
+                    return this.addCoins(coins);
+                }
+                return 0;
+            }
+        }
+
+        const coinsManager = new GunnerCoinsManager();
         
         // Initialize score manager for Square Bird
         const scoreManager = new GameScoreManager('square_bird', true);
@@ -255,6 +337,13 @@
         
         // Update high score display
         document.getElementById('highScore').textContent = 'Best: ' + highScore;
+        
+        // Update coins display
+        function updateCoinsDisplay() {
+            const coins = coinsManager.getCoins();
+            document.getElementById('coinsDisplay').textContent = '💰 ' + coins;
+        }
+        updateCoinsDisplay();
 
         // Audio context for sound effects
         let audioCtx = null;
@@ -563,12 +652,26 @@
             // Submit score to leaderboard
             scoreManager.submitGameResult(score);
             
+            // Award GunnerCoins
+            const coinsEarned = coinsManager.calculateCoinsEarned(score);
+            let newTotal = 0;
+            if (coinsEarned > 0) {
+                newTotal = coinsManager.awardCoins(score);
+                updateCoinsDisplay(); // Update the display
+            }
+            
             let finalScoreText = 'Final Score: ' + score;
             const playTime = scoreManager.getElapsedTimeFormatted();
             finalScoreText += ' | Time: ' + playTime;
             
             if (score === highScore && score > 0) {
                 finalScoreText += ' 🏆 NEW RECORD!';
+            }
+            
+            if (coinsEarned > 0) {
+                finalScoreText += `\n💰 +${coinsEarned} GunnerCoins! (Total: ${newTotal})`;
+            } else if (score > 0 && !coinsManager.canEarnCoins()) {
+                finalScoreText += '\n⏰ Play again in 1 hour to earn more coins!';
             }
             
             document.getElementById('finalScore').textContent = finalScoreText;
