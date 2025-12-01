@@ -178,8 +178,7 @@
                 <p>Inspired by Flappy Bird</p>
                 <p class="earn-info">💰 Earn GunnerCoins by playing!</p>
             </div>
-            <button class="button" onclick="restartGame()">PLAY AGAIN</button>
-            <button class="button" onclick="window.location.href='/'">MAIN MENU</button>
+            <p class="instruction" style="margin-top: 20px;">Returning to arcade in <span id="countdown">10</span>...</p>
         </div>
     </div>
 
@@ -457,14 +456,6 @@
         // Make functions globally accessible
         window.startGame = startGame;
 
-        function restartGame() {
-            document.getElementById('gameOverScreen').style.display = 'none';
-            startGame();
-        }
-        
-        // Make functions globally accessible
-        window.restartGame = restartGame;
-
         function update() {
             if (!gameActive) return;
 
@@ -654,10 +645,10 @@
             
             // Award GunnerCoins
             const coinsEarned = coinsManager.calculateCoinsEarned(score);
-            let newTotal = 0;
+            let newTotal = coinsManager.getCoins(); // Get current total first
             if (coinsEarned > 0) {
                 newTotal = coinsManager.awardCoins(score);
-                updateCoinsDisplay(); // Update the display
+                updateCoinsDisplay(); // Update the display immediately
             }
             
             let finalScoreText = 'Final Score: ' + score;
@@ -676,6 +667,18 @@
             
             document.getElementById('finalScore').textContent = finalScoreText;
             document.getElementById('gameOverScreen').style.display = 'flex';
+            
+            // Start countdown and redirect
+            let countdown = 10;
+            const countdownElement = document.getElementById('countdown');
+            const countdownInterval = setInterval(() => {
+                countdown--;
+                countdownElement.textContent = countdown;
+                if (countdown <= 0) {
+                    clearInterval(countdownInterval);
+                    window.location.href = '/arcade.html';
+                }
+            }, 1000);
         }
 
         // Controls
