@@ -86,6 +86,7 @@
         <h1 class="text-3xl mb-4 text-yellow-400">Square-Man</h1>
         <div class="info-bar">
             <div id="scoreDisplay">SCORE: 000</div>
+            <div id="highScoreDisplay">HIGH: ---</div>
             <div id="livesDisplay">LIVES: 3</div>
         </div>
         <canvas id="gameCanvas" width="500" height="500"></canvas>
@@ -109,7 +110,7 @@
         // ===== UPDATED FIREBASE & SCORE MANAGER =====
         import { db } from '/firebase-config.js';
         import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
-        import { collection, addDoc, serverTimestamp, doc, setDoc, increment } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+        import { collection, addDoc, serverTimestamp, doc, setDoc, increment, query, where, orderBy, limit, getDocs } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
         let auth = null;
         let currentUser = null;
@@ -118,11 +119,12 @@
         async function initGameAuth() {
             try {
                 auth = getAuth(db.app);
-                onAuthStateChanged(auth, (user) => {
+                onAuthStateChanged(auth, async (user) => {
                     if (user) {
                         console.log("Pilot Identified:", user.displayName);
                         currentUser = user;
                         scoreManager.playerName = user.displayName || "Unknown Pilot";
+                        await scoreManager.loadHighScore();
                     } else {
                         // Not logged in? Kick back to the portal
                         window.location.href = '/index.html';
@@ -139,6 +141,29 @@
                 this.gameName = gameName;
                 this.sessionStartTime = null;
                 this.playerName = "Loading...";
+                this.highScore = 0;
+            }
+
+            async loadHighScore() {
+                if (!currentUser) return;
+                
+                try {
+                    const q = query(
+                        collection(db, 'scores'),
+                        where('gameName', '==', this.gameName),
+                        where('uid', '==', currentUser.uid),
+                        orderBy('score', 'desc'),
+                        limit(1)
+                    );
+                    
+                    const snapshot = await getDocs(q);
+                    if (!snapshot.empty) {
+                        this.highScore = snapshot.docs[0].data().score;
+                        highScoreDisplay.textContent = `HIGH: ${String(this.highScore).padStart(3, '0')}`;
+                    }
+                } catch (error) {
+                    console.warn('Could not load high score:', error);
+                }
             }
 
             startSession() {
@@ -183,6 +208,12 @@
                         totalTimePlayed: increment(timePlayed)
                     }, { merge: true });
 
+                    // 3. Update high score if needed
+                    if (score > this.highScore) {
+                        this.highScore = score;
+                        highScoreDisplay.textContent = `HIGH: ${String(this.highScore).padStart(3, '0')}`;
+                    }
+
                     console.log('Score submitted & Career updated');
                 } catch (error) {
                     console.warn('Failed to submit score:', error.message);
@@ -199,6 +230,7 @@
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         const scoreDisplay = document.getElementById('scoreDisplay');
+        const highScoreDisplay = document.getElementById('highScoreDisplay');
         const livesDisplay = document.getElementById('livesDisplay');
         const messageBox = document.getElementById('messageBox');
         const startButton = document.getElementById('startButton');
@@ -851,7 +883,34 @@
                 scoreManager.submitGameResult(this.score);
                 
                 const playTime = scoreManager.getElapsedTimeFormatted();
-                this.showMessage(`GAME OVER! Final Score: ${this.score} | Time: ${playTime}`, true, 'bg-red-900');
+                const isNewHighScore = this.score > scoreManager.highScore && scoreManager.highScore > 0;
+                
+                // Show credits screen
+                const creditsHTML = `
+                    <div style="line-height: 1.8; font-size: 0.7rem;">
+                        <p style="font-size: 1.2rem; margin-bottom: 1rem; color: #ff0;">GAME OVER</p>
+                        ${isNewHighScore ? '<p style="color: #0f0; margin-bottom: 0.5rem;">★ NEW HIGH SCORE! ★</p>' : ''}
+                        <p style="margin-bottom: 0.5rem;">FINAL SCORE: ${this.score}</p>
+                        <p style="margin-bottom: 0.5rem;">LEVEL REACHED: ${this.level}</p>
+                        <p style="margin-bottom: 1rem;">TIME PLAYED: ${playTime}</p>
+                        <p style="font-size: 0.6rem; margin-top: 1rem; color: #888;">Returning to Arcade...</p>
+                    </div>
+                `;
+                
+                messageBox.innerHTML = creditsHTML;
+                messageBox.classList.remove('hidden', 'bg-red-800', 'bg-green-900');
+                messageBox.classList.add('bg-red-900');
+                
+                // Return to arcade after showing credits
+                setTimeout(() => {
+                    // If in iframe, tell parent to close it
+                    if (window.parent !== window) {
+                        window.parent.postMessage({ action: 'closeGame' }, '*');
+                    } else {
+                        // If opened directly, go to arcade
+                        window.location.href = '/arcade.html';
+                    }
+                }, 3000);
             }
 
             winGame() {
@@ -993,7 +1052,13 @@
         // --- Input and Event Handlers ---
 
         function handleKeyDown(e) {
-            if (!game || game.isPaused) {
+            if (!game) return;
+            
+            // If game is over, ignore all inputs (auto-returns to arcade)
+            if (!game.isRunning) return;
+            
+            // If game is paused but still running (pause during game)
+            if (game.isPaused) {
                 if (e.key === ' ' || e.key === 'Enter') {
                     game.start();
                 }
