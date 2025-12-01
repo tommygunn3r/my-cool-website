@@ -229,6 +229,14 @@
 | |_| |/ ___ \| |  | | |___  | |_| |\ V / | |___|  _ < 
  \____/_/   \_\_|  |_|_____|  \___/  \_/  |_____|_| \_\
         </pre>
+        <div class="score-display">
+            Final Score: <span id="final-score">0</span>
+        </div>
+        <div>Level Reached: <span id="final-level">1</span></div>
+        <div>Enemies Eliminated: <span id="final-kills">0</span></div>
+        <div style="margin-top: 30px;">
+            <button class="button" id="submit-score">Continue to Credits</button>
+        </div>
     </div>
 
     <div id="level-complete-screen" style="display: none;">
@@ -241,6 +249,53 @@
         </pre>
         <div class="button" id="next-level">NEXT LEVEL</div>
     </div>
+    
+    <div id="credits-screen" style="display: none;">
+        <div id="credits-content" style="position: absolute; width: 100%; text-align: center; animation: scroll-up 15s linear; font-size: 20px; line-height: 1.8;">
+            <div style="margin-bottom: 100px;">
+                <pre style="font-size: 32px; color: #ff0;">
+    _    ____   ____ ___ ___    ____   ___   ___  __  __ 
+   / \  / ___| / ___|_ _|_ _|  |  _ \ / _ \ / _ \|  \/  |
+  / _ \ \___ \| |    | | | |   | | | | | | | | | | |\/| |
+ / ___ \ ___) | |___ | | | |   | |_| | |_| | |_| | |  | |
+/_/   \_\____/ \____|___|___|  |____/ \___/ \___/|_|  |_|
+                </pre>
+            </div>
+            
+            <div style="margin-bottom: 80px;">
+                <h2 style="color: #ff0; font-size: 36px; margin-bottom: 20px;">MISSION COMPLETE</h2>
+                <p style="font-size: 24px;">Final Score: <span id="credits-score" style="color: #0ff;">0</span></p>
+                <p style="font-size: 24px;">Level Reached: <span id="credits-level" style="color: #0ff;">1</span></p>
+            </div>
+            
+            <div style="margin-bottom: 80px;">
+                <h3 style="color: #0f0; font-size: 28px; margin-bottom: 30px;">GAME DESIGN</h3>
+                <p>GunnersGames</p>
+            </div>
+            
+            <div style="margin-bottom: 80px;">
+                <h3 style="color: #0f0; font-size: 28px; margin-bottom: 30px;">PROGRAMMING</h3>
+                <p>ASCII Raycasting Engine</p>
+                <p>3D Rendering System</p>
+                <p>Enemy AI</p>
+            </div>
+            
+            <div style="margin-bottom: 80px;">
+                <h3 style="color: #0f0; font-size: 28px; margin-bottom: 30px;">SPECIAL THANKS</h3>
+                <p>To all the demon slayers</p>
+                <p>who fought through the ASCII darkness</p>
+            </div>
+            
+            <div style="margin-bottom: 80px;">
+                <h2 style="color: #f00; font-size: 32px;">THANKS FOR PLAYING!</h2>
+            </div>
+            
+            <div style="margin-bottom: 200px;">
+                <p style="font-size: 18px; color: #888;">Returning to arcade...</p>
+            </div>
+        </div>
+    </div>
+    
     
     <audio id="sound-start" src="game_start.mp3" preload="auto"></audio>
     <audio id="sound-fire" src="laser_shot.mp3" preload="auto"></audio>
@@ -338,7 +393,6 @@
         const startHardButton = document.getElementById('start-hard');
         const nextLevelButton = document.getElementById('next-level');
         const submitScoreButton = document.getElementById('submit-score');
-        const playerNameInput = document.getElementById('player-name');
         const finalScoreDisplay = document.getElementById('final-score');
 
         // Character sets for rendering
@@ -916,9 +970,20 @@
             gameState.isRunning = false;
             gameOverScreen.style.display = 'flex';
             document.getElementById('final-score').textContent = gameState.player.score;
+            document.getElementById('final-level').textContent = gameState.level;
+            document.getElementById('final-kills').textContent = gameState.totalEnemiesKilled || 0;
             document.getElementById('enemy-radar').style.display = 'none';
             playSound('sound-die'); // Play player death sound
-            document.getElementById('player-name').focus();
+            
+            // Hide navigation buttons if they exist
+            try {
+                const returnToArcade = parent.document.querySelector('.return-to-arcade');
+                const homeButton = parent.document.querySelector('.home-button');
+                if (returnToArcade) returnToArcade.style.display = 'none';
+                if (homeButton) homeButton.style.display = 'none';
+            } catch(e) {
+                // Ignore if not in iframe
+            }
         }
 
         // Level complete
@@ -1607,11 +1672,6 @@
 
         // Event listeners for score submission
         document.getElementById('submit-score').addEventListener('click', submitScore);
-        document.getElementById('player-name').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                submitScore();
-            }
-        });
 
         console.log("Game is ready to start");
     </script>
