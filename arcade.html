@@ -765,8 +765,10 @@
 
         // Listen for messages from game iframes to close overlay
         window.addEventListener('message', (e) => {
+            console.log('Message received:', e.data);
             // Handle both old string format and new object format
             if (e.data === 'closeGame' || (e.data && e.data.action === 'closeGame')) {
+                console.log('Closing game overlay...');
                 closeGame();
             }
         });
