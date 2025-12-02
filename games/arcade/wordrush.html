@@ -117,41 +117,35 @@ h1 { color: #333; margin-bottom: 10px; }
 
 <div id="game-over-screen">
     <div id="game-over-content">
-        <h2>Game Over!</h2>
-        <div class="final-stat"><span>Final Score:</span><span id="final-score">0</span></div>
-        <div class="final-stat"><span>Words Found:</span><span id="final-words">0</span></div>
-        <div class="final-stat"><span>Average Word Length:</span><span id="avg-length">0</span></div>
-        <div class="final-stat"><span>Bombs Defused:</span><span id="final-bombs">0</span></div>
-        <div class="final-stat"><span>Total Play Time:</span><span id="total-time">0s</span></div>
-        <button id="restart-btn">Play Again</button>
+        <div id="creditsContent"></div>
     </div>
 </div>
 
 <script type="module">
-    // ===== UPDATED FIREBASE & SCORE MANAGER =====
-    import { db } from '/firebase-config.js';
-    import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
-    import { collection, addDoc, serverTimestamp, doc, setDoc, increment } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
-
-    let auth = null;
+    // ===== SUPABASE INTEGRATION =====
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+    
+    const SUPABASE_URL = 'https://pknhslxhpohrzgsfkisr.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBrbmhzbHhocG9ocnpnc2ZraXNyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU1OTY5NjUsImV4cCI6MjA1MTE3Mjk2NX0.tIUj3jIMX5c_jsdjL4RrfwW7wH-8Ry93y5kKOj0uEao';
+    
+    const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    
     let currentUser = null;
+    let playerName = "Anonymous";
 
-    // Gatekeeper: Check if logged in
     async function initGameAuth() {
         try {
-            auth = getAuth(db.app);
-            onAuthStateChanged(auth, (user) => {
-                if (user) {
-                    console.log("Pilot Identified:", user.displayName);
-                    currentUser = user;
-                    scoreManager.playerName = user.displayName || "Unknown Pilot";
-                } else {
-                    // Not logged in? Kick back to the portal
-                    window.location.href = '/index.html';
-                }
-            });
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session?.user) {
+                currentUser = session.user;
+                playerName = session.user.user_metadata?.display_name || 
+                            session.user.email?.split('@')[0] || 
+                            "Anonymous";
+                scoreManager.playerName = playerName;
+                console.log("Player identified:", playerName);
+            }
         } catch (error) {
-            console.error("Auth failed:", error);
+            console.warn("Auth check failed:", error);
         }
     }
 
@@ -160,7 +154,7 @@ h1 { color: #333; margin-bottom: 10px; }
         constructor(gameName) {
             this.gameName = gameName;
             this.sessionStartTime = null;
-            this.playerName = "Loading...";
+            this.playerName = "Anonymous";
         }
 
         startSession() {
@@ -172,32 +166,35 @@ h1 { color: #333; margin-bottom: 10px; }
             return Math.floor((Date.now() - this.sessionStartTime) / 1000);
         }
 
+        getElapsedTimeFormatted() {
+            const seconds = this.getElapsedTime();
+            if (seconds < 60) return `${seconds}s`;
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${mins}m ${secs}s`;
+        }
+
         async submitGameResult(score = 0) {
-            if (!currentUser) return;
+            if (!currentUser) {
+                console.log('No user logged in, score not saved');
+                return;
+            }
 
             const timePlayed = this.getElapsedTime();
             
             try {
-                // 1. Public Leaderboard
-                await addDoc(collection(db, 'scores'), {
-                    gameName: this.gameName,
-                    playerName: this.playerName,
-                    score: score,
-                    timePlayed: timePlayed,
-                    timestamp: serverTimestamp(),
-                    uid: currentUser.uid
-                });
+                const { error } = await supabase
+                    .from('arcade_scores')
+                    .insert({
+                        game_name: this.gameName,
+                        player_name: this.playerName,
+                        score: score,
+                        time_played: timePlayed,
+                        user_id: currentUser.id
+                    });
 
-                // 2. Update Career Stats
-                const userRef = doc(db, 'users', currentUser.uid);
-                await setDoc(userRef, {
-                    lastActive: serverTimestamp(),
-                    totalArcadeScore: increment(parseInt(score)),
-                    [`gamesPlayed_${this.gameName}`]: increment(1),
-                    totalTimePlayed: increment(timePlayed)
-                }, { merge: true });
-
-                console.log('Score submitted & Career updated');
+                if (error) throw error;
+                console.log('Score submitted successfully');
             } catch (error) {
                 console.warn('Failed to submit score:', error.message);
             }
@@ -372,12 +369,59 @@ h1 { color: #333; margin-bottom: 10px; }
 
         scoreManager.submitGameResult(finalScore);
         
-        document.getElementById('final-score').textContent = finalScore;
-        document.getElementById('final-words').textContent = wordsFound;
-        document.getElementById('avg-length').textContent = avgWordLength;
-        document.getElementById('final-bombs').textContent = totalBombsDefused;
-        document.getElementById('total-time').textContent = playTime + 's';
+        // Enhanced credits screen
+        const creditsHTML = `
+            <div style="line-height: 1.8; font-size: 0.8rem; text-align: center;">
+                <h2 style="font-size: 2.5rem; margin-bottom: 1rem; color: #667eea; text-shadow: 0 0 10px #667eea;">TIME'S UP!</h2>
+                
+                <div style="margin: 1.5rem 0; padding: 1.5rem; background: rgba(0,0,0,0.1); border-radius: 12px;">
+                    <p style="color: #667eea; margin-bottom: 0.3rem; font-size: 0.7rem; font-weight: bold;">FINAL SCORE</p>
+                    <p style="font-size: 2.5rem; color: #333; margin-bottom: 1.5rem; font-weight: bold;">${finalScore}</p>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; text-align: left; margin-bottom: 1rem;">
+                        <div style="background: rgba(102, 126, 234, 0.1); padding: 0.8rem; border-radius: 8px;">
+                            <p style="color: #667eea; margin-bottom: 0.2rem; font-size: 0.65rem; font-weight: bold;">WORDS FOUND</p>
+                            <p style="font-size: 1.5rem; color: #333; font-weight: bold;">${wordsFound}</p>
+                        </div>
+                        <div style="background: rgba(118, 75, 162, 0.1); padding: 0.8rem; border-radius: 8px;">
+                            <p style="color: #764ba2; margin-bottom: 0.2rem; font-size: 0.65rem; font-weight: bold;">AVG LENGTH</p>
+                            <p style="font-size: 1.5rem; color: #333; font-weight: bold;">${avgWordLength}</p>
+                        </div>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; text-align: left;">
+                        <div style="background: rgba(255, 107, 107, 0.1); padding: 0.8rem; border-radius: 8px;">
+                            <p style="color: #ff6b6b; margin-bottom: 0.2rem; font-size: 0.65rem; font-weight: bold;">BOMBS DEFUSED</p>
+                            <p style="font-size: 1.5rem; color: #333; font-weight: bold;">${totalBombsDefused}</p>
+                        </div>
+                        <div style="background: rgba(78, 205, 196, 0.1); padding: 0.8rem; border-radius: 8px;">
+                            <p style="color: #4ecdc4; margin-bottom: 0.2rem; font-size: 0.65rem; font-weight: bold;">PLAY TIME</p>
+                            <p style="font-size: 1.5rem; color: #333; font-weight: bold;">${playTime}s</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 2px solid #e0e0e0;">
+                    <p style="font-size: 0.6rem; color: #999; margin-bottom: 0.3rem;">GAME BY</p>
+                    <p style="font-size: 0.8rem; color: #e94560; margin-bottom: 0.8rem; font-weight: bold;">GUNNER'S GAMES</p>
+                    <p style="font-size: 0.55rem; color: #666;">Thanks for playing!</p>
+                </div>
+                
+                <p style="font-size: 0.65rem; margin-top: 1.5rem; color: #999;">Returning to Arcade in 5 seconds...</p>
+            </div>
+        `;
+        
+        document.getElementById('creditsContent').innerHTML = creditsHTML;
         gameOverScreen.style.display = 'flex';
+        
+        // Return to arcade after showing credits
+        setTimeout(() => {
+            if (window.parent !== window) {
+                window.parent.postMessage({ action: 'closeGame' }, '*');
+            } else {
+                window.location.href = '/arcade.html';
+            }
+        }, 5000);
     }
 
     function initializeGrid(){
