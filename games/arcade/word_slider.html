@@ -199,12 +199,11 @@
                 const timePlayed = this.getElapsedTime();
                 try {
                     const { error } = await supabase
-                        .from('arcade_scores')
+                        .from('game_highscores')
                         .insert({
-                            game_name: this.gameName,
-                            player_name: this.playerName,
+                            game_id: this.gameName,
+                    player_name: playerName,
                             score: score,
-                            time_played: timePlayed,
                             user_id: currentUser.id
                         });
                     if (error) throw error;
