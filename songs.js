@@ -1,7 +1,7 @@
 // songs.js - Jukebox song library
 // Edit this file to add/remove songs from your jukebox
 
-export const songs = [
+window.songs songs = [
     { title: "1-up Power", artist: "Synthwave Dreams", file: "music/1-Up Power.mp3" },
     { title: "Block Life", artist: "Retro Gaming", file: "music/Block life.mp3" },
     { title: "Chopper rap", artist: "Dat' Guy", file: "music/Chopper Rap.mp3" },
