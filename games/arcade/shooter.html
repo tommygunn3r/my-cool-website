@@ -269,12 +269,11 @@
         async function submitHighScore(score, playerName) {
             if (!currentUser) return;
 
-            const { error } = await supabase.from("arcade_scores").insert({
+            const { error } = await supabase.from("game_highscores").insert({
                 user_id: currentUser.id,
-                game_name: "shooter",
+                game_id: "shooter",
+                    player_name: playerName,
                 score: Math.floor(score),
-                player_name: playerName,
-                time_played: 0
             });
 
             if (error) console.warn("Score submit failed:", error.message);
