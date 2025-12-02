@@ -104,9 +104,9 @@
 
         async function loadGameScores(gameId){
             const { data, error } = await supabase
-                .from("arcade_scores")
-                .select("score, player_name, created_at")
-                .eq("game_name", gameId)
+                .from("game_highscores")
+                .select("score, player_name, user_id, created_at")
+                .eq("game_id", gameId)
                 .order("score", { ascending:false })
                 .limit(10);
 
@@ -133,10 +133,11 @@
                     html += `<div class="loading">No scores yet</div>`;
                 } else {
                     scores.forEach((entry, i)=>{
+                        const displayName = entry.player_name || (entry.user_id ? `Player ${entry.user_id.substring(0, 8)}` : "Anonymous");
                         html += `
                         <div class="score-entry">
                             <div class="rank ${rankClass(i)}">#${i+1}</div>
-                            <div class="player-name">${entry.player_name || "Anonymous"}</div>
+                            <div class="player-name">${displayName}</div>
                             <div class="score-value">${entry.score}</div>
                         </div>
                         `;
