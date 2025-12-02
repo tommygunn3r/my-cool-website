@@ -159,8 +159,6 @@ class JukeboxModal {
                     border-radius: 12px;
                     padding: 4px;
                     margin-bottom: 10px;
-                    flex: 1;
-                    min-height: 0;
                     box-shadow: 
                         inset 0 0 20px rgba(0, 0, 0, 0.8),
                         0 0 15px rgba(201, 169, 97, 0.3);
@@ -168,8 +166,7 @@ class JukeboxModal {
                     <div id="jukebox-song-list" style="
                         overflow-y: auto;
                         padding: 8px;
-                        height: 100%;
-                        max-height: 300px;
+                        height: 280px;
                         background: rgba(0, 0, 0, 0.4);
                         border-radius: 8px;
                     "></div>
