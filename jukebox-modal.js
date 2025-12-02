@@ -1,14 +1,27 @@
 // jukebox-modal.js - Jukebox Modal System for Playerbar
 // This integrates the jukebox as a modal popup in the playerbar
 
-import { songs } from './songs.js';
-import { supabase } from './assets/js/supabaseClient.js';
-
 class JukeboxModal {
     constructor() {
         this.selectedSongs = [];
         this.COST_PER_SONG = 1;
         this.isOpen = false;
+        this.songs = [];
+        this.supabase = window.supabase;
+        
+        // Load songs from window.songs (set by songs.js)
+        this.loadSongsAndInit();
+    }
+
+    async loadSongsAndInit() {
+        // Wait for songs.js to load
+        if (window.songs) {
+            this.songs = window.songs;
+        } else {
+            // Wait a bit for songs.js to load
+            await new Promise(resolve => setTimeout(resolve, 100));
+            this.songs = window.songs || [];
+        }
         
         this.createModal();
         this.attachListeners();
@@ -143,7 +156,7 @@ class JukeboxModal {
         const songList = document.getElementById('jukebox-song-list');
         songList.innerHTML = '';
 
-        songs.forEach((song, index) => {
+        this.songs.forEach((song, index) => {
             const songItem = document.createElement('div');
             songItem.className = 'jukebox-song-item';
             songItem.dataset.index = index;
@@ -248,7 +261,7 @@ class JukeboxModal {
 
         try {
             // Get current user
-            const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+            const { data: { session }, error: sessionError } = await this.supabase.auth.getSession();
             
             if (sessionError || !session) {
                 this.showError('Please log in to use the jukebox');
@@ -258,7 +271,7 @@ class JukeboxModal {
             const userId = session.user.id;
 
             // Get current coins
-            const { data: profile, error: profileError } = await supabase
+            const { data: profile, error: profileError } = await this.supabase
                 .from('profiles')
                 .select('gunnercoins')
                 .eq('id', userId)
@@ -275,7 +288,7 @@ class JukeboxModal {
             }
 
             // Deduct coins
-            const { error: updateError } = await supabase
+            const { error: updateError } = await this.supabase
                 .from('profiles')
                 .update({ gunnercoins: profile.gunnercoins - cost })
                 .eq('id', userId);
@@ -292,7 +305,7 @@ class JukeboxModal {
             }
 
             // Send playlist to music player
-            const playlist = this.selectedSongs.map(index => songs[index]);
+            const playlist = this.selectedSongs.map(index => this.songs[index]);
             
             if (window.musicPlayer) {
                 window.musicPlayer.setPlaylist(playlist);
