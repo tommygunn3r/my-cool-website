@@ -187,11 +187,23 @@
             clearSynth = new Tone.PolySynth(Tone.Synth, { oscillator: { type: "square" }, envelope: { attack: 0.005, decay: 0.1, sustain: 0 } }).toDestination();
         }
 
-        function playLockSound() { if(lockSynth) lockSynth.triggerAttackRelease("C2", "8n"); }
+        function playLockSound() { 
+            if(lockSynth) {
+                try {
+                    lockSynth.triggerAttackRelease("C2", "8n", Tone.now());
+                } catch(e) {
+                    console.warn("Lock sound error:", e);
+                }
+            }
+        }
         function playClearSound(lines) { 
             if(clearSynth) {
-                const notes = ["C5", "E5", "G5", "C6"].slice(0, lines + 1);
-                clearSynth.triggerAttackRelease(notes, "16n");
+                try {
+                    const notes = ["C5", "E5", "G5", "C6"].slice(0, lines + 1);
+                    clearSynth.triggerAttackRelease(notes, "16n", Tone.now());
+                } catch(e) {
+                    console.warn("Clear sound error:", e);
+                }
             }
         }
 
@@ -332,7 +344,13 @@
 
         function gameOver() {
             isPlaying = false;
-            if(lockSynth) lockSynth.triggerAttackRelease("A1", 0.5);
+            if(lockSynth) {
+                try {
+                    lockSynth.triggerAttackRelease("A1", 0.5, Tone.now());
+                } catch(e) {
+                    console.warn("Game over sound error:", e);
+                }
+            }
             
             // Submit score
             scoreManager.submitGameResult(score);

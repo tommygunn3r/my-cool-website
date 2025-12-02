@@ -229,6 +229,13 @@ h1 { color: #333; margin-bottom: 10px; }
     let timeDecayRate = 1.0;
     let currentMusicTrack = null;
     let lastWarningPlayed = 0;
+    
+    // Chaos timer variables
+    let chaosBaseInterval = 10000;
+    let chaosMinInterval = 3000;
+    let chaosInterval = chaosBaseInterval;
+    let chaosSpeedMultiplier = 1;
+    let chaosTimer = null;
 
     const MULTIPLIER_CHANCE = 0.03;
     const BOMB_CHANCE = 0.02;
@@ -254,20 +261,12 @@ h1 { color: #333; margin-bottom: 10px; }
     const timeDisplay = document.getElementById('time-remaining');
     const timerDisplay = document.getElementById('timer-display');
     const gameOverScreen = document.getElementById('game-over-screen');
-    const restartBtn = document.getElementById('restart-btn');
     const startScreen = document.getElementById('start-screen');
     const startBtn = document.getElementById('start-btn');
 
     startBtn.addEventListener('click', () => {
         startScreen.style.display = 'none';
         scoreManager.startSession();
-        startBombTimer(); startChaosTimer(); startGameTimer(); startBackgroundMusic();
-    });
-
-    restartBtn.addEventListener('click', () => {
-        gameOverScreen.style.display = 'none';
-        scoreManager.startSession();
-        initializeGrid();
         startBombTimer(); startChaosTimer(); startGameTimer(); startBackgroundMusic();
     });
 
@@ -705,8 +704,6 @@ h1 { color: #333; margin-bottom: 10px; }
             if(bombs.length>0)bombs.forEach(b=>handleExplosion(b));
         },BOMB_TICK_INTERVAL);
     }
-
-    let chaosBaseInterval=10000,chaosMinInterval=3000,chaosInterval=chaosBaseInterval,chaosSpeedMultiplier=1,chaosTimer=null;
 
     function startChaosTimer(){
         if(chaosTimer)clearInterval(chaosTimer);
