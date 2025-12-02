@@ -70,7 +70,50 @@
         <div style="width: 150px; height: 4px; background: rgba(0, 255, 255, 0.2); margin-left: 15px; border-radius: 2px; overflow: hidden;">
             <div id="music-progress" style="width: 0%; height: 100%; background: #0ff; transition: width 0.1s;"></div>
         </div>
+
+        <!-- Volume Control -->
+        <div style="display: flex; align-items: center; gap: 8px; margin-left: 15px;">
+            <span style="color: #0ff; font-size: 14px;">🔊</span>
+            <input type="range" id="music-volume" min="0" max="100" value="70" style="
+                width: 80px;
+                height: 4px;
+                -webkit-appearance: none;
+                appearance: none;
+                background: rgba(0, 255, 255, 0.3);
+                border-radius: 2px;
+                outline: none;
+                cursor: pointer;
+            ">
+        </div>
     </div>
+
+    <style>
+        #music-volume::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 12px;
+            height: 12px;
+            background: #0ff;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 8px rgba(0, 255, 255, 0.8);
+        }
+        #music-volume::-moz-range-thumb {
+            width: 12px;
+            height: 12px;
+            background: #0ff;
+            border-radius: 50%;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 0 8px rgba(0, 255, 255, 0.8);
+        }
+        #music-volume:hover::-webkit-slider-thumb {
+            box-shadow: 0 0 12px rgba(0, 255, 255, 1);
+        }
+        #music-volume:hover::-moz-range-thumb {
+            box-shadow: 0 0 12px rgba(0, 255, 255, 1);
+        }
+    </style>
 
     <div style="display:flex; align-items:center; gap:8px;">
         <!-- Jukebox Button -->

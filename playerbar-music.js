@@ -116,6 +116,7 @@ class MusicPlayer {
         const playPauseBtn = document.getElementById('music-play-pause');
         const prevBtn = document.getElementById('music-prev');
         const nextBtn = document.getElementById('music-next');
+        const volumeSlider = document.getElementById('music-volume');
 
         if (playPauseBtn) {
             playPauseBtn.addEventListener('click', () => {
@@ -133,6 +134,24 @@ class MusicPlayer {
 
         if (nextBtn) {
             nextBtn.addEventListener('click', () => this.playNext());
+        }
+
+        if (volumeSlider) {
+            // Set initial volume
+            const savedVolume = localStorage.getItem('jukeboxVolume');
+            if (savedVolume !== null) {
+                this.audio.volume = parseFloat(savedVolume);
+                volumeSlider.value = parseFloat(savedVolume) * 100;
+            } else {
+                this.audio.volume = 0.7; // Default 70%
+                volumeSlider.value = 70;
+            }
+
+            volumeSlider.addEventListener('input', (e) => {
+                const volume = e.target.value / 100;
+                this.audio.volume = volume;
+                localStorage.setItem('jukeboxVolume', volume);
+            });
         }
 
         this.updateUI();
