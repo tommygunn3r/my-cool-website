@@ -528,6 +528,19 @@
 
             const isThrusting = keyMap["ArrowUp"] || keyMap["KeyW"];
 
+            // Control engine sound based on thrust
+            if (engineSound) {
+                if (isThrusting) {
+                    if (engineSound.paused) {
+                        engineSound.play().catch(() => {});
+                    }
+                } else {
+                    if (!engineSound.paused) {
+                        engineSound.pause();
+                    }
+                }
+            }
+
             // Turning, tilt first
             const tiltNorm = tiltGamma / tiltMax;
             if (Math.abs(tiltNorm) > 0.1) ship.angle += ship.turnRate * tiltNorm;
@@ -812,7 +825,7 @@
                 document.body.appendChild(engineSound);
             }
 
-            engineSound.play().catch(() => {});
+            // Don't auto-play engine sound - it will play when thrusting
 
             document.getElementById("startModal").style.display = "none";
             gameLoop();
