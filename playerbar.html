@@ -27,7 +27,67 @@
         </span>
     </div>
 
+    <!-- Music Player Controls -->
+    <div id="music-controls" style="display: none; align-items: center; gap: 10px;">
+        <button id="music-prev" style="
+            background: #0ff;
+            color: #000;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+            font-size: 14px;
+            border-radius: 4px;
+            font-weight: bold;
+        ">⏮</button>
+        
+        <button id="music-play-pause" style="
+            background: #00ff00;
+            color: #000;
+            border: none;
+            padding: 5px 15px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 4px;
+        ">▶</button>
+        
+        <button id="music-next" style="
+            background: #0ff;
+            color: #000;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+            font-size: 14px;
+            border-radius: 4px;
+            font-weight: bold;
+        ">⏭</button>
+        
+        <div style="margin-left: 15px; color: #0ff; font-size: 12px; min-width: 200px;">
+            <div id="music-title" style="font-weight: bold; margin-bottom: 2px;">No song playing</div>
+            <div id="music-artist" style="font-size: 10px; color: #88ddff;"></div>
+        </div>
+        
+        <div style="width: 150px; height: 4px; background: rgba(0, 255, 255, 0.2); margin-left: 15px; border-radius: 2px; overflow: hidden;">
+            <div id="music-progress" style="width: 0%; height: 100%; background: #0ff; transition: width 0.1s;"></div>
+        </div>
+    </div>
+
     <div style="display:flex; align-items:center; gap:8px;">
+        <!-- Jukebox Button -->
+        <button type="button" onclick="openJukebox()" style="
+            padding: 8px 16px;
+            background: linear-gradient(180deg, #ff00ff, #aa00aa);
+            border: 2px solid #ff00ff;
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 0 0 15px rgba(255, 0, 255, 0.5);
+            display: none;
+        " class="pb-jukebox-btn">
+            ♫ JUKE BOX
+        </button>
+
         <button id="pb-login-btn" type="button"
             style="
                 padding:8px 14px;
@@ -218,6 +278,13 @@
 
 
 <!-- ================================
+     JUKEBOX + MUSIC PLAYER SCRIPTS
+     ================================ -->
+<script type="module" src="playerbar-music.js"></script>
+<script type="module" src="jukebox-modal.js"></script>
+
+
+<!-- ================================
      PLAYER BAR + MODAL JS
      ================================ -->
 
@@ -262,6 +329,7 @@ async function pbLoadPlayerData() {
     const coinSpan = document.getElementById("pb-player-coins");
     const loginBtn = document.getElementById("pb-login-btn");
     const settingsBtn = document.querySelector(".pb-settings-btn");
+    const jukeboxBtn = document.querySelector(".pb-jukebox-btn");
 
     const session = await pbGetSession();
 
@@ -270,6 +338,7 @@ async function pbLoadPlayerData() {
         coinSpan.textContent = "0";
         loginBtn.style.display = "inline-flex";
         settingsBtn.style.display = "none";
+        if (jukeboxBtn) jukeboxBtn.style.display = "none";
         return;
     }
 
@@ -286,6 +355,7 @@ async function pbLoadPlayerData() {
 
     loginBtn.style.display = "none";
     settingsBtn.style.display = "inline-flex";
+    if (jukeboxBtn) jukeboxBtn.style.display = "inline-flex";
 }
 
 function togglePBMenu(e) {
