@@ -21,13 +21,8 @@
         #gameOver {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
             background: rgba(0,0,0,0.8); color: white; padding: 40px; border-radius: 10px;
-            text-align: center; display: none; z-index: 20;
+            text-align: center; display: none; z-index: 20; max-width: 600px;
         }
-        #gameOver button {
-            margin-top: 20px; padding: 10px 30px; font-size: 18px; cursor: pointer;
-            background: #4CAF50; color: white; border: none; border-radius: 5px;
-        }
-        #gameOver button:hover { background: #45a049; }
         
         #startScreen {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
@@ -36,7 +31,7 @@
             z-index: 30; color: white; overflow-y: auto; padding: 40px 20px; box-sizing: border-box; 
         }
         #startScreen h1 {
-            font-size: 72px; margin-bottom: 20px; font-family: 'Arial Black', Impact, sans-serif;
+            font-size: 56px; margin-bottom: 15px; font-family: 'Arial Black', Impact, sans-serif;
             text-shadow: 4px 4px 8px rgba(0,0,0,0.5); animation: bounce 1s infinite; text-align: center; 
         }
         
@@ -45,11 +40,11 @@
             50% { transform: translateY(-10px); }
         }
         #startScreen .instructions {
-            background: rgba(0,0,0,0.5); padding: 30px; border-radius: 15px;
-            margin: 20px; max-width: 600px;
+            background: rgba(0,0,0,0.5); padding: 20px; border-radius: 15px;
+            margin: 20px; max-width: 500px;
         }
-        #startScreen .instructions h2 { margin-bottom: 15px; font-size: 28px; }
-        #startScreen .instructions p { margin: 10px 0; font-size: 18px; line-height: 1.6; }
+        #startScreen .instructions h2 { margin-bottom: 10px; font-size: 24px; }
+        #startScreen .instructions p { margin: 8px 0; font-size: 16px; line-height: 1.4; }
         #startScreen .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
         #startScreen .control-item { background: rgba(255,255,255,0.1); padding: 10px; border-radius: 5px; }
         #startScreen button {
@@ -85,20 +80,16 @@
         <h1>🎮 SQUARIO 🎮</h1>
         <div class="instructions">
             <h2>How to Play</h2>
-            <p><strong>Objective:</strong> Reach the flagpole at the end of the level!</p>
+            <p><strong>Objective:</strong> Reach the flagpole!</p>
             <div class="controls">
-                <div class="control-item">⬅️➡️ Move Left/Right</div>
-                <div class="control-item">⬆️ or SPACE Jump</div>
+                <div class="control-item">⬅️➡️ Move</div>
+                <div class="control-item">⬆️ Jump</div>
                 <div class="control-item">⬇️ Enter Pipes</div>
-                <div class="control-item">A/D Move (Alt)</div>
                 <div class="control-item">SHIFT Run</div>
             </div>
-            <p style="margin-top: 20px;"><strong>Tips:</strong></p>
-            <p>• Hit ❓ blocks from below for power-ups!</p>
-            <p>• Collect 50 Coins for an Extra Life!</p> <p>• Jump on 🐢 enemies to defeat them</p>
-            <p>• Watch out for gaps in the ground!</p>
-            <p>• Enter green pipes for bonus rooms</p>
-            <p>• Golden power-up makes you invincible!</p>
+            <p style="margin-top: 15px;"><strong>Tips:</strong></p>
+            <p>• Hit ❓ blocks for power-ups • Collect 50 coins for 1UP</p>
+            <p>• Jump on enemies to defeat them • Enter pipes for bonus rooms</p>
         </div>
         <button onclick="startGame()">START GAME</button>
     </div>
@@ -114,7 +105,17 @@
         <h1 id="endMessage">Game Over!</h1>
         <p id="finalScore"></p>
         <p id="currentHighScore"></p>
-        <button onclick="restartGame()">Play Again</button>
+        <div id="credits" style="margin-top: 30px; font-size: 16px; line-height: 1.8; color: #aaa;">
+            <p style="color: white; font-size: 20px; margin-bottom: 15px;">━━━━━━━━━━━━━━━━</p>
+            <p><strong style="color: #FFD700;">Game Design & Development</strong></p>
+            <p>GunnersGames Studio</p>
+            <p style="margin-top: 15px;"><strong style="color: #FFD700;">Powered By</strong></p>
+            <p>Claude AI Assistant</p>
+            <p style="margin-top: 15px;"><strong style="color: #FFD700;">Special Thanks</strong></p>
+            <p>All players at GunnersGames</p>
+            <p style="color: white; font-size: 20px; margin-top: 15px;">━━━━━━━━━━━━━━━━</p>
+            <p style="margin-top: 20px; color: #888; font-size: 14px;">Close this window to return to the arcade</p>
+        </div>
     </div>
     <canvas id="game"></canvas>
 
