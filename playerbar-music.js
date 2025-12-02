@@ -207,9 +207,21 @@ class MusicPlayer {
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
         window.musicPlayer = new MusicPlayer();
+        // Force UI update after a short delay to ensure DOM is ready
+        setTimeout(() => {
+            if (window.musicPlayer) {
+                window.musicPlayer.updateUI();
+            }
+        }, 100);
     });
 } else {
     window.musicPlayer = new MusicPlayer();
+    // Force UI update after a short delay to ensure DOM is ready
+    setTimeout(() => {
+        if (window.musicPlayer) {
+            window.musicPlayer.updateUI();
+        }
+    }, 100);
 }
 
 // Listen for messages from jukebox iframe
