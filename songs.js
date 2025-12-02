@@ -13,7 +13,7 @@ window.songs = [
     { title: "Surfin' engine", artist: "The Cruisers", file: "music/Surfin' Engine.mp3" },
     { title: "Swept away", artist: "Synthwave Dreams", file: "music/Swept Away by Stardust.mp3" },
     { title: "The Hand of God", artist: "Cowboy Dude", file: "music/The Hand of God.mp3" },
-    { title: "Game Over", artist: "Continue Crew", file: "music/game-over.mp3" },
+    { title: "Game Over", artist: "Continue Crew", file: "music/Game-Over.mp3" },
     { title: "YO' Dog", artist: "Six7", file: "music/yo' dog.mp3" },
     { title: "Runnin'Hot", artist: "Six7", file: "music/Runnin' Hot on 66.mp3" },
     { title: "Going Nowhere Fast", artist: "Six7", file: "music/Going nowhere Fast.mp3" },
