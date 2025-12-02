@@ -218,7 +218,7 @@
             <div style="margin: 60px 0; font-size: 20px; line-height: 1.8; color: #0f0;">
                 <p style="color: #ff0; font-size: 24px;">CREDITS</p>
                 <p style="margin-top: 30px;">LEAD PROGRAMMER</p>
-                <p style="color: #0ff;">Claude.ai</p>
+                <p style="color: #0ff;">TOM</p>
                 
                 <p style="margin-top: 30px;">GAME DESIGN</p>
                 <p style="color: #0ff;">GUNNERSGAMES</p>
@@ -269,11 +269,12 @@
         async function submitHighScore(score, playerName) {
             if (!currentUser) return;
 
-            const { error } = await supabase.from("game_highscores").insert({
+            const { error } = await supabase.from("arcade_scores").insert({
                 user_id: currentUser.id,
-                game_id: "shooter",
+                game_name: "shooter",
                 score: Math.floor(score),
-                player_name: playerName
+                player_name: playerName,
+                time_played: 0
             });
 
             if (error) console.warn("Score submit failed:", error.message);

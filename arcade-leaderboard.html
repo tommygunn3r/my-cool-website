@@ -88,12 +88,11 @@
         /* Games to show */
         const games = [
             { id: 'shooter', name: 'Space Shooter' },
-            { id: 'square_man', name: 'Square Man' },
+            { id: 'square-man', name: 'Square Man' },
             { id: 'squario', name: 'Squario' },
             { id: 'squartris', name: 'Squartris' },
             { id: 'word_slider', name: 'Word Slider' },
-            { id: 'wordrush', name: 'Word Rush' },
-            { id: 'square_bird', name: 'Square Bird' }
+            { id: 'wordrush', name: 'Word Rush' }
         ];
 
         function rankClass(i){
@@ -105,9 +104,9 @@
 
         async function loadGameScores(gameId){
             const { data, error } = await supabase
-                .from("game_highscores")
-                .select("score, profiles!user_id(player_name)")
-                .eq("game_id", gameId)
+                .from("arcade_scores")
+                .select("score, player_name, created_at")
+                .eq("game_name", gameId)
                 .order("score", { ascending:false })
                 .limit(10);
 
@@ -137,7 +136,7 @@
                         html += `
                         <div class="score-entry">
                             <div class="rank ${rankClass(i)}">#${i+1}</div>
-                            <div class="player-name">${entry.profiles?.player_name || "Unknown"}</div>
+                            <div class="player-name">${entry.player_name || "Anonymous"}</div>
                             <div class="score-value">${entry.score}</div>
                         </div>
                         `;
