@@ -47,20 +47,20 @@ class JukeboxModal {
         modal.innerHTML = `
             <div style="
                 background: linear-gradient(135deg, #2a1810 0%, #1a0f08 50%, #0a0504 100%);
-                border: 8px solid;
+                border: 6px solid;
                 border-image: linear-gradient(45deg, #c9a961, #ffd700, #c9a961, #8b6914) 1;
-                border-radius: 40px 40px 20px 20px;
+                border-radius: 30px 30px 15px 15px;
                 width: 90%;
-                max-width: 600px;
-                max-height: 85vh;
+                max-width: 500px;
+                max-height: 80vh;
                 display: flex;
                 flex-direction: column;
                 box-shadow: 
-                    0 0 80px rgba(255, 215, 0, 0.4),
-                    inset 0 0 40px rgba(0, 0, 0, 0.8),
-                    0 20px 60px rgba(0, 0, 0, 0.9);
+                    0 0 60px rgba(255, 215, 0, 0.4),
+                    inset 0 0 30px rgba(0, 0, 0, 0.8),
+                    0 15px 50px rgba(0, 0, 0, 0.9);
                 position: relative;
-                padding: 20px;
+                padding: 15px;
             ">
                 <!-- Chrome Top Arc -->
                 <div style="
@@ -68,148 +68,152 @@ class JukeboxModal {
                     top: -5px;
                     left: 50%;
                     transform: translateX(-50%);
-                    width: 200px;
-                    height: 30px;
+                    width: 150px;
+                    height: 20px;
                     background: linear-gradient(180deg, #ffd700, #c9a961);
                     border-radius: 50%;
-                    box-shadow: 0 0 20px rgba(255, 215, 0, 0.6);
+                    box-shadow: 0 0 15px rgba(255, 215, 0, 0.6);
                 "></div>
 
                 <!-- Header with Neon Sign -->
                 <div style="
                     background: linear-gradient(180deg, #1a0f08, #0a0504);
-                    padding: 20px;
+                    padding: 12px;
                     text-align: center;
-                    border-radius: 20px 20px 0 0;
-                    border: 3px solid #c9a961;
-                    margin-bottom: 15px;
+                    border-radius: 15px 15px 0 0;
+                    border: 2px solid #c9a961;
+                    margin-bottom: 10px;
                     position: relative;
                     box-shadow: 
-                        0 0 20px rgba(255, 0, 255, 0.5),
-                        inset 0 0 20px rgba(0, 0, 0, 0.8);
+                        0 0 15px rgba(255, 0, 255, 0.5),
+                        inset 0 0 15px rgba(0, 0, 0, 0.8);
                 ">
                     <div style="
                         font-family: 'Courier New', monospace;
-                        font-size: 32px;
+                        font-size: 24px;
                         font-weight: bold;
                         text-transform: uppercase;
-                        letter-spacing: 8px;
+                        letter-spacing: 6px;
                         background: linear-gradient(90deg, #ff00ff, #00ffff, #ff00ff);
                         -webkit-background-clip: text;
                         -webkit-text-fill-color: transparent;
                         background-clip: text;
                         text-shadow: 
-                            0 0 20px rgba(255, 0, 255, 0.8),
-                            0 0 40px rgba(0, 255, 255, 0.6);
+                            0 0 15px rgba(255, 0, 255, 0.8),
+                            0 0 30px rgba(0, 255, 255, 0.6);
                         animation: neonPulse 2s infinite alternate;
                     ">♫ JUKEBOX ♫</div>
                     
                     <button id="jukebox-close" style="
                         position: absolute;
-                        top: 10px;
-                        right: 10px;
+                        top: 8px;
+                        right: 8px;
                         background: radial-gradient(circle, #ff4444, #aa0000);
                         color: #fff;
                         border: 2px solid #ff8888;
-                        width: 35px;
-                        height: 35px;
+                        width: 30px;
+                        height: 30px;
                         border-radius: 50%;
                         cursor: pointer;
-                        font-size: 22px;
+                        font-size: 20px;
                         font-weight: bold;
-                        box-shadow: 0 0 15px rgba(255, 0, 0, 0.6);
+                        box-shadow: 0 0 10px rgba(255, 0, 0, 0.6);
                     ">×</button>
                 </div>
 
                 <!-- Chrome Speaker Grills (decorative) -->
                 <div style="
                     display: flex;
-                    gap: 10px;
+                    gap: 8px;
                     justify-content: center;
-                    margin-bottom: 15px;
+                    margin-bottom: 10px;
                 ">
                     <div style="
-                        width: 60px;
-                        height: 60px;
+                        width: 45px;
+                        height: 45px;
                         background: radial-gradient(circle, #1a1a1a, #000);
-                        border: 3px solid #c9a961;
+                        border: 2px solid #c9a961;
                         border-radius: 50%;
                         position: relative;
-                        box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.9);
+                        box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.9);
                     ">
-                        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 40px; height: 40px; border-radius: 50%; border: 2px dotted #555;"></div>
+                        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 30px; height: 30px; border-radius: 50%; border: 1px dotted #555;"></div>
                     </div>
                     <div style="
-                        width: 60px;
-                        height: 60px;
+                        width: 45px;
+                        height: 45px;
                         background: radial-gradient(circle, #1a1a1a, #000);
-                        border: 3px solid #c9a961;
+                        border: 2px solid #c9a961;
                         border-radius: 50%;
-                        box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.9);
+                        position: relative;
+                        box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.9);
                     ">
-                        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 40px; height: 40px; border-radius: 50%; border: 2px dotted #555;"></div>
+                        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 30px; height: 30px; border-radius: 50%; border: 1px dotted #555;"></div>
                     </div>
                 </div>
 
                 <!-- Song List Display -->
                 <div style="
                     background: linear-gradient(135deg, #001a33, #002244);
-                    border: 5px solid #c9a961;
-                    border-radius: 15px;
-                    padding: 5px;
-                    margin-bottom: 15px;
+                    border: 3px solid #c9a961;
+                    border-radius: 12px;
+                    padding: 4px;
+                    margin-bottom: 10px;
+                    flex: 1;
+                    min-height: 0;
                     box-shadow: 
-                        inset 0 0 30px rgba(0, 0, 0, 0.8),
-                        0 0 20px rgba(201, 169, 97, 0.3);
+                        inset 0 0 20px rgba(0, 0, 0, 0.8),
+                        0 0 15px rgba(201, 169, 97, 0.3);
                 ">
                     <div id="jukebox-song-list" style="
                         overflow-y: auto;
-                        padding: 10px;
-                        min-height: 250px;
-                        max-height: 350px;
+                        padding: 8px;
+                        height: 100%;
+                        max-height: 300px;
                         background: rgba(0, 0, 0, 0.4);
-                        border-radius: 10px;
+                        border-radius: 8px;
                     "></div>
                 </div>
 
                 <!-- Control Panel -->
                 <div style="
                     background: linear-gradient(180deg, #2a1810, #1a0f08);
-                    border: 4px solid #c9a961;
-                    border-radius: 15px;
-                    padding: 20px;
+                    border: 3px solid #c9a961;
+                    border-radius: 12px;
+                    padding: 12px;
                     box-shadow: 
-                        inset 0 0 20px rgba(0, 0, 0, 0.6),
-                        0 0 15px rgba(201, 169, 97, 0.4);
+                        inset 0 0 15px rgba(0, 0, 0, 0.6),
+                        0 0 12px rgba(201, 169, 97, 0.4);
                 ">
                     <div id="jukebox-error" style="
                         display: none;
                         color: #ff4444;
                         background: rgba(255, 0, 0, 0.2);
                         border: 2px solid #ff4444;
-                        padding: 10px;
-                        margin-bottom: 10px;
-                        border-radius: 8px;
+                        padding: 8px;
+                        margin-bottom: 8px;
+                        border-radius: 6px;
                         text-align: center;
                         font-weight: bold;
-                        box-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
+                        font-size: 12px;
+                        box-shadow: 0 0 8px rgba(255, 0, 0, 0.5);
                     "></div>
                     
                     <div id="jukebox-selection-info" style="
                         color: #00ffff;
-                        margin-bottom: 8px;
-                        font-size: 16px;
+                        margin-bottom: 6px;
+                        font-size: 13px;
                         text-align: center;
                         font-family: 'Courier New', monospace;
-                        text-shadow: 0 0 10px rgba(0, 255, 255, 0.8);
+                        text-shadow: 0 0 8px rgba(0, 255, 255, 0.8);
                     ">Select songs to play</div>
                     
                     <div id="jukebox-cost-info" style="
                         color: #ffd700;
                         font-weight: bold;
-                        font-size: 20px;
-                        margin-bottom: 15px;
-                        text-shadow: 0 0 15px rgba(255, 215, 0, 0.9);
+                        font-size: 16px;
+                        margin-bottom: 10px;
+                        text-shadow: 0 0 12px rgba(255, 215, 0, 0.9);
                         text-align: center;
                         font-family: 'Courier New', monospace;
                     ">Cost: 0 GC</div>
@@ -219,34 +223,34 @@ class JukeboxModal {
                         background: linear-gradient(180deg, #ff00ff, #aa00aa, #ff00ff);
                         color: #fff;
                         border: 3px solid #ff00ff;
-                        padding: 15px;
-                        font-size: 20px;
+                        padding: 10px;
+                        font-size: 16px;
                         font-weight: bold;
                         text-transform: uppercase;
                         cursor: pointer;
-                        border-radius: 25px;
+                        border-radius: 20px;
                         transition: all 0.3s;
                         box-shadow: 
-                            0 0 30px rgba(255, 0, 255, 0.6),
-                            inset 0 0 15px rgba(255, 255, 255, 0.2);
+                            0 0 25px rgba(255, 0, 255, 0.6),
+                            inset 0 0 12px rgba(255, 255, 255, 0.2);
                         font-family: 'Impact', sans-serif;
-                        letter-spacing: 3px;
+                        letter-spacing: 2px;
                     ">▶ PLAY SELECTION ▶</button>
                 </div>
 
                 <!-- Decorative Lights -->
                 <div style="
                     position: absolute;
-                    bottom: 10px;
+                    bottom: 8px;
                     left: 50%;
                     transform: translateX(-50%);
                     display: flex;
-                    gap: 15px;
+                    gap: 12px;
                 ">
-                    <div style="width: 12px; height: 12px; background: #ff0000; border-radius: 50%; box-shadow: 0 0 15px #ff0000; animation: blink 1s infinite;"></div>
-                    <div style="width: 12px; height: 12px; background: #00ff00; border-radius: 50%; box-shadow: 0 0 15px #00ff00; animation: blink 1.5s infinite;"></div>
-                    <div style="width: 12px; height: 12px; background: #0000ff; border-radius: 50%; box-shadow: 0 0 15px #0000ff; animation: blink 2s infinite;"></div>
-                    <div style="width: 12px; height: 12px; background: #ffff00; border-radius: 50%; box-shadow: 0 0 15px #ffff00; animation: blink 1.2s infinite;"></div>
+                    <div style="width: 10px; height: 10px; background: #ff0000; border-radius: 50%; box-shadow: 0 0 12px #ff0000; animation: blink 1s infinite;"></div>
+                    <div style="width: 10px; height: 10px; background: #00ff00; border-radius: 50%; box-shadow: 0 0 12px #00ff00; animation: blink 1.5s infinite;"></div>
+                    <div style="width: 10px; height: 10px; background: #0000ff; border-radius: 50%; box-shadow: 0 0 12px #0000ff; animation: blink 2s infinite;"></div>
+                    <div style="width: 10px; height: 10px; background: #ffff00; border-radius: 50%; box-shadow: 0 0 12px #ffff00; animation: blink 1.2s infinite;"></div>
                 </div>
             </div>
 
@@ -260,16 +264,16 @@ class JukeboxModal {
                     50% { opacity: 0.3; }
                 }
                 #jukebox-song-list::-webkit-scrollbar {
-                    width: 10px;
+                    width: 8px;
                 }
                 #jukebox-song-list::-webkit-scrollbar-track {
                     background: rgba(0, 0, 0, 0.5);
-                    border-radius: 5px;
+                    border-radius: 4px;
                 }
                 #jukebox-song-list::-webkit-scrollbar-thumb {
                     background: linear-gradient(180deg, #c9a961, #ffd700);
-                    border-radius: 5px;
-                    box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+                    border-radius: 4px;
+                    box-shadow: 0 0 8px rgba(255, 215, 0, 0.5);
                 }
             </style>
         `;
