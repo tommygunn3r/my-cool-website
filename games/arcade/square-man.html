@@ -1,866 +1,1179 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Space Shooter</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Square-Man: 8-bit Maze Game</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
     <style>
-        /* Retro Green Screen Styling */
-        :root {
-            --game-color: #00ff00;
-            --bg-color: #000000;
-            --font-family: "Courier New", monospace;
-        }
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
 
+        /* Custom 8-bit look */
         body {
+            font-family: 'Press Start 2P', monospace;
+            background-color: #0d1117; /* Dark background */
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
             margin: 0;
-            background-color: var(--bg-color);
-            color: var(--game-color);
-            font-family: var(--font-family);
+            padding: 1rem;
+            flex-direction: column;
+        }
+        .game-container {
             display: flex;
             flex-direction: column;
             align-items: center;
-            height: 100vh;
-            overflow: hidden;
-            padding-bottom: 20px;
+            width: 100%;
+            max-width: 600px;
         }
-
-        #scoreboard {
-            width: 800px;
-            margin-bottom: 10px;
-            padding: 5px 0;
+        canvas {
+            background-color: #000; /* Maze background */
+            border: 4px solid #fff;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+            image-rendering: pixelated; /* Crucial for 8-bit look */
+            touch-action: none; /* Prevent browser touch behavior */
+            width: 90vw; /* Responsive width */
+            max-width: 500px;
+            aspect-ratio: 1 / 1; /* Keep it square */
+        }
+        .info-bar {
+            width: 100%;
+            max-width: 500px;
             display: flex;
             justify-content: space-between;
-            font-size: 1.2em;
-            border-bottom: 1px solid var(--game-color);
+            padding: 0.5rem 0;
+            font-size: 0.8rem;
         }
-
-        #gameCanvas {
-            border: 2px solid var(--game-color);
-            box-shadow: 0 0 15px var(--game-color);
-            cursor: none;
-            width: 800px;
-            height: 600px;
+        .btn-8bit {
+            background-color: #ff0;
+            color: #000;
+            border: 3px solid #000;
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            box-shadow: 4px 4px 0 #888;
+            transition: all 0.1s;
+            text-shadow: 2px 2px 0 #f00;
+            font-size: 0.8rem;
+            margin: 0.5rem;
         }
-
-        .modal {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.8);
+        .btn-8bit:hover {
+            box-shadow: 2px 2px 0 #888;
+            transform: translate(2px, 2px);
+        }
+        .btn-8bit:active {
+            box-shadow: none;
+            transform: translate(4px, 4px);
+        }
+        .mobile-controls {
             display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 100;
+            gap: 10px;
+            margin-top: 1rem;
+            font-size: 1.5rem;
         }
-
-        .modal-content {
-            background-color: var(--bg-color);
-            border: 3px solid var(--game-color);
-            box-shadow: 0 0 20px var(--game-color);
-            padding: 40px;
-            text-align: center;
-            font-size: 1.5em;
-        }
-
-        .modal-content button {
-            background-color: var(--game-color);
-            color: var(--bg-color);
-            border: none;
-            padding: 10px 20px;
-            margin-top: 20px;
-            font-family: var(--font-family);
-            font-size: 1em;
-            cursor: pointer;
-        }
-
-        #motionPermissionButton {
-            display: none;
-            margin-top: 15px;
-            background-color: #ff6600;
-            color: var(--bg-color);
-            border-radius: 5px;
-            padding: 10px 20px;
-            cursor: pointer;
-        }
-
-        #controls {
-            display: none;
-            width: 100%;
-            max-width: 800px;
-            margin-top: 15px;
-            justify-content: space-around;
-            padding: 0 10px;
-            box-sizing: border-box;
-            align-items: flex-end;
-        }
-
-        .control-btn {
-            background-color: var(--game-color);
-            color: var(--bg-color);
-            border: 2px solid var(--game-color);
-            padding: 15px 20px;
-            font-family: var(--font-family);
-            font-size: 1.2em;
-            cursor: pointer;
-            user-select: none;
-            touch-action: manipulation;
-            width: 80px;
-            height: 50px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 8px;
-        }
-
-        .control-btn.fire {
-            width: 90px;
-            height: 90px;
-            font-size: 1.5em;
-            background-color: #ff0000;
-            border-color: #ff0000;
-        }
-
-        @media (max-width: 820px) {
-            #scoreboard {
-                width: 95%;
-                font-size: 1em;
-            }
-            #gameCanvas {
-                width: 95%;
-                height: 70vw;
-            }
-            #controls {
-                display: flex;
-            }
-            .control-btn {
-                width: 60px;
-                height: 60px;
-            }
-            .control-btn.fire {
-                width: 80px;
-                height: 80px;
-            }
-        }
-
-        @keyframes scroll-up {
-            from {
-                transform: translateY(100vh);
-            }
-            to {
-                transform: translateY(-100%);
+        @media (min-width: 768px) {
+            .mobile-controls {
+                display: none; /* Hide on desktop */
             }
         }
     </style>
 </head>
-<body>
+<body class="p-4">
 
-    <div id="scoreboard">
-        <span>SCORE: <span id="scoreValue">0</span></span>
-        <span>HP: <span id="hpValue">3</span>/<span id="maxHpValue">3</span></span>
-        <span>SALVAGE: <span id="salvageValue">0</span></span>
-    </div>
-
-    <canvas id="gameCanvas" width="800" height="600"></canvas>
-
-    <div id="controls">
-        <div class="control-btn" data-key="KeyW" data-virtual-key="ArrowUp">THRUST</div>
-        <div class="control-btn fire" data-key="Space">FIRE</div>
-    </div>
-
-    <button id="motionPermissionButton" onclick="requestMotionPermission()">Enable Tilt Control</button>
-
-    <div id="startModal" class="modal">
-        <div class="modal-content">
-            <h2>SPACE SHOOTER</h2>
-            <p><strong>Desktop:</strong> WASD/Arrows move, Space fires.</p>
-            <p><strong>Mobile:</strong> Tilt to turn. Buttons to thrust/fire.</p>
-            <button onclick="startGame()">START GAME</button>
+    <div class="game-container">
+        <h1 class="text-3xl mb-4 text-yellow-400">Square-Man</h1>
+        <div class="info-bar">
+            <div id="scoreDisplay">SCORE: 000</div>
+            <div id="highScoreDisplay">HIGH: ---</div>
+            <div id="livesDisplay">LIVES: 3</div>
+        </div>
+        <canvas id="gameCanvas" width="500" height="500"></canvas>
+        <div id="messageBox" class="text-center text-xl mt-4 p-2 rounded-lg bg-red-800 text-yellow-400 hidden">
+            <p>Ready!</p>
+        </div>
+        <button id="startButton" class="btn-8bit mt-6">
+            Start Game (Click to Enable Audio)
+        </button>
+        <div class="mobile-controls">
+            <button class="btn-8bit" onclick="handleTouchInput('up')">▲</button>
+            <div class="flex flex-col">
+                <button class="btn-8bit" onclick="handleTouchInput('left')">◀</button>
+                <button class="btn-8bit" onclick="handleTouchInput('right')">▶</button>
+            </div>
+            <button class="btn-8bit" onclick="handleTouchInput('down')">▼</button>
         </div>
     </div>
 
-    <div id="endModal" class="modal" style="display:none;">
-        <div class="modal-content">
-            <h2>GAME OVER!</h2>
-            <p>Final Score: <span id="finalScore">0</span></p>
-            <div style="margin-top: 20px;">
-                <input type="text" id="playerName" placeholder="Enter your name" maxlength="20" 
-                    style="padding: 10px; font-size: 16px; background-color: #000; border: 2px solid #0f0; color: #0f0; font-family: monospace; text-align: center;">
-            </div>
-            <button onclick="submitAndShowCredits()">SUBMIT SCORE</button>
-        </div>
-    </div>
-
-    <div id="creditsScreen" class="modal" style="display:none;">
-        <div style="text-align: center; animation: scroll-up 15s linear; width: 100%;">
-            <pre style="font-size: 20px; color: #ff0; margin: 20px 0;">
-  _____ ____   _    ____ _____   ____  _   _  ___   ___ _____ _____ ____  
- / ____|  _ \ / \  / ___| ____| / ___|| | | |/ _ \ / _ \_   _| ____|  _ \ 
- \___ \| |_) / _ \| |   |  _|   \___ \| |_| | | | | | | || | |  _| | |_) |
-  ___) |  __/ ___ \ |___| |___   ___) |  _  | |_| | |_| || | | |___|  _ < 
- |____/|_| /_/   \_\____|_____| |____/|_| |_|\___/ \___/ |_| |_____|_| \_\
-            </pre>
-            
-            <div style="margin: 40px 0; font-size: 32px; color: #ff0;">
-                <p>FINAL SCORE</p>
-                <p id="creditsScore" style="font-size: 48px; color: #0f0;">0</p>
-            </div>
-            
-            <div style="margin: 40px 0; font-size: 24px; line-height: 2;">
-                <p style="color: #0ff;">━━━━━━━━━━━━━━━━━━━━</p>
-                <p style="color: #ff0;">SALVAGE COLLECTED</p>
-                <p id="creditsSalvage" style="color: #0f0; font-size: 36px;">0</p>
-                <p style="color: #0ff;">━━━━━━━━━━━━━━━━━━━━</p>
-            </div>
-            
-            <div style="margin: 60px 0; font-size: 20px; line-height: 1.8; color: #0f0;">
-                <p style="color: #ff0; font-size: 24px;">CREDITS</p>
-                <p style="margin-top: 30px;">LEAD PROGRAMMER</p>
-                <p style="color: #0ff;">TOM</p>
-                
-                <p style="margin-top: 30px;">GAME DESIGN</p>
-                <p style="color: #0ff;">GUNNERSGAMES</p>
-                
-                <p style="margin-top: 30px;">SPECIAL THANKS</p>
-                <p style="color: #0ff;">ALL PLAYERS</p>
-                
-                <p style="margin-top: 50px; color: #ff0; font-size: 18px;">© 2024 GUNNERSGAMES</p>
-                <p style="margin-top: 20px; font-size: 16px; color: #888;">INSERT COIN TO CONTINUE</p>
-            </div>
-        </div>
-    </div>
-
-    <!-- ======================= SUPABASE + GAME CODE ======================= -->
     <script type="module">
-        import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-        const SUPABASE_URL = "https://pknhslxhpohrzgsfkisr.supabase.co";
-        const SUPABASE_ANON_KEY = "sb_publishable_-zZw-pi_3q1sdNGhITKuhQ_ECyDARzc";
-
+        // ===== SUPABASE INTEGRATION =====
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+        
+        const SUPABASE_URL = 'https://pknhslxhpohrzgsfkisr.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBrbmhzbHhocG9ocnpnc2ZraXNyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU1OTY5NjUsImV4cCI6MjA1MTE3Mjk2NX0.tIUj3jIMX5c_jsdjL4RrfwW7wH-8Ry93y5kKOj0uEao';
+        
         const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
+        
         let currentUser = null;
+        let playerName = "Anonymous";
 
-        // ---------------- AUTH (LOGIN REQUIRED) ----------------
+        // Check for logged in user (optional - game works without login)
         async function initGameAuth() {
             try {
-                const { data: { user } } = await supabase.auth.getUser();
+                const { data: { session } } = await supabase.auth.getSession();
+                if (session?.user) {
+                    currentUser = session.user;
+                    // Get display name from user metadata or email
+                    playerName = session.user.user_metadata?.display_name || 
+                                session.user.email?.split('@')[0] || 
+                                "Anonymous";
+                    scoreManager.playerName = playerName;
+                    console.log("Player identified:", playerName);
+                    await scoreManager.loadHighScore();
+                }
+            } catch (error) {
+                console.warn("Auth check failed:", error);
+            }
+        }
 
-                if (!user) {
-                    console.log("Not logged in. Redirecting.");
-                    window.location.href = "/index.html";
+        // Score Manager
+        class GameScoreManager {
+            constructor(gameName) {
+                this.gameName = gameName;
+                this.sessionStartTime = null;
+                this.playerName = "Anonymous";
+                this.highScore = 0;
+            }
+
+            async loadHighScore() {
+                if (!currentUser) return;
+                
+                try {
+                    const { data, error } = await supabase
+                        .from('game_highscores')
+                        .select('score')
+                        .eq('game_id', this.gameName)
+                        .eq('user_id', currentUser.id)
+                        .order('score', { ascending: false })
+                        .limit(1)
+                        .single();
+                    
+                    if (data && !error) {
+                        this.highScore = data.score;
+                        highScoreDisplay.textContent = `HIGH: ${String(this.highScore).padStart(3, '0')}`;
+                    }
+                } catch (error) {
+                    console.warn('Could not load high score:', error);
+                }
+            }
+
+            startSession() {
+                this.sessionStartTime = Date.now();
+            }
+
+            getElapsedTime() {
+                if (!this.sessionStartTime) return 0;
+                return Math.floor((Date.now() - this.sessionStartTime) / 1000);
+            }
+
+            getElapsedTimeFormatted() {
+                const seconds = this.getElapsedTime();
+                if (seconds < 60) return `${seconds}s`;
+                const mins = Math.floor(seconds / 60);
+                const secs = seconds % 60;
+                return `${mins}m ${secs}s`;
+            }
+
+            async submitGameResult(score = 0) {
+                if (!currentUser) {
+                    console.log('No user logged in, score not saved');
                     return;
                 }
 
-                currentUser = user;
-                console.log("Authenticated:", user.email);
+                const timePlayed = this.getElapsedTime();
+                
+                try {
+                    // Submit score to Supabase
+                    const { error } = await supabase
+                        .from('game_highscores')
+                        .insert({
+                            game_id: this.gameName,
+                    player_name: playerName,
+                            score: score,
+                            user_id: currentUser.id
+                        });
 
-            } catch (err) {
-                console.error("Supabase auth error:", err);
-                window.location.href = "/index.html";
+                    if (error) throw error;
+
+                    // Update high score if needed
+                    if (score > this.highScore) {
+                        this.highScore = score;
+                        highScoreDisplay.textContent = `HIGH: ${String(this.highScore).padStart(3, '0')}`;
+                    }
+
+                    console.log('Score submitted successfully');
+                } catch (error) {
+                    console.warn('Failed to submit score:', error.message);
+                }
+            }
+        }
+        
+        // Initialize
+        const scoreManager = new GameScoreManager('square-man');
+        initGameAuth();
+        
+        // --- Game Setup Constants ---
+        let lastTimestamp = null; // for time-based movement (60 FPS baseline)
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreDisplay = document.getElementById('scoreDisplay');
+        const highScoreDisplay = document.getElementById('highScoreDisplay');
+        const livesDisplay = document.getElementById('livesDisplay');
+        const messageBox = document.getElementById('messageBox');
+        const startButton = document.getElementById('startButton');
+
+        const GRID_ROWS = 20; 
+        const GRID_COLS = 21;
+        let TILE_SIZE; // Calculated dynamically
+        const MOVE_THRESHOLD = 0.05; // Tight tolerance for turning
+
+        // 0: Dot, 1: Wall, 2: Empty/Path, 3: Power-Up, 4: Ghost Home, 5: Tunnel
+        let MAP = [
+            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+            [1,3,0,0,0,0,0,0,0,1,2,1,0,0,0,0,0,0,0,3,1],
+            [1,0,1,1,0,1,1,1,0,1,2,1,0,1,1,1,0,1,1,0,1],
+            [1,0,1,1,0,1,1,1,0,1,2,1,0,1,1,1,0,1,1,0,1],
+            [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+            [1,0,1,1,0,1,0,1,1,1,1,1,1,1,0,1,0,1,1,0,1],
+            [1,0,0,0,0,1,0,0,0,1,2,1,0,0,0,1,0,0,0,0,1],
+            [1,1,1,1,0,1,1,1,0,1,2,1,0,1,1,1,0,1,1,1,1],
+            [1,2,2,1,0,1,0,0,0,0,0,0,0,0,0,1,0,1,2,2,1],
+            [1,1,1,1,0,1,0,1,1,4,4,4,1,1,0,1,0,1,1,1,1],
+            [5,2,2,2,0,0,0,1,4,4,4,4,4,1,0,0,0,2,2,2,5], // Tunnel Tiles (5) at ends
+            [1,1,1,1,0,1,0,1,1,1,1,1,1,1,0,1,0,1,1,1,1],
+            [1,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,1],
+            [1,0,1,1,0,1,0,1,1,1,1,1,1,1,0,1,0,1,1,0,1],
+            [1,0,1,1,0,0,0,0,0,0,1,0,0,0,0,0,0,1,1,0,1],
+            [1,0,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,0,1],
+            [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+            [1,0,1,1,1,1,1,1,0,1,1,1,0,1,1,1,1,1,1,0,1],
+            [1,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,1],
+            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+        ];
+
+        const GHOST_EXIT_TARGET = { row: 8, col: 10 }; // Tile right above the ghost house
+        const HOME_POS = { row: 10.0, col: 10.0 }; // Center of the ghost box for respawn
+
+        let game;
+
+        // --- Tone.js Audio Setup ---
+        let bgm, bgmSynth, bgmVolume, munchSynth, powerUpSynth, deathSynth; 
+
+        function setupAudio() {
+            // 1. Create BGM Volume node and connect to destination
+            bgmVolume = new Tone.Volume(-15).toDestination();
+
+            // 2. Create BGM Synth and connect it to the volume node
+            bgmSynth = new Tone.Synth({
+                oscillator: { type: "square" },
+                envelope: { attack: 0.005, decay: 0.1, sustain: 0.1, release: 0.05 }
+            }).connect(bgmVolume);
+
+
+            // Background Music (BGM) - Simple 8-bit chip tune
+            bgm = new Tone.Loop(time => {
+                const notes = ["C4", "E4", "G4", "C5", "G4", "E4"];
+                // 3. Trigger notes on the persistent bgmSynth
+                notes.forEach((note, index) => {
+                    bgmSynth.triggerAttackRelease(note, "8n", time + index * 0.15);
+                });
+            }, "1n");
+
+            // Munch SFX
+            munchSynth = new Tone.Synth({
+                oscillator: { type: "square" },
+                envelope: { attack: 0.001, decay: 0.05, sustain: 0.01, release: 0.05 }
+            }).toDestination();
+            munchSynth.volume.value = -10;
+
+            // Power-Up SFX
+            powerUpSynth = new Tone.MembraneSynth({
+                pitchDecay: 0.01,
+                octaves: 3,
+                oscillator: { type: "square" },
+                envelope: { attack: 0.005, decay: 0.2, sustain: 0.1, release: 0.5 }
+            }).toDestination();
+            powerUpSynth.volume.value = -5;
+
+            // Death SFX (A simple descending arpeggio)
+            deathSynth = new Tone.PolySynth(Tone.Synth, {
+                oscillator: { type: "square" },
+                envelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 0.5 }
+            }).toDestination();
+            deathSynth.volume.value = -10;
+        }
+
+        function playMunch() {
+            munchSynth.triggerAttackRelease("C5", "16n");
+        }
+
+        function playPowerUp() {
+            powerUpSynth.triggerAttackRelease("C3", "2n");
+            powerUpSynth.triggerAttackRelease("G3", "1n", "+0.1");
+        }
+
+        function playDeath() {
+            deathSynth.triggerAttackRelease(["C3", "B2", "A2", "G2"], "8n", 0);
+        }
+
+        function startBGM() {
+            if (bgm && !bgm.state) {
+                bgm.start(0);
+                Tone.Transport.start();
             }
         }
 
-        initGameAuth();
-
-        // ---------------- SCORE SUBMISSION ----------------
-        async function submitHighScore(score, playerName) {
-            if (!currentUser) return;
-
-            const { error } = await supabase.from("arcade_scores").insert({
-                user_id: currentUser.id,
-                game_name: "shooter",
-                score: Math.floor(score),
-                player_name: playerName,
-                time_played: 0
-            });
-
-            if (error) console.warn("Score submit failed:", error.message);
-            else console.log("Score submitted OK:", score);
+        function stopBGM() {
+            if (bgm && bgm.state === 'started') {
+                bgm.stop();
+                Tone.Transport.stop();
+            }
         }
 
-        // Global function for submit and show credits
-        window.submitAndShowCredits = async function() {
-            const playerName = document.getElementById('playerName').value.trim();
+        // --- Utility Functions ---
+
+        // Manhattan distance for AI pathfinding
+        function manhattanDistance(r1, c1, r2, c2) {
+            return Math.abs(r1 - r2) + Math.abs(c1 - c2);
+        }
+
+        // --- Game Entity Classes ---
+
+        class Entity {
+            constructor(row, col, color) {
+                // Now uses float positions for smooth movement
+                this.row = parseFloat(row);
+                this.col = parseFloat(col);
+                this.color = color;
+                this.sizeRatio = 0.8; // Base size of the entity relative to TILE_SIZE
+                this.currentDirection = 'none'; // 'up', 'down', 'left', 'right'
+                this.nextDirection = 'none';
+                this.speed = 0.1; // Default speed: 10% of a tile per frame
+            }
+
+            draw() {
+                const x = this.col * TILE_SIZE + TILE_SIZE / 2;
+                const y = this.row * TILE_SIZE + TILE_SIZE / 2;
+                const size = TILE_SIZE * this.sizeRatio;
+
+                ctx.fillStyle = this.color;
+                ctx.fillRect(x - size / 2, y - size / 2, size, size);
+
+                // Draw 8-bit eyes/details (simple black squares)
+                ctx.fillStyle = "#000";
+                const eyeSize = size * 0.1;
+                ctx.fillRect(x - size * 0.25 - eyeSize / 2, y - size * 0.25 - eyeSize / 2, eyeSize, eyeSize);
+                ctx.fillRect(x + size * 0.25 - eyeSize / 2, y - size * 0.25 - eyeSize / 2, eyeSize, eyeSize);
+            }
+
+            move(map, delta = 1) {
+                // 1. Handle buffered direction change (turning)
+                this.handleTurns(map);
+
+                let nextRow = this.row;
+                let nextCol = this.col;
+                const speed = this.speed * delta; // time-based speed (tiles per 60FPS-second)
+
+                // Determine the current integer tile for robust wall checking
+                const currentTileR = Math.round(this.row);
+                const currentTileC = Math.round(this.col);
+
+                // FIX: Use base size ratio for collision detection, not powered-up size
+                const collisionSize = this.baseSizeRatio;
+
+                // --- Movement & Collision Prediction ---
+                
+                if (this.currentDirection === 'up') {
+                    nextRow -= speed; 
+                    nextCol = currentTileC; // Stay aligned on column axis 
+                    
+                    const tileAhead = Math.floor(nextRow - collisionSize / 2); // Check the tile the entity's edge is moving into
+                    // Check for wall one tile ahead
+                    if (map[tileAhead] && map[tileAhead][currentTileC] === 1) {
+                        // Clamp so the entity's TOP EDGE stops at the wall boundary
+                        const clampValue = tileAhead + 1 - collisionSize / 2 ; // Add small epsilon
+                        if (nextRow <= clampValue) {
+                            nextRow = clampValue;
+                            this.currentDirection = 'none';
+                        }
+                    }
+                } else if (this.currentDirection === 'down') {
+                    nextRow += speed; 
+                    nextCol = currentTileC; // Stay aligned on column axis
+
+                    const tileAhead = Math.ceil(nextRow + collisionSize / 2); // Check the tile the entity's edge is moving into
+                    if (map[tileAhead] && map[tileAhead][currentTileC] === 1) {
+                         // Clamp so the entity's BOTTOM EDGE stops at the wall boundary
+                        const clampValue = tileAhead - 1 + collisionSize / 2 ; // Subtract small epsilon
+                        if (nextRow >= clampValue) {
+                            nextRow = clampValue;
+                            this.currentDirection = 'none';
+                        }
+                    }
+                } else if (this.currentDirection === 'left') {
+                    nextCol -= speed;
+                    nextRow = currentTileR; // Stay aligned on row axis
+
+                    const tileAhead = Math.floor(nextCol - collisionSize / 2); // Check the tile the entity's edge is moving into
+                    if (map[currentTileR] && map[currentTileR][tileAhead] === 1) {
+                         // Clamp so the entity's LEFT EDGE stops at the wall boundary
+                        const clampValue = tileAhead + 1 - collisionSize / 2 ; // Add small epsilon
+                        if (nextCol <= clampValue) {
+                            nextCol = clampValue;
+                            this.currentDirection = 'none';
+                        }
+                    }
+                } else if (this.currentDirection === 'right') {
+                    nextCol += speed;
+                    nextRow = currentTileR; // Stay aligned on row axis
+
+                    const tileAhead = Math.ceil(nextCol + collisionSize / 2); // Check the tile the entity's edge is moving into
+                    if (map[currentTileR] && map[currentTileR][tileAhead] === 1) {
+                         // Clamp so the entity's RIGHT EDGE stops at the wall boundary
+                        const clampValue = tileAhead - 1 + collisionSize / 2 ; // Subtract small epsilon
+                        if (nextCol >= clampValue) {
+                            nextCol = clampValue;
+                            this.currentDirection = 'none';
+                        }
+                    }
+                }
+
+                // --- Position Update ---
+                this.row = nextRow;
+                this.col = nextCol;
+                
+                // --- Teleport Check (Boundary Wrap-around) ---
+                if (this.col < 0) {
+                    this.col = GRID_COLS - 1; // Wrap to right side
+                    this.row = 10.0; // Ensure it stays aligned in the tunnel row
+                } else if (this.col >= GRID_COLS) {
+                    this.col = 0; // Wrap to left side
+                    this.row = 10.0; // Ensure it stays aligned in the tunnel row
+                }
+
+
+                // Return true if movement occurred, false if clamped/stopped
+                const moved = this.currentDirection !== 'none';
+
+                // Stuck recovery auto-center (not in ghost home)
+                {
+                    const rCenter = Math.round(this.row);
+                    const cCenter = Math.round(this.col);
+                    const tileHere = map[rCenter]?.[cCenter];
+                    if (!moved && tileHere !== 4) {
+                        this.row = rCenter;
+                        this.col = cCenter;
+                    }
+                }
+
+                return moved; 
+            }
+
+            handleTurns(map) {
+                // Only allow turning if the entity is close to the center of a tile
+                const rowCenter = Math.round(this.row);
+                const colCenter = Math.round(this.col);
+                
+                // isAligned check uses a tight threshold
+                const isAligned = (Math.abs(this.row - rowCenter) < MOVE_THRESHOLD) && 
+                                  (Math.abs(this.col - colCenter) < MOVE_THRESHOLD);
+
+                if (this.nextDirection !== 'none') {
+                    // Determine the integer coordinates of the tile we would enter
+                    let nextR = rowCenter;
+                    let nextC = colCenter;
+                    if (this.nextDirection === 'up') nextR--;
+                    else if (this.nextDirection === 'down') nextR++;
+                    else if (this.nextDirection === 'left') nextC--;
+                    else if (this.nextDirection === 'right') nextC++;
+
+                    // Special check for ghosts when leaving home
+                    const isGhostLeavingHome = (this instanceof Ghost) && this.isLeavingHome;
+                    
+                    // Ghost home tiles (4) should only block non-leaving ghosts
+                    let blocksTile = map[nextR] && map[nextR][nextC] === 1;
+
+                    if (!isGhostLeavingHome) {
+                        blocksTile = blocksTile || (map[nextR] && map[nextR][nextC] === 4);
+                    }
+
+
+                    // Check if that intended tile is a path (not a wall '1', or blocked '4')
+                    if (map[nextR] && !blocksTile) {
+                        // Allow turn if aligned OR if the entity is stopped (just hit a wall)
+                        if (isAligned || this.currentDirection === 'none') { 
+                            // Force snap to center to ensure perfect alignment before starting new movement
+                            this.row = rowCenter;
+            this.col = colCenter;  // force-perfect centering before turn
+                            this.col = colCenter;
+                            this.currentDirection = this.nextDirection;
+                            this.nextDirection = 'none';
+                        }
+                    }
+                }
+            }
+        }
+
+        class Player extends Entity {
+            constructor(row, col) {
+                super(row, col, '#ff0'); // Yellow player
+                this.baseSizeRatio = 0.8;
+                this.sizeRatio = this.baseSizeRatio;
+                this.isPoweredUp = false;
+                this.powerUpTimer = 0;
+                this.speed = 0.12; // Player moves slightly faster
+            }
+
+            update(map, ghosts, delta) {
+                if (this.move(map, delta)) {
+                    this.checkCollisions(map, ghosts);
+                }
+
+                if (this.isPoweredUp) {
+                    // 300 ~= 5 seconds at 60 FPS; delta is "60fps frames"
+                    this.powerUpTimer -= delta;
+                    this.sizeRatio = this.baseSizeRatio * 1.2; // Get bigger
+                    if (this.powerUpTimer <= 0) {
+                        this.isPoweredUp = false;
+                        this.sizeRatio = this.baseSizeRatio; // Back to normal size
+                        ghosts.forEach(g => g.color = g.originalColor);
+                    }
+                }
+            }
+
+            checkCollisions(map, ghosts) {
+                // Check dot/power-up collision only at the rounded (integer) grid position
+                const r = Math.round(this.row);
+                const c = Math.round(this.col);
+
+                // Boundary check before accessing map (especially important near tunnels)
+                if (r < 0 || r >= GRID_ROWS || c < 0 || c >= GRID_COLS) return;
+
+                const tileValue = map[r][c];
+
+                if (tileValue === 0) { // Dot collision
+                    map[r][c] = 2; // Munch the dot
+                    game.score += 10;
+                    game.dotsRemaining--;
+                    playMunch();
+                } else if (tileValue === 3) { // Power-up collision
+                    map[r][c] = 2; // Consume power-up
+                    this.isPoweredUp = true;
+                    this.powerUpTimer = 300; // 5 seconds at 60 FPS
+                    game.score += 50;
+                    playPowerUp();
+
+                    // Ghosts turn blue/vulnerable
+                    ghosts.forEach(g => g.color = '#00f');
+                }
+            }
+        }
+
+        class Ghost extends Entity {
+            constructor(row, col, color) {
+                super(row, col, color);
+                this.originalColor = color;
+                this.startRow = row; // Store original starting position
+                this.startCol = col;
+                this.speed = 0.08; // Ghosts move slightly slower than player
+                this.isLeavingHome = true;
+            }
+
+            update(map, player, delta) {
+                // Get the AI's intended next direction first
+                this.nextDirection = this.determineNextAction(map, player);
+
+                // Perform the move
+                this.move(map, delta);
+
+                // Check collision with player
+                this.checkPlayerCollision(player);
+
+                // Check if the ghost is done leaving home
+                if (this.isLeavingHome) {
+                    const r = Math.round(this.row);
+                    const c = Math.round(this.col);
+                    // Check if ghost has reached the exit tile
+                    if (r === GHOST_EXIT_TARGET.row && c === GHOST_EXIT_TARGET.col) {
+                        this.isLeavingHome = false;
+                    }
+                }
+            }
             
-            if (!playerName) {
-                alert("Please enter your name!");
+            determineNextAction(map, player) {
+                const r = Math.round(this.row);
+                const c = Math.round(this.col);
+                
+                // Only choose a new direction when aligned to the grid center
+                if (Math.abs(this.row - r) > 0.01 || Math.abs(this.col - c) > 0.01) {
+                    return this.nextDirection; // Keep current buffered direction if not aligned
+                }
+
+                let targetR, targetC;
+
+                if (this.isLeavingHome) {
+                    // Target: The maze exit above the house
+                    targetR = GHOST_EXIT_TARGET.row;
+                    targetC = GHOST_EXIT_TARGET.col;
+                    return this.chooseDirectionToTarget(map, targetR, targetC, false);
+                } else if (player.isPoweredUp && this.color === '#00f') {
+                    // Flee Mode: Target the corner farthest from the player
+                    targetR = r < GRID_ROWS / 2 ? GRID_ROWS - 2 : 1;
+                    targetC = c < GRID_COLS / 2 ? GRID_COLS - 2 : 1;
+                    return this.chooseDirectionToTarget(map, targetR, targetC, true); // true for Flee mode (Maximize distance)
+                } else {
+                    // Chase Mode: Target the player's current tile
+                    targetR = Math.round(player.row);
+                    targetC = Math.round(player.col);
+                    return this.chooseDirectionToTarget(map, targetR, targetC, false); // false for Chase mode (Minimize distance)
+                }
+            }
+
+            // Centralized AI decision function
+            chooseDirectionToTarget(map, targetR, targetC, isFleeing) {
+                const directions = ['up', 'down', 'left', 'right'];
+                let bestDir = 'none';
+                let bestScore = isFleeing ? -1 : Infinity; // Minimize for chase, Maximize for flee
+                
+                const r = Math.round(this.row);
+                const c = Math.round(this.col);
+
+                for (const dir of directions) {
+                    const tempRow = r + (dir === 'up' ? -1 : dir === 'down' ? 1 : 0);
+                    const tempCol = c + (dir === 'left' ? -1 : dir === 'right' ? 1 : 0);
+
+                    // Check boundaries
+                    if (tempRow < 0 || tempRow >= GRID_ROWS || tempCol < 0 || tempCol >= GRID_COLS) continue;
+
+                    // Ghost home tiles (4) should ONLY block non-leaving ghosts
+                    const isBlocked = map[tempRow][tempCol] === 1 || (!this.isLeavingHome && map[tempRow][tempCol] === 4);
+
+
+                    if (!isBlocked) 
+                    {
+                        // Prevent instant 180-degree turns
+                        if (this.getOppositeDirection(this.currentDirection) !== dir) 
+                        {
+                            const dist = manhattanDistance(tempRow, tempCol, targetR, targetC);
+                            
+                            if (isFleeing) {
+                                if (dist > bestScore) {
+                                    bestScore = dist;
+                                    bestDir = dir;
+                                }
+                            } else { // Chase Mode (or Leaving Home)
+                                if (dist < bestScore) {
+                                    bestScore = dist;
+                                    bestDir = dir;
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                // Fallback: If no smart non-180 move is possible (e.g., dead end), allow a 180.
+                if (bestDir === 'none' && this.currentDirection !== 'none') {
+                    const opposite = this.getOppositeDirection(this.currentDirection);
+                    const tempRow = r + (opposite === 'up' ? -1 : opposite === 'down' ? 1 : 0);
+                    const tempCol = c + (opposite === 'left' ? -1 : opposite === 'right' ? 1 : 0);
+
+                    if (tempRow >= 0 && tempRow < GRID_ROWS && tempCol >= 0 && tempCol < GRID_COLS) {
+                        const isBlocked = map[tempRow][tempCol] === 1 || (!this.isLeavingHome && map[tempRow][tempCol] === 4);
+                        if (!isBlocked) {
+                             return opposite;
+                        }
+                    }
+                }
+
+                return bestDir;
+            }
+
+            getOppositeDirection(dir) {
+                if (dir === 'up') return 'down';
+                if (dir === 'down') return 'up';
+                if (dir === 'left') return 'right';
+                if (dir === 'right') return 'left';
+                return 'none';
+            }
+
+            checkPlayerCollision(player) {
+                // Check if the center points of the entities are close enough
+                const distance = Math.sqrt(Math.pow(this.row - player.row, 2) + Math.pow(this.col - player.col, 2));
+
+                if (distance < 0.7) { // 0.7 tiles distance for collision
+                    if (player.isPoweredUp && this.color === '#00f') {
+                        // Player eats ghost
+                        game.score += 200;
+                        this.respawn();
+                        player.powerUpTimer = Math.max(0, player.powerUpTimer - 60); // Penalty for eating (shortens power up)
+                    } else {
+                        // Ghost eats player
+                        game.loseLife();
+                    }
+                }
+            }
+
+            respawn() {
+                // Return to original starting position
+                this.row = this.startRow;
+                this.col = this.startCol;
+                this.currentDirection = 'none';
+                this.nextDirection = 'none';
+                this.isLeavingHome = true;
+                this.color = this.originalColor;
+            }
+        }
+
+        // --- Game Manager ---
+
+        class DotMuncherGame {
+            constructor() {
+                this.score = 0;
+                this.lives = 3;
+                this.level = 1;
+                this.isRunning = false;
+                this.isPaused = true;
+                this.dotsRemaining = 0;
+                this.player = null;
+                this.ghosts = [];
+                this.map = this.deepCopyMap(MAP);
+
+                this.initialize();
+                window.addEventListener('resize', this.resizeCanvas.bind(this));
+            }
+
+            deepCopyMap(original) {
+                return original.map(row => [...row]);
+            }
+
+            initialize() {
+                this.score = 0;
+                this.lives = 3;
+                this.level = 1;
+                this.dotsRemaining = 0;
+                this.map = this.deepCopyMap(MAP);
+
+                // Count dots and position entities
+                for (let r = 0; r < GRID_ROWS; r++) {
+                    for (let c = 0; c < GRID_COLS; c++) {
+                        // Count dots, including power-ups
+                        if (this.map[r][c] === 0 || this.map[r][c] === 3) {
+                            this.dotsRemaining++;
+                        }
+                    }
+                }
+
+                // Player starts at 16.0, 10.0 (clear path tile)
+                this.player = new Player(16.0, 10.0);
+
+                // Initialize ghosts near the "ghost home" (float coordinates)
+                this.ghosts = [
+                    new Ghost(9.0, 9.0, '#f00'), // Red
+                    new Ghost(9.0, 11.0, '#ff8800'), // Orange
+                    new Ghost(10.0, 9.0, '#0f0'), // Green
+                    new Ghost(10.0, 11.0, '#ffc0cb'), // Pink
+                ];
+
+                this.resizeCanvas();
+                this.updateDisplay();
+                this.showMessage("GET READY!", false);
+            }
+
+            /**
+             * Resizes the canvas and recalculates TILE_SIZE, ensuring a valid size 
+             * is used even if initial container measurements are 0.
+             */
+            resizeCanvas() {
+                const container = canvas.parentElement;
+                
+                // Get the size, safely defaulting to 500 if clientWidth/Height are 0
+                let size = Math.min(container.clientWidth || 500, container.clientHeight || 500, 500);
+
+                // Final safety check to prevent TILE_SIZE from becoming 0
+                if (size < 100) {
+                    size = 500; 
+                }
+
+                // Set canvas internal dimensions
+                canvas.width = size;
+                canvas.height = size;
+                
+                // Recalculate TILE_SIZE
+                TILE_SIZE = canvas.width / GRID_COLS;
+                this.draw();
+            }
+
+            start() {
+                if (this.isRunning) return;
+                this.isRunning = true;
+                this.isPaused = false;
+                this.hideMessage();
+                
+                // Start tracking time
+                scoreManager.startSession();
+                
+                startBGM();
+                lastTimestamp = null; // reset timing at (re)start
+                requestAnimationFrame(this.gameLoop.bind(this));
+            }
+
+            pause() {
+                this.isPaused = true;
+                stopBGM();
+                this.showMessage("PAUSED - Press Enter/Space to Resume");
+            }
+
+            loseLife() {
+                this.lives--;
+                playDeath();
+                stopBGM();
+                this.updateDisplay();
+                if (this.lives <= 0) {
+                    this.gameOver();
+                } else {
+                    this.resetPosition();
+                }
+            }
+
+            resetPosition() {
+                this.isPaused = true;
+                // Reset to float coordinates, using the fixed starting position
+                this.player.row = 16.0;
+                this.player.col = 10.0;
+                this.player.currentDirection = 'none';
+                this.player.nextDirection = 'none';
+                this.player.isPoweredUp = false;
+                this.player.powerUpTimer = 0;
+                this.player.sizeRatio = this.player.baseSizeRatio;
+
+                this.ghosts.forEach(g => {
+                    g.respawn();
+                });
+
+                this.showMessage(`LIFE LOST! LIVES: ${this.lives}`, false);
+                setTimeout(() => {
+                    this.showMessage("GET READY!", false);
+                    setTimeout(() => {
+                        this.isPaused = false;
+                        this.hideMessage();
+                        startBGM();
+                    }, 2000);
+                }, 1000);
+            }
+
+            gameOver() {
+                this.isRunning = false;
+                this.isPaused = true;
+                stopBGM();
+                
+                // Submit score to leaderboard
+                scoreManager.submitGameResult(this.score);
+                
+                const playTime = scoreManager.getElapsedTimeFormatted();
+                const isNewHighScore = this.score > scoreManager.highScore && scoreManager.highScore > 0;
+                
+                // Enhanced credits screen
+                const creditsHTML = `
+                    <div style="line-height: 1.8; font-size: 0.7rem; text-align: center;">
+                        <p style="font-size: 1.5rem; margin-bottom: 1rem; color: #ff0; text-shadow: 0 0 10px #ff0;">GAME OVER</p>
+                        ${isNewHighScore ? '<p style="color: #0f0; margin-bottom: 0.5rem; font-size: 0.9rem; animation: pulse 1s infinite;">★ NEW HIGH SCORE! ★</p>' : ''}
+                        
+                        <div style="margin: 1.5rem 0; padding: 1rem; background: rgba(0,0,0,0.5); border-radius: 8px;">
+                            <p style="color: #ffff00; margin-bottom: 0.3rem;">FINAL SCORE</p>
+                            <p style="font-size: 1.5rem; color: #fff; margin-bottom: 1rem;">${this.score}</p>
+                            
+                            <p style="color: #00ffff; margin-bottom: 0.3rem;">LEVEL REACHED</p>
+                            <p style="font-size: 1.2rem; color: #fff; margin-bottom: 1rem;">${this.level}</p>
+                            
+                            <p style="color: #ff69b4; margin-bottom: 0.3rem;">TIME PLAYED</p>
+                            <p style="font-size: 1rem; color: #fff;">${playTime}</p>
+                        </div>
+                        
+                        <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #333;">
+                            <p style="font-size: 0.55rem; color: #888; margin-bottom: 0.3rem;">GAME BY</p>
+                            <p style="font-size: 0.65rem; color: #e94560; margin-bottom: 0.8rem;">GUNNER'S GAMES</p>
+                            <p style="font-size: 0.5rem; color: #666;">Thanks for playing!</p>
+                        </div>
+                        
+                        <p style="font-size: 0.6rem; margin-top: 1.5rem; color: #888;">Returning to Arcade in 5 seconds...</p>
+                    </div>
+                    <style>
+                        @keyframes pulse {
+                            0%, 100% { opacity: 1; }
+                            50% { opacity: 0.5; }
+                        }
+                    </style>
+                `;
+                
+                messageBox.innerHTML = creditsHTML;
+                messageBox.classList.remove('hidden', 'bg-red-800', 'bg-green-900');
+                messageBox.classList.add('bg-red-900');
+                
+                // Return to arcade after showing credits
+                setTimeout(() => {
+                    // If in iframe, tell parent to close it
+                    if (window.parent !== window) {
+                        window.parent.postMessage({ action: 'closeGame' }, '*');
+                    } else {
+                        // If opened directly, go to arcade
+                        window.location.href = '/arcade.html';
+                    }
+                }, 5000); // Extended to 5 seconds to read credits
+            }
+
+            winGame() {
+                this.isRunning = false;
+                this.isPaused = true;
+                stopBGM();
+                
+                this.level++;
+                const levelBonus = 1000 * this.level;
+                this.score += levelBonus;
+                
+                this.showMessage(`LEVEL ${this.level - 1} COMPLETE! Bonus: ${levelBonus}`, false);
+                
+                setTimeout(() => {
+                    this.nextLevel();
+                }, 3000);
+            }
+            
+            nextLevel() {
+                // Reset map but keep score and lives
+                this.map = this.deepCopyMap(MAP);
+                this.dotsRemaining = 0;
+                
+                // Count dots
+                for (let r = 0; r < GRID_ROWS; r++) {
+                    for (let c = 0; c < GRID_COLS; c++) {
+                        if (this.map[r][c] === 0 || this.map[r][c] === 3) {
+                            this.dotsRemaining++;
+                        }
+                    }
+                }
+                
+                // Reset player position
+                this.player.row = 16.0;
+                this.player.col = 10.0;
+                this.player.currentDirection = 'none';
+                this.player.nextDirection = 'none';
+                this.player.isPoweredUp = false;
+                this.player.powerUpTimer = 0;
+                this.player.sizeRatio = this.player.baseSizeRatio;
+                
+                // Reset all ghosts to starting positions
+                this.ghosts.forEach(g => g.respawn());
+                
+                this.updateDisplay();
+                this.showMessage(`LEVEL ${this.level} - GET READY!`, false);
+                
+                setTimeout(() => {
+                    this.isPaused = false;
+                    this.isRunning = true;
+                    this.hideMessage();
+                    startBGM();
+                }, 2000);
+            }
+
+            update(delta) {
+                if (this.isPaused || !this.isRunning) return;
+
+                this.player.update(this.map, this.ghosts, delta);
+                this.ghosts.forEach(g => g.update(this.map, this.player, delta));
+
+                this.updateDisplay();
+
+                if (this.dotsRemaining === 0) {
+                    this.winGame();
+                }
+            }
+
+            draw() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                for (let r = 0; r < GRID_ROWS; r++) {
+                    for (let c = 0; c < GRID_COLS; c++) {
+                        const x = c * TILE_SIZE;
+                        const y = r * TILE_SIZE;
+
+                        const tile = this.map[r][c];
+
+                        if (tile === 1) { // Wall (Solid Block)
+                            ctx.fillStyle = '#0044ff'; // Blue Wall
+                            ctx.fillRect(x, y, TILE_SIZE, TILE_SIZE);
+                            ctx.strokeStyle = '#002288';
+                            ctx.lineWidth = 1;
+                            ctx.strokeRect(x, y, TILE_SIZE, TILE_SIZE);
+                        } else if (tile === 5) { // Tunnel (Empty/Black)
+                            ctx.fillStyle = '#000';
+                            ctx.fillRect(x, y, TILE_SIZE, TILE_SIZE);
+                        } else if (tile === 0) { // Dot (Small Square)
+                            ctx.fillStyle = '#fff';
+                            const dotSize = TILE_SIZE / 6;
+                            ctx.fillRect(x + TILE_SIZE / 2 - dotSize / 2, y + TILE_SIZE / 2 - dotSize / 2, dotSize, dotSize);
+                        } else if (tile === 3) { // Power-Up (Bigger Square)
+                            ctx.fillStyle = '#ff00ff'; // Pink Power-Up
+                            const puSize = TILE_SIZE / 3;
+                            ctx.fillRect(x + TILE_SIZE / 2 - puSize / 2, y + TILE_SIZE / 2 - puSize / 2, puSize, puSize);
+                        }
+                    }
+                }
+
+                // Draw Entities
+                this.player.draw();
+                this.ghosts.forEach(g => g.draw());
+            }
+
+            gameLoop(timestamp) {
+                if (lastTimestamp === null) lastTimestamp = timestamp;
+                const delta = (timestamp - lastTimestamp) / 16.67; // 1.0 ~= one 60 FPS frame
+                lastTimestamp = timestamp;
+
+                this.update(delta);
+                this.draw();
+                if (this.isRunning) {
+                    requestAnimationFrame(this.gameLoop.bind(this));
+                }
+            }
+
+            updateDisplay() {
+                scoreDisplay.textContent = `SCORE: ${String(this.score).padStart(3, '0')}`;
+                livesDisplay.textContent = `LIVES: ${this.lives}`;
+            }
+
+            showMessage(text, isPermanent = false, bgColor = 'bg-red-800') {
+                messageBox.classList.remove('hidden', 'bg-red-800', 'bg-green-900');
+                messageBox.classList.add(bgColor);
+                messageBox.innerHTML = `<p>${text}</p>`;
+
+                if (!isPermanent) {
+                    setTimeout(() => {
+                        messageBox.classList.add('hidden');
+                    }, 1500);
+                }
+            }
+
+            hideMessage() {
+                messageBox.classList.add('hidden');
+            }
+        }
+
+        // --- Input and Event Handlers ---
+
+        function handleKeyDown(e) {
+            if (!game) return;
+            
+            // If game is over, ignore all inputs (auto-returns to arcade)
+            if (!game.isRunning) return;
+            
+            // If game is paused but still running (pause during game)
+            if (game.isPaused) {
+                if (e.key === ' ' || e.key === 'Enter') {
+                    game.start();
+                }
                 return;
             }
 
-            const finalScore = parseInt(document.getElementById('finalScore').textContent);
-            await submitHighScore(finalScore, playerName);
-
-            // Show credits
-            document.getElementById('endModal').style.display = 'none';
-            document.getElementById('creditsScore').textContent = finalScore;
-            document.getElementById('creditsSalvage').textContent = salvage;
-            document.getElementById('creditsScreen').style.display = 'flex';
-
-            // Redirect to arcade after 15 seconds
-            setTimeout(() => {
-                window.location.href = '/arcade.html';
-            }, 15000);
-        };
-
-        // =====================================================================
-        // ============================ GAME LOGIC =============================
-        // =====================================================================
-
-        const SOUND_PATHS = {
-            shoot: './sounds/laser_pew.wav',
-            upgrade: './sounds/upgrade_collect.wav',
-            engineLoop: './sounds/engine_loop.wav',
-            gameOver: './sounds/game_over_jingle.wav',
-            explosion: './sounds/explosion.wav'
-        };
-
-        const canvas = document.getElementById("gameCanvas");
-        const ctx = canvas.getContext("2d");
-
-        const GAME_WIDTH = canvas.width;
-        const GAME_HEIGHT = canvas.height;
-
-        const GAME_COLOR = getComputedStyle(document.documentElement)
-            .getPropertyValue("--game-color")
-            .trim();
-
-        let gameRunning = false;
-        let score = 0;
-        let salvage = 0;
-
-        let ship;
-        let bullets = [];
-        let enemies = [];
-        let debris = [];
-        let explosions = [];
-
-        let lastBulletTime = 0;
-        const keyMap = {};
-
-        // Tilt
-        let tiltGamma = 0;
-        let tiltMax = 45;
-
-        let engineSound = null;
-
-        function playSound(src, vol = 1) {
-            const a = new Audio(src);
-            a.volume = vol;
-            a.play().catch(() => {});
-        }
-
-        // Tilt controls
-        function handleDeviceOrientation(event) {
-            tiltGamma = Math.max(-tiltMax, Math.min(tiltMax, event.gamma || 0));
-        }
-
-        window.requestMotionPermission = async function () {
-            if (typeof DeviceOrientationEvent.requestPermission === "function") {
-                const permissionState = await DeviceOrientationEvent.requestPermission();
-                if (permissionState === "granted") {
-                    window.addEventListener("deviceorientation", handleDeviceOrientation);
-                    document.getElementById("motionPermissionButton").style.display = "none";
-                }
-            } else {
-                window.addEventListener("deviceorientation", handleDeviceOrientation);
-                document.getElementById("motionPermissionButton").style.display = "none";
+            let newDir = 'none';
+            switch (e.key) {
+                case 'ArrowUp':
+                case 'w':
+                    newDir = 'up'; break;
+                case 'ArrowDown':
+                case 's':
+                    newDir = 'down'; break;
+                case 'ArrowLeft':
+                case 'a':
+                    newDir = 'left'; break;
+                case 'ArrowRight':
+                case 'd':
+                    newDir = 'right'; break;
+                case 'p':
+                    game.pause();
+                    break;
             }
-        };
-
-        if (typeof DeviceOrientationEvent.requestPermission !== "function") {
-            window.addEventListener("deviceorientation", handleDeviceOrientation);
-        } else {
-            document.getElementById("motionPermissionButton").style.display = "block";
+            if (newDir !== 'none') {
+                game.player.nextDirection = newDir;
+            }
         }
 
-        // -------------------------------------------------------
-        // GAME OBJECT CREATORS
-        // -------------------------------------------------------
-        function createShip() {
-            return {
-                x: GAME_WIDTH / 2,
-                y: GAME_HEIGHT / 2,
-                velX: 0,
-                velY: 0,
-                angle: 0,
-                radius: 15,
-
-                maxSpeed: 5,
-                thrust: 0.15,
-                turnRate: 0.05,
-                fireRate: 150,
-                bulletSpeed: 7,
-
-                hullHP: 3,
-                maxHP: 3
-            };
+        // Mobile touch input logic
+        window.handleTouchInput = function(direction) {
+            if (game && game.isRunning && !game.isPaused) {
+                game.player.nextDirection = direction;
+            } else if (game && !game.isRunning) {
+                 game.start();
+            }
         }
 
-        function createEnemy(x = null, y = null, tier = 3) {
-            let ex, ey;
+        // Touch swipe detection for movement
+        let touchstartX = 0;
+        let touchstartY = 0;
 
-            if (x !== null) {
-                ex = x;
-                ey = y;
-            } else {
-                const edge = Math.floor(Math.random() * 4);
-                if (edge === 0) {
-                    ex = Math.random() * GAME_WIDTH;
-                    ey = 0;
-                } else if (edge === 1) {
-                    ex = GAME_WIDTH;
-                    ey = Math.random() * GAME_HEIGHT;
-                } else if (edge === 2) {
-                    ex = Math.random() * GAME_WIDTH;
-                    ey = GAME_HEIGHT;
+        canvas.addEventListener('touchstart', e => {
+            if (e.touches.length === 1) {
+                touchstartX = e.touches[0].clientX;
+                touchstartY = e.touches[0].clientY;
+            }
+            e.preventDefault();
+        }, { passive: false });
+
+        canvas.addEventListener('touchend', e => {
+            const touchendX = e.changedTouches[0].clientX;
+            const touchendY = e.changedTouches[0].clientY;
+
+            const diffX = touchendX - touchstartX;
+            const diffY = touchendY - touchstartY;
+
+            if (Math.abs(diffX) > 10 || Math.abs(diffY) > 10) {
+                if (Math.abs(diffX) > Math.abs(diffY)) {
+                    // Horizontal swipe
+                    game.player.nextDirection = diffX > 0 ? 'right' : 'left';
                 } else {
-                    ex = 0;
-                    ey = Math.random() * GAME_HEIGHT;
+                    // Vertical swipe
+                    game.player.nextDirection = diffY > 0 ? 'down' : 'up';
                 }
             }
+            e.preventDefault();
+        }, { passive: false });
 
-            let radius, speed, hp, scoreValue;
 
-            if (tier === 3) {
-                radius = 35;
-                speed = 1.1;
-                hp = 4;
-                scoreValue = 100;
-            } else if (tier === 2) {
-                radius = 20;
-                speed = 2;
-                hp = 2;
-                scoreValue = 50;
-            } else {
-                radius = 10;
-                speed = 3.3;
-                hp = 1;
-                scoreValue = 25;
-            }
+        // --- Initialization ---
 
-            let angle = x !== null ? Math.random() * Math.PI * 2 : Math.atan2(ship.y - ey, ship.x - ex);
+        function initGame() {
+            // Setup game objects
+            game = new DotMuncherGame();
 
-            const shapes = ["square", "triangle", "diamond"];
-            const shape = shapes[Math.floor(Math.random() * shapes.length)];
+            // Setup audio components
+            setupAudio();
 
-            return {
-                x: ex,
-                y: ey,
-                velX: Math.cos(angle) * speed,
-                velY: Math.sin(angle) * speed,
-                radius,
-                hp,
-                tier,
-                scoreValue,
-                shape
-            };
+            // Set up event listeners
+            document.addEventListener('keydown', handleKeyDown);
+
+            // Start button handles first interaction (mandatory for web audio API)
+            startButton.addEventListener('click', async () => {
+                await Tone.start();
+                startButton.textContent = 'Use Arrow Keys/WASD or Swipe to Play!';
+                startButton.disabled = true;
+                startButton.classList.add('hidden');
+                game.start();
+            });
+
+            // Initial draw before loop starts
+            game.draw();
         }
 
-        function createDebris(x, y) {
-            const types = ["motor", "armour"];
-            const type = types[Math.floor(Math.random() * types.length)];
-
-            return {
-                x,
-                y,
-                radius: type === "armour" ? 10 : 8,
-                type,
-                velX: Math.random() * 2 - 1,
-                velY: Math.random() * 2 - 1
-            };
-        }
-
-        function createExplosion(x, y, parts = 10, maxR = 3) {
-            playSound(SOUND_PATHS.explosion, 0.6);
-
-            for (let i = 0; i < parts; i++) {
-                const angle = Math.random() * Math.PI * 2;
-                const speed = Math.random() * 5 + 1;
-
-                explosions.push({
-                    x,
-                    y,
-                    velX: Math.cos(angle) * speed,
-                    velY: Math.sin(angle) * speed,
-                    radius: maxR,
-                    life: 60,
-                    maxLife: 60
-                });
-            }
-        }
-
-        document.addEventListener("keydown", (e) => (keyMap[e.code] = true));
-        document.addEventListener("keyup", (e) => (keyMap[e.code] = false));
-
-        // -------------------------------------------------------
-        // TOUCH CONTROLS
-        // -------------------------------------------------------
-        document.querySelectorAll(".control-btn").forEach((btn) => {
-            const key = btn.dataset.key;
-
-            const press = () => {
-                keyMap[key] = true;
-                const vkey = btn.dataset.virtualKey;
-                if (vkey) keyMap[vkey] = true;
-            };
-            const release = () => {
-                keyMap[key] = false;
-                const vkey = btn.dataset.virtualKey;
-                if (vkey) keyMap[vkey] = false;
-            };
-
-            btn.addEventListener("touchstart", (e) => {
-                e.preventDefault();
-                press();
-            });
-            btn.addEventListener("touchend", release);
-            btn.addEventListener("mousedown", press);
-            btn.addEventListener("mouseup", release);
-        });
-
-        // -------------------------------------------------------
-        // UPDATE LOOP
-        // -------------------------------------------------------
-        function update() {
-            if (!gameRunning) return;
-
-            const isThrusting = keyMap["ArrowUp"] || keyMap["KeyW"];
-
-            // Control engine sound based on thrust
-            if (engineSound) {
-                if (isThrusting) {
-                    if (engineSound.paused) {
-                        engineSound.play().catch(() => {});
-                    }
-                } else {
-                    if (!engineSound.paused) {
-                        engineSound.pause();
-                    }
-                }
-            }
-
-            // Turning, tilt first
-            const tiltNorm = tiltGamma / tiltMax;
-            if (Math.abs(tiltNorm) > 0.1) ship.angle += ship.turnRate * tiltNorm;
-
-            if (keyMap["ArrowLeft"] || keyMap["KeyA"]) ship.angle -= ship.turnRate;
-            if (keyMap["ArrowRight"] || keyMap["KeyD"]) ship.angle += ship.turnRate;
-
-            if (isThrusting) {
-                ship.velX += Math.cos(ship.angle) * ship.thrust;
-                ship.velY += Math.sin(ship.angle) * ship.thrust;
-            } else {
-                ship.velX *= 0.99;
-                ship.velY *= 0.99;
-            }
-
-            // Speed limit
-            const spd = Math.hypot(ship.velX, ship.velY);
-            if (spd > ship.maxSpeed) {
-                const r = ship.maxSpeed / spd;
-                ship.velX *= r;
-                ship.velY *= r;
-            }
-
-            // Move + wrap
-            ship.x += ship.velX;
-            ship.y += ship.velY;
-
-            if (ship.x < 0) ship.x = GAME_WIDTH;
-            if (ship.x > GAME_WIDTH) ship.x = 0;
-            if (ship.y < 0) ship.y = GAME_HEIGHT;
-            if (ship.y > GAME_HEIGHT) ship.y = 0;
-
-            // Shooting
-            if ((keyMap["Space"] || keyMap["KeyF"]) && Date.now() - lastBulletTime > ship.fireRate) {
-                bullets.push({
-                    x: ship.x + Math.cos(ship.angle) * ship.radius,
-                    y: ship.y + Math.sin(ship.angle) * ship.radius,
-                    velX: Math.cos(ship.angle) * ship.bulletSpeed + ship.velX,
-                    velY: Math.sin(ship.angle) * ship.bulletSpeed + ship.velY,
-                    radius: 3
-                });
-                lastBulletTime = Date.now();
-                playSound(SOUND_PATHS.shoot, 0.4);
-            }
-
-            bullets.forEach((b) => ((b.x += b.velX), (b.y += b.velY)));
-            bullets = bullets.filter(
-                (b) => b.x > 0 && b.x < GAME_WIDTH && b.y > 0 && b.y < GAME_HEIGHT
-            );
-
-            enemies.forEach((e) => ((e.x += e.velX), (e.y += e.velY)));
-            enemies.forEach((e) => {
-                if (e.x < 0) e.x = GAME_WIDTH;
-                if (e.x > GAME_WIDTH) e.x = 0;
-                if (e.y < 0) e.y = GAME_HEIGHT;
-                if (e.y > GAME_HEIGHT) e.y = 0;
-            });
-
-            debris.forEach((d) => {
-                d.x += d.velX;
-                d.y += d.velY;
-                d.velX *= 0.99;
-                d.velY *= 0.99;
-            });
-
-            explosions.forEach((p) => {
-                p.x += p.velX;
-                p.y += p.velY;
-                p.life--;
-                p.velX *= 0.95;
-                p.velY *= 0.95;
-            });
-            explosions = explosions.filter((p) => p.life > 0);
-
-            // BULLET vs ENEMY
-            let newEnemies = [];
-            let newDebris = [];
-
-            bullets = bullets.filter((b) => {
-                let hit = false;
-
-                enemies = enemies.filter((e) => {
-                    const dist = Math.hypot(b.x - e.x, b.y - e.y);
-                    if (dist < b.radius + e.radius) {
-                        e.hp--;
-                        hit = true;
-
-                        if (e.hp <= 0) {
-                            score += e.scoreValue;
-                            createExplosion(e.x, e.y, e.tier * 5);
-
-                            if (e.tier > 1) {
-                                newEnemies.push(createEnemy(e.x, e.y, e.tier - 1));
-                                newEnemies.push(createEnemy(e.x, e.y, e.tier - 1));
-                            }
-
-                            if (Math.random() < 0.2 && e.tier > 1) {
-                                newDebris.push(createDebris(e.x, e.y));
-                            }
-
-                            return false;
-                        }
-
-                        return true;
-                    }
-                    return true;
-                });
-
-                return !hit;
-            });
-
-            enemies.push(...newEnemies);
-            debris.push(...newDebris);
-
-            // PLAYER COLLISIONS
-            enemies = enemies.filter((e) => {
-                const d = Math.hypot(ship.x - e.x, ship.y - e.y);
-                if (d < ship.radius + e.radius) {
-                    ship.hullHP--;
-                    createExplosion(e.x, e.y, 5, 2);
-
-                    if (ship.hullHP <= 0) endGame();
-                    return false;
-                }
-                return true;
-            });
-
-            debris = debris.filter((d) => {
-                const dist = Math.hypot(ship.x - d.x, ship.y - d.y);
-                if (dist < ship.radius + d.radius) {
-                    salvage++;
-
-                    if (d.type === "motor") {
-                        ship.thrust += 0.02;
-                        ship.maxSpeed += 0.5;
-                    } else {
-                        ship.maxHP += 1;
-                        ship.hullHP = ship.maxHP;
-                    }
-
-                    playSound(SOUND_PATHS.upgrade);
-                    return false;
-                }
-                return true;
-            });
-
-            if (enemies.length < 2 + Math.floor(score / 1000)) {
-                enemies.push(createEnemy());
-            }
-
-            document.getElementById("scoreValue").textContent = score;
-            document.getElementById("hpValue").textContent = ship.hullHP;
-            document.getElementById("maxHpValue").textContent = ship.maxHP;
-            document.getElementById("salvageValue").textContent = salvage;
-        }
-
-        // -------------------------------------------------------
-        // DRAW FUNCTIONS
-        // -------------------------------------------------------
-        function drawShip() {
-            ctx.strokeStyle = GAME_COLOR;
-            ctx.lineWidth = 2;
-
-            ctx.save();
-            ctx.translate(ship.x, ship.y);
-            ctx.rotate(ship.angle);
-
-            ctx.beginPath();
-            ctx.moveTo(ship.radius, 0);
-            ctx.lineTo(-ship.radius * 0.8, -ship.radius * 0.8);
-            ctx.lineTo(-ship.radius * 0.6, 0);
-            ctx.lineTo(-ship.radius * 0.8, ship.radius * 0.8);
-            ctx.closePath();
-            ctx.stroke();
-
-            if (keyMap["ArrowUp"] || keyMap["KeyW"]) {
-                ctx.fillStyle = "yellow";
-                ctx.beginPath();
-                ctx.moveTo(-ship.radius * 0.6, -ship.radius * 0.4);
-                ctx.lineTo(-ship.radius * 1.5, 0);
-                ctx.lineTo(-ship.radius * 0.6, ship.radius * 0.4);
-                ctx.fill();
-            }
-
-            ctx.restore();
-        }
-
-        function drawEnemy(e) {
-            ctx.strokeStyle = GAME_COLOR;
-            ctx.lineWidth = 2;
-
-            ctx.save();
-            ctx.translate(e.x, e.y);
-
-            if (e.shape === "square") {
-                const s = e.radius * 1.4;
-                ctx.strokeRect(-s / 2, -s / 2, s, s);
-            } else if (e.shape === "triangle") {
-                ctx.beginPath();
-                ctx.moveTo(e.radius, 0);
-                ctx.lineTo(-e.radius / 2, e.radius * 0.866);
-                ctx.lineTo(-e.radius / 2, -e.radius * 0.866);
-                ctx.closePath();
-                ctx.stroke();
-            } else if (e.shape === "diamond") {
-                const s = e.radius * 1.2;
-                ctx.beginPath();
-                ctx.moveTo(s, 0);
-                ctx.lineTo(0, s);
-                ctx.lineTo(-s, 0);
-                ctx.lineTo(0, -s);
-                ctx.closePath();
-                ctx.stroke();
-            } else {
-                ctx.beginPath();
-                ctx.arc(0, 0, e.radius, 0, Math.PI * 2);
-                ctx.stroke();
-            }
-
-            ctx.restore();
-
-            if (e.tier > 1) {
-                ctx.font = "12px Courier New";
-                ctx.fillText(`HP:${e.hp}`, e.x - 15, e.y - e.radius - 5);
-            }
-        }
-
-        function draw() {
-            ctx.fillStyle = "black";
-            ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
-
-            drawShip();
-
-            ctx.fillStyle = GAME_COLOR;
-            bullets.forEach((b) => {
-                ctx.beginPath();
-                ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
-                ctx.fill();
-            });
-
-            enemies.forEach(drawEnemy);
-
-            debris.forEach((d) => {
-                ctx.fillStyle = d.type === "motor" ? "yellow" : "cyan";
-                ctx.fillRect(d.x - d.radius / 2, d.y - d.radius / 2, d.radius, d.radius);
-            });
-
-            explosions.forEach((p) => {
-                const ratio = p.life / p.maxLife;
-                const sz = p.radius * ratio;
-
-                ctx.fillStyle = ratio > 0.5 ? "yellow" : "orange";
-                ctx.fillRect(p.x - sz / 2, p.y - sz / 2, sz, sz);
-            });
-        }
-
-        // -------------------------------------------------------
-        // GAME CONTROL
-        // -------------------------------------------------------
-        function gameLoop() {
-            update();
-            draw();
-            if (gameRunning) requestAnimationFrame(gameLoop);
-        }
-
-        window.startGame = function () {
-            ship = createShip();
-            score = 0;
-            salvage = 0;
-
-            bullets = [];
-            enemies = [];
-            debris = [];
-            explosions = [];
-
-            gameRunning = true;
-
-            if (!engineSound) {
-                engineSound = new Audio(SOUND_PATHS.engineLoop);
-                engineSound.loop = true;
-                engineSound.volume = 0.3;
-                document.body.appendChild(engineSound);
-            }
-
-            // Don't auto-play engine sound - it will play when thrusting
-
-            document.getElementById("startModal").style.display = "none";
-            gameLoop();
-        };
-
-        function endGame() {
-            gameRunning = false;
-
-            if (engineSound) {
-                engineSound.pause();
-                engineSound.currentTime = 0;
-            }
-
-            playSound(SOUND_PATHS.gameOver);
-
-            document.getElementById("finalScore").textContent = score;
-            document.getElementById("endModal").style.display = "flex";
-            document.getElementById('playerName').focus();
-        }
-
-        // Add enter key support for name input
-        document.addEventListener('DOMContentLoaded', function() {
-            const nameInput = document.getElementById('playerName');
-            if (nameInput) {
-                nameInput.addEventListener('keypress', function(e) {
-                    if (e.key === 'Enter') {
-                        submitAndShowCredits();
-                    }
-                });
-            }
-        });
-
-        ctx.font = "16px var(--font-family)";
-        ctx.fillStyle = GAME_COLOR;
+        window.onload = initGame;
     </script>
 </body>
 </html>
