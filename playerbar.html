@@ -381,6 +381,20 @@ function closeLowCoinsModal() {
     document.getElementById("lowCoinsModal").style.display = "none";
 }
 
+/* ---------- Post-Login Handler ---------- */
+// This function can be called by index-auth.js after successful login
+window.onLoginSuccess = function() {
+    closeModal();
+    pbLoadPlayerData(); // Immediately update the playerbar
+    if (typeof enableGames === "function") enableGames();
+};
+
+window.onSignupSuccess = function() {
+    closeModal();
+    pbLoadPlayerData(); // Immediately update the playerbar
+    if (typeof enableGames === "function") enableGames();
+};
+
 
 /* ---------- Player Bar Logic ---------- */
 async function pbGetSession() {
@@ -555,4 +569,25 @@ async function getCurrentCoins() {
 /* ---------- Initialize ---------- */
 pbLoadPlayerData();
 setInterval(pbLoadPlayerData, 15000);
+
+/* ---------- Auth State Listener ---------- */
+if (typeof supabase !== "undefined") {
+    supabase.auth.onAuthStateChange((event, session) => {
+        console.log("Auth state changed:", event);
+        
+        if (event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED') {
+            // Reload playerbar data immediately when auth state changes
+            pbLoadPlayerData();
+            
+            // Also enable/disable games based on auth state
+            if (session?.user) {
+                window.currentUser = session.user;
+                if (typeof enableGames === "function") enableGames();
+            } else {
+                window.currentUser = null;
+                if (typeof disableGames === "function") disableGames();
+            }
+        }
+    });
+}
 </script>
