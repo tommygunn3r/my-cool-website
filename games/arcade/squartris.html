@@ -100,16 +100,25 @@
         async function initGameAuth() {
             try {
                 const { data: { session } } = await supabase.auth.getSession();
-                if (session?.user) {
-                    currentUser = session.user;
-                    playerName = session.user.user_metadata?.display_name || 
-                                session.user.email?.split('@')[0] || 
-                                "Anonymous";
-                    scoreManager.playerName = playerName;
-                    console.log("Player identified:", playerName);
+                if (!session?.user) {
+                    console.log("No Supabase user in Squartris – scores will stay local only.");
+                    return;
                 }
+
+                currentUser = session.user;
+
+                // Fetch player_name from profiles table
+                const { data: profile } = await supabase
+                    .from("profiles")
+                    .select("player_name")
+                    .eq("id", session.user.id)
+                    .single();
+
+                playerName = profile?.player_name || "Player";
+                scoreManager.playerName = playerName;
+                console.log("✅ Squartris auth initialized:", playerName, "User ID:", session.user.id);
             } catch (error) {
-                console.warn("Auth check failed:", error);
+                console.error("Supabase auth init failed in Squartris:", error);
             }
         }
 
@@ -140,7 +149,7 @@
 
             async submitGameResult(score = 0) {
                 if (!currentUser) {
-                    console.log('No user logged in, score not saved');
+                    console.log('No user logged in, skipping score submission');
                     return;
                 }
 
@@ -150,16 +159,19 @@
                     const { error } = await supabase
                         .from('game_highscores')
                         .insert({
+                            user_id: currentUser.id,
                             game_id: this.gameName,
-                    player_name: playerName,
-                            score: score,
-                            user_id: currentUser.id
+                            player_name: this.playerName,
+                            score: Math.floor(score)
                         });
 
-                    if (error) throw error;
-                    console.log('Score submitted successfully');
+                    if (error) {
+                        console.error('Supabase score submission failed:', error);
+                    } else {
+                        console.log(`✅ Score submitted: ${score} for ${this.gameName} by ${this.playerName}`);
+                    }
                 } catch (error) {
-                    console.warn('Failed to submit score:', error.message);
+                    console.error('Error submitting score:', error);
                 }
             }
         }
