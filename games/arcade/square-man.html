@@ -225,10 +225,10 @@
 
     <script type="module">
         // ===== SUPABASE INTEGRATION =====
-        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+        import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
         
-        const SUPABASE_URL = 'https://pknhslxhpohrzgsfkisr.supabase.co';
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBrbmhzbHhocG9ocnpnc2ZraXNyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU1OTY5NjUsImV4cCI6MjA1MTE3Mjk2NX0.tIUj3jIMX5c_jsdjL4RrfwW7wH-8Ry93y5kKOj0uEao';
+        const SUPABASE_URL = "https://pknhslxhpohrzgsfkisr.supabase.co";
+        const SUPABASE_ANON_KEY = "sb_publishable_-zZw-pi_3q1sdNGhITKuhQ_ECyDARzc";
         
         const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
         
@@ -347,8 +347,6 @@
                 }
             }, 15000);
         };
-
-        initGameAuth();
 
         // ===== GAME CODE =====
 
@@ -1205,6 +1203,9 @@
         // --- Initialization ---
 
         function initGame() {
+            // Initialize auth in background (non-blocking)
+            initGameAuth();
+            
             game = new DotMuncherGame();
             setupAudio();
             document.addEventListener('keydown', handleKeyDown);
