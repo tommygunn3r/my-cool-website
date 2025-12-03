@@ -15,20 +15,64 @@
             box-shadow: 0 20px 60px rgba(0,0,0,0.5); text-align: center; max-width: 90vw; position: relative;
         }
         
-        /* Music Player */
-        .music-player {
-            position: absolute; top: -60px; right: 0; background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(10px);
-            padding: 10px 20px; border-radius: 30px; display: flex; align-items: center; gap: 15px; color: white;
-            border: 1px solid rgba(255,255,255,0.2); box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        /* Visual Timer Bar */
+        .timer-container {
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto 20px auto;
+            padding: 0 20px;
         }
-        .music-btn { background: none; border: none; color: white; cursor: pointer; font-size: 1.2em; opacity: 0.8; transition: all 0.2s; padding: 5px; }
-        .music-btn:hover { opacity: 1; transform: scale(1.1); }
-        .track-info { font-size: 0.8em; font-weight: bold; min-width: 80px; text-align: center; }
-        .equalizer { display: flex; gap: 2px; height: 15px; align-items: flex-end; }
-        .bar { width: 3px; background: #fdbb2d; animation: equalize 0.8s infinite ease-in-out alternate; }
-        .bar:nth-child(2) { animation-delay: 0.2s; } .bar:nth-child(3) { animation-delay: 0.4s; }
-        .paused .bar { animation-play-state: paused; height: 3px !important; }
-        @keyframes equalize { 0% { height: 3px; } 100% { height: 15px; } }
+        .timer-bar-wrapper {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        .timer-label {
+            color: white;
+            font-size: 0.9em;
+            margin-bottom: 8px;
+            text-align: center;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .timer-bar-bg {
+            width: 100%;
+            height: 30px;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 15px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+        }
+        .timer-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #48bb78 0%, #38a169 50%, #2f855a 100%);
+            transition: width 1s linear, background 0.3s;
+            border-radius: 15px;
+            box-shadow: 0 0 15px rgba(72, 187, 120, 0.5);
+        }
+        .timer-bar-fill.low-time {
+            background: linear-gradient(90deg, #fc8181 0%, #f56565 50%, #e53e3e 100%);
+            animation: pulse-glow 1s infinite;
+            box-shadow: 0 0 20px rgba(229, 62, 62, 0.8);
+        }
+        .timer-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-weight: bold;
+            font-size: 1em;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+            z-index: 1;
+        }
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 20px rgba(229, 62, 62, 0.8); }
+            50% { box-shadow: 0 0 30px rgba(229, 62, 62, 1); }
+        }
 
         h1 { color: #b21f1f; margin-bottom: 10px; font-size: 2em; text-transform: uppercase; letter-spacing: 2px; }
         .info { color: #666; margin-bottom: 20px; font-size: 0.9em; line-height: 1.5; }
@@ -111,12 +155,14 @@
             <div id="creditsContent"></div>
         </div>
 
-        <div class="music-player" id="musicPlayer">
-            <div class="equalizer paused" id="equalizer"><div class="bar"></div><div class="bar"></div><div class="bar"></div></div>
-            <span class="track-info" id="trackInfo">Ready</span>
-            <button class="music-btn" onclick="toggleMusic()" title="Play/Pause">⏯</button>
-            <button class="music-btn" onclick="nextTrack()" title="Next Track">⏭</button>
-            <button class="music-btn" onclick="toggleMute()" title="Mute/Unmute">🔊</button>
+        <div class="timer-container">
+            <div class="timer-bar-wrapper">
+                <div class="timer-label">Time Remaining</div>
+                <div class="timer-bar-bg">
+                    <div class="timer-bar-fill" id="timerBarFill" style="width: 100%;"></div>
+                    <div class="timer-text" id="timerText">60s</div>
+                </div>
+            </div>
         </div>
 
         <h1>Waterfall Slider</h1>
@@ -234,43 +280,15 @@
         });
 
         // --- GAME LOGIC ---
-        const playlist = ['music/track1.mp3', 'music/track2.mp3', 'music/track3.mp3'];
         const sfxPush = new Audio('sounds/push.mp3'); sfxPush.volume = 0.4;
         const sfxClear = new Audio('sounds/clear.mp3'); sfxClear.volume = 0.6;
-        let currentTrackIndex = 0, audio = new Audio(), isPlaying = false, isMuted = false;
-        
-        audio.src = playlist[0]; audio.volume = 0.2; audio.loop = false;
-        audio.addEventListener('ended', nextTrack);
 
         function playSound(type) {
-            if (isMuted) return;
             try {
                 if (type === 'push') { const s = sfxPush.cloneNode(); s.volume = 0.4; s.play().catch(()=>{}); }
                 else if (type === 'clear') { sfxClear.currentTime = 0; sfxClear.play().catch(()=>{}); }
             } catch (e) {}
         }
-
-        function toggleMusic() {
-            if (isPlaying) { audio.pause(); document.getElementById('equalizer').classList.add('paused'); }
-            else { audio.play().catch(e => console.log("Interact first")); document.getElementById('equalizer').classList.remove('paused'); }
-            isPlaying = !isPlaying; updateTrackDisplay();
-        }
-
-        function nextTrack() {
-            currentTrackIndex = (currentTrackIndex + 1) % playlist.length;
-            audio.src = playlist[currentTrackIndex];
-            if (isPlaying) { audio.play(); document.getElementById('equalizer').classList.remove('paused'); }
-            updateTrackDisplay();
-        }
-
-        function toggleMute() {
-            isMuted = !isMuted; audio.muted = isMuted;
-            document.querySelectorAll('.music-btn')[2].textContent = isMuted ? '🔇' : '🔊';
-        }
-
-        function updateTrackDisplay() { document.getElementById('trackInfo').textContent = `Track ${currentTrackIndex + 1}`; }
-
-        window.toggleMusic = toggleMusic; window.nextTrack = nextTrack; window.toggleMute = toggleMute;
 
         let dictionary = new Set(), grid = [], emptyPos = { row: 0, col: 0 };
         let score = 0, level = 1, gridSize = 5, targetRow = 4, wordsFound = [], tileSize = 70;
@@ -361,7 +379,6 @@
 
         function moveTile(row, col) {
             if (!gameActive || isProcessing) return false;
-            if (!isPlaying && audio.currentTime === 0) toggleMusic();
             const rowDiff = Math.abs(row - emptyPos.row);
             const colDiff = Math.abs(col - emptyPos.col);
             if ((rowDiff === 1 && colDiff === 0) || (rowDiff === 0 && colDiff === 1)) {
@@ -487,8 +504,26 @@
         }
 
         function updateTimerDisplay() {
-            const timerEl = document.getElementById('timer'); timerEl.textContent = timeLeft;
-            if (timeLeft <= 10) timerEl.classList.add('low-time'); else timerEl.classList.remove('low-time');
+            const timerEl = document.getElementById('timer');
+            const timerText = document.getElementById('timerText');
+            const timerBarFill = document.getElementById('timerBarFill');
+            
+            // Update text displays
+            timerEl.textContent = timeLeft;
+            timerText.textContent = `${timeLeft}s`;
+            
+            // Update visual bar
+            const percentage = (timeLeft / 60) * 100;
+            timerBarFill.style.width = `${percentage}%`;
+            
+            // Add warning styling when time is low
+            if (timeLeft <= 10) {
+                timerEl.classList.add('low-time');
+                timerBarFill.classList.add('low-time');
+            } else {
+                timerEl.classList.remove('low-time');
+                timerBarFill.classList.remove('low-time');
+            }
         }
 
         function endGame() {
@@ -530,8 +565,6 @@
             document.getElementById('creditsContent').innerHTML = creditsHTML;
             document.getElementById('gameOverOverlay').style.display = 'flex';
             
-            if(isPlaying) toggleMusic();
-            
             // Return to arcade after showing credits
             setTimeout(() => {
                 if (window.parent !== window) {
@@ -554,7 +587,6 @@
             isProcessing = false;
             scoreManager.startSession(); initGame(); startTimer();
             showMessage('Gravity Systems Online...', 'success');
-            if(!isPlaying) toggleMusic();
         }
 
         initDictionary();
