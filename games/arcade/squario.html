@@ -106,7 +106,7 @@
         <p id="finalScore"></p>
         <p id="currentHighScore"></p>
         <div id="credits" style="margin-top: 30px; height: 250px; overflow: hidden; position: relative;">
-            <div id="creditsScroll" style="position: absolute; width: 100%; animation: scrollUp 20s linear infinite;">
+            <div id="creditsScroll" style="position: absolute; width: 100%; animation: scrollUp 8s linear 1;">
                 <div style="text-align: center; font-size: 18px; line-height: 2.5; color: #fff;">
                     <p style="font-size: 24px; color: #FFD700; margin-bottom: 20px;">━━━━━━━━━━━━━━━━</p>
                     
@@ -122,7 +122,7 @@
                     <p style="font-size: 24px; color: #FFD700; margin-top: 40px;">━━━━━━━━━━━━━━━━</p>
                     
                     <p style="margin-top: 40px; color: #888; font-size: 14px;">
-                        Press ESC or close window<br>to return to arcade
+                        Returning to arcade in 5 seconds...
                     </p>
                     
                     <p style="margin-top: 60px; color: #666; font-size: 16px;">
@@ -137,10 +137,6 @@
         @keyframes scrollUp {
             0% { top: 100%; }
             100% { top: -100%; }
-        }
-        
-        #creditsScroll {
-            animation-iteration-count: infinite;
         }
     </style>
     <canvas id="game"></canvas>
@@ -223,25 +219,25 @@
 
         async function initGameAuth() {
             try {
-                const { data: { user } } = await supabase.auth.getUser();
-                if (!user) {
-                    console.log("No Supabase user in Squario iframe – scores will stay local only.");
+                const { data: { session } } = await supabase.auth.getSession();
+                if (!session?.user) {
+                    console.log("No Supabase user in Squario – scores will stay local only.");
                     return;
                 }
 
-                scoreManager.user = user;
+                scoreManager.user = session.user;
 
                 // Prefer Supabase metadata, fall back to cached profile name if needed
-                const metaName = user.user_metadata?.display_name;
+                const metaName = session.user.user_metadata?.display_name;
                 const cachedName = localStorage.getItem("playerName");
                 scoreManager.playerName = (metaName || cachedName || "Player").toString();
-                console.log("Supabase player:", scoreManager.playerName);
+                console.log("Supabase player initialized:", scoreManager.playerName, "User ID:", session.user.id);
             } catch (err) {
-                console.error("Supabase auth init failed in Squario:", err.message || err);
+                console.error("Supabase auth init failed in Squario:", err);
             }
         }
 
-        // Kick off Supabase auth lookup (non-blocking for gameplay)
+        // Wait for Supabase auth to initialize before starting
         initGameAuth();
 
         // ===== GAME LOGIC =====
@@ -615,6 +611,11 @@
                 document.getElementById('currentHighScore').style.color = 'white'; 
             }
             endDiv.style.display = 'block';
+            
+            // Auto-redirect to arcade after 5 seconds
+            setTimeout(() => {
+                window.location.href = 'arcade.html';
+            }, 5000);
         }
 
         window.restartGame = function() {
