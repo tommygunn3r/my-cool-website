@@ -192,31 +192,52 @@
     <div class="modal-content" style="background:#111; padding:28px; width:90%; max-width:380px; border-radius:12px; border:2px solid #e94560; position:relative;">
         <span class="close-modal" onclick="closeModal()" style="position:absolute; top:10px; right:14px; font-size:28px; cursor:pointer;">×</span>
 
-        <h2 style="text-align:center; color:#e94560;">Login</h2>
+        <h2 style="text-align:center; color:#e94560; margin-bottom:8px;">Login</h2>
+        <p style="text-align:center; color:#888; font-size:13px; margin-bottom:20px; font-style:italic;">
+            Come on, you know the drill...
+        </p>
 
-        <div class="input-group">
-            <label>Email</label>
-            <input id="loginEmail" class="input-field" type="email">
+        <div class="input-group" style="margin-bottom:16px;">
+            <label style="display:block; margin-bottom:6px; color:#ddd; font-size:14px;">Email</label>
+            <input id="loginEmail" class="input-field" type="email" style="
+                width:100%;
+                padding:10px;
+                background:#222;
+                border:1px solid #444;
+                border-radius:6px;
+                color:#fff;
+                font-size:14px;
+                box-sizing:border-box;
+            ">
         </div>
-        <div class="input-group">
-            <label>Password</label>
-            <input id="loginPass" class="input-field" type="password">
+        <div class="input-group" style="margin-bottom:16px;">
+            <label style="display:block; margin-bottom:6px; color:#ddd; font-size:14px;">Password</label>
+            <input id="loginPass" class="input-field" type="password" style="
+                width:100%;
+                padding:10px;
+                background:#222;
+                border:1px solid #444;
+                border-radius:6px;
+                color:#fff;
+                font-size:14px;
+                box-sizing:border-box;
+            ">
         </div>
 
-        <div id="loginError" style="color:#ff4444; display:none;"></div>
+        <div id="loginError" style="color:#ff4444; display:none; margin-bottom:10px; font-size:13px;"></div>
 
         <button id="btnLogin" type="button" class="submit-btn"
-            style="width:100%; padding:12px; background:#e94560; color:white; border:none; border-radius:6px; margin-top:10px;">
+            style="width:100%; padding:12px; background:#e94560; color:white; border:none; border-radius:6px; margin-top:10px; font-weight:bold; cursor:pointer; font-size:15px;">
             LOGIN
         </button>
 
         <div class="switch-link" style="text-align:center; margin-top:12px;">
             <span style="color:#bbb;">No account? </span>
-            <span style="color:#e94560; cursor:pointer;" onclick="openSignup()">Create one</span>
+            <span style="color:#e94560; cursor:pointer; text-decoration:underline;" onclick="openSignup()">Create one</span>
         </div>
 
         <div style="text-align:center; margin-top:12px;">
-            <span style="color:#e94560; cursor:pointer;" onclick="openResetPasswordModal()">Forgot Password?</span>
+            <span style="color:#e94560; cursor:pointer; text-decoration:underline;" onclick="openResetPasswordModal()">Forgot Password?</span>
         </div>
     </div>
 </div>
