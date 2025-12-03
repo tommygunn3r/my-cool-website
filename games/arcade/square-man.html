@@ -78,6 +78,66 @@
                 display: none; /* Hide on desktop */
             }
         }
+        
+        @keyframes scroll-up {
+            from {
+                transform: translateY(100vh);
+            }
+            to {
+                transform: translateY(-100%);
+            }
+        }
+        
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+        
+        .modal-content {
+            background-color: #000;
+            border: 3px solid #ff0;
+            box-shadow: 0 0 20px #ff0;
+            padding: 40px;
+            text-align: center;
+            max-width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .modal-content input {
+            padding: 10px;
+            font-size: 16px;
+            background-color: #000;
+            border: 2px solid #ff0;
+            color: #ff0;
+            font-family: 'Press Start 2P', monospace;
+            text-align: center;
+            margin: 10px 0;
+        }
+        
+        .modal-content button {
+            background-color: #ff0;
+            color: #000;
+            border: none;
+            padding: 10px 20px;
+            margin-top: 20px;
+            font-family: 'Press Start 2P', monospace;
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
     </style>
 </head>
 <body class="p-4">
@@ -106,6 +166,63 @@
         </div>
     </div>
 
+    <!-- End Modal -->
+    <div id="endModal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <h2 style="color: #ff0; font-size: 1.5rem; margin-bottom: 1rem;">GAME OVER!</h2>
+            <p style="color: #fff; margin: 10px 0;">Final Score: <span id="finalScore" style="color: #ff0;">0</span></p>
+            <p style="color: #fff; margin: 10px 0;">Level Reached: <span id="finalLevel" style="color: #0ff;">1</span></p>
+            <div style="margin-top: 20px;">
+                <input type="text" id="playerNameInput" placeholder="Enter your name" maxlength="20">
+            </div>
+            <button onclick="submitAndShowCredits()">SUBMIT SCORE</button>
+        </div>
+    </div>
+
+    <!-- Credits Screen -->
+    <div id="creditsScreen" class="modal" style="display:none;">
+        <div style="text-align: center; animation: scroll-up 15s linear; width: 100%; color: #fff;">
+            <pre style="font-size: 16px; color: #ff0; margin: 20px 0;">
+  ____   ___  _   _   _    ____  _____       __  __    _    _   _ 
+ / ___| / _ \| | | | / \  |  _ \| ____|     |  \/  |  / \  | \ | |
+ \___ \| | | | | | |/ _ \ | |_) |  _| _____ | |\/| | / _ \ |  \| |
+  ___) | |_| | |_| / ___ \|  _ <| |__|_____|| |  | |/ ___ \| |\  |
+ |____/ \__\_\\___/_/   \_\_| \_\_____|     |_|  |_/_/   \_\_| \_|
+            </pre>
+            
+            <div style="margin: 40px 0; font-size: 24px;">
+                <p style="color: #ff0;">FINAL SCORE</p>
+                <p id="creditsScore" style="font-size: 36px; color: #0f0; margin: 10px 0;">0</p>
+            </div>
+            
+            <div style="margin: 40px 0; font-size: 20px;">
+                <p style="color: #0ff;">━━━━━━━━━━━━━━━━━━━━</p>
+                <p style="color: #ff0; margin: 10px 0;">LEVEL REACHED</p>
+                <p id="creditsLevel" style="color: #0f0; font-size: 28px; margin: 10px 0;">1</p>
+                <p style="color: #0ff;">━━━━━━━━━━━━━━━━━━━━</p>
+            </div>
+            
+            <div style="margin: 60px 0; font-size: 16px; line-height: 1.8; color: #0f0;">
+                <p style="color: #ff0; font-size: 20px; margin-bottom: 20px;">CREDITS</p>
+                
+                <p style="margin-top: 20px;">LEAD PROGRAMMER</p>
+                <p style="color: #0ff;">Claude.ai</p>
+                
+                <p style="margin-top: 20px;">GAME DESIGN</p>
+                <p style="color: #0ff;">GUNNERSGAMES</p>
+                
+                <p style="margin-top: 20px;">INSPIRED BY</p>
+                <p style="color: #0ff;">PAC-MAN (1980)</p>
+                
+                <p style="margin-top: 30px;">SPECIAL THANKS</p>
+                <p style="color: #0ff;">ALL SQUARE-MAN FANS</p>
+                
+                <p style="margin-top: 50px; color: #ff0; font-size: 16px;">© 2025 GUNNERSGAMES</p>
+                <p style="margin-top: 20px; font-size: 14px; color: #888;">THANKS FOR PLAYING!</p>
+            </div>
+        </div>
+    </div>
+
     <script type="module">
         // ===== SUPABASE INTEGRATION =====
         import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
@@ -118,113 +235,100 @@
         let currentUser = null;
         let playerName = "Anonymous";
 
-        // Check for logged in user (optional - game works without login)
+        // Check for logged in user
         async function initGameAuth() {
             try {
-                const { data: { session } } = await supabase.auth.getSession();
-                if (session?.user) {
-                    currentUser = session.user;
-                    // Get display name from user metadata or email
-                    playerName = session.user.user_metadata?.display_name || 
-                                session.user.email?.split('@')[0] || 
-                                "Anonymous";
-                    scoreManager.playerName = playerName;
-                    console.log("Player identified:", playerName);
-                    await scoreManager.loadHighScore();
-                }
-            } catch (error) {
-                console.warn("Auth check failed:", error);
-            }
-        }
-
-        // Score Manager
-        class GameScoreManager {
-            constructor(gameName) {
-                this.gameName = gameName;
-                this.sessionStartTime = null;
-                this.playerName = "Anonymous";
-                this.highScore = 0;
-            }
-
-            async loadHighScore() {
-                if (!currentUser) return;
+                const { data: { user } } = await supabase.auth.getUser();
                 
-                try {
-                    const { data, error } = await supabase
-                        .from('game_highscores')
-                        .select('score')
-                        .eq('game_id', this.gameName)
-                        .eq('user_id', currentUser.id)
-                        .order('score', { ascending: false })
-                        .limit(1)
-                        .single();
-                    
-                    if (data && !error) {
-                        this.highScore = data.score;
-                        highScoreDisplay.textContent = `HIGH: ${String(this.highScore).padStart(3, '0')}`;
-                    }
-                } catch (error) {
-                    console.warn('Could not load high score:', error);
-                }
-            }
-
-            startSession() {
-                this.sessionStartTime = Date.now();
-            }
-
-            getElapsedTime() {
-                if (!this.sessionStartTime) return 0;
-                return Math.floor((Date.now() - this.sessionStartTime) / 1000);
-            }
-
-            getElapsedTimeFormatted() {
-                const seconds = this.getElapsedTime();
-                if (seconds < 60) return `${seconds}s`;
-                const mins = Math.floor(seconds / 60);
-                const secs = seconds % 60;
-                return `${mins}m ${secs}s`;
-            }
-
-            async submitGameResult(score = 0) {
-                if (!currentUser) {
-                    console.log('No user logged in, score not saved');
+                if (!user) {
+                    console.log("Not logged in - guest mode");
                     return;
                 }
-
-                const timePlayed = this.getElapsedTime();
                 
-                try {
-                    // Submit score to Supabase
-                    const { error } = await supabase
-                        .from('game_highscores')
-                        .insert({
-                            game_id: this.gameName,
-                    player_name: playerName,
-                            score: score,
-                            user_id: currentUser.id
-                        });
-
-                    if (error) throw error;
-
-                    // Update high score if needed
-                    if (score > this.highScore) {
-                        this.highScore = score;
-                        highScoreDisplay.textContent = `HIGH: ${String(this.highScore).padStart(3, '0')}`;
-                    }
-
-                    console.log('Score submitted successfully');
-                } catch (error) {
-                    console.warn('Failed to submit score:', error.message);
-                }
+                currentUser = user;
+                playerName = user.user_metadata?.display_name || 
+                            user.email?.split('@')[0] || 
+                            "Anonymous";
+                console.log("Authenticated:", playerName);
+                
+                await loadHighScore();
+            } catch (err) {
+                console.warn("Auth check failed:", err);
             }
         }
-        
-        // Initialize
-        const scoreManager = new GameScoreManager('square-man');
+
+        async function loadHighScore() {
+            if (!currentUser) return;
+            
+            try {
+                const { data, error } = await supabase
+                    .from('game_highscores')
+                    .select('score')
+                    .eq('game_id', 'square-man')
+                    .eq('user_id', currentUser.id)
+                    .order('score', { ascending: false })
+                    .limit(1)
+                    .single();
+                
+                if (data && !error) {
+                    document.getElementById('highScoreDisplay').textContent = `HIGH: ${String(data.score).padStart(3, '0')}`;
+                }
+            } catch (error) {
+                console.warn('Could not load high score:', error);
+            }
+        }
+
+        async function submitHighScore(score, playerNameSubmit) {
+            if (!currentUser) {
+                console.log("No user logged in, score not saved");
+                return;
+            }
+
+            try {
+                const { error } = await supabase
+                    .from('game_highscores')
+                    .insert({
+                        user_id: currentUser.id,
+                        game_id: 'square-man',
+                        player_name: playerNameSubmit,
+                        score: Math.floor(score)
+                    });
+
+                if (error) throw error;
+                console.log("Score submitted:", score);
+            } catch (error) {
+                console.error("Score submission failed:", error);
+            }
+        }
+
+        // Global function for submit and show credits
+        window.submitAndShowCredits = async function() {
+            const playerNameValue = document.getElementById('playerNameInput').value.trim() || playerName;
+            const finalScore = parseInt(document.getElementById('finalScore').textContent);
+            const finalLevel = parseInt(document.getElementById('finalLevel').textContent);
+            
+            await submitHighScore(finalScore, playerNameValue);
+
+            // Show credits
+            document.getElementById('endModal').style.display = 'none';
+            document.getElementById('creditsScore').textContent = finalScore;
+            document.getElementById('creditsLevel').textContent = finalLevel;
+            document.getElementById('creditsScreen').style.display = 'flex';
+
+            // Redirect to arcade after 15 seconds
+            setTimeout(() => {
+                if (window.parent !== window) {
+                    window.parent.postMessage({ action: 'closeGame' }, '*');
+                } else {
+                    window.location.href = '/arcade.html';
+                }
+            }, 15000);
+        };
+
         initGameAuth();
-        
-        // --- Game Setup Constants ---
-        let lastTimestamp = null; // for time-based movement (60 FPS baseline)
+
+        // ===== GAME CODE =====
+
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         const scoreDisplay = document.getElementById('scoreDisplay');
@@ -233,240 +337,185 @@
         const messageBox = document.getElementById('messageBox');
         const startButton = document.getElementById('startButton');
 
-        const GRID_ROWS = 20; 
+        const GRID_ROWS = 21;
         const GRID_COLS = 21;
-        let TILE_SIZE; // Calculated dynamically
-        const MOVE_THRESHOLD = 0.05; // Tight tolerance for turning
+        let TILE_SIZE = canvas.width / GRID_COLS;
 
-        // 0: Dot, 1: Wall, 2: Empty/Path, 3: Power-Up, 4: Ghost Home, 5: Tunnel
-        let MAP = [
+        const MOVE_THRESHOLD = 0.1;
+
+        const GHOST_EXIT_TARGET = { row: 7, col: 10 };
+
+        // 0 = Dot, 1 = Wall, 2 = Empty (eaten dot), 3 = Power-Up, 4 = Ghost Home, 5 = Tunnel
+        const MAP = [
             [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-            [1,3,0,0,0,0,0,0,0,1,2,1,0,0,0,0,0,0,0,3,1],
-            [1,0,1,1,0,1,1,1,0,1,2,1,0,1,1,1,0,1,1,0,1],
-            [1,0,1,1,0,1,1,1,0,1,2,1,0,1,1,1,0,1,1,0,1],
+            [1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1],
+            [1,3,1,1,0,1,1,1,1,0,1,0,1,1,1,1,0,1,1,3,1],
             [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
             [1,0,1,1,0,1,0,1,1,1,1,1,1,1,0,1,0,1,1,0,1],
-            [1,0,0,0,0,1,0,0,0,1,2,1,0,0,0,1,0,0,0,0,1],
-            [1,1,1,1,0,1,1,1,0,1,2,1,0,1,1,1,0,1,1,1,1],
-            [1,2,2,1,0,1,0,0,0,0,0,0,0,0,0,1,0,1,2,2,1],
+            [1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1],
+            [1,1,1,1,0,1,1,1,1,0,1,0,1,1,1,1,0,1,1,1,1],
+            [1,1,1,1,0,1,0,0,0,0,0,0,0,0,0,1,0,1,1,1,1],
             [1,1,1,1,0,1,0,1,1,4,4,4,1,1,0,1,0,1,1,1,1],
-            [5,2,2,2,0,0,0,1,4,4,4,4,4,1,0,0,0,2,2,2,5], // Tunnel Tiles (5) at ends
+            [5,0,0,0,0,0,0,1,4,4,4,4,4,1,0,0,0,0,0,0,5],
             [1,1,1,1,0,1,0,1,1,1,1,1,1,1,0,1,0,1,1,1,1],
-            [1,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,1],
-            [1,0,1,1,0,1,0,1,1,1,1,1,1,1,0,1,0,1,1,0,1],
-            [1,0,1,1,0,0,0,0,0,0,1,0,0,0,0,0,0,1,1,0,1],
-            [1,0,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,0,1],
+            [1,1,1,1,0,1,0,0,0,0,0,0,0,0,0,1,0,1,1,1,1],
+            [1,1,1,1,0,1,0,1,1,1,1,1,1,1,0,1,0,1,1,1,1],
+            [1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,1],
+            [1,0,1,1,0,1,1,1,1,0,1,0,1,1,1,1,0,1,1,0,1],
+            [1,3,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,3,1],
+            [1,1,0,1,0,1,0,1,1,1,1,1,1,1,0,1,0,1,0,1,1],
+            [1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1],
+            [1,0,1,1,1,1,1,1,1,0,1,0,1,1,1,1,1,1,1,0,1],
             [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-            [1,0,1,1,1,1,1,1,0,1,1,1,0,1,1,1,1,1,1,0,1],
-            [1,3,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,1],
-            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
         ];
 
-        const GHOST_EXIT_TARGET = { row: 8, col: 10 }; // Tile right above the ghost house
-        const HOME_POS = { row: 10.0, col: 10.0 }; // Center of the ghost box for respawn
+        let game = null;
+        let lastTimestamp = null;
 
-        let game;
-
-        // --- Tone.js Audio Setup ---
-        let bgm, bgmSynth, bgmVolume, munchSynth, powerUpSynth, deathSynth; 
+        // --- Audio ---
+        let bgmSynth = null;
+        let deathSound = null;
 
         function setupAudio() {
-            // 1. Create BGM Volume node and connect to destination
-            bgmVolume = new Tone.Volume(-15).toDestination();
-
-            // 2. Create BGM Synth and connect it to the volume node
             bgmSynth = new Tone.Synth({
-                oscillator: { type: "square" },
-                envelope: { attack: 0.005, decay: 0.1, sustain: 0.1, release: 0.05 }
-            }).connect(bgmVolume);
-
-
-            // Background Music (BGM) - Simple 8-bit chip tune
-            bgm = new Tone.Loop(time => {
-                const notes = ["C4", "E4", "G4", "C5", "G4", "E4"];
-                // 3. Trigger notes on the persistent bgmSynth
-                notes.forEach((note, index) => {
-                    bgmSynth.triggerAttackRelease(note, "8n", time + index * 0.15);
-                });
-            }, "1n");
-
-            // Munch SFX
-            munchSynth = new Tone.Synth({
-                oscillator: { type: "square" },
-                envelope: { attack: 0.001, decay: 0.05, sustain: 0.01, release: 0.05 }
+                oscillator: { type: 'square' },
+                envelope: { attack: 0.005, decay: 0.1, sustain: 0.3, release: 1 }
             }).toDestination();
-            munchSynth.volume.value = -10;
 
-            // Power-Up SFX
-            powerUpSynth = new Tone.MembraneSynth({
-                pitchDecay: 0.01,
-                octaves: 3,
-                oscillator: { type: "square" },
-                envelope: { attack: 0.005, decay: 0.2, sustain: 0.1, release: 0.5 }
-            }).toDestination();
-            powerUpSynth.volume.value = -5;
+            const bgmMelody = ['C4', 'E4', 'G4', 'C5'];
+            let bgmIndex = 0;
 
-            // Death SFX (A simple descending arpeggio)
-            deathSynth = new Tone.PolySynth(Tone.Synth, {
-                oscillator: { type: "square" },
-                envelope: { attack: 0.01, decay: 0.2, sustain: 0.1, release: 0.5 }
-            }).toDestination();
-            deathSynth.volume.value = -10;
-        }
-
-        function playMunch() {
-            munchSynth.triggerAttackRelease("C5", "16n");
-        }
-
-        function playPowerUp() {
-            powerUpSynth.triggerAttackRelease("C3", "2n");
-            powerUpSynth.triggerAttackRelease("G3", "1n", "+0.1");
-        }
-
-        function playDeath() {
-            deathSynth.triggerAttackRelease(["C3", "B2", "A2", "G2"], "8n", 0);
+            Tone.Transport.scheduleRepeat((time) => {
+                if (game && game.isRunning && !game.isPaused) {
+                    bgmSynth.triggerAttackRelease(bgmMelody[bgmIndex % bgmMelody.length], '8n', time);
+                    bgmIndex++;
+                }
+            }, '0.5s');
         }
 
         function startBGM() {
-            if (bgm && !bgm.state) {
-                bgm.start(0);
+            if (Tone.Transport.state !== 'started') {
                 Tone.Transport.start();
             }
         }
 
         function stopBGM() {
-            if (bgm && bgm.state === 'started') {
-                bgm.stop();
-                Tone.Transport.stop();
-            }
+            Tone.Transport.stop();
+        }
+
+        function playMunch() {
+            const synth = new Tone.Synth({
+                oscillator: { type: 'square' },
+                envelope: { attack: 0.01, decay: 0.05, sustain: 0, release: 0.05 }
+            }).toDestination();
+            synth.triggerAttackRelease('C5', '32n');
+        }
+
+        function playPowerUp() {
+            const synth = new Tone.Synth({
+                oscillator: { type: 'square' },
+                envelope: { attack: 0.01, decay: 0.1, sustain: 0.3, release: 0.2 }
+            }).toDestination();
+            synth.triggerAttackRelease('E5', '8n');
+        }
+
+        function playDeathSound() {
+            const synth = new Tone.Synth({
+                oscillator: { type: 'sawtooth' },
+                envelope: { attack: 0.01, decay: 0.5, sustain: 0, release: 0.5 }
+            }).toDestination();
+            
+            // Descending death sound
+            const now = Tone.now();
+            synth.triggerAttackRelease('C5', '16n', now);
+            synth.triggerAttackRelease('A4', '16n', now + 0.1);
+            synth.triggerAttackRelease('F4', '16n', now + 0.2);
+            synth.triggerAttackRelease('D4', '16n', now + 0.3);
+            synth.triggerAttackRelease('A3', '8n', now + 0.4);
         }
 
         // --- Utility Functions ---
-
-        // Manhattan distance for AI pathfinding
         function manhattanDistance(r1, c1, r2, c2) {
             return Math.abs(r1 - r2) + Math.abs(c1 - c2);
         }
 
-        // --- Game Entity Classes ---
-
+        // --- Entity Base Class ---
         class Entity {
             constructor(row, col, color) {
-                // Now uses float positions for smooth movement
-                this.row = parseFloat(row);
-                this.col = parseFloat(col);
-                this.color = color;
-                this.sizeRatio = 0.8; // Base size of the entity relative to TILE_SIZE
-                this.currentDirection = 'none'; // 'up', 'down', 'left', 'right'
+                this.row = row;
+                this.col = col;
+                this.currentDirection = 'none';
                 this.nextDirection = 'none';
-                this.speed = 0.1; // Default speed: 10% of a tile per frame
+                this.speed = 0.1;
+                this.color = color;
+                this.sizeRatio = 0.7;
             }
 
             draw() {
                 const x = this.col * TILE_SIZE + TILE_SIZE / 2;
                 const y = this.row * TILE_SIZE + TILE_SIZE / 2;
                 const size = TILE_SIZE * this.sizeRatio;
-
+                
                 ctx.fillStyle = this.color;
                 ctx.fillRect(x - size / 2, y - size / 2, size, size);
-
-                // Draw 8-bit eyes/details (simple black squares)
-                ctx.fillStyle = "#000";
-                const eyeSize = size * 0.1;
-                ctx.fillRect(x - size * 0.25 - eyeSize / 2, y - size * 0.25 - eyeSize / 2, eyeSize, eyeSize);
-                ctx.fillRect(x + size * 0.25 - eyeSize / 2, y - size * 0.25 - eyeSize / 2, eyeSize, eyeSize);
             }
 
-            move(map, delta = 1) {
-                // 1. Handle buffered direction change (turning)
+            move(map, delta) {
                 this.handleTurns(map);
 
+                if (this.currentDirection === 'none') return false;
+
+                const moveAmount = this.speed * delta;
                 let nextRow = this.row;
                 let nextCol = this.col;
-                const speed = this.speed * delta; // time-based speed (tiles per 60FPS-second)
 
-                // Determine the current integer tile for robust wall checking
-                const currentTileR = Math.round(this.row);
-                const currentTileC = Math.round(this.col);
+                if (this.currentDirection === 'up') nextRow -= moveAmount;
+                else if (this.currentDirection === 'down') nextRow += moveAmount;
+                else if (this.currentDirection === 'left') nextCol -= moveAmount;
+                else if (this.currentDirection === 'right') nextCol += moveAmount;
 
-                // FIX: Use base size ratio for collision detection, not powered-up size
-                const collisionSize = this.baseSizeRatio;
+                const r = Math.round(nextRow);
+                const c = Math.round(nextCol);
 
-                // --- Movement & Collision Prediction ---
-                
-                if (this.currentDirection === 'up') {
-                    nextRow -= speed; 
-                    nextCol = currentTileC; // Stay aligned on column axis 
+                if (r < 0 || r >= GRID_ROWS || c < 0 || c >= GRID_COLS) {
+                    if (this.row === 9.0 || this.row === 10.0) {
+                        this.row = nextRow;
+                        this.col = nextCol;
+                    } else {
+                        this.currentDirection = 'none';
+                        return false;
+                    }
+                } else {
+                    const tileAhead = map[r][c];
+                    const isGhostLeavingHome = (this instanceof Ghost) && this.isLeavingHome;
+                    let blocksMovement = tileAhead === 1;
                     
-                    const tileAhead = Math.floor(nextRow - collisionSize / 2); // Check the tile the entity's edge is moving into
-                    // Check for wall one tile ahead
-                    if (map[tileAhead] && map[tileAhead][currentTileC] === 1) {
-                        // Clamp so the entity's TOP EDGE stops at the wall boundary
-                        const clampValue = tileAhead + 1 - collisionSize / 2 ; // Add small epsilon
-                        if (nextRow <= clampValue) {
-                            nextRow = clampValue;
-                            this.currentDirection = 'none';
-                        }
+                    if (!isGhostLeavingHome) {
+                        blocksMovement = blocksMovement || (tileAhead === 4);
                     }
-                } else if (this.currentDirection === 'down') {
-                    nextRow += speed; 
-                    nextCol = currentTileC; // Stay aligned on column axis
 
-                    const tileAhead = Math.ceil(nextRow + collisionSize / 2); // Check the tile the entity's edge is moving into
-                    if (map[tileAhead] && map[tileAhead][currentTileC] === 1) {
-                         // Clamp so the entity's BOTTOM EDGE stops at the wall boundary
-                        const clampValue = tileAhead - 1 + collisionSize / 2 ; // Subtract small epsilon
-                        if (nextRow >= clampValue) {
-                            nextRow = clampValue;
-                            this.currentDirection = 'none';
-                        }
-                    }
-                } else if (this.currentDirection === 'left') {
-                    nextCol -= speed;
-                    nextRow = currentTileR; // Stay aligned on row axis
-
-                    const tileAhead = Math.floor(nextCol - collisionSize / 2); // Check the tile the entity's edge is moving into
-                    if (map[currentTileR] && map[currentTileR][tileAhead] === 1) {
-                         // Clamp so the entity's LEFT EDGE stops at the wall boundary
-                        const clampValue = tileAhead + 1 - collisionSize / 2 ; // Add small epsilon
-                        if (nextCol <= clampValue) {
-                            nextCol = clampValue;
-                            this.currentDirection = 'none';
-                        }
-                    }
-                } else if (this.currentDirection === 'right') {
-                    nextCol += speed;
-                    nextRow = currentTileR; // Stay aligned on row axis
-
-                    const tileAhead = Math.ceil(nextCol + collisionSize / 2); // Check the tile the entity's edge is moving into
-                    if (map[currentTileR] && map[currentTileR][tileAhead] === 1) {
-                         // Clamp so the entity's RIGHT EDGE stops at the wall boundary
-                        const clampValue = tileAhead - 1 + collisionSize / 2 ; // Subtract small epsilon
-                        if (nextCol >= clampValue) {
-                            nextCol = clampValue;
-                            this.currentDirection = 'none';
-                        }
+                    if (blocksMovement) {
+                        this.currentDirection = 'none';
+                        return false;
+                    } else {
+                        this.row = nextRow;
+                        this.col = nextCol;
                     }
                 }
 
-                // --- Position Update ---
-                this.row = nextRow;
-                this.col = nextCol;
-                
-                // --- Teleport Check (Boundary Wrap-around) ---
+                // Teleport Check (Boundary Wrap-around)
                 if (this.col < 0) {
-                    this.col = GRID_COLS - 1; // Wrap to right side
-                    this.row = 10.0; // Ensure it stays aligned in the tunnel row
+                    this.col = GRID_COLS - 1;
+                    this.row = 9.0;
                 } else if (this.col >= GRID_COLS) {
-                    this.col = 0; // Wrap to left side
-                    this.row = 10.0; // Ensure it stays aligned in the tunnel row
+                    this.col = 0;
+                    this.row = 9.0;
                 }
 
-
-                // Return true if movement occurred, false if clamped/stopped
                 const moved = this.currentDirection !== 'none';
 
-                // Stuck recovery auto-center (not in ghost home)
+                // Stuck recovery auto-center
                 {
                     const rCenter = Math.round(this.row);
                     const cCenter = Math.round(this.col);
@@ -481,16 +530,13 @@
             }
 
             handleTurns(map) {
-                // Only allow turning if the entity is close to the center of a tile
                 const rowCenter = Math.round(this.row);
                 const colCenter = Math.round(this.col);
                 
-                // isAligned check uses a tight threshold
                 const isAligned = (Math.abs(this.row - rowCenter) < MOVE_THRESHOLD) && 
                                   (Math.abs(this.col - colCenter) < MOVE_THRESHOLD);
 
                 if (this.nextDirection !== 'none') {
-                    // Determine the integer coordinates of the tile we would enter
                     let nextR = rowCenter;
                     let nextC = colCenter;
                     if (this.nextDirection === 'up') nextR--;
@@ -498,24 +544,16 @@
                     else if (this.nextDirection === 'left') nextC--;
                     else if (this.nextDirection === 'right') nextC++;
 
-                    // Special check for ghosts when leaving home
                     const isGhostLeavingHome = (this instanceof Ghost) && this.isLeavingHome;
-                    
-                    // Ghost home tiles (4) should only block non-leaving ghosts
                     let blocksTile = map[nextR] && map[nextR][nextC] === 1;
 
                     if (!isGhostLeavingHome) {
                         blocksTile = blocksTile || (map[nextR] && map[nextR][nextC] === 4);
                     }
 
-
-                    // Check if that intended tile is a path (not a wall '1', or blocked '4')
                     if (map[nextR] && !blocksTile) {
-                        // Allow turn if aligned OR if the entity is stopped (just hit a wall)
                         if (isAligned || this.currentDirection === 'none') { 
-                            // Force snap to center to ensure perfect alignment before starting new movement
                             this.row = rowCenter;
-            this.col = colCenter;  // force-perfect centering before turn
                             this.col = colCenter;
                             this.currentDirection = this.nextDirection;
                             this.nextDirection = 'none';
@@ -527,55 +565,103 @@
 
         class Player extends Entity {
             constructor(row, col) {
-                super(row, col, '#ff0'); // Yellow player
+                super(row, col, '#ff0');
                 this.baseSizeRatio = 0.8;
                 this.sizeRatio = this.baseSizeRatio;
                 this.isPoweredUp = false;
                 this.powerUpTimer = 0;
-                this.speed = 0.12; // Player moves slightly faster
+                this.speed = 0.12;
+                this.isDying = false;
+                this.deathAnimationFrame = 0;
             }
 
             update(map, ghosts, delta) {
+                if (this.isDying) {
+                    this.deathAnimationFrame++;
+                    return;
+                }
+
                 if (this.move(map, delta)) {
                     this.checkCollisions(map, ghosts);
                 }
 
                 if (this.isPoweredUp) {
-                    // 300 ~= 5 seconds at 60 FPS; delta is "60fps frames"
                     this.powerUpTimer -= delta;
-                    this.sizeRatio = this.baseSizeRatio * 1.2; // Get bigger
+                    this.sizeRatio = this.baseSizeRatio * 1.2;
                     if (this.powerUpTimer <= 0) {
                         this.isPoweredUp = false;
-                        this.sizeRatio = this.baseSizeRatio; // Back to normal size
+                        this.sizeRatio = this.baseSizeRatio;
                         ghosts.forEach(g => g.color = g.originalColor);
                     }
                 }
             }
 
             checkCollisions(map, ghosts) {
-                // Check dot/power-up collision only at the rounded (integer) grid position
                 const r = Math.round(this.row);
                 const c = Math.round(this.col);
 
-                // Boundary check before accessing map (especially important near tunnels)
                 if (r < 0 || r >= GRID_ROWS || c < 0 || c >= GRID_COLS) return;
 
                 const tileValue = map[r][c];
 
-                if (tileValue === 0) { // Dot collision
-                    map[r][c] = 2; // Munch the dot
+                if (tileValue === 0) {
+                    map[r][c] = 2;
                     game.score += 10;
                     game.dotsRemaining--;
                     playMunch();
-                } else if (tileValue === 3) { // Power-up collision
-                    map[r][c] = 2; // Consume power-up
+                } else if (tileValue === 3) {
+                    map[r][c] = 2;
                     this.isPoweredUp = true;
-                    this.powerUpTimer = 300; // 5 seconds at 60 FPS
+                    this.powerUpTimer = 300;
                     game.score += 50;
                     playPowerUp();
-
-                    // Ghosts turn blue/vulnerable
                     ghosts.forEach(g => g.color = '#00f');
+                }
+            }
+
+            startDeathAnimation() {
+                this.isDying = true;
+                this.deathAnimationFrame = 0;
+                playDeathSound();
+            }
+
+            draw() {
+                if (this.isDying) {
+                    this.drawDeathAnimation();
+                    return;
+                }
+
+                const x = this.col * TILE_SIZE + TILE_SIZE / 2;
+                const y = this.row * TILE_SIZE + TILE_SIZE / 2;
+                const size = TILE_SIZE * this.sizeRatio;
+                
+                ctx.fillStyle = this.color;
+                ctx.fillRect(x - size / 2, y - size / 2, size, size);
+            }
+
+            drawDeathAnimation() {
+                const x = this.col * TILE_SIZE + TILE_SIZE / 2;
+                const y = this.row * TILE_SIZE + TILE_SIZE / 2;
+                const baseSize = TILE_SIZE * this.baseSizeRatio;
+                
+                const progress = Math.min(this.deathAnimationFrame / 60, 1);
+                
+                if (progress < 1) {
+                    // Split into 4 pieces moving apart
+                    const spread = progress * TILE_SIZE * 0.5;
+                    const pieceSize = baseSize / 2.5;
+                    const fade = 1 - progress * 0.5;
+                    
+                    ctx.fillStyle = `rgba(255, 255, 0, ${fade})`;
+                    
+                    // Top-left piece
+                    ctx.fillRect(x - spread - pieceSize/2, y - spread - pieceSize/2, pieceSize, pieceSize);
+                    // Top-right piece
+                    ctx.fillRect(x + spread - pieceSize/2, y - spread - pieceSize/2, pieceSize, pieceSize);
+                    // Bottom-left piece
+                    ctx.fillRect(x - spread - pieceSize/2, y + spread - pieceSize/2, pieceSize, pieceSize);
+                    // Bottom-right piece
+                    ctx.fillRect(x + spread - pieceSize/2, y + spread - pieceSize/2, pieceSize, pieceSize);
                 }
             }
         }
@@ -584,27 +670,30 @@
             constructor(row, col, color) {
                 super(row, col, color);
                 this.originalColor = color;
-                this.startRow = row; // Store original starting position
+                this.startRow = row;
                 this.startCol = col;
-                this.speed = 0.08; // Ghosts move slightly slower than player
+                this.speed = 0.08;
                 this.isLeavingHome = true;
+                this.scatterTarget = { row: 1, col: 1 }; // Default scatter target
+                this.chaseMode = true;
+                this.modeTimer = 0;
             }
 
             update(map, player, delta) {
-                // Get the AI's intended next direction first
+                // Update chase/scatter mode timer
+                this.modeTimer++;
+                if (this.modeTimer > 600) { // Switch modes every ~10 seconds
+                    this.chaseMode = !this.chaseMode;
+                    this.modeTimer = 0;
+                }
+
                 this.nextDirection = this.determineNextAction(map, player);
-
-                // Perform the move
                 this.move(map, delta);
-
-                // Check collision with player
                 this.checkPlayerCollision(player);
 
-                // Check if the ghost is done leaving home
                 if (this.isLeavingHome) {
                     const r = Math.round(this.row);
                     const c = Math.round(this.col);
-                    // Check if ghost has reached the exit tile
                     if (r === GHOST_EXIT_TARGET.row && c === GHOST_EXIT_TARGET.col) {
                         this.isLeavingHome = false;
                     }
@@ -615,36 +704,36 @@
                 const r = Math.round(this.row);
                 const c = Math.round(this.col);
                 
-                // Only choose a new direction when aligned to the grid center
                 if (Math.abs(this.row - r) > 0.01 || Math.abs(this.col - c) > 0.01) {
-                    return this.nextDirection; // Keep current buffered direction if not aligned
+                    return this.nextDirection;
                 }
 
                 let targetR, targetC;
 
                 if (this.isLeavingHome) {
-                    // Target: The maze exit above the house
                     targetR = GHOST_EXIT_TARGET.row;
                     targetC = GHOST_EXIT_TARGET.col;
                     return this.chooseDirectionToTarget(map, targetR, targetC, false);
                 } else if (player.isPoweredUp && this.color === '#00f') {
-                    // Flee Mode: Target the corner farthest from the player
+                    // Flee Mode: Run away from player
                     targetR = r < GRID_ROWS / 2 ? GRID_ROWS - 2 : 1;
                     targetC = c < GRID_COLS / 2 ? GRID_COLS - 2 : 1;
-                    return this.chooseDirectionToTarget(map, targetR, targetC, true); // true for Flee mode (Maximize distance)
-                } else {
-                    // Chase Mode: Target the player's current tile
+                    return this.chooseDirectionToTarget(map, targetR, targetC, true);
+                } else if (this.chaseMode) {
+                    // Chase Mode: Go directly toward player
                     targetR = Math.round(player.row);
                     targetC = Math.round(player.col);
-                    return this.chooseDirectionToTarget(map, targetR, targetC, false); // false for Chase mode (Minimize distance)
+                    return this.chooseDirectionToTarget(map, targetR, targetC, false);
+                } else {
+                    // Scatter Mode: Go to scatter corner
+                    return this.chooseDirectionToTarget(map, this.scatterTarget.row, this.scatterTarget.col, false);
                 }
             }
 
-            // Centralized AI decision function
             chooseDirectionToTarget(map, targetR, targetC, isFleeing) {
                 const directions = ['up', 'down', 'left', 'right'];
                 let bestDir = 'none';
-                let bestScore = isFleeing ? -1 : Infinity; // Minimize for chase, Maximize for flee
+                let bestScore = isFleeing ? -1 : Infinity;
                 
                 const r = Math.round(this.row);
                 const c = Math.round(this.col);
@@ -653,18 +742,12 @@
                     const tempRow = r + (dir === 'up' ? -1 : dir === 'down' ? 1 : 0);
                     const tempCol = c + (dir === 'left' ? -1 : dir === 'right' ? 1 : 0);
 
-                    // Check boundaries
                     if (tempRow < 0 || tempRow >= GRID_ROWS || tempCol < 0 || tempCol >= GRID_COLS) continue;
 
-                    // Ghost home tiles (4) should ONLY block non-leaving ghosts
                     const isBlocked = map[tempRow][tempCol] === 1 || (!this.isLeavingHome && map[tempRow][tempCol] === 4);
 
-
-                    if (!isBlocked) 
-                    {
-                        // Prevent instant 180-degree turns
-                        if (this.getOppositeDirection(this.currentDirection) !== dir) 
-                        {
+                    if (!isBlocked) {
+                        if (this.getOppositeDirection(this.currentDirection) !== dir) {
                             const dist = manhattanDistance(tempRow, tempCol, targetR, targetC);
                             
                             if (isFleeing) {
@@ -672,7 +755,7 @@
                                     bestScore = dist;
                                     bestDir = dir;
                                 }
-                            } else { // Chase Mode (or Leaving Home)
+                            } else {
                                 if (dist < bestScore) {
                                     bestScore = dist;
                                     bestDir = dir;
@@ -682,7 +765,6 @@
                     }
                 }
                 
-                // Fallback: If no smart non-180 move is possible (e.g., dead end), allow a 180.
                 if (bestDir === 'none' && this.currentDirection !== 'none') {
                     const opposite = this.getOppositeDirection(this.currentDirection);
                     const tempRow = r + (opposite === 'up' ? -1 : opposite === 'down' ? 1 : 0);
@@ -708,24 +790,22 @@
             }
 
             checkPlayerCollision(player) {
-                // Check if the center points of the entities are close enough
+                if (player.isDying) return;
+
                 const distance = Math.sqrt(Math.pow(this.row - player.row, 2) + Math.pow(this.col - player.col, 2));
 
-                if (distance < 0.7) { // 0.7 tiles distance for collision
+                if (distance < 0.7) {
                     if (player.isPoweredUp && this.color === '#00f') {
-                        // Player eats ghost
                         game.score += 200;
                         this.respawn();
-                        player.powerUpTimer = Math.max(0, player.powerUpTimer - 60); // Penalty for eating (shortens power up)
+                        player.powerUpTimer = Math.max(0, player.powerUpTimer - 60);
                     } else {
-                        // Ghost eats player
                         game.loseLife();
                     }
                 }
             }
 
             respawn() {
-                // Return to original starting position
                 this.row = this.startRow;
                 this.col = this.startCol;
                 this.currentDirection = 'none';
@@ -764,91 +844,93 @@
                 this.dotsRemaining = 0;
                 this.map = this.deepCopyMap(MAP);
 
-                // Count dots and position entities
                 for (let r = 0; r < GRID_ROWS; r++) {
                     for (let c = 0; c < GRID_COLS; c++) {
-                        // Count dots, including power-ups
                         if (this.map[r][c] === 0 || this.map[r][c] === 3) {
                             this.dotsRemaining++;
                         }
                     }
                 }
 
-                // Player starts at 16.0, 10.0 (clear path tile)
                 this.player = new Player(16.0, 10.0);
 
-                // Initialize ghosts near the "ghost home" (float coordinates)
+                // Initialize ghosts with different scatter corners
                 this.ghosts = [
-                    new Ghost(9.0, 9.0, '#f00'), // Red
-                    new Ghost(9.0, 11.0, '#ff8800'), // Orange
-                    new Ghost(10.0, 9.0, '#0f0'), // Green
-                    new Ghost(10.0, 11.0, '#ffc0cb'), // Pink
+                    new Ghost(9.0, 9.0, '#f00'),   // Red - top right corner
+                    new Ghost(9.0, 11.0, '#ff8800'), // Orange - top left corner
+                    new Ghost(10.0, 9.0, '#0f0'),    // Green - bottom right corner
+                    new Ghost(10.0, 11.0, '#ffc0cb'), // Pink - bottom left corner
                 ];
+                
+                // Set scatter targets for each ghost
+                this.ghosts[0].scatterTarget = { row: 1, col: GRID_COLS - 2 };
+                this.ghosts[1].scatterTarget = { row: 1, col: 1 };
+                this.ghosts[2].scatterTarget = { row: GRID_ROWS - 2, col: GRID_COLS - 2 };
+                this.ghosts[3].scatterTarget = { row: GRID_ROWS - 2, col: 1 };
 
                 this.resizeCanvas();
                 this.updateDisplay();
                 this.showMessage("GET READY!", false);
             }
 
-            /**
-             * Resizes the canvas and recalculates TILE_SIZE, ensuring a valid size 
-             * is used even if initial container measurements are 0.
-             */
             resizeCanvas() {
                 const container = canvas.parentElement;
-                
-                // Get the size, safely defaulting to 500 if clientWidth/Height are 0
-                let size = Math.min(container.clientWidth || 500, container.clientHeight || 500, 500);
-
-                // Final safety check to prevent TILE_SIZE from becoming 0
-                if (size < 100) {
-                    size = 500; 
-                }
-
-                // Set canvas internal dimensions
-                canvas.width = size;
-                canvas.height = size;
-                
-                // Recalculate TILE_SIZE
-                TILE_SIZE = canvas.width / GRID_COLS;
-                this.draw();
+                const size = container.clientWidth || 500;
+                TILE_SIZE = Math.floor(Math.min(size, 500) / GRID_COLS);
             }
 
             start() {
-                if (this.isRunning) return;
-                this.isRunning = true;
+                if (this.isRunning && !this.isPaused) return;
+                
                 this.isPaused = false;
+                this.isRunning = true;
                 this.hideMessage();
-                
-                // Start tracking time
-                scoreManager.startSession();
-                
                 startBGM();
-                lastTimestamp = null; // reset timing at (re)start
+                lastTimestamp = null;
                 requestAnimationFrame(this.gameLoop.bind(this));
             }
 
             pause() {
-                this.isPaused = true;
-                stopBGM();
-                this.showMessage("PAUSED - Press Enter/Space to Resume");
+                if (!this.isRunning) return;
+                this.isPaused = !this.isPaused;
+                if (this.isPaused) {
+                    stopBGM();
+                    this.showMessage("PAUSED - Press P to Resume", true);
+                } else {
+                    startBGM();
+                    this.hideMessage();
+                }
             }
 
             loseLife() {
                 this.lives--;
-                playDeath();
-                stopBGM();
                 this.updateDisplay();
+                
                 if (this.lives <= 0) {
-                    this.gameOver();
-                } else {
-                    this.resetPosition();
+                    // Start death animation
+                    this.player.startDeathAnimation();
+                    this.isPaused = true;
+                    stopBGM();
+                    
+                    // Wait for death animation to complete
+                    setTimeout(() => {
+                        this.gameOver();
+                    }, 1500);
+                    return;
                 }
+                
+                // Start death animation for life lost
+                this.player.startDeathAnimation();
+                this.isPaused = true;
+                stopBGM();
+                
+                setTimeout(() => {
+                    this.resetPositions();
+                }, 1500);
             }
 
-            resetPosition() {
+            resetPositions() {
                 this.isPaused = true;
-                // Reset to float coordinates, using the fixed starting position
                 this.player.row = 16.0;
                 this.player.col = 10.0;
                 this.player.currentDirection = 'none';
@@ -856,6 +938,8 @@
                 this.player.isPoweredUp = false;
                 this.player.powerUpTimer = 0;
                 this.player.sizeRatio = this.player.baseSizeRatio;
+                this.player.isDying = false;
+                this.player.deathAnimationFrame = 0;
 
                 this.ghosts.forEach(g => {
                     g.respawn();
@@ -877,59 +961,11 @@
                 this.isPaused = true;
                 stopBGM();
                 
-                // Submit score to leaderboard
-                scoreManager.submitGameResult(this.score);
-                
-                const playTime = scoreManager.getElapsedTimeFormatted();
-                const isNewHighScore = this.score > scoreManager.highScore && scoreManager.highScore > 0;
-                
-                // Enhanced credits screen
-                const creditsHTML = `
-                    <div style="line-height: 1.8; font-size: 0.7rem; text-align: center;">
-                        <p style="font-size: 1.5rem; margin-bottom: 1rem; color: #ff0; text-shadow: 0 0 10px #ff0;">GAME OVER</p>
-                        ${isNewHighScore ? '<p style="color: #0f0; margin-bottom: 0.5rem; font-size: 0.9rem; animation: pulse 1s infinite;">★ NEW HIGH SCORE! ★</p>' : ''}
-                        
-                        <div style="margin: 1.5rem 0; padding: 1rem; background: rgba(0,0,0,0.5); border-radius: 8px;">
-                            <p style="color: #ffff00; margin-bottom: 0.3rem;">FINAL SCORE</p>
-                            <p style="font-size: 1.5rem; color: #fff; margin-bottom: 1rem;">${this.score}</p>
-                            
-                            <p style="color: #00ffff; margin-bottom: 0.3rem;">LEVEL REACHED</p>
-                            <p style="font-size: 1.2rem; color: #fff; margin-bottom: 1rem;">${this.level}</p>
-                            
-                            <p style="color: #ff69b4; margin-bottom: 0.3rem;">TIME PLAYED</p>
-                            <p style="font-size: 1rem; color: #fff;">${playTime}</p>
-                        </div>
-                        
-                        <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid #333;">
-                            <p style="font-size: 0.55rem; color: #888; margin-bottom: 0.3rem;">GAME BY</p>
-                            <p style="font-size: 0.65rem; color: #e94560; margin-bottom: 0.8rem;">GUNNER'S GAMES</p>
-                            <p style="font-size: 0.5rem; color: #666;">Thanks for playing!</p>
-                        </div>
-                        
-                        <p style="font-size: 0.6rem; margin-top: 1.5rem; color: #888;">Returning to Arcade in 5 seconds...</p>
-                    </div>
-                    <style>
-                        @keyframes pulse {
-                            0%, 100% { opacity: 1; }
-                            50% { opacity: 0.5; }
-                        }
-                    </style>
-                `;
-                
-                messageBox.innerHTML = creditsHTML;
-                messageBox.classList.remove('hidden', 'bg-red-800', 'bg-green-900');
-                messageBox.classList.add('bg-red-900');
-                
-                // Return to arcade after showing credits
-                setTimeout(() => {
-                    // If in iframe, tell parent to close it
-                    if (window.parent !== window) {
-                        window.parent.postMessage({ action: 'closeGame' }, '*');
-                    } else {
-                        // If opened directly, go to arcade
-                        window.location.href = '/arcade.html';
-                    }
-                }, 5000); // Extended to 5 seconds to read credits
+                // Show end modal
+                document.getElementById('finalScore').textContent = this.score;
+                document.getElementById('finalLevel').textContent = this.level;
+                document.getElementById('playerNameInput').value = playerName;
+                document.getElementById('endModal').style.display = 'flex';
             }
 
             winGame() {
@@ -949,11 +985,9 @@
             }
             
             nextLevel() {
-                // Reset map but keep score and lives
                 this.map = this.deepCopyMap(MAP);
                 this.dotsRemaining = 0;
                 
-                // Count dots
                 for (let r = 0; r < GRID_ROWS; r++) {
                     for (let c = 0; c < GRID_COLS; c++) {
                         if (this.map[r][c] === 0 || this.map[r][c] === 3) {
@@ -962,7 +996,6 @@
                     }
                 }
                 
-                // Reset player position
                 this.player.row = 16.0;
                 this.player.col = 10.0;
                 this.player.currentDirection = 'none';
@@ -971,8 +1004,12 @@
                 this.player.powerUpTimer = 0;
                 this.player.sizeRatio = this.player.baseSizeRatio;
                 
-                // Reset all ghosts to starting positions
                 this.ghosts.forEach(g => g.respawn());
+                
+                // Increase ghost speed slightly each level
+                this.ghosts.forEach(g => {
+                    g.speed = 0.08 + (this.level * 0.005);
+                });
                 
                 this.updateDisplay();
                 this.showMessage(`LEVEL ${this.level} - GET READY!`, false);
@@ -1008,35 +1045,34 @@
 
                         const tile = this.map[r][c];
 
-                        if (tile === 1) { // Wall (Solid Block)
-                            ctx.fillStyle = '#0044ff'; // Blue Wall
+                        if (tile === 1) {
+                            ctx.fillStyle = '#0044ff';
                             ctx.fillRect(x, y, TILE_SIZE, TILE_SIZE);
                             ctx.strokeStyle = '#002288';
                             ctx.lineWidth = 1;
                             ctx.strokeRect(x, y, TILE_SIZE, TILE_SIZE);
-                        } else if (tile === 5) { // Tunnel (Empty/Black)
+                        } else if (tile === 5) {
                             ctx.fillStyle = '#000';
                             ctx.fillRect(x, y, TILE_SIZE, TILE_SIZE);
-                        } else if (tile === 0) { // Dot (Small Square)
+                        } else if (tile === 0) {
                             ctx.fillStyle = '#fff';
                             const dotSize = TILE_SIZE / 6;
                             ctx.fillRect(x + TILE_SIZE / 2 - dotSize / 2, y + TILE_SIZE / 2 - dotSize / 2, dotSize, dotSize);
-                        } else if (tile === 3) { // Power-Up (Bigger Square)
-                            ctx.fillStyle = '#ff00ff'; // Pink Power-Up
+                        } else if (tile === 3) {
+                            ctx.fillStyle = '#ff00ff';
                             const puSize = TILE_SIZE / 3;
                             ctx.fillRect(x + TILE_SIZE / 2 - puSize / 2, y + TILE_SIZE / 2 - puSize / 2, puSize, puSize);
                         }
                     }
                 }
 
-                // Draw Entities
                 this.player.draw();
                 this.ghosts.forEach(g => g.draw());
             }
 
             gameLoop(timestamp) {
                 if (lastTimestamp === null) lastTimestamp = timestamp;
-                const delta = (timestamp - lastTimestamp) / 16.67; // 1.0 ~= one 60 FPS frame
+                const delta = (timestamp - lastTimestamp) / 16.67;
                 lastTimestamp = timestamp;
 
                 this.update(delta);
@@ -1073,10 +1109,8 @@
         function handleKeyDown(e) {
             if (!game) return;
             
-            // If game is over, ignore all inputs (auto-returns to arcade)
             if (!game.isRunning) return;
             
-            // If game is paused but still running (pause during game)
             if (game.isPaused) {
                 if (e.key === ' ' || e.key === 'Enter') {
                     game.start();
@@ -1107,7 +1141,6 @@
             }
         }
 
-        // Mobile touch input logic
         window.handleTouchInput = function(direction) {
             if (game && game.isRunning && !game.isPaused) {
                 game.player.nextDirection = direction;
@@ -1116,7 +1149,6 @@
             }
         }
 
-        // Touch swipe detection for movement
         let touchstartX = 0;
         let touchstartY = 0;
 
@@ -1137,30 +1169,21 @@
 
             if (Math.abs(diffX) > 10 || Math.abs(diffY) > 10) {
                 if (Math.abs(diffX) > Math.abs(diffY)) {
-                    // Horizontal swipe
                     game.player.nextDirection = diffX > 0 ? 'right' : 'left';
                 } else {
-                    // Vertical swipe
                     game.player.nextDirection = diffY > 0 ? 'down' : 'up';
                 }
             }
             e.preventDefault();
         }, { passive: false });
 
-
         // --- Initialization ---
 
         function initGame() {
-            // Setup game objects
             game = new DotMuncherGame();
-
-            // Setup audio components
             setupAudio();
-
-            // Set up event listeners
             document.addEventListener('keydown', handleKeyDown);
 
-            // Start button handles first interaction (mandatory for web audio API)
             startButton.addEventListener('click', async () => {
                 await Tone.start();
                 startButton.textContent = 'Use Arrow Keys/WASD or Swipe to Play!';
@@ -1169,7 +1192,6 @@
                 game.start();
             });
 
-            // Initial draw before loop starts
             game.draw();
         }
 
