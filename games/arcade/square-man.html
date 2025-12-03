@@ -239,20 +239,20 @@
         async function initGameAuth() {
             try {
                 console.log("Checking authentication...");
-                const { data: { user } } = await supabase.auth.getUser();
+                const { data: { session } } = await supabase.auth.getSession();
                 
-                if (!user) {
+                if (!session?.user) {
                     console.log("Not logged in - playing as guest");
                     console.log("Scores will not be saved to leaderboard");
                     return;
                 }
                 
-                currentUser = user;
-                playerName = user.user_metadata?.display_name || 
-                            user.email?.split('@')[0] || 
+                currentUser = session.user;
+                playerName = session.user.user_metadata?.display_name || 
+                            session.user.email?.split('@')[0] || 
                             "Anonymous";
                 console.log("✓ Authenticated as:", playerName);
-                console.log("✓ User ID:", user.id);
+                console.log("✓ User ID:", session.user.id);
                 
                 await loadHighScore();
             } catch (err) {
@@ -397,39 +397,18 @@
         let lastTimestamp = null;
 
         // --- Audio ---
-        let bgmSynth = null;
-        let bgmLoop = null;
         let deathSound = null;
 
         function setupAudio() {
-            bgmSynth = new Tone.Synth({
-                oscillator: { type: 'square' },
-                envelope: { attack: 0.005, decay: 0.1, sustain: 0.3, release: 1 }
-            }).toDestination();
+            // Audio setup for sound effects only
         }
 
         function startBGM() {
-            if (bgmLoop) return; // Already playing
-            
-            const bgmMelody = ['C4', 'E4', 'G4', 'C5'];
-            let bgmIndex = 0;
-
-            bgmLoop = Tone.Transport.scheduleRepeat((time) => {
-                bgmSynth.triggerAttackRelease(bgmMelody[bgmIndex % bgmMelody.length], '8n', time);
-                bgmIndex++;
-            }, '0.5s');
-            
-            if (Tone.Transport.state !== 'started') {
-                Tone.Transport.start();
-            }
+            // BGM removed - silent gameplay
         }
 
         function stopBGM() {
-            if (bgmLoop) {
-                Tone.Transport.clear(bgmLoop);
-                bgmLoop = null;
-            }
-            Tone.Transport.stop();
+            // BGM removed - silent gameplay
         }
 
         function playMunch() {
@@ -477,7 +456,7 @@
                 this.nextDirection = 'none';
                 this.speed = 0.1;
                 this.color = color;
-                this.sizeRatio = 0.7;
+                this.sizeRatio = 0.5; // Reduced from 0.7 to prevent wall clipping
             }
 
             draw() {
@@ -507,7 +486,8 @@
                 const c = Math.round(nextCol);
 
                 if (r < 0 || r >= GRID_ROWS || c < 0 || c >= GRID_COLS) {
-                    if (this.row === 9.0 || this.row === 10.0) {
+                    // Special handling for tunnel on rows 9
+                    if (Math.round(this.row) === 9) {
                         this.row = nextRow;
                         this.col = nextCol;
                     } else {
@@ -524,6 +504,13 @@
                     }
 
                     if (blocksMovement) {
+                        // Stop at the edge of the current tile instead of moving into the wall
+                        const currentR = Math.round(this.row);
+                        const currentC = Math.round(this.col);
+                        
+                        // Snap to center if we're trying to move into a wall
+                        this.row = currentR;
+                        this.col = currentC;
                         this.currentDirection = 'none';
                         return false;
                     } else {
@@ -532,12 +519,12 @@
                     }
                 }
 
-                // Teleport Check (Boundary Wrap-around)
-                if (this.col < 0) {
-                    this.col = GRID_COLS - 1;
+                // Teleport Check (Boundary Wrap-around for tunnel)
+                if (this.col < -0.5) {
+                    this.col = GRID_COLS - 0.5;
                     this.row = 9.0;
-                } else if (this.col >= GRID_COLS) {
-                    this.col = 0;
+                } else if (this.col >= GRID_COLS - 0.5) {
+                    this.col = -0.5;
                     this.row = 9.0;
                 }
 
@@ -594,7 +581,7 @@
         class Player extends Entity {
             constructor(row, col) {
                 super(row, col, '#ff0');
-                this.baseSizeRatio = 0.8;
+                this.baseSizeRatio = 0.6; // Adjusted from 0.8
                 this.sizeRatio = this.baseSizeRatio;
                 this.isPoweredUp = false;
                 this.powerUpTimer = 0;
