@@ -852,14 +852,14 @@
                     }
                 }
 
-                this.player = new Player(16.0, 10.0);
+                this.player = new Player(19.0, 10.0);
 
-                // Initialize ghosts with different scatter corners
+                // Initialize ghosts with different scatter corners (in ghost home)
                 this.ghosts = [
                     new Ghost(9.0, 9.0, '#f00'),   // Red - top right corner
                     new Ghost(9.0, 11.0, '#ff8800'), // Orange - top left corner
-                    new Ghost(10.0, 9.0, '#0f0'),    // Green - bottom right corner
-                    new Ghost(10.0, 11.0, '#ffc0cb'), // Pink - bottom left corner
+                    new Ghost(9.0, 10.0, '#0f0'),    // Green - bottom right corner
+                    new Ghost(9.0, 12.0, '#ffc0cb'), // Pink - bottom left corner
                 ];
                 
                 // Set scatter targets for each ghost
@@ -931,7 +931,7 @@
 
             resetPositions() {
                 this.isPaused = true;
-                this.player.row = 16.0;
+                this.player.row = 19.0;
                 this.player.col = 10.0;
                 this.player.currentDirection = 'none';
                 this.player.nextDirection = 'none';
@@ -996,7 +996,7 @@
                     }
                 }
                 
-                this.player.row = 16.0;
+                this.player.row = 19.0;
                 this.player.col = 10.0;
                 this.player.currentDirection = 'none';
                 this.player.nextDirection = 'none';
