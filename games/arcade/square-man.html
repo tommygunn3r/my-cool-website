@@ -238,10 +238,12 @@
         // Check for logged in user
         async function initGameAuth() {
             try {
+                console.log("Checking authentication...");
                 const { data: { user } } = await supabase.auth.getUser();
                 
                 if (!user) {
-                    console.log("Not logged in - guest mode");
+                    console.log("Not logged in - playing as guest");
+                    console.log("Scores will not be saved to leaderboard");
                     return;
                 }
                 
@@ -249,11 +251,12 @@
                 playerName = user.user_metadata?.display_name || 
                             user.email?.split('@')[0] || 
                             "Anonymous";
-                console.log("Authenticated:", playerName);
+                console.log("✓ Authenticated as:", playerName);
+                console.log("✓ User ID:", user.id);
                 
                 await loadHighScore();
             } catch (err) {
-                console.warn("Auth check failed:", err);
+                console.error("Auth check failed:", err);
             }
         }
 
@@ -280,12 +283,19 @@
 
         async function submitHighScore(score, playerNameSubmit) {
             if (!currentUser) {
-                console.log("No user logged in, score not saved");
+                console.log("Playing as guest - score not saved to leaderboard");
                 return;
             }
 
             try {
-                const { error } = await supabase
+                console.log("Attempting to submit score:", {
+                    user_id: currentUser.id,
+                    game_id: 'square-man',
+                    player_name: playerNameSubmit,
+                    score: Math.floor(score)
+                });
+
+                const { data, error } = await supabase
                     .from('game_highscores')
                     .insert({
                         user_id: currentUser.id,
@@ -294,18 +304,31 @@
                         score: Math.floor(score)
                     });
 
-                if (error) throw error;
-                console.log("Score submitted:", score);
+                if (error) {
+                    console.error("Supabase error details:", error);
+                    throw error;
+                }
+                console.log("Score submitted successfully:", score);
             } catch (error) {
-                console.error("Score submission failed:", error);
+                console.error("Score submission failed:", error.message);
+                alert("Failed to submit score. Check console for details.");
             }
         }
 
         // Global function for submit and show credits
         window.submitAndShowCredits = async function() {
+            console.log("submitAndShowCredits called");
             const playerNameValue = document.getElementById('playerNameInput').value.trim() || playerName;
             const finalScore = parseInt(document.getElementById('finalScore').textContent);
             const finalLevel = parseInt(document.getElementById('finalLevel').textContent);
+            
+            console.log("Submitting:", { playerNameValue, finalScore, finalLevel, currentUser });
+            
+            if (!currentUser) {
+                console.log("⚠️ Not logged in - score will not be saved");
+            } else {
+                console.log("✓ Submitting score to leaderboard...");
+            }
             
             await submitHighScore(finalScore, playerNameValue);
 
@@ -375,32 +398,39 @@
 
         // --- Audio ---
         let bgmSynth = null;
+        let bgmLoop = null;
         let deathSound = null;
+
+        let bgmLoop = null;
 
         function setupAudio() {
             bgmSynth = new Tone.Synth({
                 oscillator: { type: 'square' },
                 envelope: { attack: 0.005, decay: 0.1, sustain: 0.3, release: 1 }
             }).toDestination();
-
-            const bgmMelody = ['C4', 'E4', 'G4', 'C5'];
-            let bgmIndex = 0;
-
-            Tone.Transport.scheduleRepeat((time) => {
-                if (game && game.isRunning && !game.isPaused) {
-                    bgmSynth.triggerAttackRelease(bgmMelody[bgmIndex % bgmMelody.length], '8n', time);
-                    bgmIndex++;
-                }
-            }, '0.5s');
         }
 
         function startBGM() {
+            if (bgmLoop) return; // Already playing
+            
+            const bgmMelody = ['C4', 'E4', 'G4', 'C5'];
+            let bgmIndex = 0;
+
+            bgmLoop = Tone.Transport.scheduleRepeat((time) => {
+                bgmSynth.triggerAttackRelease(bgmMelody[bgmIndex % bgmMelody.length], '8n', time);
+                bgmIndex++;
+            }, '0.5s');
+            
             if (Tone.Transport.state !== 'started') {
                 Tone.Transport.start();
             }
         }
 
         function stopBGM() {
+            if (bgmLoop) {
+                Tone.Transport.clear(bgmLoop);
+                bgmLoop = null;
+            }
             Tone.Transport.stop();
         }
 
@@ -677,14 +707,24 @@
                 this.scatterTarget = { row: 1, col: 1 }; // Default scatter target
                 this.chaseMode = true;
                 this.modeTimer = 0;
+                this.modeDuration = 420; // 7 seconds in chase, then switch
             }
 
             update(map, player, delta) {
-                // Update chase/scatter mode timer
-                this.modeTimer++;
-                if (this.modeTimer > 600) { // Switch modes every ~10 seconds
-                    this.chaseMode = !this.chaseMode;
-                    this.modeTimer = 0;
+                // Update chase/scatter mode timer (chase more, scatter less)
+                if (!this.isLeavingHome) {
+                    this.modeTimer++;
+                    if (this.chaseMode && this.modeTimer > this.modeDuration) {
+                        // Switch to scatter for shorter time
+                        this.chaseMode = false;
+                        this.modeTimer = 0;
+                        this.modeDuration = 240; // 4 seconds scatter
+                    } else if (!this.chaseMode && this.modeTimer > this.modeDuration) {
+                        // Switch back to chase for longer time
+                        this.chaseMode = true;
+                        this.modeTimer = 0;
+                        this.modeDuration = 420; // 7 seconds chase
+                    }
                 }
 
                 this.nextDirection = this.determineNextAction(map, player);
