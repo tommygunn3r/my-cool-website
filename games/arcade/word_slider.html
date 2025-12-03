@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Word Slider: Waterfall Edition</title>
+    <title>Word Slider</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -165,16 +165,11 @@
             </div>
         </div>
 
-        <h1>Waterfall Slider</h1>
+        <h1>Word Slider</h1>
         <p class="info">Form words in the <span class="highlight-text">BOTTOM ROW</span> to add time!<br>Don't let the clock run out.</p>
         
         <div id="loadingMessage" class="message show" style="display: block; background:#2d3748; color:white;">
             Loading Dictionary...
-        </div>
-
-        <div class="file-input-section" id="fileSection">
-            <p style="color:#2d3748; margin-bottom:5px; font-size:0.8em;">Optional: Upload CSW19.txt if automatic loading fails</p>
-            <input type="file" id="dictionaryFile" accept=".txt" style="width:100%;">
         </div>
 
         <div class="stats">
@@ -186,7 +181,6 @@
         </div>
         
         <div class="puzzle-grid" id="puzzleGrid"></div>
-        <div class="buttons"><button class="new-game-btn" onclick="newGame()">Reset Game</button></div>
         <div class="message" id="message"></div>
         <div class="words-found">
             <h3>Extracted Words:</h3>
@@ -328,21 +322,6 @@
                 console.log("Background dictionary load failed, using fallback.");
             }
         }
-
-        function handleManualUpload(e) {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(event) {
-                    const text = event.target.result;
-                    const words = text.split(/\r?\n/).map(w => w.trim().toUpperCase()).filter(w => w.length >= 3);
-                    dictionary = new Set(words);
-                    showMessage("Custom Dictionary Loaded!", "success");
-                };
-                reader.readAsText(file);
-            }
-        }
-        document.getElementById('dictionaryFile').addEventListener('change', handleManualUpload);
 
         function createLetterPool() {
             const pool = [];
