@@ -290,6 +290,7 @@
 
         // DEFAULT TO FALLBACK IMMEDIATELY
         dictionary = new Set(FALLBACK_WORDS);
+        dictionaryLoaded = true; // Mark dictionary as loaded
 
         async function initDictionary() {
             document.getElementById('loadingMessage').textContent = "Game Ready (Offline Mode)";
