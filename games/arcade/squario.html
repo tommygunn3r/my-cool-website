@@ -105,18 +105,44 @@
         <h1 id="endMessage">Game Over!</h1>
         <p id="finalScore"></p>
         <p id="currentHighScore"></p>
-        <div id="credits" style="margin-top: 30px; font-size: 16px; line-height: 1.8; color: #aaa;">
-            <p style="color: white; font-size: 20px; margin-bottom: 15px;">━━━━━━━━━━━━━━━━</p>
-            <p><strong style="color: #FFD700;">Game Design & Development</strong></p>
-            <p>GunnersGames Studio</p>
-            <p style="margin-top: 15px;"><strong style="color: #FFD700;">Powered By</strong></p>
-            <p>Claude AI Assistant</p>
-            <p style="margin-top: 15px;"><strong style="color: #FFD700;">Special Thanks</strong></p>
-            <p>All players at GunnersGames</p>
-            <p style="color: white; font-size: 20px; margin-top: 15px;">━━━━━━━━━━━━━━━━</p>
-            <p style="margin-top: 20px; color: #888; font-size: 14px;">Close this window to return to the arcade</p>
+        <div id="credits" style="margin-top: 30px; height: 250px; overflow: hidden; position: relative;">
+            <div id="creditsScroll" style="position: absolute; width: 100%; animation: scrollUp 20s linear infinite;">
+                <div style="text-align: center; font-size: 18px; line-height: 2.5; color: #fff;">
+                    <p style="font-size: 24px; color: #FFD700; margin-bottom: 20px;">━━━━━━━━━━━━━━━━</p>
+                    
+                    <p style="font-size: 20px; color: #FFD700; margin-top: 30px;">GAME DESIGN</p>
+                    <p style="color: #ddd;">GunnersGames Studio</p>
+                    
+                    <p style="font-size: 20px; color: #FFD700; margin-top: 30px;">DEVELOPMENT</p>
+                    <p style="color: #ddd;">Claude AI Assistant</p>
+                    
+                    <p style="font-size: 20px; color: #FFD700; margin-top: 30px;">SPECIAL THANKS</p>
+                    <p style="color: #ddd;">All GunnersGames Players</p>
+                    
+                    <p style="font-size: 24px; color: #FFD700; margin-top: 40px;">━━━━━━━━━━━━━━━━</p>
+                    
+                    <p style="margin-top: 40px; color: #888; font-size: 14px;">
+                        Press ESC or close window<br>to return to arcade
+                    </p>
+                    
+                    <p style="margin-top: 60px; color: #666; font-size: 16px;">
+                        THANKS FOR PLAYING!
+                    </p>
+                </div>
+            </div>
         </div>
     </div>
+    
+    <style>
+        @keyframes scrollUp {
+            0% { top: 100%; }
+            100% { top: -100%; }
+        }
+        
+        #creditsScroll {
+            animation-iteration-count: infinite;
+        }
+    </style>
     <canvas id="game"></canvas>
 
     <div id="mobile-controls">
@@ -166,8 +192,11 @@
             }
 
             async submitGameResult(score = 0) {
-                // No user or no meaningful score -> skip remote write
-                if (!this.user || !score || score <= 0) return;
+                // Skip if no user logged in
+                if (!this.user) {
+                    console.log("No user logged in, skipping score submission");
+                    return;
+                }
 
                 const timePlayed = this.getElapsedTime();
 
@@ -180,12 +209,12 @@
                     });
 
                     if (error) {
-                        console.warn("Supabase stats insert failed:", error.message);
+                        console.error("Supabase stats insert failed:", error);
                     } else {
-                        console.log("Supabase stats saved for", this.gameName, score);
+                        console.log(`Score submitted: ${score} for ${this.gameName}`);
                     }
                 } catch (err) {
-                    console.warn("Supabase error while saving stats:", err.message || err);
+                    console.error("Error submitting score:", err);
                 }
             }
         }
