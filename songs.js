@@ -17,4 +17,13 @@ window.songs = [
     { title: "YO' Dog", artist: "Six7", file: "music/yo' dog.mp3" },
     { title: "Runnin'Hot", artist: "Six7", file: "music/Runnin' Hot on 66.mp3" },
     { title: "Going Nowhere Fast", artist: "Six7", file: "music/Going nowhere Fast.mp3" },
+    { title: "Rust and Regret", artist: "Vegas Vibes", file: "music/Rust and Regret.mp3" },
+    { title: "Junkyard Cadillac'", artist: "Master P", file: "music/Junkyard Cadillac.mp3" },
+    { title: "Electric Dreamer", artist: "The Cruisers", file: "music/Electric Dreamer.mp3" },
+    { title: "Soaked up", artist: "Synthwave Dreams", file: "music/Soaked Up.mp3" },
+    { title: "No More Blood", artist: "Cowboy Dude", file: "music/No More Blood.mp3" },
+    { title: "Hit'n It", artist: "Continue Crew", file: "music/Hit'n It.mp3" },
+    { title: "Wrong turn at Midnight", artist: "Six7", file: "music/Wrong Turn at Midnight.mp3" },
+    { title: "My main squeeze", artist: "Six7", file: "music/My Main Squeeze.mp3" },
+    { title: "Chevy run deep", artist: "Six7", file: "music/Chevy Runs Deep.mp3" },
 ];
