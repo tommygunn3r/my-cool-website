@@ -197,7 +197,7 @@
                 const timePlayed = this.getElapsedTime();
 
                 try {
-                    const { error } = await supabase.from("stats").insert({
+                    const { error } = await supabase.from("game_highscores").insert({
                         user_id: this.user.id,
                         game: this.gameName,
                         score: Math.floor(score),
@@ -614,7 +614,7 @@
             
             // Auto-redirect to arcade after 5 seconds
             setTimeout(() => {
-                window.location.href = 'arcade.html';
+                window.location.href = '../arcade.html';
             }, 5000);
         }
 
