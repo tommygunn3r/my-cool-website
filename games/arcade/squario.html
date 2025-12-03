@@ -199,15 +199,15 @@
                 try {
                     const { error } = await supabase.from("game_highscores").insert({
                         user_id: this.user.id,
-                        game: this.gameName,
-                        score: Math.floor(score),
-                        time_played: timePlayed
+                        game_id: this.gameName,
+                        player_name: this.playerName,
+                        score: Math.floor(score)
                     });
 
                     if (error) {
-                        console.error("Supabase stats insert failed:", error);
+                        console.error("Supabase score submission failed:", error);
                     } else {
-                        console.log(`Score submitted: ${score} for ${this.gameName}`);
+                        console.log(`✅ Score submitted: ${score} for ${this.gameName} by ${this.playerName}`);
                     }
                 } catch (err) {
                     console.error("Error submitting score:", err);
@@ -227,11 +227,15 @@
 
                 scoreManager.user = session.user;
 
-                // Prefer Supabase metadata, fall back to cached profile name if needed
-                const metaName = session.user.user_metadata?.display_name;
-                const cachedName = localStorage.getItem("playerName");
-                scoreManager.playerName = (metaName || cachedName || "Player").toString();
-                console.log("Supabase player initialized:", scoreManager.playerName, "User ID:", session.user.id);
+                // Fetch player_name from profiles table
+                const { data: profile } = await supabase
+                    .from("profiles")
+                    .select("player_name")
+                    .eq("id", session.user.id)
+                    .single();
+
+                scoreManager.playerName = profile?.player_name || "Player";
+                console.log("✅ Squario auth initialized:", scoreManager.playerName, "User ID:", session.user.id);
             } catch (err) {
                 console.error("Supabase auth init failed in Squario:", err);
             }
@@ -614,7 +618,7 @@
             
             // Auto-redirect to arcade after 5 seconds
             setTimeout(() => {
-                window.location.href = '../arcade.html';
+                window.location.href = '/arcade.html';
             }, 5000);
         }
 
