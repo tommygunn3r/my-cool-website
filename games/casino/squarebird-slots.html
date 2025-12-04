@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GunnersGames – Square-Bird Slots</title>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:wght@300;400;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -713,6 +714,76 @@
                 font-size: 1.4rem;
             }
         }
+
+        /* --- Credits Screen --- */
+        #creditsScreen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(135deg, var(--dark) 0%, #1a0f0a 100%);
+            display: none; flex-direction: column; align-items: center; justify-content: center;
+            z-index: 3000; padding: 2rem;
+        }
+        #creditsScreen.active { display: flex; }
+        
+        .credits-content {
+            text-align: center; max-width: 800px;
+            animation: fadeInUp 1s ease-out;
+        }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .credits-title {
+            font-family: 'Cinzel', serif; font-size: 3.5rem; color: var(--gold);
+            margin-bottom: 2rem; text-shadow: 0 0 30px rgba(212, 175, 55, 0.6);
+            letter-spacing: 0.2em;
+        }
+        
+        .credits-stats {
+            background: rgba(0, 0, 0, 0.6); padding: 2rem; border-radius: 15px;
+            border: 2px solid var(--gold); margin-bottom: 2rem;
+        }
+        
+        .stat-row {
+            display: flex; justify-content: space-between; padding: 1rem;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.3); font-size: 1.4rem;
+        }
+        .stat-row:last-child { border-bottom: none; }
+        .stat-label { color: var(--cream); font-weight: 600; }
+        .stat-value { color: var(--gold); font-family: 'Cinzel', serif; font-weight: 700; }
+        .stat-value.positive { color: #4ade80; }
+        .stat-value.negative { color: #ef4444; }
+        
+        .credits-message {
+            font-family: 'Cinzel', serif; font-size: 1.8rem; color: var(--gold);
+            margin: 2rem 0; letter-spacing: 0.1em;
+        }
+        
+        .credits-buttons {
+            display: flex; gap: 1rem; justify-content: center; margin-top: 2rem;
+        }
+        
+        .credits-button {
+            font-family: 'Cinzel', serif; font-size: 1.2rem; padding: 1rem 3rem;
+            background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
+            color: var(--dark); border: none; border-radius: 50px; cursor: pointer;
+            font-weight: 600; letter-spacing: 0.1em; transition: all 0.3s ease;
+            box-shadow: 0 5px 20px rgba(212, 175, 55, 0.4);
+        }
+        .credits-button:hover {
+            transform: translateY(-3px); box-shadow: 0 8px 30px rgba(212, 175, 55, 0.6);
+        }
+        .credits-button.secondary {
+            background: rgba(0, 0, 0, 0.6); color: var(--gold);
+            border: 2px solid var(--gold);
+        }
+
+        @media (max-width: 768px) {
+            .credits-title { font-size: 2.5rem; }
+            .stat-row { font-size: 1.1rem; }
+            .credits-buttons { flex-direction: column; }
+        }
+
     </style>
 </head>
 <body>
@@ -818,19 +889,59 @@
                     <option value="blue">Midnight Blue</option>
                 </select>
             </div>
-            <button class="game-button close-button" id="closeSettings">CLOSE</button>
+            <div class="setting-row">
+                <button class="game-button" id="exitGame" style="width: 100%; margin-top: 1rem;">LEAVE TABLE</button>
+            </div>
+                        <button class="game-button close-button" id="closeSettings">CLOSE</button>
         </div>
     </div>
 
+    <!-- Credits Screen -->
+    <div id="creditsScreen">
+        <div class="credits-content">
+            <div class="credits-title">SESSION COMPLETE</div>
+            
+            <div class="credits-stats">
+                <div class="stat-row">
+                    <span class="stat-label">Spins Played</span>
+                    <span class="stat-value" id="spinsPlayed">0</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Total Wagered</span>
+                    <span class="stat-value" id="totalWagered">0 G</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Total Won</span>
+                    <span class="stat-value" id="totalWon">0 G</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Session Profit</span>
+                    <span class="stat-value" id="sessionProfit">0 G</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Final Balance</span>
+                    <span class="stat-value" id="finalBalance">0 G</span>
+                </div>
+            </div>
+            
+            <div class="credits-message" id="creditsMessage">Thank you for playing!</div>
+            
+            <div class="credits-buttons">
+                <button class="credits-button" id="returnToCasino">RETURN TO CASINO</button>
+                <button class="credits-button secondary" id="playAgain">PLAY AGAIN</button>
+            </div>
+        </div>
+    </div>
 
 
     <script type="module">
         function closeGame() { window.location.href = '/index.html'; }
         window.closeGame = closeGame;
 
-        import { db } from '/firebase-config.js';
-        import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
-        import { collection, addDoc, serverTimestamp, doc, getDoc, setDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+        // --- SUPABASE SETUP ---
+        const SUPABASE_URL = 'https://pknhslxhpohrzgsfkisr.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_-zZw-pi_3q1sdNGhITKuhQ_ECyDARzc';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         let auth = null;
         let balance = 0;
@@ -843,6 +954,14 @@
         let freeSpinsRemaining = 0;
         let sessionTotalWin = 0;
         let lastWinAmount = 0;
+
+        // Session tracking
+        let sessionStats = {
+            spinsPlayed: 0,
+            totalWagered: 0,
+            totalWon: 0,
+            startingBalance: 0
+        };
 
         const audioContext = new (window.AudioContext || window.webkitAudioContext)();
 
@@ -1149,6 +1268,8 @@
             }
 
             if (!usingFreeSpin) {
+                sessionStats.spinsPlayed++;
+                sessionStats.totalWagered += bet;
                 updateBalance(-bet);
             } else {
                 freeSpinsRemaining--;
@@ -1198,6 +1319,7 @@
             updateStatsDisplay();
 
             if (result.totalWin > 0) {
+                sessionStats.totalWon += result.totalWin;
                 if (result.totalWin >= bet * 15) {
                     playBigWin();
                     showMessage('BIG WIN!', `+${result.totalWin.toLocaleString()} G`);
@@ -1230,6 +1352,78 @@
             }
         }
 
+
+        async function submitSessionScore() {
+            if (!userId) return;
+
+            const sessionProfit = balance - sessionStats.startingBalance;
+            
+            // Only submit if profit is positive
+            if (sessionProfit <= 0) {
+                console.log('No profit to report');
+                return;
+            }
+
+            try {
+                const { error } = await supabase
+                    .from('user_scores')
+                    .insert({
+                        user_id: userId,
+                        game_name: 'squarebird-slots',
+                        score: sessionProfit
+                    });
+
+                if (error) {
+                    console.error('Error submitting score:', error);
+                } else {
+                    console.log('Session profit reported:', sessionProfit);
+                }
+            } catch (err) {
+                console.error('Score submission error:', err);
+            }
+        }
+
+        async function showCreditsScreen() {
+            const sessionProfit = balance - sessionStats.startingBalance;
+            
+            document.getElementById('spinsPlayed').textContent = sessionStats.spinsPlayed;
+            document.getElementById('totalWagered').textContent = sessionStats.totalWagered + ' G';
+            document.getElementById('totalWon').textContent = sessionStats.totalWon + ' G';
+            
+            const profitEl = document.getElementById('sessionProfit');
+            profitEl.textContent = (sessionProfit >= 0 ? '+' : '') + sessionProfit + ' G';
+            profitEl.className = 'stat-value ' + (sessionProfit > 0 ? 'positive' : sessionProfit < 0 ? 'negative' : '');
+            
+            document.getElementById('finalBalance').textContent = balance + ' G';
+            
+            const messageEl = document.getElementById('creditsMessage');
+            if (sessionProfit > 500) {
+                messageEl.textContent = 'JACKPOT PERFORMANCE!';
+            } else if (sessionProfit > 100) {
+                messageEl.textContent = 'OUTSTANDING WIN!';
+            } else if (sessionProfit > 0) {
+                messageEl.textContent = 'NICE PROFIT!';
+            } else if (sessionProfit === 0) {
+                messageEl.textContent = 'EVEN MONEY!';
+            } else {
+                messageEl.textContent = 'BETTER LUCK NEXT TIME!';
+            }
+            
+            // Submit score to leaderboard if positive
+            await submitSessionScore();
+            
+            document.getElementById('creditsScreen').classList.add('active');
+        }
+
+        function resetSession() {
+            sessionStats = {
+                spinsPlayed: 0,
+                totalWagered: 0,
+                totalWon: 0,
+                startingBalance: balance
+            };
+        }
+
         async function initGameSystem() {
             const savedTheme = localStorage.getItem('blackjack_theme');
             if (savedTheme) selectedTable = savedTheme;
@@ -1237,24 +1431,25 @@
             applyTableVisuals();
 
             try {
-                auth = getAuth(db.app);
-                onAuthStateChanged(auth, async (user) => {
-                    if (user) {
-                        userId = user.uid;
-                        playerName = user.displayName || "Player";
-                        document.getElementById('playerLabel').textContent = playerName.toUpperCase();
+                const { data: { user }, error } = await supabase.auth.getUser();
+                
+                if (error || !user) {
+                    console.log('No authenticated user');
+                    window.location.href = '/casino';
+                    return;
+                }
 
-                        await loadUserBalance();
-                        initGrid();
+                userId = user.id;
+                await loadUserBalance();
+                document.getElementById('playerLabel').textContent = playerName.toUpperCase();
+                initGrid();
 
-                        document.getElementById('loadingMsg').style.display = 'none';
-                        document.getElementById('startGame').style.display = 'block';
-                    } else {
-                        window.location.href = '/index.html';
-                    }
-                });
-            } catch (error) {
-                console.warn('Auth Check Failed:', error);
+                document.getElementById('loadingMsg').style.display = 'none';
+                document.getElementById('startGame').style.display = 'block';
+
+            } catch (err) {
+                console.error('Init error:', err);
+                window.location.href = '/casino';
             }
         }
 
@@ -1318,8 +1513,22 @@
             applyTableVisuals();
         });
 
+
+        document.getElementById('exitGame').addEventListener('click', async () => {
+            document.getElementById('settingsModal').classList.remove('active');
+            await showCreditsScreen();
+        });
+
+        document.getElementById('returnToCasino').addEventListener('click', () => {
+            window.location.href = '/casino';
+        });
+
+        document.getElementById('playAgain').addEventListener('click', () => {
+            document.getElementById('creditsScreen').classList.remove('active');
+            resetSession();
+        });
+
         initGameSystem();
     </script>
 </body>
 </html>
-
