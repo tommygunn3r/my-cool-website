@@ -939,8 +939,8 @@
         window.closeGame = closeGame;
 
         // --- SUPABASE SETUP ---
-        const SUPABASE_URL = 'https://pknhslxhpohrzgsfkisr.supabase.co';
-        const SUPABASE_ANON_KEY = 'sb_publishable_-zZw-pi_3q1sdNGhITKuhQ_ECyDARzc';
+        const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+        const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         let auth = null;
@@ -1072,38 +1072,50 @@
         }
 
         async function loadUserBalance() {
+            if (!userId) return;
+            
             try {
-                const userDoc = doc(db, 'users', userId);
-                const docSnap = await getDoc(userDoc);
-                balance = docSnap.exists() ? (docSnap.data().gunnercoins || 0) : 0;
+                const { data: profile, error } = await supabase
+                    .from('profiles')
+                    .select('gunnercoins, playername')
+                    .eq('id', userId)
+                    .single();
+
+                if (error) {
+                    console.error('Error fetching profile:', error);
+                    balance = 1000;
+                } else {
+                    balance = profile.gunnercoins || 1000;
+                    playerName = profile.playername || 'Player';
+                }
+
+                sessionStats.startingBalance = balance;
                 updateBalanceDisplay();
-            } catch (e) {
-                console.error("Balance Load Error:", e);
+            } catch (err) {
+                console.error('Balance load error:', err);
+                balance = 1000;
+                sessionStats.startingBalance = 1000;
+                updateBalanceDisplay();
             }
         }
 
-        function updateBalance(amount) {
+        async function updateBalance(amount) {
             balance += amount;
             updateBalanceDisplay();
-            const userDoc = doc(db, 'users', userId);
-            setDoc(userDoc, { gunnercoins: balance }, { merge: true });
-        }
-
-        async function logSpinToFirestore(bet, win, grid, freeSpinUsed) {
+            
+            if (!userId || amount === 0) return;
+            
             try {
-                const colRef = collection(db, 'slots_squarebird');
-                await addDoc(colRef, {
-                    uid: userId,
-                    displayName: playerName,
-                    bet,
-                    win,
-                    balanceAfter: balance,
-                    freeSpinUsed,
-                    grid,
-                    timestamp: serverTimestamp()
-                });
-            } catch (e) {
-                console.warn('Spin log failed:', e);
+                const { error } = await supabase
+                    .from('profiles')
+                    .update({ gunnercoins: balance })
+                    .eq('id', userId);
+
+                if (error) {
+                    console.error('Error updating balance:', error);
+                }
+            } catch (err) {
+                console.error('Balance update error:', err);
             }
         }
 
@@ -1332,9 +1344,8 @@
                 playLose();
             }
 
-            // Log spin
-            const simpleGrid = currentGrid.map(col => col.slice());
-            logSpinToFirestore(bet, result.totalWin, simpleGrid, usingFreeSpin);
+            // Log spin - no longer needed with Supabase
+            // Individual spins are not logged, only session totals are tracked
 
             // Award free spins if scatters hit
             if (result.freeSpinsAwarded > 0) {
