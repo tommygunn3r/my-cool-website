@@ -30,12 +30,12 @@
             padding: 0;
             width: 100vw;
             height: 100vh;
-            overflow: hidden; /* no scroll */
+            overflow: hidden;
             background-color: #0a4a2e;
             background-size: cover;
             background-position: center;
             transition: background-image 0.5s ease-in-out;
-            touch-action: manipulation; /* better taps on mobile */
+            touch-action: manipulation;
         }
 
         /* --- Start Screen --- */
@@ -218,103 +218,103 @@
             width: 100%;
         }
 
-        .slot-reels {
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 0.35rem;
+        #slotReels {
+            display: flex;
+            gap: 0.4rem;
+            justify-content: center;
         }
 
-        .reel-column {
-            display: grid;
-            grid-template-rows: repeat(3, 1fr);
-            gap: 0.35rem;
+        .slot-col {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
         }
 
-        .slot-symbol {
-            position: relative;
-            background: radial-gradient(circle at top, rgba(255,255,255,0.12), rgba(0,0,0,0.6));
-            border-radius: 12px;
-            border: 2px solid rgba(0,0,0,0.7);
-            aspect-ratio: 1;
+        .slot-cell {
+            aspect-ratio: 1/1;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: all 0.3s ease;
+            font-size: 4rem;
+            transition: background 0.3s ease;
+            position: relative;
+            animation: spinFlip 0.4s ease-in-out;
         }
 
-        .slot-symbol img {
-            width: 70%;
-            height: 70%;
-            object-fit: contain;
+        @keyframes spinFlip {
+            0% { transform: rotateX(0deg); }
+            50% { transform: rotateX(90deg); }
+            100% { transform: rotateX(0deg); }
+        }
+
+        .slot-cell.spinning {
+            animation: spinContinuous 0.15s linear infinite;
+        }
+
+        @keyframes spinContinuous {
+            0% { transform: rotateX(0deg); }
+            100% { transform: rotateX(360deg); }
+        }
+
+        .slot-cell.winner {
+            background: radial-gradient(circle, rgba(255, 215, 0, 0.3), rgba(255, 255, 0, 0.1));
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.6), inset 0 0 20px rgba(255, 215, 0, 0.3);
+            animation: winnerPulse 0.8s ease-in-out infinite;
+        }
+
+        @keyframes winnerPulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.9; }
+        }
+
+        .win-line {
+            position: absolute;
+            background: linear-gradient(90deg, transparent, rgba(255, 215, 0, 0.8), transparent);
+            height: 4px;
+            z-index: 10;
             pointer-events: none;
+            animation: lineGlow 1s ease-in-out infinite;
         }
 
-        .slot-symbol.spinning {
-            animation: spinSymbol 0.1s infinite linear;
+        @keyframes lineGlow {
+            0%, 100% { box-shadow: 0 0 10px rgba(255, 215, 0, 0.6); }
+            50% { box-shadow: 0 0 20px rgba(255, 215, 0, 1); }
         }
 
-        .slot-symbol.win {
-            background: radial-gradient(circle at top, rgba(255,215,0,0.4), rgba(255,165,0,0.2));
-            border-color: var(--gold);
-            box-shadow: 0 0 20px rgba(255,215,0,0.6);
-        }
-
-        @keyframes spinSymbol {
-            0% { transform: translateY(0); opacity: 1; }
-            50% { transform: translateY(-20%); opacity: 0.7; }
-            100% { transform: translateY(0); opacity: 1; }
-        }
-
-        .betting-area {
-            display: flex;
-            flex-direction: column;
-            align-items: stretch;
-            gap: 0.8rem;
-            padding: 1.2rem;
-            background: rgba(0,0,0,0.4);
-            border-radius: 12px;
-            border: 2px solid rgba(212, 175, 55, 0.3);
-            width: 100%;
-        }
-
-        .bet-label {
-            font-size: 1.1rem;
-            color: var(--gold);
-            font-weight: 600;
-            letter-spacing: 0.1em;
-            text-align: center;
-        }
-
-        .bet-input {
-            width: 100%;
-            padding: 0.6rem;
-            background: rgba(0,0,0,0.7);
-            border: 2px solid var(--gold);
-            color: var(--cream);
-            font-size: 1.2rem;
-            border-radius: 8px;
-            text-align: center;
-            font-weight: 600;
-        }
-
+        /* Lever */
         .lever-container {
             display: flex;
             flex-direction: column;
             align-items: center;
+            position: relative;
             gap: 0.5rem;
-            padding: 1rem;
-            cursor: pointer;
-            user-select: none;
+        }
+
+        .lever-base {
+            width: 60px;
+            height: 80px;
+            background: linear-gradient(135deg, #2c2c2c, #1a1a1a);
+            border-radius: 10px;
+            border: 2px solid var(--gold);
+            position: relative;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
         }
 
         .lever-handle {
-            width: 12px;
-            height: 80px;
-            background: linear-gradient(90deg, #8b4513 0%, #a0522d 50%, #8b4513 100%);
-            border-radius: 6px;
-            position: relative;
-            box-shadow: 2px 0 5px rgba(0,0,0,0.5);
-            transition: transform 0.15s ease, height 0.15s ease;
+            position: absolute;
+            top: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 20px;
+            height: 100px;
+            background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            transform-origin: center bottom;
         }
 
         .lever-handle::before {
@@ -323,394 +323,415 @@
             top: -15px;
             left: 50%;
             transform: translateX(-50%);
-            width: 40px;
-            height: 40px;
-            background: radial-gradient(circle, #ff4444 0%, #cc0000 100%);
+            width: 35px;
+            height: 35px;
+            background: radial-gradient(circle, var(--gold-light), var(--gold));
             border-radius: 50%;
-            border: 3px solid var(--gold);
-            box-shadow: 0 4px 10px rgba(0,0,0,0.6), inset 0 2px 5px rgba(255,255,255,0.3);
+            box-shadow: 0 3px 10px rgba(212, 175, 55, 0.5);
+        }
+
+        .lever-handle:hover {
+            filter: brightness(1.2);
         }
 
         .lever-handle.pulled {
-            transform: translateY(30px);
-            height: 60px;
+            transform: translateX(-50%) translateY(40px);
         }
 
-        .lever-base {
-            width: 50px;
-            height: 20px;
-            background: linear-gradient(180deg, #2a1f1a 0%, #1a1410 100%);
-            border-radius: 10px;
-            border: 2px solid var(--gold-dark);
-            box-shadow: 0 2px 8px rgba(0,0,0,0.7);
-        }
-
-        .spin-button-container {
-            width: 100%;
-        }
-
-        #spinBtn {
-            padding: 1.2rem 2rem;
-            font-size: 1.5rem;
-            width: 100%;
-        }
-
-        .game-button {
+        .lever-label {
             font-family: 'Cinzel', serif;
-            padding: 0.55rem 1.8rem;
-            background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
+            font-size: 0.85rem;
+            color: var(--gold);
+            letter-spacing: 0.1em;
+            margin-top: 0.3rem;
+        }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            align-items: stretch;
+            width: 100%;
+            max-width: 200px;
+        }
+
+        .bet-control {
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+
+        .bet-label {
+            font-family: 'Cinzel', serif;
+            font-size: 0.9rem;
+            color: var(--gold);
+            letter-spacing: 0.1em;
+            text-align: center;
+        }
+
+        .bet-input {
+            font-family: 'Cinzel', serif;
+            font-size: 1.3rem;
+            padding: 0.5rem;
+            background: rgba(0, 0, 0, 0.6);
+            border: 2px solid var(--gold);
+            border-radius: 8px;
+            color: var(--cream);
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .control-button {
+            font-family: 'Cinzel', serif;
+            font-size: 1rem;
+            padding: 0.8rem 1.2rem;
+            background: linear-gradient(135deg, var(--gold), var(--gold-dark));
+            color: var(--dark);
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.4);
+        }
+
+        .control-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(212, 175, 55, 0.6);
+        }
+
+        .control-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .control-button.secondary {
+            background: rgba(0, 0, 0, 0.6);
+            color: var(--gold);
+            border: 2px solid var(--gold);
+        }
+
+        /* Message */
+        .message-display {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(135deg, rgba(26, 20, 16, 0.98), rgba(42, 31, 26, 0.98));
+            border: 3px solid var(--gold);
+            border-radius: 20px;
+            padding: 2rem 3rem;
+            text-align: center;
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.9);
+        }
+
+        .message-display.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .message-title {
+            font-family: 'Cinzel', serif;
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--gold);
+            margin-bottom: 0.5rem;
+            letter-spacing: 0.1em;
+            text-shadow: 0 0 20px rgba(212, 175, 55, 0.6);
+        }
+
+        .message-subtitle {
+            font-family: 'Cinzel', serif;
+            font-size: 1.5rem;
+            color: var(--cream);
+            letter-spacing: 0.08em;
+        }
+
+        /* Settings Modal */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 3000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .modal.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, var(--dark), #2a1f1a);
+            border: 3px solid var(--gold);
+            border-radius: 20px;
+            padding: 2rem;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 10px 50px rgba(0, 0, 0, 0.9);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-title {
+            font-family: 'Cinzel', serif;
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--gold);
+            letter-spacing: 0.1em;
+        }
+
+        .close-button {
+            background: none;
+            border: none;
+            color: var(--gold);
+            font-size: 2rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .close-button:hover {
+            transform: rotate(90deg);
+            color: var(--cream);
+        }
+
+        .setting-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .setting-label {
+            font-family: 'Cinzel', serif;
+            font-size: 1rem;
+            color: var(--cream);
+            margin-bottom: 0.5rem;
+            letter-spacing: 0.08em;
+            display: block;
+        }
+
+        .setting-select {
+            width: 100%;
+            padding: 0.6rem;
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1rem;
+            background: rgba(0, 0, 0, 0.6);
+            border: 2px solid var(--gold);
+            border-radius: 8px;
+            color: var(--cream);
+        }
+
+        .toggle-button {
+            width: 60px;
+            height: 30px;
+            background: rgba(0, 0, 0, 0.6);
+            border: 2px solid var(--gold);
+            border-radius: 15px;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .toggle-button::after {
+            content: '';
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 20px;
+            height: 20px;
+            background: var(--gold);
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+
+        .toggle-button.active {
+            background: var(--gold-dark);
+        }
+
+        .toggle-button.active::after {
+            left: 33px;
+            background: var(--gold-light);
+        }
+
+        /* Credits Screen */
+        .credits-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(26, 20, 16, 0.98), rgba(42, 31, 26, 0.98));
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 5000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.5s ease;
+            overflow-y: auto;
+            padding: 2rem;
+        }
+
+        .credits-screen.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .credits-content {
+            max-width: 800px;
+            text-align: center;
+        }
+
+        .credits-title {
+            font-family: 'Cinzel', serif;
+            font-size: 3.5rem;
+            font-weight: 700;
+            color: var(--gold);
+            margin-bottom: 1rem;
+            letter-spacing: 0.15em;
+            text-shadow: 0 0 30px rgba(212, 175, 55, 0.6);
+        }
+
+        .credits-subtitle {
+            font-family: 'Cinzel', serif;
+            font-size: 1.5rem;
+            color: var(--cream);
+            margin-bottom: 2rem;
+            letter-spacing: 0.1em;
+        }
+
+        .session-stats {
+            background: rgba(0, 0, 0, 0.6);
+            border: 2px solid var(--gold);
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.8rem 0;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.3);
+        }
+
+        .stat-row:last-child {
+            border-bottom: none;
+        }
+
+        .stat-label {
+            font-family: 'Cinzel', serif;
+            font-size: 1.2rem;
+            color: var(--gold);
+            letter-spacing: 0.08em;
+        }
+
+        .stat-value {
+            font-family: 'Cinzel', serif;
+            font-size: 1.3rem;
+            color: var(--cream);
+            font-weight: 600;
+        }
+
+        .stat-value.positive {
+            color: #4CAF50;
+        }
+
+        .stat-value.negative {
+            color: #f44336;
+        }
+
+        .credits-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .credits-button {
+            font-family: 'Cinzel', serif;
+            font-size: 1.2rem;
+            padding: 1rem 2.5rem;
+            background: linear-gradient(135deg, var(--gold), var(--gold-dark));
             color: var(--dark);
             border: none;
             border-radius: 50px;
             cursor: pointer;
             font-weight: 600;
             letter-spacing: 0.1em;
-            font-size: 1rem;
             transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(212, 175, 55, 0.4);
+            box-shadow: 0 5px 20px rgba(212, 175, 55, 0.4);
         }
 
-        .game-button:hover {
+        .credits-button:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(212, 175, 55, 0.6);
+            box-shadow: 0 8px 30px rgba(212, 175, 55, 0.6);
         }
 
-        .secondary-button {
-            background: linear-gradient(135deg, rgba(212, 175, 55, 0.2) 0%, rgba(184, 148, 31, 0.2) 100%);
-            border: 2px solid var(--gold);
-            padding: 0.6rem 1rem;
-            font-size: 0.95rem;
-            width: 100%;
-        }
-
-        /* Paylines Button */
-        .paylines-button {
-            background: rgba(0, 0, 0, 0.6); border: 2px solid var(--gold); color: var(--gold);
-            width: 34px; height: 34px; border-radius: 50%; cursor: pointer; font-size: 1rem; transition: all 0.3s;
-            display: flex; align-items: center; justify-content: center;
-            text-decoration: none;
-        }
-        .paylines-button:hover { background: rgba(212, 175, 55, 0.2); transform: scale(1.1); }
-
-        /* Modal Styles */
-        .modal {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.92);
-            display: flex; align-items: center; justify-content: center;
-            z-index: 2000; opacity: 0; visibility: hidden;
-            transition: opacity 0.3s, visibility 0.3s;
-        }
-        .modal.active { opacity: 1; visibility: visible; }
-
-        .modal-content {
-            background: radial-gradient(circle at top, rgba(255,255,255,0.08), rgba(0,0,0,0.95));
-            border-radius: 24px;
-            border: 3px solid var(--gold);
-            box-shadow: 0 0 40px rgba(0,0,0,0.9);
-            padding: 1.8rem 1.4rem;
-            max-width: 480px;
-            width: 94vw;
-            text-align: center;
-            color: var(--cream);
-        }
-
-        .modal-title {
-            font-family: 'Cinzel', serif;
-            font-size: 1.8rem;
-            letter-spacing: 0.15em;
+        .credits-button.secondary {
+            background: rgba(0, 0, 0, 0.6);
             color: var(--gold);
-            margin-bottom: 1.2rem;
-        }
-
-        .setting-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-            padding: 0.6rem 0;
-            border-bottom: 1px solid rgba(212, 175, 55, 0.3);
-            font-size: 1.05rem;
-        }
-
-        .select-input {
-            padding: 0.4rem 0.8rem;
-            background: rgba(0,0,0,0.7);
             border: 2px solid var(--gold);
-            color: var(--cream);
-            border-radius: 8px;
-            font-size: 1rem;
-            cursor: pointer;
         }
 
-        .toggle {
-            width: 60px;
-            height: 30px;
-            background: rgba(0,0,0,0.6);
-            border: 2px solid var(--gold-dark);
-            border-radius: 15px;
-            position: relative;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .toggle.active {
-            background: var(--gold-dark);
-            border-color: var(--gold);
-        }
-
-        .toggle-slider {
-            width: 22px;
-            height: 22px;
-            background: var(--cream);
-            border-radius: 50%;
-            position: absolute;
-            top: 2px;
-            left: 3px;
-            transition: all 0.3s;
-        }
-
-        .toggle.active .toggle-slider {
-            left: 31px;
-        }
-
-        .close-button {
-            margin-top: 1rem;
-        }
-
-        .message-overlay {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: radial-gradient(circle at top, rgba(0,0,0,0.95), rgba(0,0,0,0.98));
-            border: 3px solid var(--gold);
-            border-radius: 20px;
-            padding: 2rem 3rem;
-            font-family: 'Cinzel', serif;
-            font-size: 1.8rem;
-            font-weight: 700;
-            color: var(--gold-light);
-            letter-spacing: 0.15em;
-            text-align: center;
-            box-shadow: 0 0 50px rgba(0,0,0,0.9), 0 0 30px rgba(212, 175, 55, 0.6);
-            z-index: 500;
-            animation: fadeIn 0.3s ease;
-            pointer-events: none;
-        }
-
-        .message-overlay small {
-            display: block;
-            margin-top: 0.4rem;
-            font-size: 1.2rem;
-            font-weight: 600;
-            color: var(--cream);
-        }
-
-        /* Bonus Game Overlay */
-        .bonus-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.94);
-            z-index: 1500;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            animation: fadeIn 0.3s ease;
-        }
-
-        .bonus-window {
-            background: radial-gradient(circle at top, rgba(255,255,255,0.08), rgba(0,0,0,0.95));
-            border-radius: 24px;
-            border: 3px solid var(--gold);
-            box-shadow: 0 0 40px rgba(0,0,0,0.9);
-            padding: 1.8rem 1.4rem 1.4rem;
-            max-width: 480px;
-            width: 94vw;
-            max-height: 92vh;
-            overflow-y: auto;
-            text-align: center;
-            color: var(--cream);
-            position: relative;
-            overflow-x: hidden;
-        }
-
-        .bonus-title {
-            font-family: 'Cinzel', serif;
-            font-size: 1.5rem;
-            letter-spacing: 0.18em;
-            color: var(--gold);
-            margin-bottom: 0.4rem;
-        }
-
-        .bonus-subtitle {
-            font-size: 0.9rem;
-            letter-spacing: 0.08em;
-            margin-bottom: 1rem;
-            color: var(--accent);
-        }
-
-        .bonus-block-grid {
-            display: flex;
-            justify-content: center;
-            gap: 0.7rem;
-            margin-bottom: 1rem;
-            flex-wrap: wrap;
-        }
-
-        .bonus-block {
-            width: 76px;
-            height: 76px;
-            border-radius: 14px;
-            background: linear-gradient(145deg, #ffdf73, #e0a832);
-            border: 2px solid #9b6c00;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-family: 'Cinzel', serif;
-            font-weight: 700;
-            font-size: 2rem;
-            color: #5a3a00;
-            box-shadow: 0 8px 0 #8a5d00, 0 0 20px rgba(255,223,115,0.7);
-            cursor: pointer;
-            position: relative;
-            transform-origin: center bottom;
-            animation: blockIdle 1.2s ease-in-out infinite;
-        }
-
-        .bonus-block.disabled {
-            cursor: default;
-            opacity: 0.5;
-            box-shadow: 0 4px 0 #8a5d00;
-            animation: none;
-        }
-
-        .bonus-block::after {
-            content: '';
-            position: absolute;
-            inset: -3px;
-            border-radius: inherit;
-            border: 2px solid rgba(255,255,255,0.3);
-            pointer-events: none;
-        }
-
-        .bonus-block:hover:not(.disabled) {
-            box-shadow: 0 10px 0 #8a5d00, 0 0 25px rgba(255,255,255,0.85);
-            transform: translateY(-4px);
-        }
-
-        .bonus-block.revealing {
-            animation: blockReveal 0.45s ease forwards;
-        }
-
-        @keyframes blockIdle {
-            0%,100% { transform: translateY(0); }
-            50% { transform: translateY(-4px); }
-        }
-
-        @keyframes blockReveal {
-            0% { transform: translateY(-4px) scale(1); }
-            30% { transform: translateY(-12px) scale(1.05); }
-            60% { transform: translateY(4px) scale(0.96); }
-            100% { transform: translateY(0) scale(1); }
-        }
-
-        .bonus-result-text {
-            font-size: 1rem;
-            margin-bottom: 0.4rem;
-        }
-
-        .bonus-result-text strong {
-            color: var(--gold-light);
-        }
-
-        .bonus-close-hint {
-            font-size: 0.8rem;
-            opacity: 0.8;
-        }
-
-        .bonus-icon {
-            font-size: 1.6rem;
-        }
-
-        .bonus-reveal-label {
-            font-size: 0.75rem;
-            margin-top: 0.1rem;
-            letter-spacing: 0.08em;
-            text-transform: uppercase;
-        }
-
-        .bonus-contents {
-            transition: opacity 0.2s ease;
-        }
-
-        .bonus-contents.disabled {
-            opacity: 0.5;
-        }
-
-        .bonus-cta {
-            margin-top: 0.6rem;
-        }
-
-        @keyframes fadeIn { to { opacity: 1; } }
-
-        @media (max-width: 1024px) {
+        /* Responsive */
+        @media (max-width: 900px) {
             .slot-content {
                 flex-direction: column;
                 gap: 1rem;
             }
-            .slot-right {
-                flex-direction: row;
-                min-width: auto;
-                width: 100%;
-                justify-content: space-around;
+
+            .slot-wrapper {
+                padding: 0.5rem;
             }
-            .lever-container {
-                order: 2;
+
+            .slot-cell {
+                font-size: 3rem;
             }
-            .betting-area {
-                order: 1;
-                max-width: 300px;
+
+            .selector-title {
+                font-size: 2.5rem;
             }
-            .spin-button-container {
-                order: 3;
-                max-width: 200px;
+
+            .credits-title {
+                font-size: 2.5rem;
             }
         }
 
-        @media (max-width: 768px) {
-            .slot-wrapper { 
-                max-height: calc(100vh - 100px); 
-                max-width: 100%;
-            }
-            .slot-content {
-                flex-direction: column;
-            }
-            .slot-right {
-                flex-direction: column;
-                width: 100%;
-                max-width: 400px;
-            }
-            .betting-area,
-            .spin-button-container {
-                max-width: none;
-            }
-            #spinBtn {
-                padding: 1.2rem 2rem;
-                font-size: 1.3rem;
-            }
-            .lever-handle {
-                height: 60px;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .message-overlay {
-                padding: 1.6rem;
+        @media (max-width: 600px) {
+            .slot-cell {
+                font-size: 2.5rem;
             }
 
-            .message-overlay {
-                padding: 1.2rem 2rem;
-                font-size: 1.4rem;
+            .selector-title {
+                font-size: 2rem;
+            }
+
+            .credits-title {
+                font-size: 2rem;
+            }
+
+            .message-title {
+                font-size: 2rem;
             }
         }
     </style>
@@ -718,23 +739,34 @@
 <body>
     <!-- Start Screen -->
     <div id="tableSelector">
-        <div class="selector-title">SQUARE-MAN SLOTS</div>
-        <div class="selector-sub">CHASE THE GHOSTS • COLLECT THE COINS</div>
-        <div id="loadingMsg" class="loading-text">CONNECTING TO ACCOUNT...</div>
-        <button class="start-button" id="startGame">PLAY NOW</button>
+        <h1 class="selector-title">SQUARE-MAN SLOTS</h1>
+        <p class="selector-sub">SELECT YOUR CASINO THEME</p>
+
+        <div class="setting-group" style="width: 300px; margin-bottom: 1rem;">
+            <label class="setting-label">THEME</label>
+            <select id="tableSelect" class="setting-select">
+                <option value="classic">Classic Green</option>
+                <option value="red">Ruby Red</option>
+                <option value="blue">Sapphire Blue</option>
+                <option value="purple">Royal Purple</option>
+                <option value="black">Midnight Black</option>
+            </select>
+        </div>
+
+        <div id="loadingMsg" class="loading-text">Loading player data...</div>
+        <button id="startGame" class="start-button">START GAME</button>
     </div>
 
-    <!-- Main Game -->
-    <div id="gameContainer">
+    <!-- Game Container -->
+    <div id="gameContainer" style="display: none;">
         <div class="header">
             <div class="logo">GUNNERSGAMES</div>
-            <div class="game-title">SQUARE-MAN MAZE FORTUNE</div>
-            <a href="/slots-paylines.html" class="paylines-button" title="View Paylines" target="_blank">📊</a>
-            <button class="settings-button" id="settingsBtn">⚙</button>
+            <div class="game-title">SQUARE-MAN SLOTS</div>
             <div class="balance">
                 <div class="coin-icon">G</div>
-                <span id="balance">...</span>
+                <span id="balanceDisplay">0</span>
             </div>
+            <button class="settings-button" id="settingsBtn">⚙</button>
         </div>
 
         <div class="game-area">
@@ -742,51 +774,39 @@
                 <div class="slot-header-row">
                     <div class="slot-status">
                         <span class="status-label">PLAYER:</span>
-                        <span id="playerLabel" class="status-value">LOADING...</span>
+                        <span class="status-value" id="playerLabel">PLAYER</span>
                     </div>
-                    <div id="freeSpinBadge" class="free-spin-indicator hidden">
-                        ⭐ FREE SPINS: <span id="freeSpinCount">0</span>
+                    <div class="free-spin-indicator hidden" id="freeSpinBadge">
+                        ⚡ <span id="freeSpinCount">0</span> FREE SPINS
                     </div>
                     <div class="slot-status" style="text-align: right;">
-                        <span class="status-label">LINES:</span>
-                        <span class="status-value">10</span>
-                    </div>
-                </div>
-
-                <div class="slot-header-row" style="grid-template-columns: 1fr 1fr;">
-                    <div class="slot-status">
                         <span class="status-label">LAST WIN:</span>
-                        <span id="lastWin" class="status-value">0</span>
-                    </div>
-                    <div class="slot-status" style="text-align: right;">
-                        <span class="status-label">SESSION TOTAL:</span>
-                        <span id="sessionTotal" class="status-value">0</span>
+                        <span class="status-value" id="lastWinDisplay">0 G</span>
                     </div>
                 </div>
 
                 <div class="slot-content">
                     <div class="slot-left">
                         <div class="slot-grid">
-                            <div id="slotReels" class="slot-reels">
-                                <!-- Filled by JS -->
-                            </div>
+                            <div id="slotReels"></div>
                         </div>
                     </div>
 
                     <div class="slot-right">
-                        <div class="betting-area">
-                            <span class="bet-label">BET AMOUNT</span>
-                            <input type="number" id="betAmount" class="bet-input" value="10" min="1" max="100" step="10">
-                            <button class="game-button secondary-button" id="maxBetBtn">MAX BET</button>
-                        </div>
-
                         <div class="lever-container" id="leverContainer">
-                            <div class="lever-handle" id="leverHandle"></div>
-                            <div class="lever-base"></div>
+                            <div class="lever-base">
+                                <div class="lever-handle" id="leverHandle"></div>
+                            </div>
+                            <div class="lever-label">PULL</div>
                         </div>
 
-                        <div class="spin-button-container">
-                            <button class="game-button" id="spinBtn">SPIN</button>
+                        <div class="controls">
+                            <div class="bet-control">
+                                <label class="bet-label">BET AMOUNT</label>
+                                <input type="number" id="betAmount" class="bet-input" value="10" min="1" max="500">
+                            </div>
+                            <button class="control-button secondary" id="maxBetBtn">MAX BET</button>
+                            <button class="control-button" id="spinBtn">SPIN</button>
                         </div>
                     </div>
                 </div>
@@ -794,318 +814,326 @@
         </div>
     </div>
 
+    <!-- Message Display -->
+    <div class="message-display" id="messageDisplay">
+        <div class="message-title" id="messageTitle">WIN!</div>
+        <div class="message-subtitle" id="messageSubtitle">+100 G</div>
+    </div>
+
     <!-- Settings Modal -->
     <div class="modal" id="settingsModal">
         <div class="modal-content">
-            <div class="modal-title">SETTINGS</div>
-            <div class="setting-row">
-                <span>Sound Effects</span>
-                <div class="toggle active" id="soundToggle"><div class="toggle-slider"></div></div>
+            <div class="modal-header">
+                <h2 class="modal-title">SETTINGS</h2>
+                <button class="close-button" id="closeSettings">&times;</button>
             </div>
-            <div class="setting-row">
-                <span>Animation Speed</span>
-                <select class="select-input" id="speedSelect">
-                    <option value="0.25">Fast</option>
+
+            <div class="setting-group">
+                <label class="setting-label">SOUND EFFECTS</label>
+                <div class="toggle-button active" id="soundToggle"></div>
+            </div>
+
+            <div class="setting-group">
+                <label class="setting-label">SPIN SPEED</label>
+                <select id="speedSelect" class="setting-select">
+                    <option value="0.6">Slow</option>
                     <option value="0.45" selected>Normal</option>
-                    <option value="0.7">Slow</option>
+                    <option value="0.3">Fast</option>
                 </select>
             </div>
-            <div class="setting-row">
-                <span>Slot Background</span>
-                <select class="select-input" id="tableSelect">
-                    <option value="green">Classic Green</option>
-                    <option value="red">Royal Red</option>
-                    <option value="blue">Midnight Blue</option>
+
+            <div class="setting-group">
+                <label class="setting-label">CASINO THEME</label>
+                <select id="themeSelect" class="setting-select">
+                    <option value="classic">Classic Green</option>
+                    <option value="red">Ruby Red</option>
+                    <option value="blue">Sapphire Blue</option>
+                    <option value="purple">Royal Purple</option>
+                    <option value="black">Midnight Black</option>
                 </select>
             </div>
-            <button class="game-button close-button" id="closeSettings">CLOSE</button>
         </div>
     </div>
 
+    <!-- Credits Screen -->
+    <div class="credits-screen" id="creditsScreen">
+        <div class="credits-content">
+            <h1 class="credits-title">GAME COMPLETE</h1>
+            <p class="credits-subtitle">SESSION SUMMARY</p>
 
+            <div class="session-stats">
+                <div class="stat-row">
+                    <span class="stat-label">Total Spins</span>
+                    <span class="stat-value" id="creditsTotalSpins">0</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Total Wagered</span>
+                    <span class="stat-value" id="creditsTotalWagered">0 G</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Total Won</span>
+                    <span class="stat-value" id="creditsTotalWon">0 G</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Net Result</span>
+                    <span class="stat-value" id="creditsNetResult">0 G</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Final Balance</span>
+                    <span class="stat-value" id="creditsFinalBalance">0 G</span>
+                </div>
+            </div>
 
-    <script type="module">
-        function closeGame() { window.location.href = '/index.html'; }
-        window.closeGame = closeGame;
+            <div class="credits-actions">
+                <button class="credits-button" id="returnToCasinoBtn">RETURN TO CASINO</button>
+                <button class="credits-button secondary" id="backToMenuBtn">MAIN MENU</button>
+            </div>
+        </div>
+    </div>
 
-        import { db } from '/firebase-config.js';
-        import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
-        import { collection, addDoc, serverTimestamp, doc, getDoc, setDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        const { createClient } = supabase;
+        const SUPABASE_URL = 'https://ysjaixpgsdaspevcdkbs.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlzamFpeHBnc2Rhc3BldmNka2JzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU4NTE5MjIsImV4cCI6MjA1MTQyNzkyMn0.t_d1aSlAbW_zK4ljQ1xZwu99wQjkxgSdE0L9VClM3v0';
+        const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        let auth = null;
+        let userId = null;
+        let playerName = "Player";
         let balance = 0;
-        let soundEnabled = true;
-        let selectedTable = 'green';
-        let playerName = '';
-        let userId = '';
         let spinning = false;
+        let bonusActive = false;
+        let soundEnabled = true;
         let spinDuration = 0.45;
+        let selectedTable = 'classic';
+
+        let gameSessionId = null;
+        let sessionStartBalance = 0;
+        let sessionTotalWagered = 0;
+        let sessionTotalWon = 0;
+        let sessionSpinCount = 0;
+        let sessionStartTime = null;
+
+        const ROWS = 3;
+        const REELS = 5;
+        const MAX_BET = 500;
+        const SCATTER = '🔴';
+        const SYMBOLS = ['🟦', '🟨', '🟪', '🟩', '👻', '🍒', SCATTER];
+        const WEIGHTS = [15, 15, 12, 12, 10, 6, 3];
+
+        let currentGrid = [];
         let freeSpinsRemaining = 0;
-        let sessionTotalWin = 0;
         let lastWinAmount = 0;
+
+        const PAYTABLE = {
+            '🟦': { 3: 2, 4: 5, 5: 15 },
+            '🟨': { 3: 2, 4: 5, 5: 15 },
+            '🟪': { 3: 3, 4: 7, 5: 20 },
+            '🟩': { 3: 3, 4: 7, 5: 20 },
+            '👻': { 3: 5, 4: 15, 5: 50 },
+            '🍒': { 3: 10, 4: 30, 5: 100 },
+            [SCATTER]: { 3: 0, 4: 0, 5: 0 }
+        };
 
         const audioContext = new (window.AudioContext || window.webkitAudioContext)();
 
-        const REELS = 5;
-        const ROWS = 3;
-        const MAX_BET = 100; // NEW: Maximum bet limit
-
-        const SYMBOL_IMAGES = {
-            squareman: '/games/assets/casino/squareman_symbol.png',
-            ghost: '/games/assets/casino/ghost_symbol.png',
-            fruit: '/games/assets/casino/fruit_symbol.png',
-            coin: '/games/assets/casino/coin_symbol.png',
-            maze: '/games/assets/casino/maze_symbol.png',
-            portal: '/games/assets/casino/portal_symbol.png',
-            powerpellet: '/games/assets/casino/powerpellet_symbol.png'
-        };
-
-        const PAYLINES = [
-            [1,1,1,1,1],
-            [0,0,0,0,0],
-            [2,2,2,2,2],
-            [0,1,2,1,0],
-            [2,1,0,1,2],
-            [0,1,1,1,0],
-            [2,1,1,1,2],
-            [1,0,1,0,1],
-            [1,2,1,2,1],
-            [0,0,1,2,2]
-        ];
-
-        // BALANCED PAYTABLE - Reduced multipliers
-        const PAYTABLE = {
-            squareman: {3: 5, 4: 20, 5: 80},  
-            ghost:     {3: 4, 4: 12, 5: 55},  
-            fruit:     {3: 3, 4: 9,  5: 35},  
-            coin:      {3: 2, 4: 6,  5: 20},  
-            maze:      {3: 2, 4: 4,  5: 12},  
-            portal:    {3: 2, 4: 4,  5: 12}
-            // powerpellet is scatter only
-        };
-
-        let currentGrid = [];
-
-        function playSound(frequency, duration, type = 'sine', volume = 0.35) {
+        function beep(frequency, duration, volume = 0.3) {
             if (!soundEnabled) return;
-            if (audioContext.state === 'suspended') audioContext.resume();
-            const o = audioContext.createOscillator();
-            const g = audioContext.createGain();
-            o.connect(g); g.connect(audioContext.destination);
-            o.frequency.value = frequency; o.type = type;
-            g.gain.setValueAtTime(volume, audioContext.currentTime);
-            g.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
-            o.start(audioContext.currentTime); o.stop(audioContext.currentTime + duration);
+            const osc = audioContext.createOscillator();
+            const gain = audioContext.createGain();
+            osc.connect(gain);
+            gain.connect(audioContext.destination);
+            osc.frequency.value = frequency;
+            gain.gain.value = volume;
+            osc.start(audioContext.currentTime);
+            osc.stop(audioContext.currentTime + duration);
         }
 
-        function playSpinStart() { playSound(180, 0.25, 'square', 0.25); }
-        function playReelStop() { playSound(280, 0.15, 'square', 0.25); }
-        function playWin() {
-            playSound(523.25, 0.18);
-            setTimeout(()=>playSound(659.25,0.18),120);
-            setTimeout(()=>playSound(783.99,0.25),240);
-        }
-        function playBigWin() {
-            playSound(400,0.2,'sawtooth',0.4);
-            setTimeout(()=>playSound(500,0.2,'sawtooth',0.4),200);
-            setTimeout(()=>playSound(600,0.3,'sawtooth',0.4),400);
-        }
-        function playLose() {
-            playSound(220, 0.2, 'triangle', 0.3);
-            setTimeout(()=>playSound(150,0.25,'triangle',0.25),160);
-        }
-        function playBonusOpen() {
-            playSound(880,0.25,'square',0.35);
-            setTimeout(()=>playSound(1046.5,0.25,'square',0.35),220);
-        }
+        function playSpinStart() { beep(440, 0.1, 0.2); }
+        function playReelStop() { beep(330, 0.05, 0.15); }
+        function playWin() { beep(523, 0.15, 0.25); beep(659, 0.15, 0.25); }
+        function playBigWin() { beep(659, 0.2, 0.3); beep(784, 0.2, 0.3); beep(988, 0.3, 0.3); }
+        function playLose() { beep(220, 0.2, 0.2); }
+        function playBonusOpen() { beep(784, 0.15, 0.3); beep(988, 0.15, 0.3); beep(1047, 0.2, 0.3); }
 
-        function showMessage(text, sub = '') {
-            const el = document.createElement('div');
-            el.className = 'message-overlay';
-            el.innerHTML = text + (sub ? `<small>${sub}</small>` : '');
-            document.getElementById('gameContainer').appendChild(el);
-            setTimeout(() => el.remove(), 2000);
-        }
+        const THEMES = {
+            classic: { bg: '#0a4a2e', grad1: '#4fa64a', grad2: '#26602a' },
+            red: { bg: '#4a0a0a', grad1: '#a64f4f', grad2: '#602626' },
+            blue: { bg: '#0a1a4a', grad1: '#4f6ba6', grad2: '#26365f' },
+            purple: { bg: '#2a0a4a', grad1: '#7f4fa6', grad2: '#4a265f' },
+            black: { bg: '#0a0a0a', grad1: '#4f4f4f', grad2: '#262626' }
+        };
 
         function applyTableVisuals() {
-            const map = { 'red': 'redtop.png', 'blue': 'bluetop.png', 'green': 'greentop.png' };
-            document.body.style.backgroundImage = `url('/games/assets/casino/${map[selectedTable]}')`;
-        }
-
-        function updateBalanceDisplay() {
-            document.getElementById('balance').textContent = balance.toLocaleString();
-        }
-
-        function updateStatsDisplay() {
-            document.getElementById('lastWin').textContent = lastWinAmount.toLocaleString();
-            document.getElementById('sessionTotal').textContent = sessionTotalWin.toLocaleString();
-        }
-
-        function updateFreeSpinBadge() {
-            const badge = document.getElementById('freeSpinBadge');
-            const countEl = document.getElementById('freeSpinCount');
-            if (freeSpinsRemaining > 0) {
-                badge.classList.remove('hidden');
-                countEl.textContent = freeSpinsRemaining;
-            } else {
-                badge.classList.add('hidden');
+            const theme = THEMES[selectedTable];
+            document.body.style.backgroundColor = theme.bg;
+            const grid = document.querySelector('.slot-grid');
+            if (grid) {
+                grid.style.background = `linear-gradient(180deg, ${theme.grad1} 0%, ${theme.grad2} 100%)`;
             }
         }
 
         async function loadUserBalance() {
             try {
-                const userDoc = doc(db, 'users', userId);
-                const docSnap = await getDoc(userDoc);
-                balance = docSnap.exists() ? (docSnap.data().gunnercoins || 0) : 0;
+                const { data, error } = await sb
+                    .from('gunnercoins')
+                    .select('balance')
+                    .eq('user_id', userId)
+                    .single();
+
+                if (error) throw error;
+                balance = data?.balance || 0;
                 updateBalanceDisplay();
-            } catch (e) {
-                console.error("Balance Load Error:", e);
+            } catch (err) {
+                console.error('Error loading balance:', err);
+                balance = 0;
+                updateBalanceDisplay();
             }
         }
 
-        function updateBalance(amount) {
+        async function updateBalance(amount) {
             balance += amount;
             updateBalanceDisplay();
-            const userDoc = doc(db, 'users', userId);
-            setDoc(userDoc, { gunnercoins: balance }, { merge: true });
+
+            try {
+                const { error } = await sb
+                    .from('gunnercoins')
+                    .update({ balance })
+                    .eq('user_id', userId);
+
+                if (error) throw error;
+            } catch (err) {
+                console.error('Error updating balance:', err);
+            }
         }
 
-        async function logSpinToFirestore(bet, win, grid, freeSpinUsed) {
-            try {
-                const colRef = collection(db, 'slots_squareman');
-                await addDoc(colRef, {
-                    uid: userId,
-                    displayName: playerName,
-                    bet,
-                    win,
-                    balanceAfter: balance,
-                    freeSpinUsed,
-                    grid,
-                    timestamp: serverTimestamp()
-                });
-            } catch (e) {
-                console.warn('Spin log failed:', e);
+        function updateBalanceDisplay() {
+            document.getElementById('balanceDisplay').textContent = balance.toLocaleString();
+        }
+
+        function updateStatsDisplay() {
+            document.getElementById('lastWinDisplay').textContent = `${lastWinAmount.toLocaleString()} G`;
+        }
+
+        function updateFreeSpinBadge() {
+            const badge = document.getElementById('freeSpinBadge');
+            const count = document.getElementById('freeSpinCount');
+            count.textContent = freeSpinsRemaining;
+            if (freeSpinsRemaining > 0) {
+                badge.classList.remove('hidden');
+            } else {
+                badge.classList.add('hidden');
             }
+        }
+
+        function showMessage(title, subtitle = '') {
+            const msg = document.getElementById('messageDisplay');
+            document.getElementById('messageTitle').textContent = title;
+            document.getElementById('messageSubtitle').textContent = subtitle;
+            msg.classList.add('active');
+            setTimeout(() => msg.classList.remove('active'), 2000);
+        }
+
+        function getRandomSymbol() {
+            const totalWeight = WEIGHTS.reduce((a, b) => a + b, 0);
+            let random = Math.random() * totalWeight;
+            for (let i = 0; i < SYMBOLS.length; i++) {
+                random -= WEIGHTS[i];
+                if (random <= 0) return SYMBOLS[i];
+            }
+            return SYMBOLS[0];
         }
 
         function initGrid() {
+            const reels = document.getElementById('slotReels');
+            reels.innerHTML = '';
             currentGrid = [];
-            const reelsContainer = document.getElementById('slotReels');
-            reelsContainer.innerHTML = '';
+
             for (let col = 0; col < REELS; col++) {
-                const colEl = document.createElement('div');
-                colEl.className = 'reel-column';
+                const colDiv = document.createElement('div');
+                colDiv.className = 'slot-col';
                 currentGrid[col] = [];
+
                 for (let row = 0; row < ROWS; row++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'slot-cell';
+                    cell.dataset.col = col;
+                    cell.dataset.row = row;
                     const symbol = getRandomSymbol();
+                    cell.textContent = symbol;
                     currentGrid[col][row] = symbol;
-                    const symEl = createSymbolElement(symbol, col, row);
-                    colEl.appendChild(symEl);
+                    colDiv.appendChild(cell);
                 }
-                reelsContainer.appendChild(colEl);
+                reels.appendChild(colDiv);
             }
         }
 
-        // BALANCED SYMBOL WEIGHTS - Made high-value symbols much rarer
-        function getRandomSymbol() {
-            const rand = Math.random();
-            if (rand < 0.25) return 'coin';         // 25%
-            if (rand < 0.48) return 'portal';       // 23%
-            if (rand < 0.70) return 'maze';         // 22%
-            if (rand < 0.86) return 'fruit';        // 16%
-            if (rand < 0.95) return 'ghost';        // 9%
-            if (rand < 0.99) return 'squareman';    // 4%
-            return 'powerpellet';                   // 1% (scatter)
-        }
+        function updateColumnSymbols(colIndex, symbols, animate) {
+            const col = document.getElementById('slotReels').children[colIndex];
+            const cells = Array.from(col.children);
 
-        function createSymbolElement(symbol, col, row) {
-            const wrapper = document.createElement('div');
-            wrapper.className = 'slot-symbol';
-            wrapper.dataset.col = col;
-            wrapper.dataset.row = row;
-            wrapper.dataset.symbol = symbol;
-
-            const img = document.createElement('img');
-            img.src = SYMBOL_IMAGES[symbol] || '';
-            img.alt = symbol.toUpperCase();
-
-            wrapper.appendChild(img);
-            return wrapper;
-        }
-
-        function updateColumnSymbols(col, symbols, withSpinClass) {
-            const reelsContainer = document.getElementById('slotReels');
-            const colEl = reelsContainer.children[col];
-            for (let row = 0; row < ROWS; row++) {
-                const symEl = colEl.children[row];
-                const img = symEl.querySelector('img');
-                const symbol = symbols[row];
-                currentGrid[col][row] = symbol;
-                symEl.dataset.symbol = symbol;
-                img.src = SYMBOL_IMAGES[symbol] || '';
-                img.alt = symbol.toUpperCase();
-                if (withSpinClass) {
-                    symEl.classList.add('spinning');
+            cells.forEach((cell, rowIndex) => {
+                if (animate) {
+                    cell.classList.add('spinning');
                 } else {
-                    symEl.classList.remove('spinning');
+                    cell.classList.remove('spinning');
                 }
-                symEl.classList.remove('win');
-            }
+                cell.textContent = symbols[rowIndex];
+                currentGrid[colIndex][rowIndex] = symbols[rowIndex];
+            });
         }
 
         function clearWinHighlights() {
-            document.querySelectorAll('.slot-symbol').forEach(s => s.classList.remove('win'));
-        }
-
-        function evalSymbolForPay(sym) {
-            // Squarebird doesn't have super wilds
-            return sym;
+            document.querySelectorAll('.slot-cell').forEach(cell => {
+                cell.classList.remove('winner');
+            });
+            document.querySelectorAll('.win-line').forEach(line => line.remove());
         }
 
         function highlightPositions(positions) {
-            const reelsContainer = document.getElementById('slotReels');
-            positions.forEach(pos => {
-                const colEl = reelsContainer.children[pos.c];
-                if (!colEl) return;
-                const symEl = colEl.children[pos.r];
-                if (!symEl) return;
-                symEl.classList.add('win');
+            positions.forEach(([col, row]) => {
+                const cell = document.querySelector(`.slot-cell[data-col="${col}"][data-row="${row}"]`);
+                if (cell) cell.classList.add('winner');
             });
+        }
+
+        function countScatters() {
+            let count = 0;
+            for (let col = 0; col < REELS; col++) {
+                for (let row = 0; row < ROWS; row++) {
+                    if (currentGrid[col][row] === SCATTER) count++;
+                }
+            }
+            return count;
         }
 
         function evaluateGrid(bet) {
             let totalWin = 0;
             let freeSpinsAwarded = 0;
-            let scatterCount = 0;
 
-            for (let c = 0; c < REELS; c++) {
-                for (let r = 0; r < ROWS; r++) {
-                    const sym = currentGrid[c][r];
-                    if (sym === 'powerpellet') scatterCount++;
-                }
-            }
-
-            // Squareman free spins: 3 scatters = 5 FS, 4 = 8 FS, 5 = 11 FS
+            const scatterCount = countScatters();
             if (scatterCount >= 3) {
-                freeSpinsAwarded = 5 + (scatterCount - 3) * 3;
+                freeSpinsAwarded = scatterCount * 3;
             }
 
-            PAYLINES.forEach(line => {
-                const firstRow = line[0];
-                const firstRaw = currentGrid[0][firstRow];
-                const firstSymbol = evalSymbolForPay(firstRaw);
-                if (!PAYTABLE[firstSymbol]) return;
+            const paylines = [];
+            for (let row = 0; row < ROWS; row++) {
+                paylines.push(Array.from({ length: REELS }, (_, col) => [col, row]));
+            }
 
+            paylines.forEach(line => {
+                const firstSymbol = currentGrid[line[0][0]][line[0][1]];
+                if (firstSymbol === SCATTER) return;
+
+                const positions = [line[0]];
                 let count = 1;
-                const positions = [{c:0, r:firstRow}];
 
-                for (let c = 1; c < REELS; c++) {
-                    const r = line[c];
-                    const symRaw = currentGrid[c][r];
-                    const symEval = evalSymbolForPay(symRaw);
-                    if (symEval === firstSymbol) {
+                for (let i = 1; i < REELS; i++) {
+                    const [col, row] = line[i];
+                    const symbol = currentGrid[col][row];
+                    if (symbol === firstSymbol) {
+                        positions.push([col, row]);
                         count++;
-                        positions.push({c, r});
                     } else {
                         break;
                     }
@@ -1123,13 +1151,106 @@
             return { totalWin, freeSpinsAwarded };
         }
 
+        async function createGameSession() {
+            try {
+                const { data, error } = await sb
+                    .from('games')
+                    .insert({
+                        user_id: userId,
+                        game_name: 'squareman-slots',
+                        session_start: new Date().toISOString(),
+                        starting_balance: balance,
+                        current_balance: balance
+                    })
+                    .select()
+                    .single();
+
+                if (error) throw error;
+
+                gameSessionId = data.id;
+                sessionStartBalance = balance;
+                sessionStartTime = new Date();
+                sessionTotalWagered = 0;
+                sessionTotalWon = 0;
+                sessionSpinCount = 0;
+            } catch (err) {
+                console.error('Error creating game session:', err);
+            }
+        }
+
+        async function updateGameSession() {
+            if (!gameSessionId) return;
+
+            try {
+                const netResult = sessionTotalWon - sessionTotalWagered;
+                const { error } = await sb
+                    .from('games')
+                    .update({
+                        current_balance: balance,
+                        spins: sessionSpinCount,
+                        total_wagered: sessionTotalWagered,
+                        total_won: sessionTotalWon,
+                        net_result: netResult
+                    })
+                    .eq('id', gameSessionId);
+
+                if (error) throw error;
+            } catch (err) {
+                console.error('Error updating game session:', err);
+            }
+        }
+
+        async function endGameSession() {
+            if (!gameSessionId) return;
+
+            try {
+                const sessionEnd = new Date();
+                const durationMs = sessionEnd - sessionStartTime;
+                const netResult = sessionTotalWon - sessionTotalWagered;
+
+                const { error } = await sb
+                    .from('games')
+                    .update({
+                        session_end: sessionEnd.toISOString(),
+                        ending_balance: balance,
+                        current_balance: balance,
+                        duration_seconds: Math.floor(durationMs / 1000),
+                        spins: sessionSpinCount,
+                        total_wagered: sessionTotalWagered,
+                        total_won: sessionTotalWon,
+                        net_result: netResult
+                    })
+                    .eq('id', gameSessionId);
+
+                if (error) throw error;
+            } catch (err) {
+                console.error('Error ending game session:', err);
+            }
+        }
+
+        function showCreditsScreen() {
+            const netResult = sessionTotalWon - sessionTotalWagered;
+            
+            document.getElementById('creditsTotalSpins').textContent = sessionSpinCount.toLocaleString();
+            document.getElementById('creditsTotalWagered').textContent = `${sessionTotalWagered.toLocaleString()} G`;
+            document.getElementById('creditsTotalWon').textContent = `${sessionTotalWon.toLocaleString()} G`;
+            
+            const netResultEl = document.getElementById('creditsNetResult');
+            netResultEl.textContent = `${netResult >= 0 ? '+' : ''}${netResult.toLocaleString()} G`;
+            netResultEl.classList.toggle('positive', netResult > 0);
+            netResultEl.classList.toggle('negative', netResult < 0);
+            
+            document.getElementById('creditsFinalBalance').textContent = `${balance.toLocaleString()} G`;
+            
+            document.getElementById('creditsScreen').classList.add('active');
+        }
+
         async function handleSpinClick() {
             if (spinning || !userId) return;
 
             const betInput = document.getElementById('betAmount');
             let bet = parseInt(betInput.value, 10);
             
-            // Enforce bet limits
             if (isNaN(bet) || bet < 1) {
                 showMessage('MINIMUM BET IS 1');
                 return;
@@ -1149,12 +1270,14 @@
             }
 
             if (!usingFreeSpin) {
-                updateBalance(-bet);
+                await updateBalance(-bet);
+                sessionTotalWagered += bet;
             } else {
                 freeSpinsRemaining--;
                 updateFreeSpinBadge();
             }
 
+            sessionSpinCount++;
             spinning = true;
             lastWinAmount = 0;
             clearWinHighlights();
@@ -1194,7 +1317,7 @@
 
             const result = evaluateGrid(bet);
             lastWinAmount = result.totalWin;
-            sessionTotalWin += result.totalWin;
+            sessionTotalWon += result.totalWin;
             updateStatsDisplay();
 
             if (result.totalWin > 0) {
@@ -1205,16 +1328,11 @@
                     playWin();
                     showMessage('WIN!', `+${result.totalWin.toLocaleString()} G`);
                 }
-                updateBalance(result.totalWin);
+                await updateBalance(result.totalWin);
             } else if (!usingFreeSpin && result.freeSpinsAwarded === 0) {
                 playLose();
             }
 
-            // Log spin
-            const simpleGrid = currentGrid.map(col => col.slice());
-            logSpinToFirestore(bet, result.totalWin, simpleGrid, usingFreeSpin);
-
-            // Award free spins if scatters hit
             if (result.freeSpinsAwarded > 0) {
                 freeSpinsRemaining += result.freeSpinsAwarded;
                 updateFreeSpinBadge();
@@ -1222,9 +1340,9 @@
                 showMessage('POWER PELLET BONUS!', `+${result.freeSpinsAwarded} FREE SPINS`);
             }
 
+            await updateGameSession();
             spinning = false;
 
-            // Auto-play free spins
             if (freeSpinsRemaining > 0) {
                 setTimeout(() => handleSpinClick(), 900);
             }
@@ -1237,35 +1355,37 @@
             applyTableVisuals();
 
             try {
-                auth = getAuth(db.app);
-                onAuthStateChanged(auth, async (user) => {
-                    if (user) {
-                        userId = user.uid;
-                        playerName = user.displayName || "Player";
-                        document.getElementById('playerLabel').textContent = playerName.toUpperCase();
+                const { data: { user }, error } = await sb.auth.getUser();
+                
+                if (error || !user) {
+                    window.location.href = '/index.html';
+                    return;
+                }
 
-                        await loadUserBalance();
-                        initGrid();
+                userId = user.id;
+                playerName = user.user_metadata?.display_name || user.email?.split('@')[0] || "Player";
+                document.getElementById('playerLabel').textContent = playerName.toUpperCase();
 
-                        document.getElementById('loadingMsg').style.display = 'none';
-                        document.getElementById('startGame').style.display = 'block';
-                    } else {
-                        window.location.href = '/index.html';
-                    }
-                });
-            } catch (error) {
-                console.warn('Auth Check Failed:', error);
+                await loadUserBalance();
+                initGrid();
+
+                document.getElementById('loadingMsg').style.display = 'none';
+                document.getElementById('startGame').style.display = 'block';
+            } catch (err) {
+                console.error('Auth Check Failed:', err);
+                window.location.href = '/index.html';
             }
         }
 
-        document.getElementById('startGame').addEventListener('click', () => {
+        document.getElementById('startGame').addEventListener('click', async () => {
             document.getElementById('tableSelector').classList.add('hidden');
+            document.getElementById('gameContainer').style.display = 'flex';
             if (audioContext.state === 'suspended') audioContext.resume();
+            await createGameSession();
         });
 
         document.getElementById('spinBtn').addEventListener('click', handleSpinClick);
 
-        // Lever interaction
         document.getElementById('leverContainer').addEventListener('click', function() {
             if (spinning || bonusActive || !userId) return;
             
@@ -1282,12 +1402,10 @@
         document.getElementById('maxBetBtn').addEventListener('click', () => {
             if (balance <= 0) return;
             const betInput = document.getElementById('betAmount');
-            // NEW: Cap max bet at MAX_BET
             const maxBet = Math.min(MAX_BET, Math.max(1, Math.floor(balance / 5)));
             betInput.value = maxBet;
         });
 
-        // NEW: Enforce max bet on input change
         document.getElementById('betAmount').addEventListener('change', function() {
             let val = parseInt(this.value, 10);
             if (val > MAX_BET) {
@@ -1299,6 +1417,7 @@
         document.getElementById('settingsBtn').addEventListener('click', () => {
             document.getElementById('settingsModal').classList.add('active');
         });
+
         document.getElementById('closeSettings').addEventListener('click', () => {
             document.getElementById('settingsModal').classList.remove('active');
         });
@@ -1312,14 +1431,43 @@
             spinDuration = parseFloat(this.value) || 0.45;
         });
 
-        document.getElementById('tableSelect').addEventListener('change', function() {
+        document.getElementById('themeSelect').addEventListener('change', function() {
             selectedTable = this.value;
             localStorage.setItem('blackjack_theme', selectedTable);
             applyTableVisuals();
+        });
+
+        document.getElementById('tableSelect').addEventListener('change', function() {
+            selectedTable = this.value;
+            document.getElementById('themeSelect').value = selectedTable;
+            localStorage.setItem('blackjack_theme', selectedTable);
+            applyTableVisuals();
+        });
+
+        document.getElementById('returnToCasinoBtn').addEventListener('click', async () => {
+            await endGameSession();
+            window.location.href = '/casino.html';
+        });
+
+        document.getElementById('backToMenuBtn').addEventListener('click', async () => {
+            await endGameSession();
+            window.location.href = '/index.html';
+        });
+
+        window.addEventListener('beforeunload', async () => {
+            if (gameSessionId) {
+                await endGameSession();
+            }
+        });
+
+        window.addEventListener('visibilitychange', () => {
+            if (document.hidden && gameSessionId) {
+                endGameSession();
+                showCreditsScreen();
+            }
         });
 
         initGameSystem();
     </script>
 </body>
 </html>
-
