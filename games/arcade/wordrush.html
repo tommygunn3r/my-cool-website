@@ -14,13 +14,31 @@ body {
     padding: 30px; border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.3);
 }
 h1 { color: #333; margin-bottom: 10px; }
-#timer-display {
-    font-size: 3em; margin: 20px 0; padding: 20px; border-radius: 12px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white; font-weight: bold; box-shadow: 0 4px 15px rgba(0,0,0,0.2); transition: all 0.3s;
+#timer-container {
+    width: 100%; max-width: 500px; margin: 20px auto; padding: 0;
 }
-#timer-display.warning { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); animation: pulse 1s infinite; }
-#timer-display.critical { background: linear-gradient(135deg, #fa709a 0%, #fee140 100%); animation: pulse 0.5s infinite; }
-@keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+#timer-bar-background {
+    width: 100%; height: 40px; background: #e0e0e0; border-radius: 20px; overflow: hidden;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+}
+#timer-bar {
+    height: 100%; background: linear-gradient(90deg, #48bb78 0%, #38a169 100%);
+    transition: width 0.3s ease, background 0.3s ease; border-radius: 20px;
+    box-shadow: 0 2px 8px rgba(72, 187, 120, 0.4);
+}
+#timer-bar.warning {
+    background: linear-gradient(90deg, #f6ad55 0%, #ed8936 100%);
+    box-shadow: 0 2px 8px rgba(237, 137, 54, 0.4);
+}
+#timer-bar.critical {
+    background: linear-gradient(90deg, #fc8181 0%, #f56565 100%);
+    box-shadow: 0 2px 8px rgba(245, 101, 101, 0.4);
+    animation: pulse-bar 0.5s infinite;
+}
+#timer-text {
+    text-align: center; font-size: 1.5em; font-weight: bold; color: #333; margin-top: 10px;
+}
+@keyframes pulse-bar { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
 #game-grid {
     display: inline-grid; gap: 8px; margin: 20px 0; padding: 20px; background: #f5f5f5; border-radius: 10px; width: auto;
 }
@@ -64,7 +82,7 @@ h1 { color: #333; margin-bottom: 10px; }
 #restart-btn:hover { transform: scale(1.05); }
 @media (max-width: 600px) {
     #game-container { padding: 15px; } h1 { font-size: 1.5em; }
-    #timer-display { font-size: 2em; padding: 15px; margin: 15px 0; } #game-grid { gap: 4px; padding: 10px; }
+    #timer-container { margin: 15px auto; } #timer-text { font-size: 1.2em; margin-top: 8px; } #game-grid { gap: 4px; padding: 10px; }
 }
 #start-screen {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.85);
@@ -92,9 +110,6 @@ h1 { color: #333; margin-bottom: 10px; }
 <audio id="sound-push" src="sounds/push.mp3" preload="auto"></audio>
 <audio id="sound-timer-warning" src="sounds/timer_warning.mp3" preload="auto"></audio>
 
-<audio id="music-track-1" src="music/track1.mp3" preload="auto" loop></audio>
-<audio id="music-track-2" src="music/track2.mp3" preload="auto" loop></audio>
-<audio id="music-track-3" src="music/track3.mp3" preload="auto" loop></audio>
 
 <div id="start-screen">
     <div id="start-content">
@@ -111,7 +126,12 @@ h1 { color: #333; margin-bottom: 10px; }
 
 <div id="game-container">
 <h1>Word Rush ⏱️</h1>
-<div id="timer-display">⏰ <span id="time-remaining">30</span>s</div>
+<div id="timer-container">
+    <div id="timer-bar-background">
+        <div id="timer-bar"></div>
+    </div>
+    <div id="timer-text"><span id="time-remaining">30</span>s</div>
+</div>
 <div id="game-grid"></div>
 </div>
 
@@ -226,7 +246,6 @@ h1 { color: #333; margin-bottom: 10px; }
     let gameStartTime = null;
     let gameActive = false;
     let timeDecayRate = 1.0;
-    let currentMusicTrack = null;
     let lastWarningPlayed = 0;
     
     // Chaos timer variables
@@ -258,7 +277,8 @@ h1 { color: #333; margin-bottom: 10px; }
 
     const gridElement = document.getElementById('game-grid');
     const timeDisplay = document.getElementById('time-remaining');
-    const timerDisplay = document.getElementById('timer-display');
+    const timerBar = document.getElementById('timer-bar');
+    const timerText = document.getElementById('timer-text');
     const gameOverScreen = document.getElementById('game-over-screen');
     const startScreen = document.getElementById('start-screen');
     const startBtn = document.getElementById('start-btn');
@@ -266,7 +286,7 @@ h1 { color: #333; margin-bottom: 10px; }
     startBtn.addEventListener('click', () => {
         startScreen.style.display = 'none';
         scoreManager.startSession();
-        startBombTimer(); startChaosTimer(); startGameTimer(); startBackgroundMusic();
+        startBombTimer(); startChaosTimer(); startGameTimer();
     });
 
     function playSound(id){
@@ -274,16 +294,7 @@ h1 { color: #333; margin-bottom: 10px; }
         if(audio){ audio.currentTime = 0; audio.play().catch(e => console.log("Audio playback failed:", e)); }
     }
 
-    function startBackgroundMusic(){
-        if(currentMusicTrack){ currentMusicTrack.pause(); currentMusicTrack.currentTime = 0; }
-        const trackNumber = Math.floor(Math.random() * 3) + 1;
-        currentMusicTrack = document.getElementById(`music-track-${trackNumber}`);
-        if(currentMusicTrack){ currentMusicTrack.volume = 0.3; currentMusicTrack.play().catch(e => console.log("Music playback failed:", e)); }
-    }
 
-    function stopBackgroundMusic(){
-        if(currentMusicTrack){ currentMusicTrack.pause(); currentMusicTrack.currentTime = 0; }
-    }
 
     function getRandomTile(){
         const r=Math.random();
@@ -325,10 +336,18 @@ h1 { color: #333; margin-bottom: 10px; }
     }
 
     function updateTimerDisplay(){
-        timeDisplay.textContent = Math.ceil(timeRemaining);
-        timerDisplay.classList.remove('warning', 'critical');
-        if(timeRemaining <= 10) timerDisplay.classList.add('critical');
-        else if(timeRemaining <= 20) timerDisplay.classList.add('warning');
+        const timeValue = Math.ceil(timeRemaining);
+        timeDisplay.textContent = timeValue;
+        
+        // Update timer bar width (max time is 120 seconds)
+        const maxTime = 120;
+        const percentage = Math.max(0, Math.min(100, (timeRemaining / maxTime) * 100));
+        timerBar.style.width = percentage + "%";
+        
+        // Update timer bar classes
+        timerBar.classList.remove("warning", "critical");
+        if(timeRemaining <= 10) timerBar.classList.add("critical");
+        else if(timeRemaining <= 20) timerBar.classList.add("warning");
     }
 
     function addTime(seconds){
@@ -355,7 +374,7 @@ h1 { color: #333; margin-bottom: 10px; }
     function endGame(){
         gameActive = false;
         clearInterval(gameTimer); clearInterval(bombTimerId); clearInterval(chaosTimer);
-        stopBackgroundMusic();
+       
         
         const playTime = Math.floor((Date.now() - gameStartTime) / 1000);
         const avgWordLength = wordLengths.length > 0 ? (wordLengths.reduce((a,b) => a+b, 0) / wordLengths.length).toFixed(1) : 0;
