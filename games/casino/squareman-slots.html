@@ -893,10 +893,14 @@
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
+        console.log('Squareman Slots loading...');
+        
         const { createClient } = supabase;
         const SUPABASE_URL = 'https://ysjaixpgsdaspevcdkbs.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlzamFpeHBnc2Rhc3BldmNka2JzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU4NTE5MjIsImV4cCI6MjA1MTQyNzkyMn0.t_d1aSlAbW_zK4ljQ1xZwu99wQjkxgSdE0L9VClM3v0';
         const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
+        
+        console.log('Supabase client created:', sb ? 'SUCCESS' : 'FAILED');
 
         let userId = null;
         let playerName = "Player";
@@ -975,14 +979,37 @@
 
         async function loadUserBalance() {
             try {
+                console.log('Loading balance for user:', userId);
                 const { data, error } = await sb
                     .from('gunnercoins')
                     .select('balance')
                     .eq('user_id', userId)
                     .single();
 
-                if (error) throw error;
-                balance = data?.balance || 0;
+                if (error) {
+                    console.error('Balance load error:', error);
+                    // If user doesn't exist in gunnercoins, create entry
+                    if (error.code === 'PGRST116') {
+                        console.log('Creating new gunnercoins entry...');
+                        const { data: newData, error: insertError } = await sb
+                            .from('gunnercoins')
+                            .insert({ user_id: userId, balance: 1000 })
+                            .select()
+                            .single();
+                        
+                        if (insertError) {
+                            console.error('Insert error:', insertError);
+                            throw insertError;
+                        }
+                        balance = newData?.balance || 1000;
+                    } else {
+                        throw error;
+                    }
+                } else {
+                    balance = data?.balance || 0;
+                }
+                
+                console.log('Balance loaded:', balance);
                 updateBalanceDisplay();
             } catch (err) {
                 console.error('Error loading balance:', err);
@@ -1355,13 +1382,24 @@
             applyTableVisuals();
 
             try {
-                const { data: { user }, error } = await sb.auth.getUser();
+                // Check for active session
+                const { data: { session }, error: sessionError } = await sb.auth.getSession();
                 
-                if (error || !user) {
-                    window.location.href = '/index.html';
+                if (sessionError) {
+                    console.error('Session error:', sessionError);
+                    document.getElementById('loadingMsg').textContent = 'Session error - redirecting...';
+                    setTimeout(() => window.location.href = '/index.html', 1000);
                     return;
                 }
 
+                if (!session) {
+                    console.warn('No active session');
+                    document.getElementById('loadingMsg').textContent = 'No active session - redirecting...';
+                    setTimeout(() => window.location.href = '/index.html', 1000);
+                    return;
+                }
+
+                const user = session.user;
                 userId = user.id;
                 playerName = user.user_metadata?.display_name || user.email?.split('@')[0] || "Player";
                 document.getElementById('playerLabel').textContent = playerName.toUpperCase();
@@ -1373,7 +1411,8 @@
                 document.getElementById('startGame').style.display = 'block';
             } catch (err) {
                 console.error('Auth Check Failed:', err);
-                window.location.href = '/index.html';
+                document.getElementById('loadingMsg').textContent = 'Authentication failed - redirecting...';
+                setTimeout(() => window.location.href = '/index.html', 1000);
             }
         }
 
@@ -1467,6 +1506,7 @@
             }
         });
 
+        console.log('Initializing game system...');
         initGameSystem();
     </script>
 </body>
