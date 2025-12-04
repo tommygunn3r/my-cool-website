@@ -1077,7 +1077,7 @@
             try {
                 const { data: profile, error } = await supabase
                     .from('profiles')
-                    .select('gunnercoins, playername')
+                    .select('gunnercoins, player_name')
                     .eq('id', userId)
                     .single();
 
@@ -1086,7 +1086,7 @@
                     balance = 1000;
                 } else {
                     balance = profile.gunnercoins || 1000;
-                    playerName = profile.playername || 'Player';
+                    playerName = profile.player_name || 'Player';
                 }
 
                 sessionStats.startingBalance = balance;
