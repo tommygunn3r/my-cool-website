@@ -245,12 +245,11 @@
                 
                 try {
                     const { data, error } = await supabase
-                        .from('arcade_scores')
+                        .from('game_highscores')
                         .insert([{
-                            game_name: this.gameName,
-                            player_name: this.playerName,
+                            game_id: this.gameName,
+                            player_name: this.player_name,
                             score: this.hasScore ? score : 0,
-                            time_played: timePlayed,
                             created_at: new Date().toISOString()
                         }]);
                     
