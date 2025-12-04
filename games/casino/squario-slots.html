@@ -1129,27 +1129,6 @@
             }
         }
 
- catch (e) {
-                console.warn('Spin log failed:', e);
-            }
-        }
-
-        async function logBonusToFirestore(bet, reward) {
-            try {
-                const colRef = collection(db, 'slots_squario_bonus');
-                await addDoc(colRef, {
-                    uid: userId,
-                    displayName: playerName,
-                    bet,
-                    reward,
-                    balanceAfter: balance,
-                    timestamp: serverTimestamp()
-                });
-            } catch (e) {
-                console.warn('Bonus log failed:', e);
-            }
-        }
-
         function initGrid() {
             currentGrid = [];
             const reelsContainer = document.getElementById('slotReels');
