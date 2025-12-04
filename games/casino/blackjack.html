@@ -420,8 +420,8 @@
 
     <script>
         // --- SUPABASE SETUP ---
-        const SUPABASE_URL = 'YOUR_SUPABASE_URL';
-        const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+        const SUPABASE_URL = "https://pknhslxhpohrzgsfkisr.supabase.co";
+        const SUPABASE_ANON_KEY = "sb_publishable_-zZw-pi_3q1sdNGhITKuhQ_ECyDARzc";
         const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         // --- GAME STATE ---
@@ -504,7 +504,7 @@
                 // Fetch user profile for balance
                 const { data: profile, error: profileError } = await supabase
                     .from('profiles')
-                    .select('gunnercoins, playername')
+                    .select('gunnercoins, player_name')
                     .eq('id', userId)
                     .single();
 
@@ -513,7 +513,7 @@
                     balance = 1000;
                 } else {
                     balance = profile.gunnercoins || 1000;
-                    playerName = profile.playername || 'Player';
+                    playerName = profile.player_name || 'Player';
                 }
 
                 sessionStats.startingBalance = balance;
