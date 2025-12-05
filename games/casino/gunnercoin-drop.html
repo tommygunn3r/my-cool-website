@@ -520,19 +520,23 @@
         async function loadUserBalance() {
             try {
                 const { data, error } = await supabase
-                    .from('users')
+                    .from('profiles')
                     .select('gunnercoins')
                     .eq('id', userId)
                     .single();
                 
-                if (error) throw error;
+                if (error) {
+                    console.error('Balance query error:', error);
+                    balance = 100;
+                } else {
+                    balance = data?.gunnercoins || 100;
+                }
                 
-                balance = data?.gunnercoins || 0;
                 balanceText.textContent = balance.toLocaleString();
             } catch (e) {
                 console.error('Balance load error:', e);
-                balance = 0;
-                balanceText.textContent = '0';
+                balance = 100;
+                balanceText.textContent = '100';
             }
         }
 
@@ -543,11 +547,13 @@
             
             try {
                 const { error } = await supabase
-                    .from('users')
+                    .from('profiles')
                     .update({ gunnercoins: balance })
                     .eq('id', userId);
                 
-                if (error) throw error;
+                if (error) {
+                    console.error('Balance update error:', error);
+                }
             } catch (e) {
                 console.error('Balance update error:', e);
             }
