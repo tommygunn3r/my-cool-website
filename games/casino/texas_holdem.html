@@ -394,86 +394,81 @@
         // ============================================
         // SUPABASE INTEGRATION
         // ============================================
-        const SUPABASE_URL = 'https://lutpubicojtvczktzeyl.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx1dHB1Ymljb2p0dmN6a3R6ZXlsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU1MDc2MTUsImV4cCI6MjA1MTA4MzYxNX0.hLqKKz9hN-EV8wVCNZH_bTrvRRpU3rOQjPp42sDTPGg';
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const SUPABASE_URL = "https://pknhslxhpohrzgsfkisr.supabase.co";
+        const SUPABASE_ANON_KEY = "sb_publishable_-zZw-pi_3q1sdNGhITKuhQ_ECyDARzc";
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         let userId = null;
         let currentBalance = 0;
+        let playerName = 'Guest';
 
         async function initSupabase() {
             try {
-                // First try to get the session
-                const { data: { session } } = await supabase.auth.getSession();
+                const { data: { user }, error } = await supabase.auth.getUser();
                 
-                if (!session) {
-                    console.error('No authenticated session found');
+                if (error || !user) {
+                    console.error('No authenticated user found');
                     document.querySelector('.loading-text').textContent = 'Please sign in to play';
                     return false;
                 }
 
-                userId = session.user.id;
+                userId = user.id;
                 console.log('✅ User authenticated:', userId);
-                await loadBalance();
+
+                // Fetch user profile for balance
+                const { data: profile, error: profileError } = await supabase
+                    .from('profiles')
+                    .select('gunnercoins, player_name')
+                    .eq('id', userId)
+                    .single();
+
+                if (profileError) {
+                    console.error('Error fetching profile:', profileError);
+                    document.querySelector('.loading-text').textContent = 'Error loading profile';
+                    return false;
+                }
+
+                currentBalance = profile.gunnercoins || 0;
+                playerName = profile.player_name || 'Player';
+                document.getElementById('balanceDisplay').textContent = currentBalance;
+                console.log('✅ Balance loaded:', currentBalance);
+
+                if (currentBalance >= 2000) {
+                    document.querySelector('.loading-text').textContent = 'Ready to play!';
+                    document.getElementById('startGame').style.display = 'block';
+                } else {
+                    document.querySelector('.loading-text').textContent = `Insufficient balance (need 2000 coins, you have ${currentBalance})`;
+                }
+
                 return true;
-            } catch (error) {
-                console.error('Supabase init error:', error);
+            } catch (err) {
+                console.error('Supabase init error:', err);
                 document.querySelector('.loading-text').textContent = 'Connection error';
                 return false;
             }
         }
 
-        async function loadBalance() {
-            if (!userId) return;
-            
-            try {
-                const { data, error } = await supabase
-                    .from('user_balances')
-                    .select('balance')
-                    .eq('user_id', userId)
-                    .single();
-
-                if (error) {
-                    console.error('Error loading balance:', error);
-                    currentBalance = 0;
-                } else {
-                    currentBalance = data?.balance || 0;
-                    console.log('✅ Balance loaded:', currentBalance);
-                }
-                
-                document.getElementById('balanceDisplay').textContent = currentBalance;
-            } catch (error) {
-                console.error('Error loading balance:', error);
-                currentBalance = 0;
-                document.getElementById('balanceDisplay').textContent = '0';
-            }
-        }
-
         async function updateBalance(amount) {
-            if (!userId) return;
+            if (!userId) {
+                console.error('No user ID - cannot update balance');
+                return;
+            }
             
             try {
-                // Get current balance first
-                const { data: currentData } = await supabase
-                    .from('user_balances')
-                    .select('balance')
-                    .eq('user_id', userId)
-                    .single();
-
-                const newBalance = (currentData?.balance || 0) + amount;
+                const newBalance = currentBalance + amount;
 
                 const { error } = await supabase
-                    .from('user_balances')
-                    .update({ 
-                        balance: newBalance,
-                        updated_at: new Date().toISOString()
-                    })
-                    .eq('user_id', userId);
+                    .from('profiles')
+                    .update({ gunnercoins: newBalance })
+                    .eq('id', userId);
 
-                if (error) throw error;
-                
-                await loadBalance();
-                console.log(`✅ Balance updated: ${amount > 0 ? '+' : ''}${amount} (new: ${newBalance})`);
+                if (error) {
+                    console.error('Error updating balance:', error);
+                } else {
+                    currentBalance = newBalance;
+                    document.getElementById('balanceDisplay').textContent = currentBalance;
+                    console.log(`✅ Balance updated: ${amount > 0 ? '+' : ''}${amount} (new: ${newBalance})`);
+                }
             } catch (error) {
                 console.error('Error updating balance:', error);
             }
@@ -531,18 +526,16 @@
             applyTableVisuals(savedTheme);
             document.getElementById('tableSelect').value = savedTheme;
 
-            const success = await initSupabase();
-            if (success) {
-                if (currentBalance >= 2000) {
-                    document.querySelector('.loading-text').textContent = 'Ready to play!';
-                    document.getElementById('startGame').style.display = 'block';
-                } else {
-                    document.querySelector('.loading-text').textContent = `Insufficient balance (need 2000 coins)`;
-                }
-            }
+            await initSupabase();
         }
 
         async function startGame() {
+            // Check if we have enough balance
+            if (currentBalance < 2000) {
+                alert('Insufficient balance! You need 2000 coins to play.');
+                return;
+            }
+
             // Deduct buy-in
             await updateBalance(-2000);
             
