@@ -404,15 +404,17 @@
 
         async function initSupabase() {
             try {
-                const { data: { user } } = await supabase.auth.getUser();
+                // First try to get the session
+                const { data: { session } } = await supabase.auth.getSession();
                 
-                if (!user) {
-                    console.error('No authenticated user found');
+                if (!session) {
+                    console.error('No authenticated session found');
                     document.querySelector('.loading-text').textContent = 'Please sign in to play';
                     return false;
                 }
 
-                userId = user.id;
+                userId = session.user.id;
+                console.log('✅ User authenticated:', userId);
                 await loadBalance();
                 return true;
             } catch (error) {
@@ -423,6 +425,8 @@
         }
 
         async function loadBalance() {
+            if (!userId) return;
+            
             try {
                 const { data, error } = await supabase
                     .from('user_balances')
@@ -430,27 +434,47 @@
                     .eq('user_id', userId)
                     .single();
 
-                if (error) throw error;
-                currentBalance = data?.balance || 0;
+                if (error) {
+                    console.error('Error loading balance:', error);
+                    currentBalance = 0;
+                } else {
+                    currentBalance = data?.balance || 0;
+                    console.log('✅ Balance loaded:', currentBalance);
+                }
+                
                 document.getElementById('balanceDisplay').textContent = currentBalance;
             } catch (error) {
                 console.error('Error loading balance:', error);
                 currentBalance = 0;
+                document.getElementById('balanceDisplay').textContent = '0';
             }
         }
 
         async function updateBalance(amount) {
+            if (!userId) return;
+            
             try {
+                // Get current balance first
+                const { data: currentData } = await supabase
+                    .from('user_balances')
+                    .select('balance')
+                    .eq('user_id', userId)
+                    .single();
+
+                const newBalance = (currentData?.balance || 0) + amount;
+
                 const { error } = await supabase
                     .from('user_balances')
                     .update({ 
-                        balance: supabase.raw(`balance + ${amount}`),
+                        balance: newBalance,
                         updated_at: new Date().toISOString()
                     })
                     .eq('user_id', userId);
 
                 if (error) throw error;
+                
                 await loadBalance();
+                console.log(`✅ Balance updated: ${amount > 0 ? '+' : ''}${amount} (new: ${newBalance})`);
             } catch (error) {
                 console.error('Error updating balance:', error);
             }
@@ -519,12 +543,10 @@
             }
         }
 
-        function startGame() {
+        async function startGame() {
             // Deduct buy-in
-            updateBalance(-2000);
-            currentBalance -= 2000;
-            document.getElementById('balanceDisplay').textContent = currentBalance;
-
+            await updateBalance(-2000);
+            
             document.getElementById('tableSelector').classList.add('hidden');
             document.getElementById('gameContainer').style.display = 'flex';
             startNewHand();
@@ -729,16 +751,16 @@
             setTimeout(nextTurn, gameSpeed / 2);
         }
 
-        function checkEndConditions() {
+        async function checkEndConditions() {
             const active = players.filter(p => !p.folded);
             if(active.length === 1) {
-                givePotTo(active[0].id);
+                await givePotTo(active[0].id);
             } else {
                 finishTurn();
             }
         }
 
-        function showdown() {
+        async function showdown() {
             players.forEach(p => {
                 if(!p.folded) renderHand(p.id, true);
             });
@@ -755,10 +777,10 @@
 
             const winner = active[0];
             showActionBubble(winner.id, winner.eval.type + "!");
-            setTimeout(() => givePotTo(winner.id), 2000);
+            setTimeout(async () => await givePotTo(winner.id), 2000);
         }
 
-        function givePotTo(id) {
+        async function givePotTo(id) {
             sfx.win();
             const p = players[id];
             p.chips += pot;
@@ -771,7 +793,9 @@
             if(id === 0) {
                 const netChange = p.chips - 2000;
                 if(netChange !== 0) {
-                    updateBalance(netChange);
+                    await updateBalance(netChange);
+                    // Reset to starting stack for next hand
+                    players[0].chips = 2000;
                 }
             }
             
@@ -926,11 +950,12 @@
         });
 
         // Cash out remaining chips on leave
-        window.addEventListener('beforeunload', () => {
+        window.addEventListener('beforeunload', async (e) => {
             if(userId && players[0].chips > 0) {
                 const netChange = players[0].chips - 2000;
                 if(netChange > 0) {
-                    updateBalance(netChange);
+                    // Try to update but don't block
+                    updateBalance(netChange).catch(err => console.error('Failed to cash out:', err));
                 }
             }
         });
