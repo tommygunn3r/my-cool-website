@@ -389,15 +389,14 @@
         </div>
     </div>
 
-    <script type="module">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
         // ============================================
         // SUPABASE INTEGRATION
         // ============================================
-        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
-
         const SUPABASE_URL = 'https://lutpubicojtvczktzeyl.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx1dHB1Ymljb2p0dmN6a3R6ZXlsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU1MDc2MTUsImV4cCI6MjA1MTA4MzYxNX0.hLqKKz9hN-EV8wVCNZH_bTrvRRpU3rOQjPp42sDTPGg';
-        const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         let userId = null;
         let currentBalance = 0;
