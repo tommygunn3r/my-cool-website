@@ -421,11 +421,12 @@
         function closeGame() { window.location.href = '/index.html'; }
         window.closeGame = closeGame;
 
-        import { db } from '/firebase-config.js';
-        import { getAuth, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
-        import { doc, getDoc, setDoc } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 
-        let auth = null;
+        const supabaseUrl = 'https://pknhslxhpohrzgsfkisr.supabase.co';
+        const supabaseKey = 'sb_publishable_-zZw-pi_3q1sdNGhITKuhQ_ECyDARzc';
+        const supabase = createClient(supabaseUrl, supabaseKey);
+
         let userId = '';
         let playerName = '';
         let balance = 0;
@@ -499,18 +500,17 @@
 
         async function initAuth() {
             try {
-                auth = getAuth(db.app);
-                onAuthStateChanged(auth, async (user) => {
-                    if (user) {
-                        userId = user.uid;
-                        playerName = user.displayName || "Player";
-                        await loadUserBalance();
-                        loadingMsg.textContent = 'READY';
-                        startGameBtn.style.display = 'inline-block';
-                    } else {
-                        window.location.href = '/index.html';
-                    }
-                });
+                const { data: { session } } = await supabase.auth.getSession();
+                
+                if (session?.user) {
+                    userId = session.user.id;
+                    playerName = session.user.user_metadata?.player_name || "Player";
+                    await loadUserBalance();
+                    loadingMsg.textContent = 'READY';
+                    startGameBtn.style.display = 'inline-block';
+                } else {
+                    window.location.href = '/index.html';
+                }
             } catch (err) {
                 console.error('Auth init failed:', err);
                 loadingMsg.textContent = 'AUTH ERROR';
@@ -519,25 +519,38 @@
 
         async function loadUserBalance() {
             try {
-                const userDoc = doc(db, 'users', userId);
-                const snap = await getDoc(userDoc);
-                if (snap.exists()) {
-                    balance = snap.data().gunnercoins || 0;
-                } else {
-                    balance = 0;
-                }
+                const { data, error } = await supabase
+                    .from('users')
+                    .select('gunnercoins')
+                    .eq('id', userId)
+                    .single();
+                
+                if (error) throw error;
+                
+                balance = data?.gunnercoins || 0;
                 balanceText.textContent = balance.toLocaleString();
             } catch (e) {
                 console.error('Balance load error:', e);
+                balance = 0;
+                balanceText.textContent = '0';
             }
         }
 
-        function updateBalance(delta) {
+        async function updateBalance(delta) {
             balance += delta;
             if (balance < 0) balance = 0;
             balanceText.textContent = balance.toLocaleString();
-            const userDoc = doc(db, 'users', userId);
-            setDoc(userDoc, { gunnercoins: balance }, { merge: true });
+            
+            try {
+                const { error } = await supabase
+                    .from('users')
+                    .update({ gunnercoins: balance })
+                    .eq('id', userId);
+                
+                if (error) throw error;
+            } catch (e) {
+                console.error('Balance update error:', e);
+            }
         }
 
         // ---------- GAME LOGIC ----------
@@ -649,314 +662,296 @@
             
             prizeBoxes = [];
             let x = 0;
-            
-            for (let m of multipliers) {
+            for (let i = 0; i < multipliers.length; i++) {
                 prizeBoxes.push({
-                    baseX: x,
+                    multiplier: multipliers[i],
                     width: boxWidth,
-                    multiplier: m
+                    baseX: x
                 });
                 x += boxWidth + minGap;
             }
-            
-            // Store total width for wrapping
-            prizeBoxes.totalWidth = x - minGap; // Don't count last gap
-        }
-
-        function addMessage(txt) {
-            const msg = document.createElement('div');
-            msg.className = 'message-overlay';
-            msg.textContent = txt;
-            gameContainer.appendChild(msg);
-            setTimeout(() => msg.remove(), 2100);
-        }
-
-        function addParticles(x, y, count, color = 'gold') {
-            if (!particlesEnabled) return;
-            for (let i = 0; i < count; i++) {
-                particles.push({
-                    x,
-                    y,
-                    vx: (Math.random() - 0.5) * 3,
-                    vy: (Math.random() - 0.5) * 3,
-                    life: 30 + Math.random()*20,
-                    color
-                });
-            }
-        }
-
-        function createCoin(x, y, vy = 1, vx = 0) {
-            return {
-                x, y,
-                vx, vy,
-                radius: coinRadius,
-                spinning: 0,
-                landed: false,
-                prize: null
-            };
         }
 
         function startDropFromX(x) {
             if (gameState !== 'idle') return;
             if (balance < 1) {
-                addMessage('INSUFFICIENT FUNDS');
+                addMessage('NOT ENOUGH COINS');
                 return;
             }
             updateBalance(-1);
-            mainCoin = createCoin(x, dropZoneHeightPx + 10, 2);
             gameState = 'dropping';
+            hoverCoinX = null;
+            mainCoin = {
+                x: x,
+                y: dropZoneHeightPx * 0.5,
+                vx: 0,
+                vy: 0,
+                radius: coinRadius,
+                spinning: 0,
+                landed: false,
+                prize: null
+            };
             playDropSound();
-            lastMultiplier = 0;
-            
-            // Switch scroll direction on each drop
-            prizeScrollDirection *= -1;
         }
 
-        function updateCoinPhysics(coin, isMini = false) {
-            if (coin.landed) return;
-
-            coin.vy += gravity * (isMini ? 1.2 : 1);
+        function updateCoinPhysics(coin, isMini) {
+            coin.vy += gravity;
             coin.x += coin.vx;
             coin.y += coin.vy;
-            coin.spinning += 0.18;
-
-            // Edge collision – slightly softer rebound
-            if (coin.x < coin.radius) {
-                coin.x = coin.radius;
-                coin.vx *= -0.35;
-            }
-            if (coin.x > width - coin.radius) {
-                coin.x = width - coin.radius;
-                coin.vx *= -0.35;
-            }
+            coin.spinning += 0.15;
 
             // Peg collisions
             for (let peg of pegGrid) {
                 const dx = coin.x - peg.x;
                 const dy = coin.y - peg.y;
                 const dist = Math.sqrt(dx*dx + dy*dy);
-                const minDist = coin.radius + pegRadius;
-                if (dist > 0 && dist < minDist) {
+                if (dist < coin.radius + pegRadius) {
+                    const angle = Math.atan2(dy, dx);
+                    const overlap = (coin.radius + pegRadius) - dist;
+                    coin.x += Math.cos(angle) * overlap;
+                    coin.y += Math.sin(angle) * overlap;
+
                     const nx = dx / dist;
                     const ny = dy / dist;
-                    const overlap = minDist - dist;
-                    coin.x += nx * overlap;
-                    coin.y += ny * overlap;
-                    const dot = coin.vx * nx + coin.vy * ny;
-                    coin.vx -= 2 * dot * nx;
-                    coin.vy -= 2 * dot * ny;
-                    // Softer damping so it doesn't stall
-                    coin.vx *= 0.92;
-                    coin.vy *= 0.92;
-                    playPegHitSound();
-                    addParticles(coin.x, coin.y, 6, 'gold');
-                }
-            }
+                    const dot = coin.vx*nx + coin.vy*ny;
+                    coin.vx = (coin.vx - 2*dot*nx) * 0.7;
+                    coin.vy = (coin.vy - 2*dot*ny) * 0.7;
 
-            // Prize line
-            if (coin.y + coin.radius >= prizeTrackY) {
-                const box = getPrizeBoxUnderCoin(coin.x);
-                if (box) {
-                    coin.landed = true;
-                    coin.prize = box.multiplier;
-                    handlePrizeResult(box.multiplier, isMini);
-                } else {
-                    coin.landed = true;
-                    coin.prize = 0;
-                }
-            }
-
-            // Fell off bottom (no prize)
-            if (coin.y - coin.radius > height + 50) {
-                coin.landed = true;
-                coin.prize = 0;
-            }
-        }
-
-        function getPrizeBoxUnderCoin(x) {
-            const totalWidth = prizeBoxes.totalWidth || (prizeBoxes[prizeBoxes.length-1].baseX + prizeBoxes[prizeBoxes.length-1].width);
-            
-            // Check boxes in multiple passes to handle wrapping
-            let idx = 0;
-            for (let pass = -1; pass <= 1; pass++) {
-                for (let box of prizeBoxes) {
-                    const bx = box.baseX + prizeOffset + (pass * totalWidth);
-                    if (x >= bx && x <= bx + box.width) {
-                        return { ...box, x: bx, index: idx };
+                    if (!isMini) playPegHitSound();
+                    if (particlesEnabled) {
+                        for (let i = 0; i < 3; i++) {
+                            particles.push({
+                                x: peg.x, y: peg.y,
+                                vx: (Math.random()-0.5)*3,
+                                vy: (Math.random()-0.5)*3,
+                                life: 15 + Math.random()*10,
+                                color: `hsl(${40 + Math.random()*20}, 80%, 60%)`
+                            });
+                        }
                     }
-                    idx++;
                 }
             }
-            return null;
-        }
 
-        function handlePrizeResult(multiplier, isMini) {
-            if (!isMini) {
-                if (multiplier > 0) {
-                    updateBalance(multiplier);
-                }
-                if (multiplier >= 10 && lastHitWasX10) {
-                    triggerCoinBreaker();
-                    lastHitWasX10 = false;
-                } else {
-                    lastHitWasX10 = (multiplier >= 10);
-                }
-                lastMultiplier = multiplier;
-                if (multiplier > 0) {
-                    addMessage(`WIN x${multiplier}`);
-                    playPrizeSound(multiplier);
-                } else {
-                    addMessage('NO PRIZE');
-                }
-            } else {
-                if (multiplier > 0) {
-                    updateBalance(multiplier);
-                    playBonusHitSound();
-                }
-            }
-        }
+            // Prize collision
+            if (coin.y + coin.radius >= prizeTrackY) {
+                for (let box of prizeBoxes) {
+                    const totalWidth = (prizeBoxes[prizeBoxes.length-1].baseX + prizeBoxes[prizeBoxes.length-1].width);
+                    for (let pass = -2; pass <= 2; pass++) {
+                        const boxX = box.baseX + prizeOffset + (pass * totalWidth);
+                        if (coin.x >= boxX && coin.x <= boxX + box.width) {
+                            coin.landed = true;
+                            coin.prize = box.multiplier;
+                            if (!isMini) {
+                                playPrizeSound(box.multiplier);
+                                const winAmt = box.multiplier;
+                                updateBalance(winAmt);
+                                addMessage(`+${winAmt} COINS`);
 
-        function triggerCoinBreaker() {
-            gameState = 'bonus_intro';
-            bonus.active = true;
-            bonus.cracking = true;
-            bonus.hp = bonus.maxHp = 100;
-            bonus.miniCoins = [];
-            bonus.bannerShown = false;
-            playBonusStartSound();
-            showBonusBanner();
-        }
+                                if (box.multiplier === 10) {
+                                    if (lastHitWasX10) {
+                                        triggerBonus();
+                                        lastHitWasX10 = false;
+                                    } else {
+                                        lastHitWasX10 = true;
+                                    }
+                                } else {
+                                    lastHitWasX10 = false;
+                                }
+                                lastMultiplier = box.multiplier;
 
-        function showBonusBanner() {
-            const overlay = document.createElement('div');
-            overlay.className = 'bonus-banner';
-            overlay.id = 'bonusBannerOverlay';
-
-            const img = document.createElement('img');
-            img.src = '/games/assets/casino/coinbreaker_bonus.png';
-            overlay.appendChild(img);
-
-            const txt = document.createElement('div');
-            txt.className = 'bonus-text';
-            txt.textContent = 'TAP / CLICK TO SMASH THE GIANT COIN';
-            overlay.appendChild(txt);
-
-            gameContainer.appendChild(overlay);
-            bonus.bannerShown = true;
-
-            setTimeout(() => {
-                overlay.style.opacity = '0';
-                overlay.style.transition = 'opacity 0.4s';
-                setTimeout(() => overlay.remove(), 420);
-            }, 1400);
-
-            setTimeout(() => {
-                gameState = 'bonus_active';
-            }, 500);
-        }
-
-        function updateBonusGiantCoinOnClick(evX, evY) {
-            if (!bonus.active || !bonus.cracking) return;
-            const cx = width / 2;
-            const cy = height / 2;
-            const maxR = coinRadius * bonus.giantCoinScale * 1.1;
-            const dx = evX - cx;
-            const dy = evY - cy;
-            const dist = Math.sqrt(dx*dx + dy*dy);
-            if (dist <= maxR) {
-                bonus.hp -= 8 + Math.random()*4;
-                if (bonus.hp < 0) bonus.hp = 0;
-                playBonusHitSound();
-                addParticles(evX, evY, 10, 'gold');
-                if (bonus.hp <= 0) {
-                    bonus.cracking = false;
-                    startBonusMiniCoinExplosion();
+                                if (particlesEnabled) {
+                                    for (let i = 0; i < 15; i++) {
+                                        particles.push({
+                                            x: coin.x, y: coin.y,
+                                            vx: (Math.random()-0.5)*6,
+                                            vy: (Math.random()-0.5)*6,
+                                            life: 25 + Math.random()*15,
+                                            color: (box.multiplier === 10) ? '#FFD700' : '#FFFFFF'
+                                        });
+                                    }
+                                }
+                            } else {
+                                // Mini coins from bonus
+                                const winAmt = box.multiplier * 2;
+                                updateBalance(winAmt);
+                                if (particlesEnabled) {
+                                    for (let i = 0; i < 8; i++) {
+                                        particles.push({
+                                            x: coin.x, y: coin.y,
+                                            vx: (Math.random()-0.5)*4,
+                                            vy: (Math.random()-0.5)*4,
+                                            life: 20 + Math.random()*10,
+                                            color: '#FFAA00'
+                                        });
+                                    }
+                                }
+                            }
+                            return;
+                        }
+                    }
                 }
             }
-        }
 
-        function startBonusMiniCoinExplosion() {
-            playBonusExplosionSound();
-            const miniCount = 12;
-            for (let i = 0; i < miniCount; i++) {
-                const angle = (Math.PI * 2 * i) / miniCount;
-                const speed = 4 + Math.random() * 2;
-                const mc = createCoin(width/2, height/2, Math.sin(angle)*speed, Math.cos(angle)*speed);
-                mc.radius = coinRadius * 0.7;
-                bonus.miniCoins.push(mc);
+            // Boundaries
+            if (coin.x < coin.radius) {
+                coin.x = coin.radius;
+                coin.vx *= -0.7;
             }
-            gameState = 'bonus_cleanup';
+            if (coin.x > width - coin.radius) {
+                coin.x = width - coin.radius;
+                coin.vx *= -0.7;
+            }
+            if (coin.y > height + 50) {
+                coin.landed = true;
+            }
         }
 
         function updateParticles() {
             for (let p of particles) {
                 p.x += p.vx;
                 p.y += p.vy;
-                p.life -= 1;
-                p.vy += 0.03;
+                p.life--;
             }
             particles = particles.filter(p => p.life > 0);
         }
 
         function drawParticles() {
             for (let p of particles) {
-                const alpha = Math.max(0, p.life / 50);
-                ctx.fillStyle = p.color === 'gold'
-                    ? `rgba(244, 215, 122, ${alpha})`
-                    : `rgba(255,255,255, ${alpha})`;
-                ctx.beginPath();
-                ctx.arc(p.x, p.y, 2.5, 0, Math.PI*2);
-                ctx.fill();
+                ctx.fillStyle = p.color;
+                ctx.globalAlpha = p.life / 30;
+                ctx.fillRect(p.x - 2, p.y - 2, 4, 4);
+            }
+            ctx.globalAlpha = 1;
+        }
+
+        function addMessage(text) {
+            const div = document.createElement('div');
+            div.className = 'message-overlay';
+            div.textContent = text;
+            gameContainer.appendChild(div);
+            setTimeout(() => div.remove(), 2200);
+        }
+
+        function triggerBonus() {
+            gameState = 'bonus_intro';
+            bonus.active = true;
+            bonus.cracking = false;
+            bonus.hp = bonus.maxHp;
+            bonus.miniCoins = [];
+            bonus.giantCoinScale = 2.8;
+            bonus.bannerShown = false;
+
+            playBonusStartSound();
+
+            const bannerDiv = document.createElement('div');
+            bannerDiv.className = 'bonus-banner';
+            const img = document.createElement('img');
+            img.src = bonusBannerImg.src;
+            bannerDiv.appendChild(img);
+            const txt = document.createElement('div');
+            txt.className = 'bonus-text';
+            txt.textContent = 'TAP THE COIN TO CRACK IT';
+            bannerDiv.appendChild(txt);
+            gameContainer.appendChild(bannerDiv);
+
+            setTimeout(() => {
+                bannerDiv.remove();
+                bonus.bannerShown = true;
+                gameState = 'bonus_active';
+            }, 2200);
+        }
+
+        function updateBonusGiantCoinOnClick(x, y) {
+            if (!bonus.active || gameState !== 'bonus_active') return;
+            const cx = width/2;
+            const cy = height/2;
+            const r = coinRadius * bonus.giantCoinScale;
+            const dx = x - cx;
+            const dy = y - cy;
+            if (Math.sqrt(dx*dx + dy*dy) <= r) {
+                bonus.hp -= 10;
+                playBonusHitSound();
+                if (bonus.hp <= 0) {
+                    bonus.hp = 0;
+                    bonus.cracking = true;
+                    setTimeout(() => {
+                        playBonusExplosionSound();
+                        explodeBonusCoin();
+                    }, 300);
+                }
+            }
+        }
+
+        function explodeBonusCoin() {
+            const numCoins = 10 + Math.floor(Math.random()*6);
+            for (let i = 0; i < numCoins; i++) {
+                const angle = (Math.random() * Math.PI * 2);
+                const speed = 3 + Math.random()*4;
+                bonus.miniCoins.push({
+                    x: width/2,
+                    y: height/2,
+                    vx: Math.cos(angle)*speed,
+                    vy: Math.sin(angle)*speed,
+                    radius: coinRadius * 0.7,
+                    spinning: 0,
+                    landed: false,
+                    prize: null
+                });
+            }
+            gameState = 'bonus_cleanup';
+            if (particlesEnabled) {
+                for (let i = 0; i < 40; i++) {
+                    particles.push({
+                        x: width/2, y: height/2,
+                        vx: (Math.random()-0.5)*10,
+                        vy: (Math.random()-0.5)*10,
+                        life: 30 + Math.random()*20,
+                        color: '#FFD700'
+                    });
+                }
             }
         }
 
         function drawScene() {
-            ctx.clearRect(0,0,width,height);
+            ctx.clearRect(0, 0, width, height);
 
-            const grad = ctx.createRadialGradient(width/2, 0, width*0.1, width/2, height, width);
-            grad.addColorStop(0, 'rgba(31,23,46,0.9)');
-            grad.addColorStop(0.5, 'rgba(7,4,10,0.96)');
-            grad.addColorStop(1, 'rgba(0,0,0,1)');
-            ctx.fillStyle = grad;
-            ctx.fillRect(0,0,width,height);
-
-            if (hintEnabled) {
-                ctx.fillStyle = 'rgba(255,255,255,0.05)';
+            // Drop zone hint
+            if (hintEnabled && gameState === 'idle') {
+                ctx.fillStyle = 'rgba(212, 175, 55, 0.15)';
                 ctx.fillRect(0, 0, width, dropZoneHeightPx);
+                ctx.strokeStyle = 'rgba(212, 175, 55, 0.5)';
+                ctx.lineWidth = 2;
+                ctx.setLineDash([8, 4]);
+                ctx.strokeRect(0, 0, width, dropZoneHeightPx);
+                ctx.setLineDash([]);
             }
 
+            // Pegs
             for (let peg of pegGrid) {
                 if (pegImg.complete && pegImg.naturalWidth > 0) {
-                    const s = pegRadius*2;
-                    ctx.drawImage(pegImg, peg.x - s/2, peg.y - s/2, s, s);
+                    const size = pegRadius * 2;
+                    ctx.drawImage(pegImg, peg.x - size/2, peg.y - size/2, size, size);
                 } else {
-                    ctx.fillStyle = '#444';
+                    ctx.fillStyle = '#555';
                     ctx.beginPath();
                     ctx.arc(peg.x, peg.y, pegRadius, 0, Math.PI*2);
                     ctx.fill();
                 }
             }
 
-
-            // Update prize box scrolling
-            prizeOffset += prizeScrollSpeed * prizeScrollDirection;
-            
-            // Wrap around when scrolling
-            const totalWidth = prizeBoxes.totalWidth || (prizeBoxes[prizeBoxes.length-1].baseX + prizeBoxes[prizeBoxes.length-1].width);
-            if (prizeScrollDirection < 0) {
-                // Scrolling left
+            // Prize boxes scrolling
+            if (gameState === 'idle' || gameState === 'dropping') {
+                prizeOffset += prizeScrollDirection * prizeScrollSpeed;
+                const totalWidth = (prizeBoxes[prizeBoxes.length-1].baseX + prizeBoxes[prizeBoxes.length-1].width);
                 if (prizeOffset < -totalWidth) {
                     prizeOffset += totalWidth;
-                }
-            } else {
-                // Scrolling right
-                if (prizeOffset > width) {
+                } else if (prizeOffset > totalWidth) {
                     prizeOffset -= totalWidth;
                 }
             }
 
-            // Draw boxes multiple times to create seamless loop
-            for (let pass = -1; pass <= 1; pass++) {
+            for (let pass = -2; pass <= 2; pass++) {
+                const totalWidth = (prizeBoxes[prizeBoxes.length-1].baseX + prizeBoxes[prizeBoxes.length-1].width);
                 for (let box of prizeBoxes) {
                     const img = boxImgMap[box.multiplier];
                     const x = box.baseX + prizeOffset + (pass * totalWidth);
