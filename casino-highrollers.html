@@ -94,7 +94,11 @@
     </div>
 
     <script type="module">
-        import { supabase } from '/supabase-config.js';
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+
+        const supabaseUrl = 'https://lgchsciptvubyzejypdl.supabase.co';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxnY2hzY2lwdHZ1Ynl6ZWp5cGRsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU2ODEwOTQsImV4cCI6MjA1MTI1NzA5NH0.yKe03bes4th780AohP8O1DznmWjvCdripDHh5WnOtpg';
+        const supabase = createClient(supabaseUrl, supabaseKey);
 
         async function initAndLoad() {
             const contentDiv = document.getElementById('leaderboardContent');
