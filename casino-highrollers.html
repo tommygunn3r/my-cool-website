@@ -106,7 +106,7 @@
             try {
                 // Query users table ordered by gunnercoins descending, limit 50
                 const { data, error } = await supabase
-                    .from('users')
+                    .from('profiles')
                     .select('player_name, gunnercoins')
                     .order('gunnercoins', { ascending: false })
                     .limit(50);
