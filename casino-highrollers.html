@@ -45,6 +45,7 @@
         @keyframes dots { 0%, 20% { content: '.'; } 40% { content: '..'; } 60%, 100% { content: '...'; } }
         .no-data { text-align: center; font-size: 1.3rem; color: #aaa; padding: 40px; }
         .error-msg { color: #ff4444; text-align: center; padding: 20px; }
+        .debug-info { background: rgba(50, 50, 50, 0.8); color: #0f0; padding: 15px; margin: 20px 0; border-radius: 8px; font-family: monospace; font-size: 0.9rem; }
 
         .fixed-nav { position: fixed; bottom: 30px; right: 30px; display: flex; gap: 15px; z-index: 100; }
         .nav-button { padding: 12px 24px; background: rgba(10, 10, 10, 0.95); border: 2px solid #FFD700; border-radius: 10px; color: #fff; font-size: 1rem; font-weight: bold; cursor: pointer; text-decoration: none; display: flex; align-items: center; gap: 8px; transition: all 0.3s ease; box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3); }
@@ -76,6 +77,8 @@
         <div class="subtitle">🎰 RICHEST PLAYERS 🎰</div>
         <div class="info-text">Rankings based on total GunnerCoins balance</div>
 
+        <div id="debugInfo" class="debug-info" style="display:none;"></div>
+
         <div class="leaderboard-container">
             <div class="leaderboard-header">
                 <div>RANK</div>
@@ -92,25 +95,32 @@
     <script type="module">
         // Use parent's Supabase client if available (when in iframe), otherwise create our own
         let supabase;
+        const debugInfo = document.getElementById('debugInfo');
+        
+        function debug(message) {
+            console.log(message);
+            debugInfo.style.display = 'block';
+            debugInfo.innerHTML += message + '<br>';
+        }
         
         if (window.parent && window.parent.supabase) {
             // We're in an iframe, use parent's Supabase client
             supabase = window.parent.supabase;
-            console.log('✅ Using parent Supabase client');
+            debug('✅ Using parent Supabase client');
         } else {
             // Standalone mode, create our own client
             const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');
             const supabaseUrl = 'https://pknhslxhpohrzgsfkisr.supabase.co';
-            const supabaseKey = 'sb_publishable_-zZw-pi_3q1sdNGhITKuhQ_ECyDARzc';
+            const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBrbmhzbHhocG9ocnpnc2ZraXNyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU1ODA1OTMsImV4cCI6MjA1MTE1NjU5M30.A-SQOhWOwlCk_gxn-4JgE3UQCCo8QBp5XxgPy4h4Weo';
             supabase = createClient(supabaseUrl, supabaseKey);
-            console.log('✅ Created standalone Supabase client');
+            debug('✅ Created standalone Supabase client');
         }
 
         async function loadLeaderboard() {
             const contentDiv = document.getElementById('leaderboardContent');
             
             try {
-                console.log('Fetching leaderboard...');
+                debug('🔍 Fetching leaderboard data...');
                 
                 // Query profiles table ordered by gunnercoins descending, limit 50
                 const { data, error } = await supabase
@@ -120,11 +130,12 @@
                     .limit(50);
                 
                 if (error) {
-                    console.error('Supabase error:', error);
+                    debug('❌ Supabase error: ' + JSON.stringify(error));
                     throw error;
                 }
                 
-                console.log('Retrieved data:', data);
+                debug(`✅ Retrieved ${data ? data.length : 0} players`);
+                debug('Raw data: ' + JSON.stringify(data, null, 2));
                 
                 if (!data || data.length === 0) {
                     contentDiv.innerHTML = '<div class="no-data">No players yet. Be the first to play!</div>';
@@ -138,6 +149,8 @@
                     // Use player_name if available, or fallback to "Pilot"
                     const playerName = (player.player_name || "Pilot").toUpperCase();
                     const coins = (player.gunnercoins !== undefined && player.gunnercoins !== null) ? player.gunnercoins : 0;
+                    
+                    debug(`Player ${rank}: ${playerName} - ${coins} coins`);
                     
                     let rankClass = '';
                     if (rank === 1) rankClass = 'top-1';
@@ -162,8 +175,12 @@
                     rank++;
                 });
 
+                debug(`📊 Rendering ${rank - 1} leaderboard entries`);
                 contentDiv.innerHTML = html;
+                debug('✅ Leaderboard loaded successfully!');
+                
             } catch (error) {
+                debug('❌ Fatal error: ' + error.message);
                 console.error('Error loading leaderboard:', error);
                 contentDiv.innerHTML = `<div class="error-msg">Error loading data: ${error.message}</div>`;
             }
@@ -172,8 +189,10 @@
         document.addEventListener('mousemove', (e) => {
             const x = e.clientX / window.innerWidth;
             const y = e.clientY / window.innerHeight;
-            document.querySelector('.layer-2').style.transform = `translate(${x * 20}px, ${y * 20}px)`;
-            document.querySelector('.layer-3').style.transform = `translate(${x * 40}px, ${y * 40}px)`;
+            const layer2 = document.querySelector('.layer-2');
+            const layer3 = document.querySelector('.layer-3');
+            if (layer2) layer2.style.transform = `translate(${x * 20}px, ${y * 20}px)`;
+            if (layer3) layer3.style.transform = `translate(${x * 40}px, ${y * 40}px)`;
         });
 
         // Initialize
