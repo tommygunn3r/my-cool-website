@@ -209,7 +209,10 @@ async function start() {
         const { data, error } = await supabase.auth.signUp({
             email,
             password: pass,
-            options: { data: { display_name: name } }
+            options: { 
+                data: { display_name: name },
+                emailRedirectTo: window.location.origin
+            }
         });
 
         if (error) {
@@ -218,6 +221,21 @@ async function start() {
             return;
         }
 
+        // Check if email confirmation is required
+        if (data.user && !data.session) {
+            // Email confirmation required
+            signupError.style.display = "block";
+            signupError.style.color = "#e94560";
+            signupError.textContent = "✓ Account created! Check your email to verify your account.";
+            
+            // Clear form
+            regName.value = "";
+            regEmail.value = "";
+            regPass.value = "";
+            return;
+        }
+
+        // Auto-confirmed (email confirmation disabled)
         if (window.closeModal) window.closeModal();
         await initAuthState();
     });
