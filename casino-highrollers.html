@@ -94,11 +94,21 @@
     </div>
 
     <script type="module">
-        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
-
-        const supabaseUrl = 'https://pknhslxhpohrzgsfkisr.supabase.co';
-        const supabaseKey = 'sb_publishable_-zZw-pi_3q1sdNGhITKuhQ_ECyDARzc';
-        const supabase = createClient(supabaseUrl, supabaseKey);
+        // Use parent's Supabase client if available (when in iframe), otherwise create our own
+        let supabase;
+        
+        if (window.parent && window.parent.supabase) {
+            // We're in an iframe, use parent's Supabase client
+            supabase = window.parent.supabase;
+            console.log('✅ Using parent Supabase client');
+        } else {
+            // Standalone mode, create our own client
+            const { createClient } = await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');
+            const supabaseUrl = 'https://pknhslxhpohrzgsfkisr.supabase.co';
+            const supabaseKey = 'sb_publishable_-zZw-pi_3q1sdNGhITKuhQ_ECyDARzc';
+            supabase = createClient(supabaseUrl, supabaseKey);
+            console.log('✅ Created standalone Supabase client');
+        }
 
         async function loadLeaderboard() {
             const contentDiv = document.getElementById('leaderboardContent');
