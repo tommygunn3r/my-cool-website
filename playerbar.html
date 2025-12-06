@@ -1,6 +1,7 @@
 <!-- =======================
      GLOBAL PLAYER BAR
      + GLOBAL AUTH MODALS
+     + MULTIPLAYER ROOM CONTROLS
      ======================= -->
 
 <div id="player-bar-wrapper" style="
@@ -116,6 +117,21 @@
     </style>
 
     <div style="display:flex; align-items:center; gap:8px;">
+        <!-- Multiplayer Room Button -->
+        <button id="pb-room-toggle" type="button" onclick="toggleRoomPanel()" style="
+            padding: 8px 16px;
+            background: linear-gradient(180deg, #4CAF50, #2d7a32);
+            border: 2px solid #4CAF50;
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 0 0 15px rgba(76, 175, 80, 0.5);
+            display: none;
+        ">
+            🎮 ROOM
+        </button>
+
         <!-- Jukebox Button -->
         <button type="button" onclick="openJukebox()" style="
             padding: 8px 16px;
@@ -162,6 +178,7 @@
         </button>
     </div>
 
+    <!-- Settings Menu -->
     <div id="pb-settings-menu" style="
         position:absolute;
         top:56px;
@@ -179,11 +196,287 @@
         <div onclick="pbDeleteAccount()" style="padding:10px 16px; cursor:pointer;">Delete Account</div>
         <div onclick="pbLogout()" style="padding:10px 16px; cursor:pointer;">Log Out</div>
     </div>
+
+    <!-- Multiplayer Room Panel -->
+    <div id="pb-room-panel" style="
+        position: absolute;
+        top: 56px;
+        right: 22px;
+        background: #1a1a1a;
+        border: 2px solid #4CAF50;
+        border-radius: 10px;
+        padding: 15px;
+        display: none;
+        width: 320px;
+        max-height: 400px;
+        overflow-y: auto;
+        z-index: 3000;
+        box-shadow: 0 4px 20px rgba(76, 175, 80, 0.3);
+    ">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid #4CAF50; padding-bottom: 8px;">
+            <h3 style="margin: 0; color: #4CAF50; font-size: 1.1rem;">Room Info</h3>
+            <button onclick="leaveMultiplayerRoom()" style="
+                padding: 5px 12px;
+                background: #ff4444;
+                border: none;
+                color: white;
+                border-radius: 5px;
+                cursor: pointer;
+                font-size: 0.85rem;
+                font-weight: bold;
+            ">Leave</button>
+        </div>
+
+        <div id="pb-room-pot" style="
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            color: #000;
+            padding: 8px;
+            border-radius: 5px;
+            text-align: center;
+            font-weight: bold;
+            margin-bottom: 12px;
+            display: none;
+        ">
+            💰 Pot: <span id="pb-pot-amount">0</span> Coins
+        </div>
+
+        <div style="margin-bottom: 12px;">
+            <div style="color: #4CAF50; font-size: 0.9rem; font-weight: bold; margin-bottom: 6px;">Players:</div>
+            <div id="pb-room-players" style="display: grid; gap: 6px;"></div>
+        </div>
+
+        <div>
+            <div style="color: #4CAF50; font-size: 0.9rem; font-weight: bold; margin-bottom: 6px;">Quick Chat:</div>
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                <button onclick="sendRoomEmoji('👍')" class="pb-emoji-btn">👍</button>
+                <button onclick="sendRoomEmoji('👎')" class="pb-emoji-btn">👎</button>
+                <button onclick="sendRoomEmoji('😂')" class="pb-emoji-btn">😂</button>
+                <button onclick="sendRoomEmoji('😎')" class="pb-emoji-btn">😎</button>
+                <button onclick="sendRoomEmoji('🔥')" class="pb-emoji-btn">🔥</button>
+                <button onclick="sendRoomEmoji('💪')" class="pb-emoji-btn">💪</button>
+                <button onclick="sendRoomEmoji('🎮')" class="pb-emoji-btn">🎮</button>
+                <button onclick="sendRoomEmoji('✌️')" class="pb-emoji-btn">✌️</button>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .pb-emoji-btn {
+            background: #2a2a2a;
+            border: 1px solid #555;
+            padding: 6px 10px;
+            border-radius: 5px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .pb-emoji-btn:hover {
+            background: #4CAF50;
+            transform: scale(1.1);
+        }
+        #pb-room-panel::-webkit-scrollbar {
+            width: 8px;
+        }
+        #pb-room-panel::-webkit-scrollbar-track {
+            background: #2a2a2a;
+            border-radius: 4px;
+        }
+        #pb-room-panel::-webkit-scrollbar-thumb {
+            background: #4CAF50;
+            border-radius: 4px;
+        }
+    </style>
 </div>
 
+<!-- [REST OF THE AUTH MODALS STAY THE SAME - I'll include them at the end] -->
 
+<script>
+/* ================================================
+   MULTIPLAYER ROOM INTEGRATION
+   ================================================ */
 
-<!-- ================================
+let pbMultiplayerRoom = {
+    roomId: null,
+    players: [],
+    pot: 0,
+    channel: null
+};
+
+// Call this function from your multiplayer games to activate the room panel
+window.initMultiplayerPanel = async function(roomId) {
+    pbMultiplayerRoom.roomId = roomId;
+    
+    // Show the room button
+    document.getElementById('pb-room-toggle').style.display = 'inline-flex';
+    
+    // Load room data
+    await loadRoomData();
+    
+    // Subscribe to room updates
+    subscribeToRoomUpdates();
+};
+
+async function loadRoomData() {
+    if (!pbMultiplayerRoom.roomId) return;
+    
+    try {
+        // Get room info
+        const { data: room } = await supabase
+            .from('rooms')
+            .select('buy_in')
+            .eq('id', pbMultiplayerRoom.roomId)
+            .single();
+        
+        if (room && room.buy_in > 0) {
+            pbMultiplayerRoom.pot = room.buy_in;
+            
+            // Get player count for total pot
+            const { data: players } = await supabase
+                .from('room_players')
+                .select('user_id, player_name')
+                .eq('room_id', pbMultiplayerRoom.roomId);
+            
+            pbMultiplayerRoom.players = players || [];
+            
+            const totalPot = room.buy_in * players.length;
+            document.getElementById('pb-pot-amount').textContent = totalPot;
+            document.getElementById('pb-room-pot').style.display = 'block';
+        } else {
+            document.getElementById('pb-room-pot').style.display = 'none';
+        }
+        
+        renderRoomPlayers();
+        
+    } catch (error) {
+        console.error('Error loading room data:', error);
+    }
+}
+
+function renderRoomPlayers() {
+    const container = document.getElementById('pb-room-players');
+    if (!pbMultiplayerRoom.players || pbMultiplayerRoom.players.length === 0) {
+        container.innerHTML = '<div style="color: #888; text-align: center; padding: 8px;">No players</div>';
+        return;
+    }
+    
+    container.innerHTML = pbMultiplayerRoom.players.map(p => `
+        <div style="
+            background: #2a2a2a;
+            padding: 8px;
+            border-radius: 5px;
+            border: 1px solid #444;
+        ">
+            ${p.player_name}
+        </div>
+    `).join('');
+}
+
+function subscribeToRoomUpdates() {
+    if (pbMultiplayerRoom.channel) {
+        pbMultiplayerRoom.channel.unsubscribe();
+    }
+    
+    pbMultiplayerRoom.channel = supabase
+        .channel(`playerbar-room-${pbMultiplayerRoom.roomId}`)
+        .on('postgres_changes',
+            { event: '*', schema: 'public', table: 'room_players', filter: `room_id=eq.${pbMultiplayerRoom.roomId}` },
+            () => loadRoomData()
+        )
+        .subscribe();
+}
+
+function toggleRoomPanel() {
+    const panel = document.getElementById('pb-room-panel');
+    const menu = document.getElementById('pb-settings-menu');
+    
+    // Close settings menu if open
+    menu.style.display = 'none';
+    
+    // Toggle room panel
+    panel.style.display = (panel.style.display === 'block') ? 'none' : 'block';
+}
+
+async function leaveMultiplayerRoom() {
+    if (!pbMultiplayerRoom.roomId) return;
+    
+    if (!confirm('Leave this room? You will be redirected to the lobby.')) return;
+    
+    const session = await pbGetSession();
+    if (!session) return;
+    
+    try {
+        // Remove from room
+        await supabase
+            .from('room_players')
+            .delete()
+            .eq('room_id', pbMultiplayerRoom.roomId)
+            .eq('user_id', session.user.id);
+        
+        // Cleanup
+        if (pbMultiplayerRoom.channel) {
+            pbMultiplayerRoom.channel.unsubscribe();
+        }
+        
+        // Hide room button
+        document.getElementById('pb-room-toggle').style.display = 'none';
+        document.getElementById('pb-room-panel').style.display = 'none';
+        
+        // Redirect to lobby
+        window.location.href = '/multiplayer.html';
+        
+    } catch (error) {
+        console.error('Error leaving room:', error);
+        alert('Failed to leave room');
+    }
+}
+
+function sendRoomEmoji(emoji) {
+    // You can implement a simple notification system or just log it
+    console.log('Sent emoji:', emoji);
+    
+    // Optional: Show a quick toast notification
+    const toast = document.createElement('div');
+    toast.textContent = `You sent ${emoji}`;
+    toast.style.cssText = `
+        position: fixed;
+        top: 70px;
+        right: 30px;
+        background: #4CAF50;
+        color: white;
+        padding: 10px 20px;
+        border-radius: 5px;
+        z-index: 9999;
+        animation: fadeOut 2s forwards;
+    `;
+    document.body.appendChild(toast);
+    
+    setTimeout(() => toast.remove(), 2000);
+}
+
+// Add fadeOut animation
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes fadeOut {
+        0% { opacity: 1; }
+        70% { opacity: 1; }
+        100% { opacity: 0; }
+    }
+`;
+document.head.appendChild(style);
+
+// Close room panel when clicking outside
+document.addEventListener('click', (e) => {
+    const panel = document.getElementById('pb-room-panel');
+    const button = document.getElementById('pb-room-toggle');
+    
+    if (!e.target.closest('#pb-room-panel') && !e.target.closest('#pb-room-toggle')) {
+        panel.style.display = 'none';
+    }
+});
+
+/* ================================================
+   [ORIGINAL PLAYERBAR CODE CONTINUES BELOW]
+   ================================================ */
      GLOBAL AUTH MODALS LIVE HERE NOW
      ================================ -->
 

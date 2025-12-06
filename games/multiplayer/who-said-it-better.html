@@ -513,7 +513,7 @@
 
     <script>
         // === SUPABASE CONFIG ===
-        const SUPABASE_URL = 'https://pknhslxhpohrzgsfkisr.supabase.co';
+        const SUPABASE_URL = 'https://esm.sh/@supabase/supabase-js@2';
         const SUPABASE_ANON_KEY = 'sb_publishable_-zZw-pi_3q1sdNGhITKuhQ_ECyDARzc';
         const { createClient } = supabase;
         const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -1316,6 +1316,11 @@
                 const input = document.getElementById("answerInput");
                 input.value = pickRandomAnswerText();
             });
+
+            // Initialize multiplayer panel in playerbar (if it exists)
+            if (typeof window.initMultiplayerPanel === 'function') {
+                window.initMultiplayerPanel(roomId);
+            }
         }
 
         window.addEventListener("load", init);
