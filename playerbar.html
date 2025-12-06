@@ -246,20 +246,6 @@
             <div style="color: #4CAF50; font-size: 0.9rem; font-weight: bold; margin-bottom: 6px;">Players:</div>
             <div id="pb-room-players" style="display: grid; gap: 6px;"></div>
         </div>
-
-        <div>
-            <div style="color: #4CAF50; font-size: 0.9rem; font-weight: bold; margin-bottom: 6px;">Quick Chat:</div>
-            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                <button onclick="sendRoomEmoji('👍')" class="pb-emoji-btn">👍</button>
-                <button onclick="sendRoomEmoji('👎')" class="pb-emoji-btn">👎</button>
-                <button onclick="sendRoomEmoji('😂')" class="pb-emoji-btn">😂</button>
-                <button onclick="sendRoomEmoji('😎')" class="pb-emoji-btn">😎</button>
-                <button onclick="sendRoomEmoji('🔥')" class="pb-emoji-btn">🔥</button>
-                <button onclick="sendRoomEmoji('💪')" class="pb-emoji-btn">💪</button>
-                <button onclick="sendRoomEmoji('🎮')" class="pb-emoji-btn">🎮</button>
-                <button onclick="sendRoomEmoji('✌️')" class="pb-emoji-btn">✌️</button>
-            </div>
-        </div>
     </div>
 
     <style>
@@ -432,40 +418,6 @@ async function leaveMultiplayerRoom() {
     }
 }
 
-function sendRoomEmoji(emoji) {
-    // You can implement a simple notification system or just log it
-    console.log('Sent emoji:', emoji);
-    
-    // Optional: Show a quick toast notification
-    const toast = document.createElement('div');
-    toast.textContent = `You sent ${emoji}`;
-    toast.style.cssText = `
-        position: fixed;
-        top: 70px;
-        right: 30px;
-        background: #4CAF50;
-        color: white;
-        padding: 10px 20px;
-        border-radius: 5px;
-        z-index: 9999;
-        animation: fadeOut 2s forwards;
-    `;
-    document.body.appendChild(toast);
-    
-    setTimeout(() => toast.remove(), 2000);
-}
-
-// Add fadeOut animation
-const style = document.createElement('style');
-style.textContent = `
-    @keyframes fadeOut {
-        0% { opacity: 1; }
-        70% { opacity: 1; }
-        100% { opacity: 0; }
-    }
-`;
-document.head.appendChild(style);
-
 // Close room panel when clicking outside
 document.addEventListener('click', (e) => {
     const panel = document.getElementById('pb-room-panel');
@@ -636,9 +588,10 @@ document.addEventListener('click', (e) => {
 <!-- ================================
      JUKEBOX + MUSIC PLAYER SCRIPTS
      ================================ -->
-<script src="songs.js"></script>
-<script src="playerbar-music.js"></script>
-<script src="jukebox-modal.js"></script>
+<!-- <script src="songs.js"></script>
+<!-- <script src="playerbar-music.js"></script>
+<!-- <script src="jukebox-modal.js"></script>
+-->
 
 
 <!-- ================================
