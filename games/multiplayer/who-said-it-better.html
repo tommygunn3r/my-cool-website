@@ -30,6 +30,7 @@
 
         body {
             margin: 0;
+            padding-top: 60px;
             background: #1a1a1a;
             color: var(--text-main);
             font-family: "Roboto", sans-serif;
@@ -432,6 +433,9 @@
     </style>
 </head>
 <body>
+    <!-- GLOBAL PLAYER BAR -->
+    <div id="playerbar"></div>
+
     <div class="header">
         <div class="logo">WHO SAID IT BETTER?</div>
         <div class="header-right">
@@ -1221,7 +1225,7 @@
             const { data: profile } = await supabaseClient
                 .from('profiles')
                 .select('player_name')
-                .eq('user_id', myPlayerId)
+                .eq('id', myPlayerId)
                 .single();
 
             myPlayerName = profile?.player_name || 'Player';
@@ -1316,14 +1320,43 @@
                 const input = document.getElementById("answerInput");
                 input.value = pickRandomAnswerText();
             });
-
-            // Initialize multiplayer panel in playerbar (if it exists)
-            if (typeof window.initMultiplayerPanel === 'function') {
-                window.initMultiplayerPanel(roomId);
-            }
         }
 
-        window.addEventListener("load", init);
+        // Load playerbar first, then initialize
+        async function loadPlayerBar(){
+            try {
+                const res = await fetch("/playerbar.html");
+                const html = await res.text();
+                const container = document.getElementById("playerbar");
+                const temp = document.createElement("div");
+                temp.innerHTML = html;
+
+                Array.from(temp.childNodes).forEach(node => {
+                    if (node.tagName === "SCRIPT") {
+                        const s = document.createElement("script");
+                        if (node.src) s.src = node.src;
+                        else s.textContent = node.textContent;
+                        document.body.appendChild(s);
+                    } else {
+                        container.appendChild(node);
+                    }
+                });
+
+                // Wait for playerbar scripts to load
+                setTimeout(async () => {
+                    await init();
+                    // Initialize multiplayer panel
+                    if (typeof window.initMultiplayerPanel === 'function') {
+                        window.initMultiplayerPanel(roomId);
+                    }
+                }, 200);
+            } catch (e) { console.error(e); }
+        }
+        document.addEventListener("DOMContentLoaded", loadPlayerBar);
     </script>
+
+    <!-- LOAD PLAYERBAR -->
+    <script>
+    async function loadPlayerBar(){
 </body>
 </html>
