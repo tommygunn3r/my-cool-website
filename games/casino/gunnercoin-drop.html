@@ -687,6 +687,10 @@
             updateBalance(-1);
             gameState = 'dropping';
             hoverCoinX = null;
+            
+            // Switch prize box direction on each drop
+            prizeScrollDirection *= -1;
+            
             mainCoin = {
                 x: x,
                 y: dropZoneHeightPx * 0.5,
