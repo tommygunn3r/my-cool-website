@@ -7,7 +7,8 @@
 <div id="player-bar-wrapper" style="
     width:100%;
     padding:12px 22px;
-    background:transparent;
+    background:rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(10px);
     border-bottom:0px solid #e94560;
     display:flex;
     justify-content:space-between;
@@ -17,6 +18,7 @@
     position:fixed;
     top:0;
     z-index:2000;
+    pointer-events:auto;
 ">
     <div style="display:flex; align-items:center; gap:12px;">
         <span id="pb-player-name" style="font-size:1.2rem; font-weight:bold;">
