@@ -631,6 +631,13 @@
 
                 const buyInBadge = buyIn > 0 ? `<span class="buy-in-badge">💰 ${buyIn}</span>` : '';
 
+                // Get player names
+                let playerNames = '';
+                if (room.room_players && room.room_players.length > 0) {
+                    const names = room.room_players.map(p => p.player_name).join(', ');
+                    playerNames = `<div style="font-size: 0.85rem; color: #888; margin-top: 4px;">${names}</div>`;
+                }
+
                 return `
                     <div class="room-card ${cardClass}" onclick="${disabled ? '' : `joinRoom(${room.room_number}, '${room.id || ''}')`}">
                         <div class="room-header">
@@ -639,6 +646,7 @@
                         </div>
                         <div class="room-info">
                             <div><strong>Players:</strong> ${playerCount}/${maxPlayers}</div>
+                            ${playerNames}
                             <div><strong>Game:</strong> ${gameName} ${buyInBadge}</div>
                         </div>
                         <button class="join-btn" ${disabled ? 'disabled' : ''}>
@@ -699,11 +707,11 @@
             // Get user's name from profiles
             const { data: profile } = await supabaseClient
                 .from('profiles')
-                .select('username')
+                .select('player_name')
                 .eq('user_id', currentUser.id)
                 .single();
 
-            const playerName = profile?.username || 'Player';
+            const playerName = profile?.player_name || 'Player';
 
             // Join room
             const { error: joinError } = await supabaseClient
