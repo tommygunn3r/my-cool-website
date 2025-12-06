@@ -864,7 +864,7 @@
                 .from('room_players')
                 .select('is_ready, coins_paid')
                 .eq('room_id', currentRoomId)
-                .eq('id', currentUser.id)
+                .eq('user_id', currentUser.id)
                 .single();
 
             if (isHost) {
@@ -896,7 +896,7 @@
                 .from('room_players')
                 .select('is_ready, coins_paid')
                 .eq('room_id', currentRoomId)
-                .eq('id', currentUser.id)
+                .eq('user_id', currentUser.id)
                 .single();
 
             const buyIn = currentRoom.buy_in || 0;
@@ -927,7 +927,7 @@
                     .from('room_players')
                     .update({ is_ready: true, coins_paid: true })
                     .eq('room_id', currentRoomId)
-                    .eq('id', currentUser.id);
+                    .eq('user_id', currentUser.id);
 
                 alert(`${buyIn} GunnerCoins paid! You're in the game. Good luck! 🎮`);
             } else {
@@ -937,7 +937,7 @@
                     .from('room_players')
                     .update({ is_ready: newReadyState })
                     .eq('room_id', currentRoomId)
-                    .eq('id', currentUser.id);
+                    .eq('user_id', currentUser.id);
             }
 
             updateReadyButton();
@@ -1002,7 +1002,7 @@
                         .from('room_players')
                         .update({ coins_paid: true })
                         .eq('room_id', currentRoomId)
-                        .eq('id', currentUser.id);
+                        .eq('user_id', currentUser.id);
                 }
             }
 
@@ -1047,7 +1047,7 @@
                 .from('room_players')
                 .select('coins_paid')
                 .eq('room_id', currentRoomId)
-                .eq('id', currentUser.id)
+                .eq('user_id', currentUser.id)
                 .single();
 
             if (myPlayer?.coins_paid) {
@@ -1060,7 +1060,7 @@
                 .from('room_players')
                 .delete()
                 .eq('room_id', currentRoomId)
-                .eq('id', currentUser.id);
+                .eq('user_id', currentUser.id);
 
             // If host left, check if room is empty
             if (isHost) {
@@ -1126,7 +1126,7 @@
                     .from('room_players')
                     .select('player_name')
                     .eq('room_id', currentRoomId)
-                    .eq('id', currentUser.id)
+                    .eq('user_id', currentUser.id)
                     .single();
 
                 const message = `${player.player_name}: ${emoji}`;
