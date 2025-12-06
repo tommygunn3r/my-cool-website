@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multiplayer Lobby - GunnersGames</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #1a1a1a;
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: #4CAF50;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #888;
+            margin-bottom: 40px;
+            font-size: 1.1em;
+        }
+
+        .rooms-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .room-card {
+            background: #2a2a2a;
+            border: 2px solid #3a3a3a;
+            border-radius: 10px;
+            padding: 20px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .room-card:hover {
+            border-color: #4CAF50;
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.3);
+        }
+
+        .room-card.occupied {
+            border-color: #FFA500;
+        }
+
+        .room-card.in-progress {
+            border-color: #ff4444;
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        .room-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .room-number {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #4CAF50;
+        }
+
+        .room-status {
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.85em;
+            font-weight: bold;
+        }
+
+        .status-empty {
+            background: #3a3a3a;
+            color: #888;
+        }
+
+        .status-waiting {
+            background: #FFA500;
+            color: #000;
+        }
+
+        .status-playing {
+            background: #ff4444;
+            color: #fff;
+        }
+
+        .room-info {
+            margin: 15px 0;
+        }
+
+        .room-info div {
+            margin: 8px 0;
+            color: #ccc;
+        }
+
+        .room-info strong {
+            color: #4CAF50;
+        }
+
+        .join-btn {
+            width: 100%;
+            padding: 12px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .join-btn:hover {
+            background: #45a049;
+        }
+
+        .join-btn:disabled {
+            background: #555;
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.8);
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal-content {
+            background-color: #2a2a2a;
+            margin: 5% auto;
+            padding: 0;
+            border: 2px solid #4CAF50;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            background: #333;
+            padding: 20px;
+            border-bottom: 2px solid #4CAF50;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h2 {
+            color: #4CAF50;
+            margin: 0;
+        }
+
+        .close {
+            color: #aaa;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+
+        .close:hover {
+            color: #fff;
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        .host-controls {
+            background: #333;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+
+        .host-controls h3 {
+            color: #4CAF50;
+            margin-bottom: 15px;
+        }
+
+        .control-group {
+            margin-bottom: 15px;
+        }
+
+        .control-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #ccc;
+        }
+
+        .control-group select,
+        .control-group input {
+            width: 100%;
+            padding: 10px;
+            background: #2a2a2a;
+            border: 1px solid #555;
+            border-radius: 5px;
+            color: #fff;
+            font-size: 1em;
+        }
+
+        .players-list {
+            margin-bottom: 20px;
+        }
+
+        .players-list h3 {
+            color: #4CAF50;
+            margin-bottom: 15px;
+        }
+
+        .player-item {
+            background: #333;
+            padding: 12px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .player-item.host {
+            border-left: 3px solid #4CAF50;
+        }
+
+        .player-item.ready {
+            border-left: 3px solid #FFA500;
+        }
+
+        .player-name {
+            font-weight: bold;
+        }
+
+        .host-badge {
+            background: #4CAF50;
+            color: #000;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 0.8em;
+            margin-left: 10px;
+        }
+
+        .ready-badge {
+            background: #FFA500;
+            color: #000;
+            padding: 3px 8px;
+            border-radius: 3px;
+            font-size: 0.8em;
+            margin-left: 10px;
+        }
+
+        .kick-btn {
+            background: #ff4444;
+            color: white;
+            border: none;
+            padding: 5px 12px;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 0.9em;
+        }
+
+        .kick-btn:hover {
+            background: #cc0000;
+        }
+
+        .emoji-chat {
+            background: #333;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+
+        .emoji-chat h3 {
+            color: #4CAF50;
+            margin-bottom: 10px;
+        }
+
+        .emoji-picker {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 10px;
+        }
+
+        .emoji-btn {
+            background: #2a2a2a;
+            border: 1px solid #555;
+            padding: 8px 12px;
+            border-radius: 5px;
+            font-size: 1.5em;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .emoji-btn:hover {
+            background: #4CAF50;
+            transform: scale(1.1);
+        }
+
+        .emoji-messages {
+            background: #2a2a2a;
+            padding: 10px;
+            border-radius: 5px;
+            max-height: 100px;
+            overflow-y: auto;
+            min-height: 50px;
+        }
+
+        .emoji-message {
+            margin: 5px 0;
+            color: #ccc;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .ready-btn, .leave-btn {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 5px;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .ready-btn {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .ready-btn:hover {
+            background: #45a049;
+        }
+
+        .ready-btn.ready {
+            background: #FFA500;
+        }
+
+        .leave-btn {
+            background: #ff4444;
+            color: white;
+        }
+
+        .leave-btn:hover {
+            background: #cc0000;
+        }
+
+        .back-btn {
+            display: inline-block;
+            padding: 12px 24px;
+            background: #4CAF50;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+
+        .back-btn:hover {
+            background: #45a049;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #888;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎮 MULTIPLAYER LOBBY</h1>
+        <p class="subtitle">Choose a room to join or start a new game</p>
+        
+        <div class="rooms-grid" id="roomsGrid">
+            <div class="loading">Loading rooms...</div>
+        </div>
+
+        <div style="text-align: center; margin-top: 20px;">
+            <a href="/" class="back-btn">← Back to GunnersGames</a>
+        </div>
+    </div>
+
+    <!-- Room Modal -->
+    <div id="roomModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalRoomTitle">Room 1</h2>
+                <span class="close" id="closeModal">&times;</span>
+            </div>
+            <div class="modal-body">
+                <!-- Host Controls (only visible to host) -->
+                <div id="hostControls" class="host-controls" style="display: none;">
+                    <h3>⚙️ Host Controls</h3>
+                    <div class="control-group">
+                        <label for="gameSelect">Select Game:</label>
+                        <select id="gameSelect">
+                            <option value="">-- Choose a game --</option>
+                            <option value="poker">Texas Hold'em Poker</option>
+                            <option value="blackjack">Blackjack</option>
+                            <!-- Add more games as you build them -->
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label for="maxPlayers">Max Players:</label>
+                        <select id="maxPlayers">
+                            <option value="2">2 Players</option>
+                            <option value="3">3 Players</option>
+                            <option value="4" selected>4 Players</option>
+                            <option value="5">5 Players</option>
+                            <option value="6">6 Players</option>
+                            <option value="8">8 Players</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Players List -->
+                <div class="players-list">
+                    <h3>👥 Players</h3>
+                    <div id="playersList"></div>
+                </div>
+
+                <!-- Emoji Chat -->
+                <div class="emoji-chat">
+                    <h3>💬 Quick Chat</h3>
+                    <div class="emoji-picker">
+                        <button class="emoji-btn" data-emoji="👍">👍</button>
+                        <button class="emoji-btn" data-emoji="👎">👎</button>
+                        <button class="emoji-btn" data-emoji="😂">😂</button>
+                        <button class="emoji-btn" data-emoji="😎">😎</button>
+                        <button class="emoji-btn" data-emoji="🔥">🔥</button>
+                        <button class="emoji-btn" data-emoji="💪">💪</button>
+                        <button class="emoji-btn" data-emoji="🎮">🎮</button>
+                        <button class="emoji-btn" data-emoji="✌️">✌️</button>
+                    </div>
+                    <div class="emoji-messages" id="emojiMessages"></div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="action-buttons">
+                    <button id="readyBtn" class="ready-btn">Ready Up</button>
+                    <button id="leaveBtn" class="leave-btn">Leave Room</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Supabase Configuration
+        const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+        const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        let currentUser = null;
+        let currentRoom = null;
+        let currentRoomId = null;
+        let isHost = false;
+        let roomSubscription = null;
+        let playersSubscription = null;
+
+        // Initialize
+        async function init() {
+            // Check authentication
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) {
+                window.location.href = '/login.html';
+                return;
+            }
+            currentUser = user;
+
+            // Load rooms
+            loadRooms();
+            subscribeToRooms();
+        }
+
+        // Load all rooms
+        async function loadRooms() {
+            const { data: rooms, error } = await supabase
+                .from('rooms')
+                .select('*, room_players(*)')
+                .in('status', ['waiting', 'in_progress'])
+                .order('room_number');
+
+            if (error) {
+                console.error('Error loading rooms:', error);
+                return;
+            }
+
+            // Create array of all 4 rooms
+            const allRooms = [];
+            for (let i = 1; i <= 4; i++) {
+                const existingRoom = rooms?.find(r => r.room_number === i);
+                allRooms.push(existingRoom || { room_number: i, status: 'empty' });
+            }
+
+            renderRooms(allRooms);
+        }
+
+        // Render rooms grid
+        function renderRooms(rooms) {
+            const grid = document.getElementById('roomsGrid');
+            grid.innerHTML = rooms.map(room => {
+                const playerCount = room.room_players?.length || 0;
+                const maxPlayers = room.max_players || 4;
+                const gameName = room.game_type || 'No game selected';
+                
+                let statusClass = 'status-empty';
+                let statusText = 'Empty';
+                let cardClass = '';
+                let disabled = false;
+
+                if (room.status === 'in_progress') {
+                    statusClass = 'status-playing';
+                    statusText = 'In Progress';
+                    cardClass = 'in-progress';
+                    disabled = true;
+                } else if (room.status === 'waiting' && playerCount > 0) {
+                    statusClass = 'status-waiting';
+                    statusText = 'Waiting';
+                    cardClass = 'occupied';
+                }
+
+                return `
+                    <div class="room-card ${cardClass}" onclick="${disabled ? '' : `joinRoom(${room.room_number}, '${room.id || ''}')`}">
+                        <div class="room-header">
+                            <div class="room-number">Room ${room.room_number}</div>
+                            <div class="room-status ${statusClass}">${statusText}</div>
+                        </div>
+                        <div class="room-info">
+                            <div><strong>Players:</strong> ${playerCount}/${maxPlayers}</div>
+                            <div><strong>Game:</strong> ${gameName}</div>
+                        </div>
+                        <button class="join-btn" ${disabled ? 'disabled' : ''}>
+                            ${disabled ? 'In Progress' : (playerCount > 0 ? 'Join Room' : 'Create Room')}
+                        </button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Subscribe to room changes
+        function subscribeToRooms() {
+            supabase
+                .channel('rooms-channel')
+                .on('postgres_changes', 
+                    { event: '*', schema: 'public', table: 'rooms' },
+                    () => loadRooms()
+                )
+                .on('postgres_changes',
+                    { event: '*', schema: 'public', table: 'room_players' },
+                    () => loadRooms()
+                )
+                .subscribe();
+        }
+
+        // Join or create room
+        async function joinRoom(roomNumber, roomId) {
+            if (!roomId) {
+                // Create new room
+                const { data: newRoom, error } = await supabase
+                    .from('rooms')
+                    .insert({
+                        room_number: roomNumber,
+                        host_user_id: currentUser.id,
+                        status: 'waiting'
+                    })
+                    .select()
+                    .single();
+
+                if (error) {
+                    console.error('Error creating room:', error);
+                    alert('Failed to create room');
+                    return;
+                }
+                roomId = newRoom.id;
+            }
+
+            // Get user's name from profiles
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('username')
+                .eq('user_id', currentUser.id)
+                .single();
+
+            const playerName = profile?.username || 'Player';
+
+            // Join room
+            const { error: joinError } = await supabase
+                .from('room_players')
+                .insert({
+                    room_id: roomId,
+                    user_id: currentUser.id,
+                    player_name: playerName
+                });
+
+            if (joinError) {
+                if (joinError.code === '23505') {
+                    // Already in room, just open it
+                } else {
+                    console.error('Error joining room:', joinError);
+                    alert('Failed to join room');
+                    return;
+                }
+            }
+
+            openRoomModal(roomId, roomNumber);
+        }
+
+        // Open room modal
+        async function openRoomModal(roomId, roomNumber) {
+            currentRoomId = roomId;
+            
+            // Load room data
+            const { data: room, error } = await supabase
+                .from('rooms')
+                .select('*, room_players(*)')
+                .eq('id', roomId)
+                .single();
+
+            if (error) {
+                console.error('Error loading room:', error);
+                return;
+            }
+
+            currentRoom = room;
+            isHost = room.host_user_id === currentUser.id;
+
+            document.getElementById('modalRoomTitle').textContent = `Room ${roomNumber}`;
+            document.getElementById('hostControls').style.display = isHost ? 'block' : 'none';
+            
+            if (isHost) {
+                document.getElementById('gameSelect').value = room.game_type || '';
+                document.getElementById('maxPlayers').value = room.max_players || 4;
+            }
+
+            updatePlayersList(room.room_players);
+            updateReadyButton();
+            
+            document.getElementById('roomModal').style.display = 'block';
+
+            // Subscribe to room updates
+            subscribeToRoomUpdates();
+        }
+
+        // Subscribe to room updates
+        function subscribeToRoomUpdates() {
+            // Unsubscribe from previous
+            if (roomSubscription) roomSubscription.unsubscribe();
+            if (playersSubscription) playersSubscription.unsubscribe();
+
+            roomSubscription = supabase
+                .channel(`room-${currentRoomId}`)
+                .on('postgres_changes',
+                    { event: 'UPDATE', schema: 'public', table: 'rooms', filter: `id=eq.${currentRoomId}` },
+                    (payload) => {
+                        currentRoom = payload.new;
+                        if (payload.new.status === 'in_progress') {
+                            // Game started, redirect to game
+                            redirectToGame(payload.new.game_type);
+                        }
+                    }
+                )
+                .subscribe();
+
+            playersSubscription = supabase
+                .channel(`players-${currentRoomId}`)
+                .on('postgres_changes',
+                    { event: '*', schema: 'public', table: 'room_players', filter: `room_id=eq.${currentRoomId}` },
+                    async () => {
+                        const { data: players } = await supabase
+                            .from('room_players')
+                            .select('*')
+                            .eq('room_id', currentRoomId);
+                        updatePlayersList(players);
+                    }
+                )
+                .subscribe();
+        }
+
+        // Update players list
+        function updatePlayersList(players) {
+            const list = document.getElementById('playersList');
+            if (!players || players.length === 0) {
+                list.innerHTML = '<div style="color: #888; text-align: center;">No players yet</div>';
+                return;
+            }
+
+            list.innerHTML = players.map(player => {
+                const isPlayerHost = player.user_id === currentRoom.host_user_id;
+                const canKick = isHost && !isPlayerHost && player.user_id !== currentUser.id;
+                
+                return `
+                    <div class="player-item ${isPlayerHost ? 'host' : ''} ${player.is_ready ? 'ready' : ''}">
+                        <div>
+                            <span class="player-name">${player.player_name}</span>
+                            ${isPlayerHost ? '<span class="host-badge">HOST</span>' : ''}
+                            ${player.is_ready && !isPlayerHost ? '<span class="ready-badge">READY</span>' : ''}
+                        </div>
+                        ${canKick ? `<button class="kick-btn" onclick="kickPlayer('${player.user_id}')">Kick</button>` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Update ready button
+        function updateReadyButton() {
+            const btn = document.getElementById('readyBtn');
+            if (isHost) {
+                btn.textContent = 'Start Game';
+                btn.onclick = startGame;
+            } else {
+                btn.onclick = toggleReady;
+            }
+        }
+
+        // Toggle ready status
+        async function toggleReady() {
+            const { data: player } = await supabase
+                .from('room_players')
+                .select('is_ready')
+                .eq('room_id', currentRoomId)
+                .eq('user_id', currentUser.id)
+                .single();
+
+            const newReadyState = !player.is_ready;
+
+            await supabase
+                .from('room_players')
+                .update({ is_ready: newReadyState })
+                .eq('room_id', currentRoomId)
+                .eq('user_id', currentUser.id);
+
+            const btn = document.getElementById('readyBtn');
+            btn.textContent = newReadyState ? 'Not Ready' : 'Ready Up';
+            btn.classList.toggle('ready', newReadyState);
+        }
+
+        // Start game (host only)
+        async function startGame() {
+            const gameType = document.getElementById('gameSelect').value;
+            if (!gameType) {
+                alert('Please select a game first!');
+                return;
+            }
+
+            // Check if all non-host players are ready
+            const { data: players } = await supabase
+                .from('room_players')
+                .select('is_ready, user_id')
+                .eq('room_id', currentRoomId);
+
+            const allReady = players.every(p => p.is_ready || p.user_id === currentUser.id);
+            
+            if (!allReady) {
+                alert('All players must be ready before starting!');
+                return;
+            }
+
+            // Update room status
+            await supabase
+                .from('rooms')
+                .update({ status: 'in_progress' })
+                .eq('id', currentRoomId);
+
+            redirectToGame(gameType);
+        }
+
+        // Redirect to game
+        function redirectToGame(gameType) {
+            const gameUrls = {
+                'poker': '/casino/poker-multi.html',
+                'blackjack': '/casino/blackjack-multi.html'
+                // Add more as you create them
+            };
+            
+            const gameUrl = gameUrls[gameType];
+            if (gameUrl) {
+                window.location.href = `${gameUrl}?room=${currentRoomId}`;
+            }
+        }
+
+        // Kick player
+        async function kickPlayer(userId) {
+            if (confirm('Kick this player from the room?')) {
+                await supabase
+                    .from('room_players')
+                    .delete()
+                    .eq('room_id', currentRoomId)
+                    .eq('user_id', userId);
+            }
+        }
+
+        // Leave room
+        async function leaveRoom() {
+            await supabase
+                .from('room_players')
+                .delete()
+                .eq('room_id', currentRoomId)
+                .eq('user_id', currentUser.id);
+
+            // If host left, check if room is empty
+            if (isHost) {
+                const { data: remainingPlayers } = await supabase
+                    .from('room_players')
+                    .select('user_id')
+                    .eq('room_id', currentRoomId);
+
+                if (remainingPlayers.length === 0) {
+                    // Delete empty room
+                    await supabase
+                        .from('rooms')
+                        .delete()
+                        .eq('id', currentRoomId);
+                } else {
+                    // Promote next player to host
+                    const newHost = remainingPlayers[0];
+                    await supabase
+                        .from('rooms')
+                        .update({ host_user_id: newHost.user_id })
+                        .eq('id', currentRoomId);
+                }
+            }
+
+            closeModal();
+        }
+
+        // Host controls change handlers
+        document.getElementById('gameSelect')?.addEventListener('change', async (e) => {
+            if (isHost) {
+                await supabase
+                    .from('rooms')
+                    .update({ game_type: e.target.value })
+                    .eq('id', currentRoomId);
+            }
+        });
+
+        document.getElementById('maxPlayers')?.addEventListener('change', async (e) => {
+            if (isHost) {
+                await supabase
+                    .from('rooms')
+                    .update({ max_players: parseInt(e.target.value) })
+                    .eq('id', currentRoomId);
+            }
+        });
+
+        // Emoji chat
+        document.querySelectorAll('.emoji-btn').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const emoji = btn.dataset.emoji;
+                const { data: player } = await supabase
+                    .from('room_players')
+                    .select('player_name')
+                    .eq('room_id', currentRoomId)
+                    .eq('user_id', currentUser.id)
+                    .single();
+
+                const message = `${player.player_name}: ${emoji}`;
+                const messagesDiv = document.getElementById('emojiMessages');
+                const msgEl = document.createElement('div');
+                msgEl.className = 'emoji-message';
+                msgEl.textContent = message;
+                messagesDiv.appendChild(msgEl);
+                messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+                // Auto-clear old messages
+                if (messagesDiv.children.length > 10) {
+                    messagesDiv.removeChild(messagesDiv.firstChild);
+                }
+            });
+        });
+
+        // Modal controls
+        document.getElementById('closeModal').onclick = closeModal;
+        document.getElementById('leaveBtn').onclick = leaveRoom;
+
+        function closeModal() {
+            document.getElementById('roomModal').style.display = 'none';
+            if (roomSubscription) roomSubscription.unsubscribe();
+            if (playersSubscription) playersSubscription.unsubscribe();
+            currentRoomId = null;
+            currentRoom = null;
+            loadRooms();
+        }
+
+        window.onclick = function(event) {
+            const modal = document.getElementById('roomModal');
+            if (event.target == modal) {
+                closeModal();
+            }
+        }
+
+        // Initialize on load
+        init();
+    </script>
+</body>
+</html>
