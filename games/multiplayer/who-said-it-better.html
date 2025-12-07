@@ -1518,12 +1518,14 @@
             const scores = currentState.scores || {};
             const sorted = Object.entries(scores).sort((a, b) => b[1] - a[1]);
             
-            // Set game state to show final results
+            // Set local state to show final results (don't save to DB, we're deleting it)
             currentState.phase = 'final_results';
             currentState.finalScores = sorted;
-            await saveGameState();
             
-            // Clean up room (this will kick all players when they try to interact)
+            // Trigger UI update locally
+            displayFinalResults();
+            
+            // Clean up room - this deletes everything from database
             await cleanupRoom();
         }
 
