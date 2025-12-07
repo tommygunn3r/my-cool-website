@@ -79,12 +79,21 @@
             color: var(--gold);
         }
 
+        .pot-display {
+            padding: 0.4rem 0.9rem;
+            border-radius: 999px;
+            background: var(--gold);
+            color: #000;
+            font-weight: bold;
+            font-size: 0.85rem;
+        }
+
         .main {
-            max-width: 1400px;
+            max-width: 1200px;
             margin: 1.8rem auto 3rem;
             padding: 0 1rem;
             display: grid;
-            grid-template-columns: minmax(0, 2.5fr) minmax(0, 1fr);
+            grid-template-columns: minmax(0, 2fr) minmax(0, 1.2fr);
             gap: 1.5rem;
         }
 
@@ -94,218 +103,118 @@
             }
         }
 
-        .game-area {
+        /* Left Panel (Game Area) */
+        .game-card {
             background: var(--bg-alt);
-            border-radius: 12px;
-            padding: 1.8rem;
-            box-shadow: 0 4px 24px rgba(0,0,0,0.6);
+            border-radius: 14px;
+            padding: 1.4rem 1.6rem;
+            box-shadow: 0 6px 24px rgba(0,0,0,0.75);
+            border: 2px solid #3a3a3a;
+            min-height: 420px;
         }
 
-        .round-info {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1.5rem;
-            padding-bottom: 1rem;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
+        .game-title {
+            font-family: "Cinzel", serif;
+            font-size: 1.8rem;
+            letter-spacing: 0.12em;
+            margin-bottom: 0.2rem;
+            color: var(--accent);
         }
 
-        .round-label {
-            font-size: 1.1rem;
-            font-weight: 500;
-            color: var(--gold);
+        .game-subtitle {
+            font-size: 0.95rem;
+            color: var(--text-soft);
+            margin-bottom: 1.2rem;
         }
 
         .phase-tag {
-            padding: 0.3rem 0.8rem;
-            border-radius: 6px;
+            display: inline-block;
+            padding: 0.25rem 0.6rem;
+            border-radius: 999px;
+            border: 1px solid rgba(255,255,255,0.25);
             font-size: 0.75rem;
             text-transform: uppercase;
-            letter-spacing: 0.1em;
-            font-weight: bold;
+            letter-spacing: 0.15em;
+            margin-bottom: 0.7rem;
         }
 
-        .phase-lobby { background: rgba(255,255,255,0.1); }
-        .phase-submit { background: rgba(76, 175, 80, 0.3); border: 1px solid var(--accent); }
-        .phase-vote { background: rgba(255, 193, 7, 0.3); border: 1px solid #FFC107; }
-        .phase-results { background: rgba(33, 150, 243, 0.3); border: 1px solid #2196F3; }
+        .phase-submit { border-color: var(--accent); color: var(--accent); }
+        .phase-vote { border-color: var(--gold); color: var(--gold-soft); }
+        .phase-results { border-color: var(--success); color: var(--success); }
+        .phase-lobby { border-color: var(--text-soft); color: var(--text-soft); }
 
         .prompt-box {
-            background: linear-gradient(135deg, #2a2a2a 0%, #1f1f1f 100%);
-            border: 2px solid var(--accent);
-            border-radius: 12px;
-            padding: 1.8rem;
-            margin-bottom: 1.5rem;
-            text-align: center;
+            background: rgba(0,0,0,0.5);
+            border-radius: 10px;
+            padding: 1.1rem 1rem;
+            border: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 1rem;
         }
 
         .prompt-source {
-            font-size: 0.85rem;
-            color: var(--gold);
-            margin-bottom: 0.8rem;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
+            font-size: 0.8rem;
+            color: var(--text-soft);
+            margin-bottom: 0.4rem;
         }
 
         .prompt-text {
-            font-size: 1.4rem;
-            line-height: 1.6;
-            color: var(--text-main);
-            font-weight: 500;
+            font-size: 1.1rem;
+            line-height: 1.4;
         }
 
-        .blank {
+        .prompt-text .blank {
             color: var(--gold);
             font-weight: bold;
-            text-decoration: underline;
         }
 
-        /* CARD SELECTION UI */
-        .hand-area {
-            margin: 1.5rem 0;
-        }
-
-        .hand-title {
-            font-size: 0.9rem;
-            color: var(--text-soft);
-            margin-bottom: 1rem;
-            text-align: center;
-        }
-
-        .cards-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-            gap: 1rem;
-            margin-bottom: 1.5rem;
-        }
-
-        .answer-card {
-            background: white;
-            color: #000;
-            border-radius: 8px;
-            padding: 1.2rem;
-            min-height: 140px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            font-size: 0.95rem;
-            line-height: 1.4;
-            cursor: pointer;
-            transition: all 0.2s;
-            border: 3px solid transparent;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-        }
-
-        .answer-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 6px 20px rgba(255, 215, 0, 0.4);
-            border-color: var(--gold);
-        }
-
-        .answer-card.selected {
-            border-color: var(--accent);
-            background: #e8f5e9;
-            transform: translateY(-4px);
-        }
-
-        .answer-card.disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
-        .answer-card.disabled:hover {
-            transform: none;
-        }
-
-        /* VOTING UI */
-        .voting-grid {
-            display: grid;
-            gap: 1rem;
-            margin-top: 1.5rem;
-        }
-
-        .vote-card {
-            background: var(--card-bg);
-            border: 2px solid rgba(255,255,255,0.1);
-            border-radius: 8px;
-            padding: 1.2rem;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .vote-card:hover {
-            border-color: var(--gold);
-            transform: translateX(4px);
-        }
-
-        .vote-card.voted {
-            border-color: var(--accent);
-            background: var(--accent-soft);
-        }
-
-        .vote-card.own-answer {
-            opacity: 0.6;
-            cursor: not-allowed;
-            border-color: rgba(255,255,255,0.05);
-        }
-
-        .vote-card-text {
-            font-size: 1.1rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .vote-card-player {
+        .round-label {
             font-size: 0.85rem;
             color: var(--text-soft);
+            margin-bottom: 0.4rem;
         }
 
-        .vote-count {
-            float: right;
-            background: var(--gold);
-            color: #000;
-            padding: 0.2rem 0.6rem;
-            border-radius: 12px;
-            font-size: 0.85rem;
-            font-weight: bold;
-        }
-
-        /* RESULTS */
-        .results-area {
-            margin-top: 1.5rem;
-        }
-
-        .winner-card {
-            background: linear-gradient(135deg, var(--gold) 0%, #f0c420 100%);
-            color: #000;
-            border-radius: 12px;
-            padding: 1.8rem;
-            text-align: center;
-            margin-bottom: 1.5rem;
-            box-shadow: 0 4px 20px rgba(255, 215, 0, 0.4);
-        }
-
-        .winner-title {
+        .timer {
             font-size: 1.2rem;
             font-weight: bold;
-            margin-bottom: 0.5rem;
-            text-transform: uppercase;
+            color: var(--gold);
+            margin-bottom: 0.8rem;
         }
 
-        .winner-name {
-            font-size: 1.8rem;
-            font-weight: bold;
-            margin-bottom: 0.5rem;
+        .status-msg {
+            background: rgba(76, 175, 80, 0.1);
+            border: 1px solid var(--accent);
+            border-radius: 8px;
+            padding: 0.8rem;
+            margin: 1rem 0;
+            font-size: 0.9rem;
+            color: var(--accent);
         }
 
-        .winner-answer {
-            font-size: 1.1rem;
-            font-style: italic;
+        .answer-input-area {
+            margin: 1.2rem 0;
         }
 
-        /* BUTTONS */
+        .answer-input {
+            width: 100%;
+            min-height: 100px;
+            padding: 0.8rem;
+            background: rgba(0,0,0,0.5);
+            border: 1px solid #555;
+            border-radius: 8px;
+            color: var(--text-main);
+            font-size: 1rem;
+            font-family: inherit;
+            resize: vertical;
+        }
+
+        .answer-buttons {
+            display: flex;
+            gap: 0.8rem;
+            margin-top: 0.8rem;
+        }
+
         .btn {
-            padding: 0.8rem 1.8rem;
+            padding: 0.7rem 1.4rem;
             border: none;
             border-radius: 6px;
             font-size: 0.95rem;
@@ -318,7 +227,7 @@
 
         .btn-primary {
             background: var(--accent);
-            color: white;
+            color: #000;
         }
 
         .btn-primary:hover {
@@ -327,9 +236,30 @@
         }
 
         .btn-primary:disabled {
-            opacity: 0.5;
+            background: #555;
             cursor: not-allowed;
-            transform: none;
+            opacity: 0.5;
+        }
+
+        .btn-ghost {
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.3);
+            color: var(--text-main);
+        }
+
+        .btn-ghost:hover {
+            border-color: var(--accent);
+            background: rgba(76, 175, 80, 0.1);
+        }
+
+        .btn-accent {
+            background: var(--gold);
+            color: #000;
+        }
+
+        .btn-accent:hover {
+            background: #ffd700;
+            transform: translateY(-2px);
         }
 
         .btn-danger {
@@ -338,403 +268,226 @@
         }
 
         .btn-danger:hover {
-            background: #e63939;
+            background: #cc0000;
         }
 
-        /* SETTINGS MODAL */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.8);
-            z-index: 1000;
-            align-items: center;
-            justify-content: center;
+        .answers-list {
+            display: grid;
+            gap: 0.8rem;
+            margin: 1.2rem 0;
         }
 
-        .modal.active {
-            display: flex;
+        .answer-card {
+            background: rgba(0,0,0,0.5);
+            border: 2px solid #444;
+            border-radius: 10px;
+            padding: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
         }
 
-        .modal-content {
-            background: var(--bg-alt);
-            border-radius: 12px;
-            padding: 2rem;
-            max-width: 500px;
-            width: 90%;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.8);
+        .answer-card:hover:not(.disabled) {
+            border-color: var(--accent);
+            background: rgba(76, 175, 80, 0.1);
+            transform: translateX(5px);
         }
 
-        .modal-title {
-            font-size: 1.5rem;
-            margin-bottom: 1.5rem;
-            color: var(--gold);
+        .answer-card.selected {
+            border-color: var(--gold);
+            background: rgba(255, 215, 0, 0.1);
         }
 
-        .setting-group {
-            margin-bottom: 1.5rem;
+        .answer-card.disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
         }
 
-        .setting-label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-size: 0.95rem;
+        .answer-card.winner {
+            border-color: var(--gold);
+            background: rgba(255, 215, 0, 0.15);
+        }
+
+        .answer-author {
+            font-size: 0.85rem;
             color: var(--text-soft);
+            margin-top: 0.5rem;
         }
 
-        .setting-input {
-            width: 100%;
-            padding: 0.8rem;
-            background: var(--card-bg);
-            border: 1px solid rgba(255,255,255,0.2);
-            border-radius: 6px;
-            color: var(--text-main);
-            font-size: 1rem;
+        .results-line {
+            margin-top: 0.6rem;
+            padding-top: 0.6rem;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            font-size: 0.9rem;
+            color: var(--accent);
         }
 
-        .modal-buttons {
-            display: flex;
-            gap: 1rem;
-            justify-content: flex-end;
-            margin-top: 2rem;
+        .winner-tag {
+            color: var(--gold);
+            font-weight: bold;
         }
 
-        /* SIDE PANELS */
+        /* Right Panel */
         .side-card {
             background: var(--bg-alt);
-            border-radius: 12px;
+            border-radius: 10px;
             padding: 1.2rem;
-            margin-bottom: 1.5rem;
-            box-shadow: 0 4px 18px rgba(0,0,0,0.5);
+            margin-bottom: 1.2rem;
+            border: 2px solid #3a3a3a;
         }
 
         .side-title {
-            font-size: 1rem;
+            font-size: 1.1rem;
             font-weight: 600;
-            color: var(--gold);
-            margin-bottom: 1rem;
+            margin-bottom: 0.8rem;
+            color: var(--accent);
             text-transform: uppercase;
             letter-spacing: 0.1em;
         }
 
         .player-list {
-            display: flex;
-            flex-direction: column;
-            gap: 0.6rem;
+            display: grid;
+            gap: 0.5rem;
         }
 
         .player-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0.6rem 0.8rem;
-            background: var(--card-bg);
+            padding: 0.6rem;
+            background: rgba(0,0,0,0.3);
             border-radius: 6px;
-            font-size: 0.9rem;
+            border: 1px solid #444;
         }
 
-        .player-ready {
-            color: var(--accent);
-            font-size: 0.8rem;
+        .player-item.me {
+            border-color: var(--accent);
+            background: rgba(76, 175, 80, 0.1);
         }
 
-        .scores-list {
-            display: flex;
-            flex-direction: column;
-            gap: 0.6rem;
+        .player-item.host {
+            border-left: 3px solid var(--gold);
         }
 
         .score-item {
             display: flex;
             justify-content: space-between;
-            padding: 0.6rem 0.8rem;
-            background: var(--card-bg);
+            padding: 0.5rem;
+            background: rgba(0,0,0,0.3);
             border-radius: 6px;
-            font-size: 0.9rem;
+            margin-bottom: 0.4rem;
         }
 
-        .score-value {
-            color: var(--gold);
-            font-weight: bold;
+        .score-item.leader {
+            border-left: 3px solid var(--gold);
+            background: rgba(255, 215, 0, 0.1);
         }
 
         .log-box {
+            background: rgba(0,0,0,0.5);
+            border-radius: 6px;
+            padding: 0.8rem;
             max-height: 200px;
             overflow-y: auto;
-            font-size: 0.8rem;
-            color: var(--text-soft);
-            background: var(--card-bg);
-            padding: 0.8rem;
-            border-radius: 6px;
+            font-size: 0.85rem;
+            font-family: monospace;
         }
 
-        .log-entry {
-            margin-bottom: 0.4rem;
-            line-height: 1.4;
+        .log-line {
+            margin-bottom: 0.3rem;
+            color: #888;
         }
 
         .connection-status {
-            margin-top: 0.8rem;
-            text-align: center;
+            margin-top: 0.6rem;
             font-size: 0.75rem;
-            padding: 0.4rem;
-            border-radius: 6px;
+            color: var(--text-soft);
+            text-align: center;
         }
 
         .connection-status.connected {
-            background: var(--accent-soft);
-            color: var(--accent);
+            color: var(--success);
         }
 
-        .connection-status.normal {
-            background: rgba(255,255,255,0.05);
-            color: var(--text-soft);
+        .connection-status.error {
+            color: var(--danger);
         }
 
-        .status-msg {
-            text-align: center;
-            padding: 1rem;
-            background: rgba(255,255,255,0.05);
-            border-radius: 8px;
+        .winner-announcement {
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(76, 175, 80, 0.2));
+            border: 2px solid var(--gold);
+            border-radius: 10px;
+            padding: 1.5rem;
             margin: 1rem 0;
-            color: var(--text-soft);
-        }
-
-        /* FINAL RESULTS OVERLAY */
-        .final-results-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.95);
-            z-index: 2000;
-            align-items: center;
-            justify-content: center;
-            padding: 2rem;
-        }
-
-        .final-results-overlay.active {
-            display: flex;
-        }
-
-        .final-results-content {
-            background: linear-gradient(135deg, var(--bg-alt) 0%, var(--bg) 100%);
-            border: 3px solid var(--gold);
-            border-radius: 20px;
-            padding: 3rem;
-            max-width: 800px;
-            width: 100%;
             text-align: center;
-            box-shadow: 0 10px 50px rgba(255, 215, 0, 0.3);
         }
 
-        .final-results-title {
-            font-size: 3rem;
-            font-weight: bold;
+        .winner-announcement h2 {
+            font-family: "Cinzel", serif;
             color: var(--gold);
-            margin-bottom: 2rem;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
-        }
-
-        .final-results-podium {
-            display: flex;
-            justify-content: center;
-            gap: 2rem;
-            margin: 2rem 0;
-            flex-wrap: wrap;
-        }
-
-        .podium-place {
-            background: var(--card-bg);
-            border-radius: 12px;
-            padding: 2rem 1.5rem;
-            min-width: 200px;
-            border: 2px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .podium-place.first {
-            border-color: var(--gold);
-            background: linear-gradient(135deg, rgba(255, 215, 0, 0.1) 0%, var(--card-bg) 100%);
-            transform: scale(1.1);
-        }
-
-        .podium-place.second {
-            border-color: #C0C0C0;
-        }
-
-        .podium-place.third {
-            border-color: #CD7F32;
-        }
-
-        .podium-rank {
-            font-size: 2rem;
-            font-weight: bold;
             margin-bottom: 0.5rem;
+            font-size: 1.8rem;
         }
 
-        .podium-rank.first { color: var(--gold); }
-        .podium-rank.second { color: #C0C0C0; }
-        .podium-rank.third { color: #CD7F32; }
-
-        .podium-name {
-            font-size: 1.5rem;
-            font-weight: bold;
-            margin-bottom: 0.5rem;
-            color: var(--text-main);
-        }
-
-        .podium-score {
-            font-size: 2rem;
-            font-weight: bold;
-            color: var(--gold);
-        }
-
-        .final-results-button {
-            margin-top: 2rem;
-            padding: 1rem 3rem;
+        .winner-announcement .prize {
             font-size: 1.2rem;
-            background: var(--accent);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            text-transform: uppercase;
-            font-weight: bold;
-            letter-spacing: 0.1em;
-            transition: all 0.3s;
-        }
-
-        .final-results-button:hover {
-            background: #45a049;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+            color: var(--accent);
+            margin-top: 0.5rem;
         }
     </style>
 </head>
 <body>
-    <!-- FINAL RESULTS OVERLAY -->
-    <div id="finalResultsOverlay" class="final-results-overlay">
-        <div class="final-results-content">
-            <div class="final-results-title" id="finalResultsTitle">🎉 GAME OVER! 🎉</div>
-            <div class="final-results-podium" id="finalResultsPodium"></div>
-            <button class="final-results-button" onclick="returnToLobby()">RETURN TO LOBBY</button>
-        </div>
-    </div>
-    <!-- HEADER -->
+    <!-- GLOBAL PLAYER BAR -->
+    <div id="playerbar"></div>
+
     <div class="header">
         <div class="logo">WHO SAID IT BETTER?</div>
         <div class="header-right">
-            <div class="room-pill" id="roomInfo">Room: Loading...</div>
+            <div class="room-pill" id="roomInfo">Room: ...</div>
             <div class="host-tag" id="hostTag">PLAYER</div>
+            <div class="pot-display" id="potDisplay" style="display: none;">💰 Pot: 0</div>
         </div>
     </div>
 
-    <!-- GAME SETTINGS MODAL -->
-    <div id="settingsModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-title">Game Settings</div>
-            <div class="setting-group">
-                <label class="setting-label">Number of Rounds</label>
-                <select id="roundsInput" class="setting-input">
-                    <option value="3">3 Rounds</option>
-                    <option value="5" selected>5 Rounds</option>
-                    <option value="7">7 Rounds</option>
-                    <option value="10">10 Rounds</option>
-                </select>
-            </div>
-            <div class="setting-group">
-                <label class="setting-label">Hand Size (cards per player)</label>
-                <select id="handSizeInput" class="setting-input">
-                    <option value="5">5 Cards</option>
-                    <option value="7" selected>7 Cards</option>
-                    <option value="10">10 Cards</option>
-                </select>
-            </div>
-            <div class="setting-group">
-                <label class="setting-label">Content Rating</label>
-                <select id="ratingInput" class="setting-input">
-                    <option value="all" selected>All Ratings</option>
-                    <option value="G">G - Family Friendly</option>
-                    <option value="PG">PG - Mild Content</option>
-                    <option value="PG-13">PG-13 - Teens+</option>
-                    <option value="R">R - Mature</option>
-                    <option value="NSFW">NSFW - Adults Only</option>
-                </select>
-            </div>
-            <div class="setting-group">
-                <label class="setting-label">Prompt Theme/Pack</label>
-                <select id="packInput" class="setting-input">
-                    <option value="all" selected>All Themes</option>
-                    <option value="pop-hits">Pop Hits</option>
-                    <option value="classic-rock">Classic Rock</option>
-                    <option value="hip-hop">Hip Hop</option>
-                    <option value="country">Country</option>
-                    <option value="movies">Movies</option>
-                    <option value="tv-shows">TV Shows</option>
-                </select>
-            </div>
-            <div class="modal-buttons">
-                <button class="btn btn-primary" onclick="saveSettings()">Save & Start Game</button>
-                <button class="btn btn-danger" onclick="closeSettings()">Cancel</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- MAIN GAME AREA -->
     <div class="main">
         <!-- LEFT: GAME AREA -->
-        <div class="game-area">
-            <div class="round-info">
-                <div class="round-label" id="roundLabel">Round <span id="roundNumber">0</span> of <span id="totalRounds">5</span></div>
-                <div class="phase-tag phase-lobby" id="phaseTag">LOBBY</div>
+        <div class="game-card">
+            <div class="game-title">Round <span id="roundNumber">0</span></div>
+            <div class="game-subtitle" id="phaseDescription">Waiting for players...</div>
+            
+            <div>
+                <span class="phase-tag phase-lobby" id="phaseTag">LOBBY</span>
+                <div class="round-label" id="roundLabel">Phase: Lobby</div>
+                <div class="timer" id="timerDisplay">⏱ --</div>
             </div>
 
-            <!-- PROMPT DISPLAY -->
             <div class="prompt-box" id="promptBox" style="display:none;">
                 <div class="prompt-source" id="promptSource">Source</div>
                 <div class="prompt-text" id="promptText">Prompt text here</div>
             </div>
 
             <div class="status-msg" id="statusMessage">
-                Waiting for host to start the game.
+                Waiting for host to start the first round.
             </div>
 
-            <!-- HAND OF CARDS (SUBMIT PHASE) -->
-            <div id="handArea" class="hand-area" style="display:none;">
-                <div class="hand-title">Select your answer card:</div>
-                <div class="cards-grid" id="cardsGrid"></div>
-                <div style="text-align: center;">
-                    <button id="confirmCardBtn" class="btn btn-primary" style="display:none;" onclick="submitCard()">
-                        CONFIRM SELECTION
+            <!-- SUBMIT PHASE UI -->
+            <div id="submitArea" class="answer-input-area" style="display:none;">
+                <textarea id="answerInput" class="answer-input" placeholder="Rewrite the lyric / quote..."></textarea>
+                <div class="answer-buttons">
+                    <button id="randomAnswerBtn" class="btn btn-ghost" type="button">
+                        🎲 Random Answer
+                    </button>
+                    <button id="submitAnswerBtn" class="btn btn-primary" type="button">
+                        SUBMIT ANSWER
                     </button>
                 </div>
             </div>
 
-            <!-- VOTING AREA -->
-            <div id="votingArea" style="display:none;">
-                <div class="hand-title">Vote for the best answer:</div>
-                <div class="voting-grid" id="votingGrid"></div>
-            </div>
-
-            <!-- RESULTS AREA -->
-            <div id="resultsArea" style="display:none;"></div>
+            <!-- VOTE / RESULTS PHASE UI -->
+            <div id="answersArea" class="answers-list" style="display:none;"></div>
 
             <!-- HOST CONTROLS -->
-            <div style="margin-top: 1.2rem; text-align: center;">
-                <button id="hostSettingsBtn" class="btn btn-primary" type="button" style="display:none;" onclick="openSettings()">
-                    ⚙️ GAME SETTINGS
+            <div style="margin-top: 1.2rem;">
+                <button id="hostStartBtn" class="btn btn-accent" type="button" style="display:none;">
+                    START GAME / NEXT ROUND
                 </button>
-                <button id="hostStartBtn" class="btn btn-primary" type="button" style="display:none;">
-                    START NEXT ROUND
-                </button>
-                <button id="endGameBtn" class="btn btn-danger" type="button" style="display:none;">
+                <button id="endGameBtn" class="btn btn-danger" type="button" style="display:none; margin-left: 0.5rem;">
                     END GAME
                 </button>
             </div>
@@ -749,7 +502,7 @@
 
             <div class="side-card">
                 <div class="side-title">Scores</div>
-                <div id="scoresList" class="scores-list">
+                <div id="scoresList">
                     No scores yet.
                 </div>
             </div>
@@ -766,7 +519,16 @@
         // === SUPABASE CONFIG ===
         const SUPABASE_URL = 'https://pknhslxhpohrzgsfkisr.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_-zZw-pi_3q1sdNGhITKuhQ_ECyDARzc';
-        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        const { createClient } = window.supabase;
+        const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        // Also set global supabase for playerbar compatibility
+        window.supabase = supabaseClient;
+
+        // === TIMING CONFIG ===
+        const SUBMIT_SECONDS = 40;
+        const VOTE_SECONDS = 25;
+        const RESULTS_SECONDS = 8;
 
         // === STATE ===
         let roomId = null;
@@ -774,6 +536,7 @@
         let myPlayerId = null;
         let myPlayerName = null;
         let isHost = false;
+        let buyIn = 0;
 
         let prompts = [];
         let answers = [];
@@ -781,22 +544,20 @@
         let currentState = {
             phase: "lobby",
             round: 0,
-            totalRounds: 5,
-            handSize: 7,
-            rating: 'all',
-            pack: 'all',
             prompt: null,
-            playerHands: {}, // { playerId: [card indices] }
-            submissions: {}, // { playerId: answerIndex }
-            votes: {}, // { playerId: targetPlayerId }
-            scores: {}, // { playerId: score }
-            roundWinner: null
+            submissions: {},
+            votes: {},
+            scores: {},
+            lastResults: null,
+            timerEnd: null,
+            voteOrder: [],
+            gameEnded: false,
+            winner: null
         };
 
-        let myHand = [];
-        let selectedCardIndex = null;
         let hasSubmitted = false;
         let hasVoted = false;
+        let countdownInterval = null;
 
         let gameStateChannel = null;
         let playersChannel = null;
@@ -807,282 +568,169 @@
             return params.get(name);
         }
 
-        function log(msg) {
-            const logBox = document.getElementById('logBox');
-            const entry = document.createElement('div');
-            entry.className = 'log-entry';
-            const time = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
-            entry.textContent = `[${time}] ${msg}`;
-            logBox.appendChild(entry);
-            logBox.scrollTop = logBox.scrollHeight;
+        function log(message) {
+            const box = document.getElementById("logBox");
+            const line = document.createElement("div");
+            line.className = "log-line";
+            line.textContent = "[" + new Date().toLocaleTimeString() + "] " + message;
+            box.appendChild(line);
+            box.scrollTop = box.scrollHeight;
         }
 
-        function setConnectionStatus(msg, status = 'normal') {
-            const el = document.getElementById('connectionStatus');
+        function setConnectionStatus(msg, type = 'normal') {
+            const el = document.getElementById("connectionStatus");
             el.textContent = msg;
-            el.className = 'connection-status ' + status;
+            el.className = 'connection-status';
+            if (type === 'connected') el.classList.add('connected');
+            if (type === 'error') el.classList.add('error');
         }
 
-        // === SETTINGS MODAL ===
-        function openSettings() {
-            document.getElementById('settingsModal').classList.add('active');
-        }
-
-        function closeSettings() {
-            document.getElementById('settingsModal').classList.remove('active');
-        }
-
-        function saveSettings() {
-            const totalRounds = parseInt(document.getElementById('roundsInput').value);
-            const handSize = parseInt(document.getElementById('handSizeInput').value);
-            const rating = document.getElementById('ratingInput').value;
-            const pack = document.getElementById('packInput').value;
-            
-            currentState.totalRounds = totalRounds;
-            currentState.handSize = handSize;
-            currentState.rating = rating;
-            currentState.pack = pack;
-            
-            log(`Settings: ${totalRounds} rounds, ${handSize} cards, ${rating} rating, ${pack} pack`);
-            
-            closeSettings();
-            hostStartNewRound();
-        }
-
-        // === LOAD DATA ===
+        // === DATA LOADING ===
         async function loadGameData() {
             try {
-                const [promptsRes, answersRes] = await Promise.all([
-                    fetch('prompts.json'),
-                    fetch('answers.json')
+                const [p, a] = await Promise.all([
+                    fetch('data/prompts.json').then(r => r.json()),
+                    fetch('data/answers.json').then(r => r.json())
                 ]);
-                
-                if (!promptsRes.ok || !answersRes.ok) {
-                    throw new Error('Failed to load JSON files');
-                }
-                
-                const promptsData = await promptsRes.json();
-                const answersData = await answersRes.json();
-                
-                prompts = promptsData.prompts || [];
-                answers = answersData.answers || [];
-                
+                prompts = p.prompts || [];
+                answers = a.answers || [];
                 log(`Loaded ${prompts.length} prompts, ${answers.length} answers.`);
-            } catch (error) {
-                console.error('Error loading game data:', error);
-                alert('Failed to load game data. Please make sure prompts.json and answers.json are in the same folder as this game.');
+            } catch (err) {
+                console.error(err);
+                log("Error loading game data files.");
             }
         }
 
-        // Store loaded players for name lookup
-        let loadedPlayers = {};
+        function pickRandomPrompt() {
+            if (prompts.length === 0) return null;
+            return prompts[Math.floor(Math.random() * prompts.length)];
+        }
 
-        // === PLAYER MANAGEMENT ===
+        function pickRandomAnswerText() {
+            if (answers.length === 0) return "";
+            const ans = answers[Math.floor(Math.random() * answers.length)];
+            return ans.text || "";
+        }
+
+        // === PLAYERS ===
         async function loadPlayers() {
-            const { data, error } = await supabaseClient
+            const { data: players, error } = await supabaseClient
                 .from('room_players')
-                .select('*')
-                .eq('room_id', roomId)
-                .order('joined_at', { ascending: true });
+                .select('user_id, player_name')
+                .eq('room_id', roomId);
 
             if (error) {
                 console.error('Error loading players:', error);
                 return;
             }
 
-            // Store for name lookups
-            loadedPlayers = {};
-            data.forEach(p => {
-                loadedPlayers[p.user_id] = p.player_name;
-            });
-
-            const playersList = document.getElementById('playersList');
-            playersList.innerHTML = '';
-
-            data.forEach(p => {
-                const div = document.createElement('div');
-                div.className = 'player-item';
-                div.dataset.playerId = p.user_id;
-                
-                const name = document.createElement('span');
-                name.textContent = p.player_name;
-                
-                const status = document.createElement('span');
-                status.className = 'player-ready';
-                
-                // Show if player has submitted/voted
-                if (currentState.phase === 'submit' && currentState.submissions[p.user_id]) {
-                    status.textContent = '✓ Submitted';
-                } else if (currentState.phase === 'vote' && currentState.votes[p.user_id]) {
-                    status.textContent = '✓ Voted';
-                } else {
-                    status.textContent = '';
-                }
-                
-                div.appendChild(name);
-                div.appendChild(status);
-                playersList.appendChild(div);
-            });
+            renderPlayers(players);
         }
 
-        function renderScores() {
-            const scoresList = document.getElementById('scoresList');
-            const scores = currentState.scores || {};
-            
-            if (Object.keys(scores).length === 0) {
-                scoresList.innerHTML = 'No scores yet.';
+        function renderPlayers(players) {
+            const list = document.getElementById('playersList');
+            if (!players || players.length === 0) {
+                list.innerHTML = '<div style="color: #888;">No players</div>';
                 return;
             }
 
-            // Sort by score descending
+            list.innerHTML = players.map(p => {
+                const isMe = p.user_id === myPlayerId;
+                const classes = ['player-item'];
+                if (isMe) classes.push('me');
+                
+                return `
+                    <div class="${classes.join(' ')}">
+                        ${p.player_name}${isMe ? ' (You)' : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // === SCORES ===
+        function renderScores() {
+            const scores = currentState.scores || {};
             const sorted = Object.entries(scores).sort((a, b) => b[1] - a[1]);
             
-            scoresList.innerHTML = '';
-            sorted.forEach(([playerId, score]) => {
-                const div = document.createElement('div');
-                div.className = 'score-item';
-                
-                // Get player name
-                const playerName = getPlayerName(playerId);
-                
-                const name = document.createElement('span');
-                name.textContent = playerName;
-                
-                const scoreVal = document.createElement('span');
-                scoreVal.className = 'score-value';
-                scoreVal.textContent = score;
-                
-                div.appendChild(name);
-                div.appendChild(scoreVal);
-                scoresList.appendChild(div);
-            });
+            const list = document.getElementById('scoresList');
+            if (sorted.length === 0) {
+                list.innerHTML = '<div style="color: #888;">No scores yet.</div>';
+                return;
+            }
+
+            const maxScore = sorted[0][1];
+            list.innerHTML = sorted.map(([playerId, score]) => {
+                const isLeader = score === maxScore;
+                return `
+                    <div class="score-item ${isLeader ? 'leader' : ''}">
+                        <span>${getPlayerName(playerId)}</span>
+                        <span style="font-weight: bold;">${score}</span>
+                    </div>
+                `;
+            }).join('');
         }
 
         function getPlayerName(playerId) {
-            // Try stored players first
-            if (loadedPlayers[playerId]) {
-                return loadedPlayers[playerId];
-            }
-            
-            // Try to get from DOM
-            const playerEl = Array.from(document.querySelectorAll('.player-item'))
-                .find(el => el.dataset.playerId === playerId);
-            if (playerEl) return playerEl.querySelector('span').textContent;
-            
-            // Fallback to shortened ID
-            return playerId.substring(0, 9);
+            // Try to get from last known players
+            // For simplicity, just use ID substring
+            return playerId === myPlayerId ? myPlayerName : `Player ${playerId.substring(0, 4)}`;
         }
 
-        // === CARD DEALING ===
-        // How it works:
-        // 1. Each player gets a persistent hand of cards (default 7)
-        // 2. Cards are dealt randomly from answers.json
-        // 3. No two players can have the same card at the same time
-        // 4. When a player submits a card, it's removed from their hand
-        // 5. At the start of next round, their hand is refilled with new random cards
-        // 6. This ensures players always have fresh cards while maintaining uniqueness
-        function dealCards() {
-            const handSize = currentState.handSize || 7;
-            const usedIndices = new Set();
-            
-            // Collect all currently dealt cards across all players
-            Object.values(currentState.playerHands).forEach(hand => {
-                hand.forEach(idx => usedIndices.add(idx));
-            });
-
-            // For each player, ensure they have a full hand
-            const players = Object.keys(currentState.scores || {});
-            players.forEach(playerId => {
-                if (!currentState.playerHands[playerId]) {
-                    currentState.playerHands[playerId] = [];
-                }
-                
-                const hand = currentState.playerHands[playerId];
-                
-                // Remove any invalid card indices
-                const validHand = hand.filter(idx => answers[idx]);
-                currentState.playerHands[playerId] = validHand;
-                
-                // Deal new random cards to fill hand up to handSize
-                while (validHand.length < handSize) {
-                    let newIdx;
-                    let attempts = 0;
-                    do {
-                        newIdx = Math.floor(Math.random() * answers.length);
-                        attempts++;
-                    } while (usedIndices.has(newIdx) && attempts < 100);
-                    
-                    if (attempts < 100) {
-                        validHand.push(newIdx);
-                        usedIndices.add(newIdx);
-                    } else {
-                        break; // Safety: avoid infinite loop if running out of cards
-
-                    }
-                }
-            });
-        }
-
-        // === GAME PHASES ===
+        // === UI UPDATES ===
         function setPhaseUI(phase) {
             const tag = document.getElementById("phaseTag");
             tag.className = "phase-tag phase-" + phase;
-            tag.innerText = phase.toUpperCase().replace('_', ' ');
+            tag.innerText = phase.toUpperCase();
 
-            const promptBox = document.getElementById("promptBox");
-            const handArea = document.getElementById("handArea");
-            const votingArea = document.getElementById("votingArea");
-            const resultsArea = document.getElementById("resultsArea");
-            const statusMessage = document.getElementById("statusMessage");
+            const submitArea = document.getElementById("submitArea");
+            const answersArea = document.getElementById("answersArea");
             const hostStartBtn = document.getElementById("hostStartBtn");
-            const hostSettingsBtn = document.getElementById("hostSettingsBtn");
             const endGameBtn = document.getElementById("endGameBtn");
+            const promptBox = document.getElementById("promptBox");
 
-            // Hide everything
-            promptBox.style.display = "none";
-            handArea.style.display = "none";
-            votingArea.style.display = "none";
-            resultsArea.style.display = "none";
+            submitArea.style.display = "none";
+            answersArea.style.display = "none";
             hostStartBtn.style.display = "none";
-            hostSettingsBtn.style.display = "none";
             endGameBtn.style.display = "none";
-            statusMessage.style.display = "block";
+            promptBox.style.display = "none";
+
+            const phaseDescription = document.getElementById("phaseDescription");
+            const roundLabel = document.getElementById("roundLabel");
+            const statusMessage = document.getElementById("statusMessage");
 
             if (phase === "lobby") {
+                phaseDescription.innerText = "Waiting for the host to start the game.";
+                roundLabel.innerText = "Phase: Lobby";
                 statusMessage.innerText = isHost
-                    ? "You are the host. Configure settings and start the game."
-                    : "Waiting for host to start the game...";
-                if (isHost) {
-                    hostSettingsBtn.style.display = "inline-block";
-                }
-            } else if (phase === "submit") {
-                promptBox.style.display = "block";
-                handArea.style.display = "block";
-                statusMessage.style.display = "none";
-                renderMyHand();
-                if (isHost) endGameBtn.style.display = "inline-block";
-            } else if (phase === "vote") {
-                promptBox.style.display = "block";
-                votingArea.style.display = "block";
-                statusMessage.innerText = "Vote for the best answer! (Can't vote for your own)";
-                renderVoting();
-                if (isHost) endGameBtn.style.display = "inline-block";
-            } else if (phase === "results") {
-                promptBox.style.display = "block";
-                resultsArea.style.display = "block";
-                statusMessage.style.display = "none";
-                renderResults();
+                    ? "You are the host. Click START GAME to begin."
+                    : "Waiting for host to start...";
                 if (isHost) {
                     hostStartBtn.style.display = "inline-block";
-                    hostStartBtn.innerText = currentState.round >= currentState.totalRounds 
-                        ? "VIEW FINAL RESULTS" 
-                        : "START NEXT ROUND";
+                    hostStartBtn.innerText = "START GAME";
+                }
+            } else if (phase === "submit") {
+                phaseDescription.innerText = "Rewrite the lyric, quote, or line.";
+                roundLabel.innerText = "Phase: Answer Submission";
+                statusMessage.innerText = "Type your answer and hit SUBMIT. Timer is running.";
+                submitArea.style.display = "block";
+                promptBox.style.display = "block";
+                if (isHost) endGameBtn.style.display = "inline-block";
+            } else if (phase === "vote") {
+                phaseDescription.innerText = "Vote for your favorite answer.";
+                roundLabel.innerText = "Phase: Voting";
+                statusMessage.innerText = "Pick the best answer. You can't vote for yourself.";
+                promptBox.style.display = "block";
+                if (isHost) endGameBtn.style.display = "inline-block";
+            } else if (phase === "results") {
+                phaseDescription.innerText = "Round results.";
+                roundLabel.innerText = "Phase: Results";
+                statusMessage.innerText = "Scores updated. Next round coming soon...";
+                promptBox.style.display = "block";
+                if (isHost) {
+                    hostStartBtn.style.display = "inline-block";
+                    hostStartBtn.innerText = "START NEXT ROUND";
                     endGameBtn.style.display = "inline-block";
                 }
-            } else if (phase === "final_results") {
-                // Hide main game UI, show final results overlay
-                statusMessage.style.display = "none";
-                displayFinalResults();
             }
         }
 
@@ -1096,597 +744,377 @@
             document.getElementById('promptSource').textContent = prompt.source || 'Unknown Source';
             
             let text = prompt.text || '';
+            // Replace [blank] with highlighted version
             text = text.replace(/\[blank\]/gi, '<span class="blank">[_____]</span>');
             document.getElementById('promptText').innerHTML = text;
         }
 
-        // === RENDER HAND ===
-        function renderMyHand() {
-            const grid = document.getElementById('cardsGrid');
-            grid.innerHTML = '';
+        function updateTimerDisplay() {
+            const el = document.getElementById("timerDisplay");
+            if (!currentState.timerEnd) {
+                el.innerText = "⏱ --";
+                return;
+            }
+            const now = Date.now();
+            const remaining = Math.max(0, Math.round((currentState.timerEnd - now) / 1000));
+            el.innerText = "⏱ " + remaining + "s";
+        }
+
+        function startCountdown(phase) {
+            if (countdownInterval) clearInterval(countdownInterval);
+            updateTimerDisplay();
+            countdownInterval = setInterval(() => {
+                updateTimerDisplay();
+                if (!currentState.timerEnd) return;
+                const now = Date.now();
+                if (now >= currentState.timerEnd) {
+                    clearInterval(countdownInterval);
+                    countdownInterval = null;
+                    if (isHost) {
+                        handlePhaseTimeout(phase);
+                    }
+                }
+            }, 1000);
+        }
+
+        function renderAnswers() {
+            const container = document.getElementById('answersArea');
+            const phase = currentState.phase;
             
-            myHand = currentState.playerHands[myPlayerId] || [];
-            
-            if (myHand.length === 0) {
-                grid.innerHTML = '<div style="grid-column: 1/-1; text-align: center; color: var(--text-soft);">No cards in hand</div>';
+            if (phase !== 'vote' && phase !== 'results') {
+                container.style.display = 'none';
                 return;
             }
 
-            myHand.forEach((answerIdx, i) => {
-                const answer = answers[answerIdx];
-                if (!answer) return;
-                
-                const card = document.createElement('div');
-                card.className = 'answer-card';
-                card.textContent = answer.text;
-                card.dataset.index = i;
-                card.dataset.answerIdx = answerIdx;
-                
-                if (hasSubmitted) {
-                    card.classList.add('disabled');
-                } else {
-                    card.onclick = () => selectCard(i);
-                }
-                
-                grid.appendChild(card);
-            });
-
-            // Update confirm button
-            const confirmBtn = document.getElementById('confirmCardBtn');
-            confirmBtn.style.display = selectedCardIndex !== null && !hasSubmitted ? 'inline-block' : 'none';
-        }
-
-        function selectCard(index) {
-            if (hasSubmitted) return;
-            
-            // Deselect all
-            document.querySelectorAll('.answer-card').forEach(c => c.classList.remove('selected'));
-            
-            // Select this one
-            const cards = document.querySelectorAll('.answer-card');
-            if (cards[index]) {
-                cards[index].classList.add('selected');
-                selectedCardIndex = parseInt(cards[index].dataset.answerIdx);
+            const voteOrder = currentState.voteOrder || [];
+            if (voteOrder.length === 0) {
+                container.innerHTML = '<div style="color: #888; text-align: center;">No answers to display.</div>';
+                container.style.display = 'block';
+                return;
             }
-            
-            document.getElementById('confirmCardBtn').style.display = 'inline-block';
+
+            container.style.display = "block";
+            container.innerHTML = '';
+
+            const votes = currentState.votes || {};
+            const myVote = votes[myPlayerId] || null;
+
+            voteOrder.forEach(entry => {
+                const card = document.createElement("div");
+                card.className = "answer-card";
+
+                const main = document.createElement("div");
+                main.innerText = entry.text;
+                card.appendChild(main);
+
+                const author = document.createElement("div");
+                author.className = "answer-author";
+                let label = entry.name || "Player";
+                if (entry.playerId === myPlayerId) label += " (You)";
+                author.innerText = label;
+                card.appendChild(author);
+
+                const isMe = entry.playerId === myPlayerId;
+
+                if (phase === "vote") {
+                    if (isMe) {
+                        card.classList.add("disabled");
+                        card.style.opacity = "0.6";
+                    } else {
+                        card.addEventListener("click", () => {
+                            handleVote(entry.playerId, card);
+                        });
+                    }
+                    if (myVote === entry.playerId) {
+                        card.classList.add("selected");
+                    }
+                }
+
+                if (phase === "results") {
+                    const last = currentState.lastResults;
+                    if (last && last.details) {
+                        const detail = last.details.find(d => d.playerId === entry.playerId);
+                        if (detail) {
+                            const rLine = document.createElement("div");
+                            rLine.className = "results-line";
+                            rLine.innerText = `Votes: ${detail.votes}`;
+                            if (detail.votes === Math.max(...last.details.map(d => d.votes))) {
+                                rLine.classList.add("winner-tag");
+                                rLine.innerText += "  ← Winner";
+                                card.classList.add("winner");
+                            }
+                            card.appendChild(rLine);
+                        }
+                    }
+                    card.classList.add("disabled");
+                }
+
+                container.appendChild(card);
+            });
         }
 
-        async function submitCard() {
-            if (selectedCardIndex === null || hasSubmitted) return;
-            
+        // === ACTIONS ===
+        async function handleSubmit() {
+            if (hasSubmitted) {
+                alert("You already submitted this round.");
+                return;
+            }
+            if (currentState.phase !== "submit") {
+                alert("It's not submission time right now.");
+                return;
+            }
+            const input = document.getElementById("answerInput");
+            const text = input.value.trim();
+            if (!text) {
+                alert("Type an answer first.");
+                return;
+            }
+
             hasSubmitted = true;
-            
-            console.log('Submitting card:', { playerId: myPlayerId, cardIndex: selectedCardIndex });
-            
+            document.getElementById("submitAnswerBtn").disabled = true;
+            input.disabled = true;
+
+            // Add submission to state
+            currentState.submissions[myPlayerId] = {
+                text: text,
+                name: myPlayerName
+            };
+
             // Update state
-            currentState.submissions[myPlayerId] = selectedCardIndex;
-            
-            // Remove card from hand
-            const handIdx = myHand.indexOf(selectedCardIndex);
-            if (handIdx > -1) {
-                myHand.splice(handIdx, 1);
-                currentState.playerHands[myPlayerId] = myHand;
-            }
-            
             await saveGameState();
-            
-            log('You submitted your answer!');
-            renderMyHand();
-            
-            // Check if all players submitted
-            if (isHost) {
-                checkAllSubmitted();
-            }
+            log("You submitted an answer.");
         }
 
-        async function checkAllSubmitted() {
-            const { data: players } = await supabaseClient
-                .from('room_players')
-                .select('user_id')
-                .eq('room_id', roomId);
-                
-            if (!players) return;
-            
-            console.log('Checking submissions:', {
-                players: players.map(p => p.user_id),
-                submissions: Object.keys(currentState.submissions),
-                allSubmitted: players.every(p => currentState.submissions[p.user_id])
-            });
-            
-            const allSubmitted = players.every(p => currentState.submissions[p.user_id]);
-            
-            if (allSubmitted) {
-                log('All players submitted! Moving to voting...');
-                setTimeout(() => moveToVoting(), 2000);
-            }
-        }
-
-        async function moveToVoting() {
-            if (!isHost) return;
-            
-            currentState.phase = 'vote';
-            currentState.votes = {};
-            
-            await saveGameState();
-        }
-
-        // === RENDER VOTING ===
-        function renderVoting() {
-            const grid = document.getElementById('votingGrid');
-            grid.innerHTML = '';
-            
-            const submissions = currentState.submissions || {};
-            
-            if (Object.keys(submissions).length === 0) {
-                grid.innerHTML = '<div style="text-align: center; color: var(--text-soft);">No submissions yet</div>';
+        async function handleVote(targetPlayerId, cardElem) {
+            if (hasVoted) {
+                alert("You already voted this round.");
                 return;
             }
+            if (currentState.phase !== "vote") {
+                alert("It's not voting time right now.");
+                return;
+            }
+            if (!targetPlayerId) return;
 
-            Object.entries(submissions).forEach(([playerId, answerIdx]) => {
-                const answer = answers[answerIdx];
-                if (!answer) return;
-                
-                const card = document.createElement('div');
-                card.className = 'vote-card';
-                
-                const isOwn = playerId === myPlayerId;
-                if (isOwn) {
-                    card.classList.add('own-answer');
-                }
-                
-                if (hasVoted && currentState.votes[myPlayerId] === playerId) {
-                    card.classList.add('voted');
-                }
-                
-                const text = document.createElement('div');
-                text.className = 'vote-card-text';
-                text.textContent = answer.text;
-                
-                card.appendChild(text);
-                
-                if (!isOwn && !hasVoted) {
-                    card.onclick = () => voteFor(playerId);
-                }
-                
-                grid.appendChild(card);
-            });
-        }
-
-        async function voteFor(targetPlayerId) {
-            if (hasVoted || targetPlayerId === myPlayerId) return;
-            
             hasVoted = true;
             currentState.votes[myPlayerId] = targetPlayerId;
-            
+
             await saveGameState();
-            
-            log('You voted!');
-            renderVoting();
-            
-            // Check if all voted
-            if (isHost) {
-                checkAllVoted();
-            }
+            log("You cast your vote.");
+
+            // Highlight selection locally
+            const all = document.querySelectorAll(".answer-card");
+            all.forEach(c => c.classList.remove("selected"));
+            cardElem.classList.add("selected");
         }
 
-        async function checkAllVoted() {
-            const { data: players } = await supabaseClient
-                .from('room_players')
-                .select('user_id')
-                .eq('room_id', roomId);
-                
-            if (!players) return;
-            
-            console.log('Checking votes:', {
-                players: players.map(p => p.user_id),
-                votes: Object.keys(currentState.votes),
-                voteData: currentState.votes,
-                allVoted: players.every(p => currentState.votes[p.user_id])
-            });
-            
-            const allVoted = players.every(p => currentState.votes[p.user_id]);
-            
-            if (allVoted) {
-                log('All players voted! Calculating results...');
-                setTimeout(() => calculateResults(), 2000);
-            }
-        }
-
-        async function calculateResults() {
-            if (!isHost) return;
-            
-            console.log('Calculating results with votes:', currentState.votes);
-            
-            // Count votes
-            const voteCounts = {};
-            Object.values(currentState.votes).forEach(targetId => {
-                voteCounts[targetId] = (voteCounts[targetId] || 0) + 1;
-            });
-            
-            console.log('Vote counts:', voteCounts);
-            
-            // Find max votes
-            let maxVotes = 0;
-            Object.values(voteCounts).forEach(votes => {
-                if (votes > maxVotes) maxVotes = votes;
-            });
-            
-            // Find all players with max votes (handles ties)
-            const winners = Object.entries(voteCounts)
-                .filter(([playerId, votes]) => votes === maxVotes)
-                .map(([playerId]) => playerId);
-            
-            console.log('Winners:', winners, 'with', maxVotes, 'votes');
-            
-            // Award points to all winners (in case of tie)
-            if (winners.length > 0) {
-                winners.forEach(winnerId => {
-                    currentState.scores[winnerId] = (currentState.scores[winnerId] || 0) + 1;
-                });
-                // For display, just use first winner
-                currentState.roundWinner = winners[0];
-                currentState.roundWinners = winners; // Store all winners for tie display
-            }
-            
-            currentState.phase = 'results';
-            await saveGameState();
-        }
-
-        // === RENDER RESULTS ===
-        function renderResults() {
-            const area = document.getElementById('resultsArea');
-            area.innerHTML = '';
-            
-            const winners = currentState.roundWinners || [currentState.roundWinner];
-            if (!winners || winners.length === 0 || !winners[0]) {
-                area.innerHTML = '<div class="status-msg">No winner this round</div>';
-                return;
-            }
-            
-            const isTie = winners.length > 1;
-            
-            const winnerCard = document.createElement('div');
-            winnerCard.className = 'winner-card';
-            
-            const title = document.createElement('div');
-            title.className = 'winner-title';
-            title.textContent = isTie ? '🤝 TIE! 🤝' : '🏆 Round Winner 🏆';
-            
-            if (isTie) {
-                // Show all tied winners
-                winners.forEach(winnerId => {
-                    const name = document.createElement('div');
-                    name.className = 'winner-name';
-                    name.textContent = getPlayerName(winnerId);
-                    
-                    const answerIdx = currentState.submissions[winnerId];
-                    const answer = answers[answerIdx];
-                    
-                    const answerText = document.createElement('div');
-                    answerText.className = 'winner-answer';
-                    answerText.style.marginBottom = '1rem';
-                    answerText.textContent = `"${answer ? answer.text : 'Unknown'}"`;
-                    
-                    winnerCard.appendChild(title);
-                    winnerCard.appendChild(name);
-                    winnerCard.appendChild(answerText);
-                    
-                    // Clear title after first winner
-                    title.remove();
-                });
-                
-                const tieNote = document.createElement('div');
-                tieNote.style.marginTop = '1rem';
-                tieNote.style.fontSize = '1rem';
-                tieNote.textContent = 'Both players get a point!';
-                winnerCard.appendChild(tieNote);
-            } else {
-                // Single winner
-                const winnerId = winners[0];
-                
-                const name = document.createElement('div');
-                name.className = 'winner-name';
-                name.textContent = getPlayerName(winnerId);
-                
-                const answerIdx = currentState.submissions[winnerId];
-                const answer = answers[answerIdx];
-                
-                const answerText = document.createElement('div');
-                answerText.className = 'winner-answer';
-                answerText.textContent = `"${answer ? answer.text : 'Unknown'}"`;
-                
-                const votes = document.createElement('div');
-                votes.style.marginTop = '1rem';
-                votes.style.fontSize = '1.1rem';
-                const voteCount = Object.values(currentState.votes).filter(v => v === winnerId).length;
-                votes.textContent = `${voteCount} vote${voteCount !== 1 ? 's' : ''}`;
-                
-                winnerCard.appendChild(title);
-                winnerCard.appendChild(name);
-                winnerCard.appendChild(answerText);
-                winnerCard.appendChild(votes);
-            }
-            
-            area.appendChild(winnerCard);
-        }
-
-        // === HOST ACTIONS ===
         async function hostStartNewRound() {
             if (!isHost) return;
-            
-            // Check if game ended
-            if (currentState.phase === 'results' && currentState.round >= currentState.totalRounds) {
-                await showFinalResults();
+
+            const nextRound = (currentState.round || 0) + 1;
+            const prompt = pickRandomPrompt();
+            if (!prompt) {
+                alert("No prompts loaded yet.");
                 return;
             }
-            
-            // Initialize scores for all players
-            const { data: players } = await supabaseClient
-                .from('room_players')
-                .select('user_id')
-                .eq('room_id', roomId);
-                
-            if (players) {
-                players.forEach(p => {
-                    if (!(p.user_id in currentState.scores)) {
-                        currentState.scores[p.user_id] = 0;
-                    }
-                });
-            }
-            
-            // Start new round
-            currentState.round = (currentState.round || 0) + 1;
-            currentState.phase = 'submit';
-            currentState.submissions = {};
-            currentState.votes = {};
-            currentState.roundWinner = null;
-            
-            // Pick random prompt based on filters
-            let filteredPrompts = prompts;
-            
-            // Filter by rating
-            if (currentState.rating && currentState.rating !== 'all') {
-                const ratingOrder = ['G', 'PG', 'PG-13', 'R', 'NSFW'];
-                const maxRatingIndex = ratingOrder.indexOf(currentState.rating);
-                filteredPrompts = filteredPrompts.filter(p => {
-                    const promptRatingIndex = ratingOrder.indexOf(p.rating);
-                    return promptRatingIndex <= maxRatingIndex;
-                });
-            }
-            
-            // Filter by pack
-            if (currentState.pack && currentState.pack !== 'all') {
-                filteredPrompts = filteredPrompts.filter(p => p.pack === currentState.pack);
-            }
-            
-            // Fallback to all prompts if filters are too restrictive
-            if (filteredPrompts.length === 0) {
-                log('No prompts match filters, using all prompts');
-                filteredPrompts = prompts;
-            }
-            
-            const prompt = filteredPrompts[Math.floor(Math.random() * filteredPrompts.length)];
-            currentState.prompt = prompt;
-            
-            // Deal cards
-            dealCards();
-            
-            await saveGameState();
-            
-            log(`Round ${currentState.round} started!`);
-        }
 
-        async function showFinalResults() {
-            if (!isHost) return;
-            
-            const scores = currentState.scores || {};
-            const sorted = Object.entries(scores).sort((a, b) => b[1] - a[1]);
-            
-            // Update room status to kick all players back to lobby when they click button
-            await supabaseClient
-                .from('rooms')
-                .update({ status: 'completed' })
-                .eq('id', roomId);
-            
-            // Set game state to show final results
-            currentState.phase = 'final_results';
-            currentState.finalScores = sorted;
-            await saveGameState();
-        }
-
-        function displayFinalResults() {
-            const sorted = currentState.finalScores || Object.entries(currentState.scores || {}).sort((a, b) => b[1] - a[1]);
-            
-            if (sorted.length === 0) {
-                return;
-            }
-            
-            // Check for tie at top
-            const topScore = sorted[0][1];
-            const winners = sorted.filter(([id, score]) => score === topScore);
-            
-            // Update title
-            const titleEl = document.getElementById('finalResultsTitle');
-            if (winners.length > 1) {
-                titleEl.textContent = '🤝 TIE GAME! 🤝';
-            } else {
-                titleEl.textContent = '🎉 GAME OVER! 🎉';
-            }
-            
-            // Build podium
-            const podium = document.getElementById('finalResultsPodium');
-            podium.innerHTML = '';
-            
-            const places = ['first', 'second', 'third'];
-            const emojis = ['🥇', '🥈', '🥉'];
-            
-            sorted.slice(0, 3).forEach(([playerId, score], index) => {
-                const place = document.createElement('div');
-                place.className = `podium-place ${places[index] || ''}`;
-                
-                const rank = document.createElement('div');
-                rank.className = `podium-rank ${places[index] || ''}`;
-                rank.textContent = emojis[index] || `#${index + 1}`;
-                
-                const name = document.createElement('div');
-                name.className = 'podium-name';
-                name.textContent = getPlayerName(playerId);
-                
-                const scoreEl = document.createElement('div');
-                scoreEl.className = 'podium-score';
-                scoreEl.textContent = `${score} point${score !== 1 ? 's' : ''}`;
-                
-                place.appendChild(rank);
-                place.appendChild(name);
-                place.appendChild(scoreEl);
-                podium.appendChild(place);
-            });
-            
-            // Show overlay
-            document.getElementById('finalResultsOverlay').classList.add('active');
-        }
-
-        function returnToLobby() {
-            window.location.href = '/multiplayer.html';
-        }
-
-        function resetGame() {
+            const now = Date.now();
             currentState = {
-                phase: "lobby",
-                round: 0,
-                totalRounds: 5,
-                handSize: 7,
-                rating: 'all',
-                pack: 'all',
-                prompt: null,
-                playerHands: {},
+                phase: "submit",
+                round: nextRound,
+                prompt: prompt,
                 submissions: {},
                 votes: {},
-                scores: {},
-                roundWinner: null
+                scores: currentState.scores || {},
+                lastResults: null,
+                timerEnd: now + SUBMIT_SECONDS * 1000,
+                voteOrder: [],
+                gameEnded: false,
+                winner: null
             };
-            
-            selectedCardIndex = null;
-            hasSubmitted = false;
-            hasVoted = false;
-            
-            saveGameState();
+
+            log("Starting round " + nextRound + " as host.");
+            await saveGameState();
+        }
+
+        async function handlePhaseTimeout(phase) {
+            if (!isHost) return;
+
+            if (phase === "submit") {
+                const submissions = currentState.submissions || {};
+                const submitters = Object.keys(submissions);
+
+                if (submitters.length === 0) {
+                    currentState.lastResults = {
+                        message: "No submissions this round.",
+                        details: []
+                    };
+                    currentState.phase = "results";
+                    currentState.timerEnd = Date.now() + RESULTS_SECONDS * 1000;
+                    log("No submissions. Moving to results.");
+                } else if (submitters.length === 1) {
+                    const winnerId = submitters[0];
+                    currentState.scores[winnerId] = (currentState.scores[winnerId] || 0) + 1;
+                    currentState.lastResults = {
+                        message: "Only one submission.",
+                        details: [{
+                            playerId: winnerId,
+                            votes: 1
+                        }]
+                    };
+                    currentState.phase = "results";
+                    currentState.timerEnd = Date.now() + RESULTS_SECONDS * 1000;
+                    log("Only one answer. Auto-win.");
+                } else {
+                    // Move to voting
+                    currentState.phase = "vote";
+                    currentState.timerEnd = Date.now() + VOTE_SECONDS * 1000;
+                    
+                    // Shuffle submissions for voting
+                    const voteOrder = Object.entries(submissions).map(([playerId, data]) => ({
+                        playerId,
+                        name: data.name,
+                        text: data.text
+                    }));
+                    // Shuffle
+                    for (let i = voteOrder.length - 1; i > 0; i--) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        [voteOrder[i], voteOrder[j]] = [voteOrder[j], voteOrder[i]];
+                    }
+                    currentState.voteOrder = voteOrder;
+                    log("Moving to voting phase.");
+                }
+                await saveGameState();
+            } else if (phase === "vote") {
+                // Tally votes
+                const votes = currentState.votes || {};
+                const tally = {};
+                
+                Object.values(votes).forEach(targetId => {
+                    tally[targetId] = (tally[targetId] || 0) + 1;
+                });
+
+                const voteOrder = currentState.voteOrder || [];
+                const details = voteOrder.map(entry => ({
+                    playerId: entry.playerId,
+                    votes: tally[entry.playerId] || 0
+                }));
+
+                const maxVotes = Math.max(...details.map(d => d.votes), 0);
+                const winners = details.filter(d => d.votes === maxVotes);
+
+                winners.forEach(w => {
+                    currentState.scores[w.playerId] = (currentState.scores[w.playerId] || 0) + 1;
+                });
+
+                currentState.lastResults = { details };
+                currentState.phase = "results";
+                currentState.timerEnd = Date.now() + RESULTS_SECONDS * 1000;
+                
+                log("Voting complete. Results tallied.");
+                await saveGameState();
+            } else if (phase === "results") {
+                // Auto-start next round
+                await hostStartNewRound();
+            }
         }
 
         async function endGame() {
             if (!isHost) return;
+            if (!confirm("Are you sure you want to end the game?")) return;
+
+            // Determine winner
+            const scores = currentState.scores || {};
+            const sorted = Object.entries(scores).sort((a, b) => b[1] - a[1]);
             
-            if (confirm('Are you sure you want to end the game? All players will return to the lobby.')) {
-                // Update room status to ended
-                await supabaseClient
-                    .from('rooms')
-                    .update({ status: 'waiting' })
-                    .eq('id', roomId);
-                
-                // Show final results and redirect
-                showFinalResults();
+            let winnerId = null;
+            let winnerScore = 0;
+            
+            if (sorted.length > 0) {
+                winnerId = sorted[0][0];
+                winnerScore = sorted[0][1];
             }
+
+            currentState.gameEnded = true;
+            currentState.winner = winnerId;
+            currentState.phase = "ended";
+
+            await saveGameState();
+
+            // Award pot to winner
+            if (winnerId && buyIn > 0) {
+                const { data: players } = await supabaseClient
+                    .from('room_players')
+                    .select('user_id')
+                    .eq('room_id', roomId);
+
+                const totalPot = buyIn * players.length;
+
+                // Get winner's current coins
+                const { data: profile } = await supabaseClient
+                    .from('profiles')
+                    .select('gunnercoins')
+                    .eq('user_id', winnerId)
+                    .single();
+
+                // Award pot
+                await supabaseClient
+                    .from('profiles')
+                    .update({ gunnercoins: (profile?.gunnercoins || 0) + totalPot })
+                    .eq('user_id', winnerId);
+
+                log(`Winner awarded ${totalPot} GunnerCoins!`);
+            }
+
+            // Update room status
+            await supabaseClient
+                .from('rooms')
+                .update({ status: 'finished' })
+                .eq('id', roomId);
+
+            showGameEndScreen(winnerId, winnerScore);
         }
 
-        // Watch for room status changes (for non-host players)
-        async function checkRoomStatus() {
-            const { data: room } = await supabaseClient
-                .from('rooms')
-                .select('status')
-                .eq('id', roomId)
-                .maybeSingle();
-                
-            if (room && room.status === 'waiting') {
-                // Game ended, redirect to lobby
-                alert('Game has ended. Returning to lobby...');
-                window.location.href = '/multiplayer.html';
-            }
+        function showGameEndScreen(winnerId, score) {
+            const gameCard = document.querySelector('.game-card');
+            
+            let winnerName = winnerId === myPlayerId ? myPlayerName : getPlayerName(winnerId);
+            const totalPot = buyIn > 0 ? `Won ${buyIn} × players = Total Pot!` : '';
+            
+            gameCard.innerHTML = `
+                <div class="winner-announcement">
+                    <h2>🎉 GAME OVER! 🎉</h2>
+                    <p style="font-size: 1.5rem; margin: 1rem 0;">
+                        Winner: <strong>${winnerName}</strong>
+                    </p>
+                    <p style="font-size: 1.2rem;">
+                        Final Score: <strong>${score}</strong> points
+                    </p>
+                    ${totalPot ? `<p class="prize">${totalPot}</p>` : ''}
+                    <div style="margin-top: 2rem;">
+                        <a href="/multiplayer.html" class="btn btn-primary">Back to Lobby</a>
+                    </div>
+                </div>
+            `;
         }
 
         // === STATE MANAGEMENT ===
         async function saveGameState() {
-            console.log('saveGameState called by:', isHost ? 'HOST' : 'PLAYER', myPlayerId);
-            
-            // Load current state from DB first
-            const { data: existing } = await supabaseClient
+            if (!isHost) return;
+
+            const { error } = await supabaseClient
                 .from('game_states')
-                .select('*')
-                .eq('room_id', roomId)
-                .eq('game_type', 'who-said-it-better')
-                .maybeSingle();
+                .upsert({
+                    room_id: roomId,
+                    game_type: 'who-said-it-better',
+                    state: currentState,
+                    updated_at: new Date().toISOString()
+                }, {
+                    onConflict: 'room_id'
+                });
 
-            let stateToSave;
-            
-            if (isHost) {
-                // Host can save everything
-                stateToSave = currentState;
-                console.log('Host saving full state');
-            } else {
-                // Non-host merges their submission/vote into existing state
-                if (existing && existing.state) {
-                    stateToSave = existing.state;
-                    console.log('Non-host merging into existing state');
-                    
-                    // Merge my submission
-                    if (currentState.submissions && currentState.submissions[myPlayerId]) {
-                        stateToSave.submissions = stateToSave.submissions || {};
-                        stateToSave.submissions[myPlayerId] = currentState.submissions[myPlayerId];
-                        console.log('Merged submission:', myPlayerId, currentState.submissions[myPlayerId]);
-                    }
-                    // Merge my vote
-                    if (currentState.votes && currentState.votes[myPlayerId]) {
-                        stateToSave.votes = stateToSave.votes || {};
-                        stateToSave.votes[myPlayerId] = currentState.votes[myPlayerId];
-                        console.log('Merged vote:', myPlayerId, currentState.votes[myPlayerId]);
-                    }
-                    // Merge my hand changes
-                    if (currentState.playerHands && currentState.playerHands[myPlayerId]) {
-                        stateToSave.playerHands = stateToSave.playerHands || {};
-                        stateToSave.playerHands[myPlayerId] = currentState.playerHands[myPlayerId];
-                    }
-                } else {
-                    // No existing state, shouldn't happen for non-host
-                    console.error('Non-host trying to save but no existing state');
-                    return;
-                }
-            }
-
-            console.log('State to save submissions:', stateToSave.submissions);
-
-            if (existing) {
-                const { error } = await supabaseClient
-                    .from('game_states')
-                    .update({
-                        state: stateToSave,
-                        updated_at: new Date().toISOString()
-                    })
-                    .eq('id', existing.id);
-
-                if (error) {
-                    console.error('Error updating game state:', error);
-                } else {
-                    console.log('State saved successfully');
-                }
-            } else {
-                // Only host should create initial state
-                if (!isHost) return;
-                
-                const { error } = await supabaseClient
-                    .from('game_states')
-                    .insert({
-                        room_id: roomId,
-                        game_type: 'who-said-it-better',
-                        state: stateToSave,
-                        created_at: new Date().toISOString(),
-                        updated_at: new Date().toISOString()
-                    });
-
-                if (error) {
-                    console.error('Error inserting game state:', error);
-                } else {
-                    console.log('Initial state created successfully');
-                }
+            if (error) {
+                console.error('Error saving game state:', error);
             }
         }
 
@@ -1696,139 +1124,155 @@
                 .select('state')
                 .eq('room_id', roomId)
                 .eq('game_type', 'who-said-it-better')
-                .maybeSingle();
+                .single();
 
             if (error) {
-                console.error('Error loading game state:', error);
-                applyState(null);
+                if (error.code !== 'PGRST116') { // Not found is ok
+                    console.error('Error loading game state:', error);
+                }
                 return;
             }
 
-            applyState(data ? data.state : null);
+            if (data && data.state) {
+                applyState(data.state);
+            }
         }
 
         function applyState(state) {
             if (!state || !state.phase) {
                 currentState.phase = "lobby";
                 currentState.round = 0;
-                currentState.totalRounds = 5;
-                currentState.handSize = 7;
                 currentState.prompt = null;
-                currentState.playerHands = {};
                 currentState.submissions = {};
                 currentState.votes = {};
                 currentState.scores = {};
-                currentState.roundWinner = null;
+                currentState.lastResults = null;
+                currentState.timerEnd = null;
+                currentState.voteOrder = [];
+                currentState.gameEnded = false;
+                currentState.winner = null;
             } else {
                 currentState = state;
             }
 
-            document.getElementById("roundNumber").innerText = currentState.round || 0;
-            document.getElementById("totalRounds").innerText = currentState.totalRounds || 5;
-            
-            // Reset submission/vote flags for new phases
-            if (currentState.phase === 'submit') {
-                hasSubmitted = !!(currentState.submissions && currentState.submissions[myPlayerId]);
-                selectedCardIndex = null;
-                
-                // If host and in submit phase, check if everyone submitted
-                if (isHost) {
-                    setTimeout(() => checkAllSubmitted(), 1000);
-                }
-            } else if (currentState.phase === 'vote') {
-                hasVoted = !!(currentState.votes && currentState.votes[myPlayerId]);
-                
-                // If host and in vote phase, check if everyone voted
-                if (isHost) {
-                    setTimeout(() => checkAllVoted(), 1000);
-                }
-            } else if (currentState.phase === 'results' || currentState.phase === 'lobby') {
-                hasSubmitted = false;
-                hasVoted = false;
-                selectedCardIndex = null;
+            // Check if game ended
+            if (currentState.gameEnded && currentState.winner) {
+                const scores = currentState.scores || {};
+                const winnerScore = scores[currentState.winner] || 0;
+                showGameEndScreen(currentState.winner, winnerScore);
+                return;
             }
 
+            document.getElementById("roundNumber").innerText = currentState.round || 0;
+            
+            // Reset submission/vote flags for new rounds
+            const mySubmission = currentState.submissions && currentState.submissions[myPlayerId];
+            hasSubmitted = !!mySubmission;
+            
+            const myVote = currentState.votes && currentState.votes[myPlayerId];
+            hasVoted = !!myVote;
+
+            // Update UI
             setPhaseUI(currentState.phase);
             updatePromptDisplay();
             renderScores();
-            loadPlayers(); // Refresh player list to show submission status
+            renderAnswers();
+
+            // Handle timers
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+                countdownInterval = null;
+            }
+
+            if (currentState.timerEnd && currentState.phase !== 'lobby') {
+                startCountdown(currentState.phase);
+            } else {
+                updateTimerDisplay();
+            }
+
+            // Reset input for new round
+            if (currentState.phase === 'submit') {
+                const input = document.getElementById("answerInput");
+                const btn = document.getElementById("submitAnswerBtn");
+                if (!hasSubmitted) {
+                    input.value = '';
+                    input.disabled = false;
+                    btn.disabled = false;
+                } else {
+                    input.disabled = true;
+                    btn.disabled = true;
+                }
+            }
         }
 
-        let isInitialized = false;
-
-        // === INIT ===
+        // === INITIALIZATION ===
         async function init() {
-            if (isInitialized) {
-                console.log('Already initialized, skipping...');
-                return;
-            }
-            isInitialized = true;
-
             roomId = getQueryParam('room');
             if (!roomId) {
-                alert('No room specified!');
+                alert('No room ID provided!');
                 window.location.href = '/multiplayer.html';
                 return;
             }
 
-            // Wait for auth to be ready
-            const { data: { session }, error: authError } = await supabaseClient.auth.getSession();
-            if (authError || !session) {
-                alert('Not logged in!');
-                window.location.href = '/login.html?redirect=' + encodeURIComponent(window.location.href);
+            // Get current user
+            const { data: { user } } = await supabaseClient.auth.getUser();
+            if (!user) {
+                window.location.href = '/login.html';
                 return;
             }
 
-            currentUser = session.user;
-            myPlayerId = currentUser.id;
+            currentUser = user;
+            myPlayerId = user.id;
 
-            const { data: profile, error: profileError } = await supabaseClient
+            // Get player name
+            const { data: profile } = await supabaseClient
                 .from('profiles')
                 .select('player_name')
                 .eq('id', myPlayerId)
-                .maybeSingle();
+                .single();
 
-            if (profileError) {
-                console.error('Error loading profile:', profileError);
-                myPlayerName = currentUser.email?.split('@')[0] || 'Player';
-            } else {
-                myPlayerName = profile?.player_name || currentUser.email?.split('@')[0] || 'Player';
-            }
+            myPlayerName = profile?.player_name || 'Player';
 
-            console.log('Looking for room:', roomId);
-            
-            const { data: room, error: roomError } = await supabaseClient
+            // Get room info
+            const { data: room } = await supabaseClient
                 .from('rooms')
-                .select('*')
+                .select('host_user_id, buy_in')
                 .eq('id', roomId)
-                .maybeSingle();
+                .single();
 
-            console.log('Room query result:', { room, roomError });
-
-            if (roomError) {
-                console.error('Error loading room:', roomError);
-                alert('Error loading room: ' + roomError.message);
-                window.location.href = '/multiplayer.html';
-                return;
-            }
-            
             if (!room) {
-                console.error('Room not found in database');
-                // Room doesn't exist, redirect back
+                alert('Room not found!');
                 window.location.href = '/multiplayer.html';
                 return;
             }
 
             isHost = room.host_user_id === myPlayerId;
+            buyIn = room.buy_in || 0;
 
             document.getElementById("roomInfo").innerText = "Room: " + roomId.substring(0, 8);
             document.getElementById("hostTag").innerText = isHost ? "HOST" : "PLAYER";
+            
+            if (buyIn > 0) {
+                document.getElementById('potDisplay').style.display = 'block';
+                // Calculate pot from player count
+                const { data: players } = await supabaseClient
+                    .from('room_players')
+                    .select('user_id')
+                    .eq('room_id', roomId);
+                const totalPot = buyIn * (players?.length || 0);
+                document.getElementById('potDisplay').textContent = `💰 Pot: ${totalPot}`;
+            }
 
             log(`Joined room as ${myPlayerName} (${isHost ? 'HOST' : 'PLAYER'})`);
             setConnectionStatus('Loading...', 'normal');
 
+            // Load game data
             await loadGameData();
+
+            // Load initial players
             await loadPlayers();
+
+            // Load game state
             await loadGameState();
 
             // Subscribe to game state updates
@@ -1856,21 +1300,16 @@
                     { event: '*', schema: 'public', table: 'room_players', filter: `room_id=eq.${roomId}` },
                     () => {
                         loadPlayers();
-                    }
-                )
-                .subscribe();
-
-            // Subscribe to room status changes (to detect game end)
-            supabaseClient
-                .channel(`room-status-${roomId}`)
-                .on('postgres_changes',
-                    { event: 'UPDATE', schema: 'public', table: 'rooms', filter: `id=eq.${roomId}` },
-                    (payload) => {
-                        console.log('Room status changed:', payload.new);
-                        // Don't redirect on completed - let them see final results
-                        if (payload.new && payload.new.status === 'waiting') {
-                            alert('Host ended the game. Returning to lobby...');
-                            window.location.href = '/multiplayer.html';
+                        // Update pot if buy-in
+                        if (buyIn > 0) {
+                            supabaseClient
+                                .from('room_players')
+                                .select('user_id')
+                                .eq('room_id', roomId)
+                                .then(({ data }) => {
+                                    const totalPot = buyIn * (data?.length || 0);
+                                    document.getElementById('potDisplay').textContent = `💰 Pot: ${totalPot}`;
+                                });
                         }
                     }
                 )
@@ -1879,33 +1318,52 @@
             // Event listeners
             document.getElementById("hostStartBtn").addEventListener("click", hostStartNewRound);
             document.getElementById("endGameBtn").addEventListener("click", endGame);
+            document.getElementById("submitAnswerBtn").addEventListener("click", handleSubmit);
+            document.getElementById("randomAnswerBtn").addEventListener("click", () => {
+                const input = document.getElementById("answerInput");
+                input.value = pickRandomAnswerText();
+            });
+
+            // Initialize multiplayer panel in playerbar
+            console.log('Initializing multiplayer panel with roomId:', roomId);
+            if (typeof window.initMultiplayerPanel === 'function') {
+                window.initMultiplayerPanel(roomId);
+            } else {
+                console.warn('initMultiplayerPanel not available yet');
+            }
         }
 
-        // Monitor auth state
-        supabaseClient.auth.onAuthStateChange((event, session) => {
-            console.log('Auth state changed:', event);
-            if (event === 'SIGNED_OUT') {
-                window.location.href = '/login.html';
-            } else if (event === 'INITIAL_SESSION' && session) {
-                // Session is now ready, we can safely init if not already done
-                if (!myPlayerId) {
-                    console.log('Auth ready, initializing game...');
-                    init();
-                }
-            }
-        });
+        // Load playerbar first, then initialize
+        async function loadPlayerBar(){
+            try {
+                const res = await fetch("/playerbar.html");
+                const html = await res.text();
+                const container = document.getElementById("playerbar");
+                const temp = document.createElement("div");
+                temp.innerHTML = html;
 
-        // Start when page loads - but only if we already have a session
-        window.addEventListener('DOMContentLoaded', async () => {
-            const { data: { session } } = await supabaseClient.auth.getSession();
-            if (session) {
-                // We have a session immediately, can init now
-                init();
-            } else {
-                // No immediate session, wait for INITIAL_SESSION event
-                console.log('Waiting for auth session...');
-            }
-        });
+                Array.from(temp.childNodes).forEach(node => {
+                    if (node.tagName === "SCRIPT") {
+                        const s = document.createElement("script");
+                        if (node.src) s.src = node.src;
+                        else s.textContent = node.textContent;
+                        document.body.appendChild(s);
+                    } else {
+                        container.appendChild(node);
+                    }
+                });
+
+                // Wait for playerbar scripts to load
+                setTimeout(async () => {
+                    await init();
+                }, 200);
+            } catch (e) { console.error(e); }
+        }
+        document.addEventListener("DOMContentLoaded", loadPlayerBar);
     </script>
+
+    <!-- LOAD PLAYERBAR -->
+    <script>
+    async function loadPlayerBar(){
 </body>
 </html>
