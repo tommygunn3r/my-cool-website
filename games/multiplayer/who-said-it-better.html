@@ -1391,14 +1391,25 @@
                 myPlayerName = profile?.player_name || currentUser.email?.split('@')[0] || 'Player';
             }
 
+            console.log('Looking for room:', roomId);
+            
             const { data: room, error: roomError } = await supabaseClient
                 .from('multiplayer_rooms')
                 .select('*')
                 .eq('room_id', roomId)
                 .maybeSingle();
 
-            if (roomError || !room) {
+            console.log('Room query result:', { room, roomError });
+
+            if (roomError) {
                 console.error('Error loading room:', roomError);
+                alert('Error loading room: ' + roomError.message);
+                window.location.href = '/multiplayer.html';
+                return;
+            }
+            
+            if (!room) {
+                console.error('Room not found in database');
                 alert('Room not found!');
                 window.location.href = '/multiplayer.html';
                 return;
