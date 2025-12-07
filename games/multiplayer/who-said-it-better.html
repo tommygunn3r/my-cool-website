@@ -1380,22 +1380,22 @@
 
             const { data: profile, error: profileError } = await supabaseClient
                 .from('profiles')
-                .select('username')
+                .select('player_name')
                 .eq('id', myPlayerId)
-                .single();
+                .maybeSingle();
 
             if (profileError) {
                 console.error('Error loading profile:', profileError);
                 myPlayerName = currentUser.email?.split('@')[0] || 'Player';
             } else {
-                myPlayerName = profile?.username || currentUser.email?.split('@')[0] || 'Player';
+                myPlayerName = profile?.player_name || currentUser.email?.split('@')[0] || 'Player';
             }
 
             const { data: room, error: roomError } = await supabaseClient
                 .from('multiplayer_rooms')
                 .select('*')
                 .eq('room_id', roomId)
-                .single();
+                .maybeSingle();
 
             if (roomError || !room) {
                 console.error('Error loading room:', roomError);
