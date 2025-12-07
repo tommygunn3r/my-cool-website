@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <title>Who Said It Better? - GunnersGames</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Cinzel:wght@400;700&display=swap" rel="stylesheet">
@@ -515,29 +515,15 @@
         </div>
     </div>
 
-    <!-- Supabase Initialization -->
-    <script type="module">
-        import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.10/+esm";
+    <script>
+        // === SUPABASE CONFIG ===
         const SUPABASE_URL = 'https://pknhslxhpohrzgsfkisr.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_-zZw-pi_3q1sdNGhITKuhQ_ECyDARzc';
+        const { createClient } = window.supabase;
         const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        window.supabase = supabaseClient;
-        console.log('✅ Supabase initialized');
-    </script>
-
-    <script>
-        // Wait for Supabase to be available
-        function waitForSupabase() {
-            return new Promise((resolve) => {
-                if (window.supabase) {
-                    resolve();
-                } else {
-                    setTimeout(() => waitForSupabase().then(resolve), 50);
-                }
-            });
-        }
         
-        const supabaseClient = window.supabase || { auth: {}, from: () => ({}) }; // Temporary until loaded
+        // Also set global supabase for playerbar compatibility
+        window.supabase = supabaseClient;
 
         // === TIMING CONFIG ===
         const SUBMIT_SECONDS = 40;
@@ -1367,8 +1353,7 @@
                     }
                 });
 
-                // Wait for playerbar scripts to load and Supabase
-                await waitForSupabase();
+                // Wait for playerbar scripts to load
                 setTimeout(async () => {
                     await init();
                 }, 200);
