@@ -991,7 +991,7 @@
             // Add player to room
             const { data: profile } = await supabaseClient
                 .from('profiles')
-                .select('username')
+                .select('player_name')
                 .eq('id', currentUser.id)
                 .single();
 
@@ -1000,7 +1000,7 @@
                 .insert({
                     room_id: roomId,
                     user_id: currentUser.id,
-                    player_name: profile?.username || 'Player'
+                    player_name: profile?.player_name || 'Player'
                 });
 
             if (joinError) {
