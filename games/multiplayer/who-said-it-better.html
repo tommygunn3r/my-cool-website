@@ -1128,12 +1128,13 @@
 
             if (error) {
                 console.error('Error loading game state:', error);
+                // Still apply default state on error
+                applyState(null);
                 return;
             }
 
-            if (data && data.state) {
-                applyState(data.state);
-            }
+            // Apply state (null will initialize to default lobby state)
+            applyState(data ? data.state : null);
         }
 
         function applyState(state) {
