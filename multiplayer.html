@@ -1478,6 +1478,9 @@
                 closeModal();
             }
         }
+        
+        // Start the game initialization
+        init();
         } // End of initMultiplayerLobby function
     </script>
 
@@ -1530,12 +1533,12 @@
         }
         
         // Initialize everything in proper order
-        async function init() {
+        async function initAll() {
             await loadPlayerBar();
             initMultiplayerLobby();
         }
         
-        init();
+        initAll();
     </script>
 </body>
 </html>
