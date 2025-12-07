@@ -692,6 +692,39 @@
             transform: none;
         }
 
+                /* Fixed Navigation Buttons */
+        .fixed-nav {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            display: flex;
+            gap: 15px;
+            z-index: 1000;
+        }
+
+        .nav-button {
+            padding: 15px 30px;
+            background: rgba(10, 10, 10, 0.95);
+            border: 2px solid  rgba(76, 175, 255, 0.3);
+            border-radius: 10px;
+            color: #fff;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(76, 175, 255, 0.5);
+        }
+
+        .nav-button:hover {
+            background: rgba(76, 175, 255, 0.3);
+            box-shadow: 0 0 25px rgba(76, 175, 255, 0.5);
+            transform: translateY(-2px);
+        }
+
         /* Responsive Design */
         @media (max-width: 768px) {
             .title {
