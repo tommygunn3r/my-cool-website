@@ -1124,12 +1124,10 @@
                 .select('state')
                 .eq('room_id', roomId)
                 .eq('game_type', 'who-said-it-better')
-                .single();
+                .maybeSingle();
 
             if (error) {
-                if (error.code !== 'PGRST116') { // Not found is ok
-                    console.error('Error loading game state:', error);
-                }
+                console.error('Error loading game state:', error);
                 return;
             }
 
