@@ -1567,14 +1567,20 @@
                 // Move all nodes to container
                 Array.from(temp.childNodes).forEach(node => {
                     if (node.tagName === 'SCRIPT') {
-                        // Scripts need to be recreated to execute
-                        const script = document.createElement('script');
+                        // Skip if it's an external script that's already loaded
                         if (node.src) {
-                            script.src = node.src;
+                            const scriptExists = Array.from(document.scripts).some(s => s.src === node.src);
+                            if (!scriptExists) {
+                                const script = document.createElement('script');
+                                script.src = node.src;
+                                document.body.appendChild(script);
+                            }
                         } else {
+                            // For inline scripts, recreate them to execute
+                            const script = document.createElement('script');
                             script.textContent = node.textContent;
+                            document.body.appendChild(script);
                         }
-                        document.body.appendChild(script);
                     } else {
                         container.appendChild(node);
                     }
@@ -1582,22 +1588,18 @@
                 
                 console.log('✅ Playerbar loaded successfully!');
                 
-                // Wait a bit for scripts to initialize, then load player data
-                setTimeout(() => {
-                    if (typeof pbLoadPlayerData === 'function') {
-                        pbLoadPlayerData();
-                        console.log('✅ Player data loaded');
-                    }
-                }, 500);
-                
             } catch (error) {
                 console.error('❌ Error loading playerbar:', error);
             }
         }
         
-        // Initialize everything
-        loadPlayerBar();
-        initMultiplayerLobby();
+        // Initialize everything in proper order
+        async function init() {
+            await loadPlayerBar();
+            initMultiplayerLobby();
+        }
+        
+        init();
     </script>
 </body>
 </html>
