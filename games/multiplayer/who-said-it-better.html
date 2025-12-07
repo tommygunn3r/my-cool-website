@@ -992,6 +992,8 @@
             
             hasSubmitted = true;
             
+            console.log('Submitting card:', { playerId: myPlayerId, cardIndex: selectedCardIndex });
+            
             // Update state
             currentState.submissions[myPlayerId] = selectedCardIndex;
             
@@ -1285,40 +1287,86 @@
 
         // === STATE MANAGEMENT ===
         async function saveGameState() {
-            if (!isHost) return;
-
+            console.log('saveGameState called by:', isHost ? 'HOST' : 'PLAYER', myPlayerId);
+            
+            // Load current state from DB first
             const { data: existing } = await supabaseClient
                 .from('game_states')
-                .select('id')
+                .select('*')
                 .eq('room_id', roomId)
                 .eq('game_type', 'who-said-it-better')
                 .maybeSingle();
+
+            let stateToSave;
+            
+            if (isHost) {
+                // Host can save everything
+                stateToSave = currentState;
+                console.log('Host saving full state');
+            } else {
+                // Non-host merges their submission/vote into existing state
+                if (existing && existing.state) {
+                    stateToSave = existing.state;
+                    console.log('Non-host merging into existing state');
+                    
+                    // Merge my submission
+                    if (currentState.submissions && currentState.submissions[myPlayerId]) {
+                        stateToSave.submissions = stateToSave.submissions || {};
+                        stateToSave.submissions[myPlayerId] = currentState.submissions[myPlayerId];
+                        console.log('Merged submission:', myPlayerId, currentState.submissions[myPlayerId]);
+                    }
+                    // Merge my vote
+                    if (currentState.votes && currentState.votes[myPlayerId]) {
+                        stateToSave.votes = stateToSave.votes || {};
+                        stateToSave.votes[myPlayerId] = currentState.votes[myPlayerId];
+                        console.log('Merged vote:', myPlayerId, currentState.votes[myPlayerId]);
+                    }
+                    // Merge my hand changes
+                    if (currentState.playerHands && currentState.playerHands[myPlayerId]) {
+                        stateToSave.playerHands = stateToSave.playerHands || {};
+                        stateToSave.playerHands[myPlayerId] = currentState.playerHands[myPlayerId];
+                    }
+                } else {
+                    // No existing state, shouldn't happen for non-host
+                    console.error('Non-host trying to save but no existing state');
+                    return;
+                }
+            }
+
+            console.log('State to save submissions:', stateToSave.submissions);
 
             if (existing) {
                 const { error } = await supabaseClient
                     .from('game_states')
                     .update({
-                        state: currentState,
+                        state: stateToSave,
                         updated_at: new Date().toISOString()
                     })
                     .eq('id', existing.id);
 
                 if (error) {
                     console.error('Error updating game state:', error);
+                } else {
+                    console.log('State saved successfully');
                 }
             } else {
+                // Only host should create initial state
+                if (!isHost) return;
+                
                 const { error } = await supabaseClient
                     .from('game_states')
                     .insert({
                         room_id: roomId,
                         game_type: 'who-said-it-better',
-                        state: currentState,
+                        state: stateToSave,
                         created_at: new Date().toISOString(),
                         updated_at: new Date().toISOString()
                     });
 
                 if (error) {
                     console.error('Error inserting game state:', error);
+                } else {
+                    console.log('Initial state created successfully');
                 }
             }
         }
