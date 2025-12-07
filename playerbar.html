@@ -396,8 +396,8 @@ async function leaveMultiplayerRoom() {
         
         // Get room info before leaving
         const { data: roomData } = await supabase
-            .from('game_rooms')
-            .select('is_locked, player_count')
+            .from('rooms')
+            .select('status')
             .eq('id', roomId)
             .single();
         
@@ -408,18 +408,21 @@ async function leaveMultiplayerRoom() {
             .eq('room_id', roomId)
             .eq('user_id', session.user.id);
         
-        // Check if room should be cleaned up
-        if (roomData) {
-            const newPlayerCount = roomData.player_count - 1;
-            
-            // If locked room is now empty, delete it
-            if (roomData.is_locked && newPlayerCount === 0) {
-                await supabase
-                    .from('game_rooms')
-                    .delete()
-                    .eq('id', roomId);
-                console.log('Cleaned up empty locked room');
-            }
+        // Get updated player count
+        const { data: players } = await supabase
+            .from('room_players')
+            .select('user_id')
+            .eq('room_id', roomId);
+        
+        const newPlayerCount = players?.length || 0;
+        
+        // If room is now empty, delete it (no point keeping empty rooms)
+        if (newPlayerCount === 0) {
+            await supabase
+                .from('rooms')
+                .delete()
+                .eq('id', roomId);
+            console.log('Cleaned up empty room');
         }
         
         // Cleanup
@@ -440,22 +443,34 @@ async function leaveMultiplayerRoom() {
     }
 }
 
-// Periodic cleanup utility for abandoned locked rooms
-async function cleanupAbandonedLockedRooms() {
+// Periodic cleanup utility for abandoned rooms
+async function cleanupAbandonedRooms() {
     try {
-        // Delete locked rooms with 0 players that haven't been updated in 10+ minutes
+        // Delete empty rooms that haven't been updated in 10+ minutes
         const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
         
-        const { data: deletedRooms } = await supabase
-            .from('game_rooms')
-            .delete()
-            .eq('is_locked', true)
-            .eq('player_count', 0)
-            .lt('updated_at', tenMinutesAgo)
-            .select('id');
+        // First find rooms with no players
+        const { data: allRooms } = await supabase
+            .from('rooms')
+            .select('id, updated_at, room_players(user_id)')
+            .lt('updated_at', tenMinutesAgo);
         
-        if (deletedRooms && deletedRooms.length > 0) {
-            console.log(`Cleaned up ${deletedRooms.length} abandoned locked room(s)`);
+        if (allRooms) {
+            const emptyRoomIds = allRooms
+                .filter(room => !room.room_players || room.room_players.length === 0)
+                .map(room => room.id);
+            
+            if (emptyRoomIds.length > 0) {
+                const { data: deletedRooms } = await supabase
+                    .from('rooms')
+                    .delete()
+                    .in('id', emptyRoomIds)
+                    .select('id');
+                
+                if (deletedRooms && deletedRooms.length > 0) {
+                    console.log(`Cleaned up ${deletedRooms.length} abandoned room(s)`);
+                }
+            }
         }
     } catch (error) {
         console.error('Error cleaning up abandoned rooms:', error);
