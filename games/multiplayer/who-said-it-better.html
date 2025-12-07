@@ -535,6 +535,29 @@
                     <option value="10">10 Cards</option>
                 </select>
             </div>
+            <div class="setting-group">
+                <label class="setting-label">Content Rating</label>
+                <select id="ratingInput" class="setting-input">
+                    <option value="all" selected>All Ratings</option>
+                    <option value="G">G - Family Friendly</option>
+                    <option value="PG">PG - Mild Content</option>
+                    <option value="PG-13">PG-13 - Teens+</option>
+                    <option value="R">R - Mature</option>
+                    <option value="NSFW">NSFW - Adults Only</option>
+                </select>
+            </div>
+            <div class="setting-group">
+                <label class="setting-label">Prompt Theme/Pack</label>
+                <select id="packInput" class="setting-input">
+                    <option value="all" selected>All Themes</option>
+                    <option value="pop-hits">Pop Hits</option>
+                    <option value="classic-rock">Classic Rock</option>
+                    <option value="hip-hop">Hip Hop</option>
+                    <option value="country">Country</option>
+                    <option value="movies">Movies</option>
+                    <option value="tv-shows">TV Shows</option>
+                </select>
+            </div>
             <div class="modal-buttons">
                 <button class="btn btn-primary" onclick="saveSettings()">Save & Start Game</button>
                 <button class="btn btn-danger" onclick="closeSettings()">Cancel</button>
@@ -638,6 +661,8 @@
             round: 0,
             totalRounds: 5,
             handSize: 7,
+            rating: 'all',
+            pack: 'all',
             prompt: null,
             playerHands: {}, // { playerId: [card indices] }
             submissions: {}, // { playerId: answerIndex }
@@ -688,9 +713,15 @@
         function saveSettings() {
             const totalRounds = parseInt(document.getElementById('roundsInput').value);
             const handSize = parseInt(document.getElementById('handSizeInput').value);
+            const rating = document.getElementById('ratingInput').value;
+            const pack = document.getElementById('packInput').value;
             
             currentState.totalRounds = totalRounds;
             currentState.handSize = handSize;
+            currentState.rating = rating;
+            currentState.pack = pack;
+            
+            log(`Settings: ${totalRounds} rounds, ${handSize} cards, ${rating} rating, ${pack} pack`);
             
             closeSettings();
             hostStartNewRound();
@@ -1131,26 +1162,37 @@
         async function calculateResults() {
             if (!isHost) return;
             
+            console.log('Calculating results with votes:', currentState.votes);
+            
             // Count votes
             const voteCounts = {};
             Object.values(currentState.votes).forEach(targetId => {
                 voteCounts[targetId] = (voteCounts[targetId] || 0) + 1;
             });
             
-            // Find winner
+            console.log('Vote counts:', voteCounts);
+            
+            // Find max votes
             let maxVotes = 0;
-            let winnerId = null;
-            Object.entries(voteCounts).forEach(([playerId, votes]) => {
-                if (votes > maxVotes) {
-                    maxVotes = votes;
-                    winnerId = playerId;
-                }
+            Object.values(voteCounts).forEach(votes => {
+                if (votes > maxVotes) maxVotes = votes;
             });
             
-            // Update scores
-            if (winnerId) {
-                currentState.scores[winnerId] = (currentState.scores[winnerId] || 0) + 1;
-                currentState.roundWinner = winnerId;
+            // Find all players with max votes (handles ties)
+            const winners = Object.entries(voteCounts)
+                .filter(([playerId, votes]) => votes === maxVotes)
+                .map(([playerId]) => playerId);
+            
+            console.log('Winners:', winners, 'with', maxVotes, 'votes');
+            
+            // Award points to all winners (in case of tie)
+            if (winners.length > 0) {
+                winners.forEach(winnerId => {
+                    currentState.scores[winnerId] = (currentState.scores[winnerId] || 0) + 1;
+                });
+                // For display, just use first winner
+                currentState.roundWinner = winners[0];
+                currentState.roundWinners = winners; // Store all winners for tie display
             }
             
             currentState.phase = 'results';
@@ -1162,40 +1204,75 @@
             const area = document.getElementById('resultsArea');
             area.innerHTML = '';
             
-            const winnerId = currentState.roundWinner;
-            if (!winnerId) {
+            const winners = currentState.roundWinners || [currentState.roundWinner];
+            if (!winners || winners.length === 0 || !winners[0]) {
                 area.innerHTML = '<div class="status-msg">No winner this round</div>';
                 return;
             }
+            
+            const isTie = winners.length > 1;
             
             const winnerCard = document.createElement('div');
             winnerCard.className = 'winner-card';
             
             const title = document.createElement('div');
             title.className = 'winner-title';
-            title.textContent = '🏆 Round Winner 🏆';
+            title.textContent = isTie ? '🤝 TIE! 🤝' : '🏆 Round Winner 🏆';
             
-            const name = document.createElement('div');
-            name.className = 'winner-name';
-            name.textContent = getPlayerName(winnerId);
-            
-            const answerIdx = currentState.submissions[winnerId];
-            const answer = answers[answerIdx];
-            
-            const answerText = document.createElement('div');
-            answerText.className = 'winner-answer';
-            answerText.textContent = `"${answer ? answer.text : 'Unknown'}"`;
-            
-            const votes = document.createElement('div');
-            votes.style.marginTop = '1rem';
-            votes.style.fontSize = '1.1rem';
-            const voteCount = Object.values(currentState.votes).filter(v => v === winnerId).length;
-            votes.textContent = `${voteCount} vote${voteCount !== 1 ? 's' : ''}`;
-            
-            winnerCard.appendChild(title);
-            winnerCard.appendChild(name);
-            winnerCard.appendChild(answerText);
-            winnerCard.appendChild(votes);
+            if (isTie) {
+                // Show all tied winners
+                winners.forEach(winnerId => {
+                    const name = document.createElement('div');
+                    name.className = 'winner-name';
+                    name.textContent = getPlayerName(winnerId);
+                    
+                    const answerIdx = currentState.submissions[winnerId];
+                    const answer = answers[answerIdx];
+                    
+                    const answerText = document.createElement('div');
+                    answerText.className = 'winner-answer';
+                    answerText.style.marginBottom = '1rem';
+                    answerText.textContent = `"${answer ? answer.text : 'Unknown'}"`;
+                    
+                    winnerCard.appendChild(title);
+                    winnerCard.appendChild(name);
+                    winnerCard.appendChild(answerText);
+                    
+                    // Clear title after first winner
+                    title.remove();
+                });
+                
+                const tieNote = document.createElement('div');
+                tieNote.style.marginTop = '1rem';
+                tieNote.style.fontSize = '1rem';
+                tieNote.textContent = 'Both players get a point!';
+                winnerCard.appendChild(tieNote);
+            } else {
+                // Single winner
+                const winnerId = winners[0];
+                
+                const name = document.createElement('div');
+                name.className = 'winner-name';
+                name.textContent = getPlayerName(winnerId);
+                
+                const answerIdx = currentState.submissions[winnerId];
+                const answer = answers[answerIdx];
+                
+                const answerText = document.createElement('div');
+                answerText.className = 'winner-answer';
+                answerText.textContent = `"${answer ? answer.text : 'Unknown'}"`;
+                
+                const votes = document.createElement('div');
+                votes.style.marginTop = '1rem';
+                votes.style.fontSize = '1.1rem';
+                const voteCount = Object.values(currentState.votes).filter(v => v === winnerId).length;
+                votes.textContent = `${voteCount} vote${voteCount !== 1 ? 's' : ''}`;
+                
+                winnerCard.appendChild(title);
+                winnerCard.appendChild(name);
+                winnerCard.appendChild(answerText);
+                winnerCard.appendChild(votes);
+            }
             
             area.appendChild(winnerCard);
         }
@@ -1231,8 +1308,31 @@
             currentState.votes = {};
             currentState.roundWinner = null;
             
-            // Pick random prompt
-            const prompt = prompts[Math.floor(Math.random() * prompts.length)];
+            // Pick random prompt based on filters
+            let filteredPrompts = prompts;
+            
+            // Filter by rating
+            if (currentState.rating && currentState.rating !== 'all') {
+                const ratingOrder = ['G', 'PG', 'PG-13', 'R', 'NSFW'];
+                const maxRatingIndex = ratingOrder.indexOf(currentState.rating);
+                filteredPrompts = filteredPrompts.filter(p => {
+                    const promptRatingIndex = ratingOrder.indexOf(p.rating);
+                    return promptRatingIndex <= maxRatingIndex;
+                });
+            }
+            
+            // Filter by pack
+            if (currentState.pack && currentState.pack !== 'all') {
+                filteredPrompts = filteredPrompts.filter(p => p.pack === currentState.pack);
+            }
+            
+            // Fallback to all prompts if filters are too restrictive
+            if (filteredPrompts.length === 0) {
+                log('No prompts match filters, using all prompts');
+                filteredPrompts = prompts;
+            }
+            
+            const prompt = filteredPrompts[Math.floor(Math.random() * filteredPrompts.length)];
             currentState.prompt = prompt;
             
             // Deal cards
@@ -1249,18 +1349,29 @@
             
             if (sorted.length === 0) {
                 alert('No scores to show!');
+                window.location.href = '/multiplayer.html';
                 return;
             }
             
-            const winnerId = sorted[0][0];
-            const winnerScore = sorted[0][1];
-            const winnerName = getPlayerName(winnerId);
+            // Check for tie
+            const topScore = sorted[0][1];
+            const winners = sorted.filter(([id, score]) => score === topScore);
             
-            alert(`🎉 GAME OVER! 🎉\n\nWinner: ${winnerName}\nScore: ${winnerScore} points\n\nThanks for playing!`);
-            
-            if (confirm('Start a new game?')) {
-                resetGame();
+            let message;
+            if (winners.length > 1) {
+                const winnerNames = winners.map(([id]) => getPlayerName(id)).join(' & ');
+                message = `🎉 GAME OVER - TIE! 🎉\n\nWinners: ${winnerNames}\nScore: ${topScore} points each\n\nThanks for playing!`;
+            } else {
+                const winnerId = sorted[0][0];
+                const winnerScore = sorted[0][1];
+                const winnerName = getPlayerName(winnerId);
+                message = `🎉 GAME OVER! 🎉\n\nWinner: ${winnerName}\nScore: ${winnerScore} points\n\nThanks for playing!`;
             }
+            
+            alert(message);
+            
+            // Return to multiplayer lobby
+            window.location.href = '/multiplayer.html';
         }
 
         function resetGame() {
@@ -1269,6 +1380,8 @@
                 round: 0,
                 totalRounds: 5,
                 handSize: 7,
+                rating: 'all',
+                pack: 'all',
                 prompt: null,
                 playerHands: {},
                 submissions: {},
@@ -1287,7 +1400,7 @@
         async function endGame() {
             if (!isHost) return;
             
-            if (confirm('Are you sure you want to end the game?')) {
+            if (confirm('Are you sure you want to end the game? All players will return to the lobby.')) {
                 showFinalResults();
             }
         }
