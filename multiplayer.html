@@ -885,20 +885,36 @@
                 const temp = document.createElement('div');
                 temp.innerHTML = html;
                 
-                // Move all nodes to container
+                // Separate HTML content from scripts
+                const htmlNodes = [];
+                const scriptNodes = [];
+                
                 Array.from(temp.childNodes).forEach(node => {
                     if (node.tagName === 'SCRIPT') {
-                        // Scripts need to be recreated to execute
-                        const script = document.createElement('script');
-                        if (node.src) {
-                            script.src = node.src;
-                        } else {
-                            script.textContent = node.textContent;
-                        }
-                        document.body.appendChild(script);
+                        scriptNodes.push(node);
                     } else {
-                        container.appendChild(node);
+                        htmlNodes.push(node);
                     }
+                });
+                
+                // First, add HTML content to container
+                htmlNodes.forEach(node => container.appendChild(node));
+                
+                // Then execute scripts, but skip Supabase initialization
+                scriptNodes.forEach(node => {
+                    const script = document.createElement('script');
+                    if (node.src) {
+                        script.src = node.src;
+                    } else {
+                        let scriptContent = node.textContent;
+                        // Skip lines that initialize pbSupabaseClient
+                        const lines = scriptContent.split('\n');
+                        const filteredLines = lines.filter(line => 
+                            !line.includes('const pbSupabaseClient = supabase.createClient')
+                        );
+                        script.textContent = filteredLines.join('\n');
+                    }
+                    document.body.appendChild(script);
                 });
                 
                 console.log('✅ Playerbar loaded successfully!');
