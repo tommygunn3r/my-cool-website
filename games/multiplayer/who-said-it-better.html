@@ -830,6 +830,7 @@
         let selectedCardIndex = null;
         let hasSubmitted = false;
         let hasVoted = false;
+        let isCleaningUp = false; // Flag to prevent saves during cleanup
 
         let gameStateChannel = null;
         let playersChannel = null;
@@ -1611,6 +1612,9 @@
         async function cleanupRoom() {
             if (!isHost) return;
             
+            // Set flag to prevent any further saves
+            isCleaningUp = true;
+            
             console.log('Host cleanup: deleting room', roomId);
             
             try {
@@ -1684,6 +1688,12 @@
 
         // === STATE MANAGEMENT ===
         async function saveGameState() {
+            // Don't save if we're in the middle of cleanup
+            if (isCleaningUp) {
+                console.log('Skipping save - cleanup in progress');
+                return;
+            }
+            
             console.log('saveGameState called by:', isHost ? 'HOST' : 'PLAYER', myPlayerId);
             
             // Load current state from DB first
