@@ -1102,19 +1102,42 @@
         async function saveGameState() {
             if (!isHost) return;
 
-            const { error } = await supabaseClient
+            // First, check if a state already exists for this room/game
+            const { data: existing } = await supabaseClient
                 .from('game_states')
-                .upsert({
-                    room_id: roomId,
-                    game_type: 'who-said-it-better',
-                    state: currentState,
-                    updated_at: new Date().toISOString()
-                }, {
-                    onConflict: 'room_id,game_type'
-                });
+                .select('id')
+                .eq('room_id', roomId)
+                .eq('game_type', 'who-said-it-better')
+                .maybeSingle();
 
-            if (error) {
-                console.error('Error saving game state:', error);
+            if (existing) {
+                // Update existing record
+                const { error } = await supabaseClient
+                    .from('game_states')
+                    .update({
+                        state: currentState,
+                        updated_at: new Date().toISOString()
+                    })
+                    .eq('id', existing.id);
+
+                if (error) {
+                    console.error('Error updating game state:', error);
+                }
+            } else {
+                // Insert new record
+                const { error } = await supabaseClient
+                    .from('game_states')
+                    .insert({
+                        room_id: roomId,
+                        game_type: 'who-said-it-better',
+                        state: currentState,
+                        created_at: new Date().toISOString(),
+                        updated_at: new Date().toISOString()
+                    });
+
+                if (error) {
+                    console.error('Error inserting game state:', error);
+                }
             }
         }
 
