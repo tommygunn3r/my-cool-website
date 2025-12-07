@@ -1612,47 +1612,69 @@
         async function cleanupRoom() {
             if (!isHost) return;
             
-            // Set flag to prevent any further saves
+            // Prevent double cleanup
+            if (isCleaningUp) {
+                console.log('Cleanup already in progress, skipping');
+                return;
+            }
+            
+            // Set flag to prevent any further saves and double cleanup
             isCleaningUp = true;
             
             console.log('Host cleanup: deleting room', roomId);
             
             try {
                 // Delete the room from database
-                const { error: roomError } = await supabaseClient
+                const { error: roomError, data: roomData } = await supabaseClient
                     .from('rooms')
                     .delete()
-                    .eq('id', roomId);
+                    .eq('id', roomId)
+                    .select();
                 
                 if (roomError) {
                     console.error('Error deleting room:', roomError);
                 } else {
-                    console.log('Room deleted successfully');
+                    console.log('Room deleted successfully, deleted rows:', roomData);
                 }
                 
                 // Delete game state
-                const { error: stateError } = await supabaseClient
+                const { error: stateError, data: stateData } = await supabaseClient
                     .from('game_states')
                     .delete()
                     .eq('room_id', roomId)
-                    .eq('game_type', 'who-said-it-better');
+                    .eq('game_type', 'who-said-it-better')
+                    .select();
                 
                 if (stateError) {
                     console.error('Error deleting game state:', stateError);
                 } else {
-                    console.log('Game state deleted');
+                    console.log('Game state deleted, deleted rows:', stateData);
                 }
                 
                 // Delete all room players
-                const { error: playersError } = await supabaseClient
+                const { error: playersError, data: playersData } = await supabaseClient
                     .from('room_players')
                     .delete()
-                    .eq('room_id', roomId);
+                    .eq('room_id', roomId)
+                    .select();
                 
                 if (playersError) {
                     console.error('Error deleting players:', playersError);
                 } else {
-                    console.log('Players deleted');
+                    console.log('Players deleted, deleted rows:', playersData);
+                }
+                
+                // Verify deletion
+                const { data: checkRoom } = await supabaseClient
+                    .from('rooms')
+                    .select('id')
+                    .eq('id', roomId)
+                    .maybeSingle();
+                
+                if (checkRoom) {
+                    console.error('⚠️ WARNING: Room still exists after deletion!', checkRoom);
+                } else {
+                    console.log('✓ Verified: Room successfully deleted from database');
                 }
             } catch (error) {
                 console.error('Cleanup failed:', error);
