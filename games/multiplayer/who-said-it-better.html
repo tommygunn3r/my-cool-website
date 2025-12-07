@@ -52,6 +52,12 @@
             font-size: 1.5rem;
             letter-spacing: 0.18em;
             color: var(--accent);
+            /* Ready for image replacement */
+        }
+        
+        .logo img {
+            height: 40px;
+            display: block;
         }
 
         .header-right {
@@ -69,14 +75,7 @@
         }
 
         .host-tag {
-            padding: 0.2rem 0.6rem;
-            border-radius: 999px;
-            border: 1px solid var(--gold);
-            background: rgba(255, 215, 0, 0.1);
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 0.15em;
-            color: var(--gold);
+            display: none; /* Removed per user request */
         }
 
         .main {
@@ -131,12 +130,13 @@
         .phase-results { background: rgba(33, 150, 243, 0.3); border: 1px solid #2196F3; }
 
         .prompt-box {
-            background: linear-gradient(135deg, #2a2a2a 0%, #1f1f1f 100%);
-            border: 2px solid var(--accent);
+            background: #000000;
+            border: 2px solid #FFD700;
             border-radius: 12px;
             padding: 1.8rem;
             margin-bottom: 1.5rem;
             text-align: center;
+            box-shadow: 0 4px 12px rgba(255, 215, 0, 0.3);
         }
 
         .prompt-source {
@@ -469,6 +469,12 @@
             background: var(--card-bg);
             padding: 0.8rem;
             border-radius: 6px;
+            /* Hidden by default, shown only for host */
+            display: none;
+        }
+        
+        .log-box.host-only {
+            display: block;
         }
 
         .log-entry {
@@ -629,7 +635,10 @@
     </div>
     <!-- HEADER -->
     <div class="header">
-        <div class="logo">WHO SAID IT BETTER?</div>
+        <div class="logo">
+            <img src="wsib.png"
+            WHO SAID IT BETTER?
+        </div>
         <div class="header-right">
             <div class="room-pill" id="roomInfo">Room: Loading...</div>
             <div class="host-tag" id="hostTag">PLAYER</div>
@@ -1898,6 +1907,11 @@
 
             document.getElementById("roomInfo").innerText = "Room: " + roomId.substring(0, 8);
             document.getElementById("hostTag").innerText = isHost ? "HOST" : "PLAYER";
+            
+            // Show game log only for host
+            if (isHost) {
+                document.getElementById("logBox").classList.add("host-only");
+            }
 
             log(`Joined room as ${myPlayerName} (${isHost ? 'HOST' : 'PLAYER'})`);
             setConnectionStatus('Loading...', 'normal');
