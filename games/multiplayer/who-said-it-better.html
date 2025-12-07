@@ -43,21 +43,25 @@
             align-items: center;
             padding: 1.2rem 1.8rem;
             background: #2a2a2a;
-            border-bottom: 2px solid var(--accent);
+            border-bottom: 2px solid #333;
             box-shadow: 0 4px 18px rgba(0,0,0,0.5);
         }
 
         .logo {
-            font-family: "Cinzel", serif;
-            font-size: 1.5rem;
-            letter-spacing: 0.18em;
-            color: var(--accent);
-            /* Ready for image replacement */
+            display: flex;
+            align-items: center;
         }
         
         .logo img {
-            height: 40px;
+            height: 60px;
+            width: auto;
             display: block;
+        }
+        
+        @media (max-width: 600px) {
+            .logo img {
+                height: 40px;
+            }
         }
 
         .header-right {
@@ -636,8 +640,7 @@
     <!-- HEADER -->
     <div class="header">
         <div class="logo">
-            <img src="wsib.png"
-            WHO SAID IT BETTER?
+            <img src="wsib.png" alt="Who Said It Better?">
         </div>
         <div class="header-right">
             <div class="room-pill" id="roomInfo">Room: Loading...</div>
