@@ -1110,7 +1110,7 @@
                     state: currentState,
                     updated_at: new Date().toISOString()
                 }, {
-                    onConflict: 'room_id'
+                    onConflict: 'room_id,game_type'
                 });
 
             if (error) {
