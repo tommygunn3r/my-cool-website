@@ -1,1012 +1,1550 @@
-<!-- =======================
-     GLOBAL PLAYER BAR
-     + GLOBAL AUTH MODALS
-     + MULTIPLAYER ROOM CONTROLS
-     ======================= -->
-
-<div id="player-bar-wrapper" style="
-    width:100%;
-    padding:12px 22px;
-    background:transparent;
-    border-bottom:0px solid #e94560;
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    color:#fff;
-    font-family:'Segoe UI', sans-serif;
-    position:fixed;
-    top:0;
-    z-index:2000;
-    pointer-events:auto;
-">
-    <div style="display:flex; align-items:center; gap:12px;">
-        <span id="pb-player-name" style="font-size:1.2rem; font-weight:bold;">
-            PLAYER
-        </span>
-        <span style="font-size:1.2rem;">🪙</span>
-        <span id="pb-player-coins" style="font-size:1.1rem;">
-            0
-        </span>
-    </div>
-
-    <!-- Music Player Controls -->
-    <div id="music-controls" style="display: none; align-items: center; gap: 10px;">
-        <button id="music-prev" style="
-            background: #0ff;
-            color: #000;
-            border: none;
-            padding: 5px 10px;
-            cursor: pointer;
-            font-size: 14px;
-            border-radius: 4px;
-            font-weight: bold;
-        ">⏮</button>
-        
-        <button id="music-play-pause" style="
-            background: #00ff00;
-            color: #000;
-            border: none;
-            padding: 5px 15px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: bold;
-            border-radius: 4px;
-        ">▶</button>
-        
-        <button id="music-next" style="
-            background: #0ff;
-            color: #000;
-            border: none;
-            padding: 5px 10px;
-            cursor: pointer;
-            font-size: 14px;
-            border-radius: 4px;
-            font-weight: bold;
-        ">⏭</button>
-        
-        <div style="margin-left: 15px; color: #0ff; font-size: 12px; min-width: 200px;">
-            <div id="music-title" style="font-weight: bold; margin-bottom: 2px;">No song playing</div>
-            <div id="music-artist" style="font-size: 10px; color: #88ddff;"></div>
-        </div>
-        
-        <div style="width: 150px; height: 4px; background: rgba(0, 255, 255, 0.2); margin-left: 15px; border-radius: 2px; overflow: hidden;">
-            <div id="music-progress" style="width: 0%; height: 100%; background: #0ff; transition: width 0.1s;"></div>
-        </div>
-
-        <!-- Volume Control -->
-        <div style="display: flex; align-items: center; gap: 8px; margin-left: 15px;">
-            <span style="color: #0ff; font-size: 14px;">🔊</span>
-            <input type="range" id="music-volume" min="0" max="100" value="70" style="
-                width: 80px;
-                height: 4px;
-                -webkit-appearance: none;
-                appearance: none;
-                background: rgba(0, 255, 255, 0.3);
-                border-radius: 2px;
-                outline: none;
-                cursor: pointer;
-            ">
-        </div>
-    </div>
-
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multiplayer Lobby - Gunner's Games</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
-        #music-volume::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 12px;
-            height: 12px;
-            background: #0ff;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            background: #000000;
+            color: #e0e0e0;
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+            margin: 0;
+            padding: 0;
+            width: 100%;
+        }
+
+        /* Parallax Background Layers */
+        .parallax-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+        
+        /* Playerbar positioning */
+        #playerbar {
+            position: relative;
+            z-index: 100;
+            pointer-events: auto;
+        }
+
+        .parallax-layer {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Layer 1 - Deep background with grid */
+        .layer-1 {
+            background: 
+                linear-gradient(0deg, transparent 24%, rgba(76, 175, 255, 0.05) 25%, rgba(76, 175, 255, 0.05) 26%, transparent 27%, transparent 74%, rgba(76, 175, 255, 0.05) 75%, rgba(76, 175, 255, 0.05) 76%, transparent 77%, transparent),
+                linear-gradient(90deg, transparent 24%, rgba(76, 175, 255, 0.05) 25%, rgba(76, 175, 255, 0.05) 26%, transparent 27%, transparent 74%, rgba(76, 175, 255, 0.05) 75%, rgba(76, 175, 255, 0.05) 76%, transparent 77%, transparent);
+            background-size: 50px 50px;
+            animation: gridMove 20s linear infinite;
+        }
+
+        @keyframes gridMove {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(50px); }
+        }
+
+        /* Layer 2 - Floating neon particles */
+        .layer-2 {
+            background-image: 
+                radial-gradient(circle at 20% 30%, rgba(76, 175, 255, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(138, 43, 226, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 50% 50%, rgba(76, 175, 255, 0.08) 0%, transparent 50%);
+            animation: floatParticles 15s ease-in-out infinite;
+        }
+
+        @keyframes floatParticles {
+            0%, 100% { transform: translate(0, 0); }
+            50% { transform: translate(30px, -20px); }
+        }
+
+        /* Layer 3 - Geometric neon shapes */
+        .neon-shape {
+            position: absolute;
+            border: 2px solid rgba(76, 175, 255, 0.3);
             border-radius: 50%;
-            cursor: pointer;
-            box-shadow: 0 0 8px rgba(0, 255, 255, 0.8);
+            animation: rotate 30s linear infinite;
         }
-        #music-volume::-moz-range-thumb {
-            width: 12px;
-            height: 12px;
-            background: #0ff;
-            border-radius: 50%;
-            cursor: pointer;
-            border: none;
-            box-shadow: 0 0 8px rgba(0, 255, 255, 0.8);
-        }
-        #music-volume:hover::-webkit-slider-thumb {
-            box-shadow: 0 0 12px rgba(0, 255, 255, 1);
-        }
-        #music-volume:hover::-moz-range-thumb {
-            box-shadow: 0 0 12px rgba(0, 255, 255, 1);
-        }
-    </style>
 
-    <div style="display:flex; align-items:center; gap:8px;">
-        <!-- Multiplayer Room Button -->
-        <button id="pb-room-toggle" type="button" onclick="toggleRoomPanel()" style="
-            padding: 8px 16px;
-            background: linear-gradient(180deg, #4CAF50, #2d7a32);
-            border: 2px solid #4CAF50;
-            color: white;
-            border-radius: 8px;
+        .neon-shape:nth-child(1) {
+            width: 300px;
+            height: 300px;
+            top: 10%;
+            left: 10%;
+            box-shadow: 0 0 20px rgba(76, 175, 255, 0.2);
+        }
+
+        .neon-shape:nth-child(2) {
+            width: 200px;
+            height: 200px;
+            top: 60%;
+            right: 15%;
+            animation-duration: 25s;
+            animation-direction: reverse;
+            box-shadow: 0 0 15px rgba(138, 43, 226, 0.2);
+            border-color: rgba(138, 43, 226, 0.3);
+        }
+
+        .neon-shape:nth-child(3) {
+            width: 150px;
+            height: 150px;
+            bottom: 20%;
+            left: 30%;
+            animation-duration: 35s;
+            box-shadow: 0 0 10px rgba(76, 175, 255, 0.2);
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* Main Content */
+        .content {
+            position: relative;
+            z-index: 1;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 20px;
+        }
+
+        .title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 3.5rem;
+            font-weight: 900;
+            text-align: center;
+            margin-bottom: 20px;
+            margin-top: 20px;
+            color: #fff;
+            text-shadow: 
+                0 0 10px rgba(76, 175, 255, 0.8),
+                0 0 20px rgba(76, 175, 255, 0.6),
+                0 0 30px rgba(76, 175, 255, 0.4);
+            letter-spacing: 4px;
+        }
+
+        .subtitle {
+            font-family: 'Rajdhani', sans-serif;
+            text-align: center;
+            color: #888;
+            margin-bottom: 40px;
+            font-size: 1.2em;
+            font-weight: 300;
+            letter-spacing: 1px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1400px;
+        }
+
+        .rooms-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .room-card {
+            background: rgba(10, 10, 20, 0.8);
+            border: 2px solid rgba(76, 175, 255, 0.3);
+            border-radius: 15px;
+            padding: 25px;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+
+        .room-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(76, 175, 255, 0.05) 0%, transparent 100%);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            pointer-events: none;
+        }
+
+        .room-card:hover {
+            border-color: rgba(76, 175, 255, 0.8);
+            transform: translateY(-8px);
+            box-shadow: 
+                0 15px 40px rgba(76, 175, 255, 0.3),
+                0 0 30px rgba(76, 175, 255, 0.2);
+        }
+
+        .room-card:hover::before {
+            opacity: 1;
+        }
+
+        .room-card.occupied {
+            border-color: rgba(255, 165, 0, 0.5);
+        }
+
+        .room-card.occupied:hover {
+            border-color: rgba(255, 165, 0, 0.8);
+            box-shadow: 
+                0 15px 40px rgba(255, 165, 0, 0.3),
+                0 0 30px rgba(255, 165, 0, 0.2);
+        }
+
+        .room-card.in-progress {
+            border-color: rgba(255, 68, 68, 0.3);
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .room-card.in-progress:hover {
+            transform: none;
+            box-shadow: none;
+        }
+
+        .room-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .room-number {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.8em;
             font-weight: bold;
-            box-shadow: 0 0 15px rgba(76, 175, 80, 0.5);
-            display: none;
-        ">
-            🎮 ROOM
-        </button>
+            background: linear-gradient(135deg, #4CAFff, #2196F3);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 20px rgba(76, 175, 255, 0.5);
+        }
 
-        <!-- Jukebox Button -->
-        <button type="button" onclick="openJukebox()" style="
-            padding: 8px 16px;
-            background: linear-gradient(180deg, #ff00ff, #aa00aa);
-            border: 2px solid #ff00ff;
-            color: white;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: bold;
-            box-shadow: 0 0 15px rgba(255, 0, 255, 0.5);
-            display: none;
-        " class="pb-jukebox-btn">
-            ♫ JUKE BOX
-        </button>
+        .room-status {
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
 
-        <button id="pb-login-btn" type="button"
-            style="
-                padding:8px 14px;
-                background:rgba(233,69,96,0.2);
-                border:2px solid #e94560;
-                color:white;
-                border-radius:8px;
-                cursor:pointer;
-                font-weight:bold;
-                display:none;
-            "
-            onclick="openModal()">
-            Login
-        </button>
+        .status-empty {
+            background: rgba(128, 128, 128, 0.2);
+            color: #888;
+            border: 1px solid rgba(128, 128, 128, 0.3);
+        }
 
-        <button type="button" class="pb-settings-btn"
-            style="
-                padding:8px 16px;
-                background:rgba(233,69,96,0.2);
-                border:2px solid #e94560;
-                color:white;
-                border-radius:8px;
-                cursor:pointer;
-                font-weight:bold;
-                display:none;
-            "
-            onclick="togglePBMenu(event)">
-            ⚙ Settings
-        </button>
-    </div>
+        .status-waiting {
+            background: rgba(255, 165, 0, 0.2);
+            color: #FFA500;
+            border: 1px solid rgba(255, 165, 0, 0.5);
+            box-shadow: 0 0 10px rgba(255, 165, 0, 0.3);
+        }
 
-    <!-- Settings Menu -->
-    <div id="pb-settings-menu" style="
-        position:absolute;
-        top:56px;
-        right:22px;
-        background:#000;
-        border:1px solid #333;
-        border-radius:10px;
-        padding:8px 0;
-        display:none;
-        width:200px;
-        z-index:3000;
-    ">
-        <div onclick="openChangeName()" style="padding:10px 16px; cursor:pointer;">Change Player Name</div>
-        <div onclick="openResetPasswordModal()" style="padding:10px 16px; cursor:pointer;">Reset Password</div>
-        <div onclick="pbDeleteAccount()" style="padding:10px 16px; cursor:pointer;">Delete Account</div>
-        <div onclick="pbLogout()" style="padding:10px 16px; cursor:pointer;">Log Out</div>
-    </div>
+        .status-playing {
+            background: rgba(255, 68, 68, 0.2);
+            color: #ff4444;
+            border: 1px solid rgba(255, 68, 68, 0.5);
+        }
 
-    <!-- Multiplayer Room Panel -->
-    <div id="pb-room-panel" style="
-        position: absolute;
-        top: 56px;
-        right: 22px;
-        background: #1a1a1a;
-        border: 2px solid #4CAF50;
-        border-radius: 10px;
-        padding: 15px;
-        display: none;
-        width: 320px;
-        max-height: 400px;
-        overflow-y: auto;
-        z-index: 3000;
-        box-shadow: 0 4px 20px rgba(76, 175, 80, 0.3);
-    ">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid #4CAF50; padding-bottom: 8px;">
-            <h3 style="margin: 0; color: #4CAF50; font-size: 1.1rem;">Room Info</h3>
-            <button onclick="leaveMultiplayerRoom()" style="
-                padding: 5px 12px;
-                background: #ff4444;
-                border: none;
-                color: white;
-                border-radius: 5px;
-                cursor: pointer;
-                font-size: 0.85rem;
-                font-weight: bold;
-            ">Leave</button>
-        </div>
+        .room-info {
+            margin: 20px 0;
+        }
 
-        <div id="pb-room-pot" style="
+        .room-info div {
+            margin: 10px 0;
+            color: #ccc;
+            font-size: 1.05em;
+            font-weight: 400;
+        }
+
+        .room-info strong {
+            color: #4CAFff;
+            font-weight: 600;
+        }
+
+        .buy-in-badge {
+            display: inline-block;
             background: linear-gradient(135deg, #FFD700, #FFA500);
             color: #000;
-            padding: 8px;
+            padding: 4px 10px;
             border-radius: 5px;
-            text-align: center;
             font-weight: bold;
-            margin-bottom: 12px;
-            display: none;
-        ">
-            💰 Pot: <span id="pb-pot-amount">0</span> Coins
-        </div>
+            margin-left: 8px;
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.4);
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.9em;
+        }
 
-        <div style="margin-bottom: 12px;">
-            <div style="color: #4CAF50; font-size: 0.9rem; font-weight: bold; margin-bottom: 6px;">Players:</div>
-            <div id="pb-room-players" style="display: grid; gap: 6px;"></div>
+        .join-btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #4CAFff, #2196F3);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: bold;
+            font-family: 'Orbitron', sans-serif;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            box-shadow: 0 5px 15px rgba(76, 175, 255, 0.4);
+        }
+
+        .join-btn:hover {
+            background: linear-gradient(135deg, #2196F3, #4CAFff);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(76, 175, 255, 0.6);
+        }
+
+        .join-btn:disabled {
+            background: linear-gradient(135deg, #555, #333);
+            cursor: not-allowed;
+            opacity: 0.5;
+            box-shadow: none;
+            transform: none;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.9);
+            animation: fadeIn 0.3s ease;
+            backdrop-filter: blur(5px);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal-content {
+            background: rgba(10, 10, 20, 0.95);
+            margin: 5% auto;
+            padding: 0;
+            border: 2px solid rgba(76, 175, 255, 0.5);
+            border-radius: 15px;
+            width: 90%;
+            max-width: 700px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 0 50px rgba(76, 175, 255, 0.3);
+            backdrop-filter: blur(20px);
+        }
+
+        .modal-header {
+            background: rgba(20, 20, 30, 0.9);
+            padding: 25px;
+            border-bottom: 2px solid rgba(76, 175, 255, 0.5);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h2 {
+            font-family: 'Orbitron', sans-serif;
+            background: linear-gradient(135deg, #4CAFff, #2196F3);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin: 0;
+            font-size: 1.8em;
+        }
+
+        .close {
+            color: #aaa;
+            font-size: 32px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+            line-height: 1;
+        }
+
+        .close:hover {
+            color: #4CAFff;
+            text-shadow: 0 0 10px rgba(76, 175, 255, 0.8);
+        }
+
+        .modal-body {
+            padding: 25px;
+        }
+
+        .host-controls {
+            background: rgba(20, 20, 30, 0.6);
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            border: 1px solid rgba(76, 175, 255, 0.2);
+        }
+
+        .host-controls h3 {
+            font-family: 'Orbitron', sans-serif;
+            color: #4CAFff;
+            margin-bottom: 20px;
+            font-size: 1.3em;
+        }
+
+        .control-group {
+            margin-bottom: 20px;
+        }
+
+        .control-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #ccc;
+            font-weight: 500;
+            font-size: 1.05em;
+        }
+
+        .control-group select,
+        .control-group input {
+            width: 100%;
+            padding: 12px;
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(76, 175, 255, 0.3);
+            border-radius: 8px;
+            color: #fff;
+            font-size: 1em;
+            font-family: 'Rajdhani', sans-serif;
+            transition: all 0.3s ease;
+        }
+
+        .control-group select:focus,
+        .control-group input:focus {
+            outline: none;
+            border-color: rgba(76, 175, 255, 0.8);
+            box-shadow: 0 0 15px rgba(76, 175, 255, 0.3);
+        }
+
+        .control-group input[type="number"] {
+            -moz-appearance: textfield;
+        }
+
+        .control-group input[type="number"]::-webkit-outer-spin-button,
+        .control-group input[type="number"]::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        .players-section {
+            margin-bottom: 25px;
+        }
+
+        .players-section h3 {
+            font-family: 'Orbitron', sans-serif;
+            color: #4CAFff;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .player-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .player-item {
+            background: rgba(20, 20, 30, 0.6);
+            padding: 15px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid rgba(76, 175, 255, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .player-item:hover {
+            border-color: rgba(76, 175, 255, 0.5);
+            background: rgba(30, 30, 40, 0.8);
+        }
+
+        .player-name {
+            font-weight: 600;
+            color: #fff;
+            font-size: 1.1em;
+        }
+
+        .player-badge {
+            padding: 4px 10px;
+            border-radius: 5px;
+            font-size: 0.85em;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .badge-host {
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            color: #000;
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.4);
+        }
+
+        .badge-ready {
+            background: rgba(76, 175, 80, 0.3);
+            color: #4CAF50;
+            border: 1px solid rgba(76, 175, 80, 0.5);
+        }
+
+        .badge-waiting {
+            background: rgba(255, 165, 0, 0.2);
+            color: #FFA500;
+            border: 1px solid rgba(255, 165, 0, 0.5);
+        }
+
+        .badge-paid {
+            background: rgba(76, 175, 255, 0.3);
+            color: #4CAFff;
+            border: 1px solid rgba(76, 175, 255, 0.5);
+        }
+
+        .kick-btn {
+            padding: 6px 12px;
+            background: rgba(255, 68, 68, 0.3);
+            color: #ff4444;
+            border: 1px solid rgba(255, 68, 68, 0.5);
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 0.9em;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .kick-btn:hover {
+            background: rgba(255, 68, 68, 0.5);
+            box-shadow: 0 0 10px rgba(255, 68, 68, 0.4);
+        }
+
+        .pot-display {
+            background: rgba(255, 215, 0, 0.1);
+            border: 2px solid rgba(255, 215, 0, 0.5);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            margin: 20px 0;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.2);
+        }
+
+        .pot-display h3 {
+            font-family: 'Orbitron', sans-serif;
+            color: #FFD700;
+            font-size: 1.2em;
+            margin-bottom: 10px;
+        }
+
+        .pot-amount {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2em;
+            font-weight: bold;
+            background: linear-gradient(135deg, #FFD700, #FFA500);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .emoji-chat {
+            background: rgba(20, 20, 30, 0.6);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(76, 175, 255, 0.2);
+        }
+
+        .emoji-chat h3 {
+            font-family: 'Orbitron', sans-serif;
+            color: #4CAFff;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+
+        .emoji-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 10px;
+        }
+
+        .emoji-btn {
+            padding: 8px 15px;
+            background: rgba(76, 175, 255, 0.2);
+            border: 1px solid rgba(76, 175, 255, 0.3);
+            border-radius: 8px;
+            font-size: 1.5em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .emoji-btn:hover {
+            background: rgba(76, 175, 255, 0.4);
+            transform: scale(1.1);
+            box-shadow: 0 0 10px rgba(76, 175, 255, 0.5);
+        }
+
+        .emoji-messages {
+            background: rgba(0, 0, 0, 0.5);
+            padding: 10px;
+            border-radius: 5px;
+            min-height: 100px;
+            max-height: 150px;
+            overflow-y: auto;
+            border: 1px solid rgba(76, 175, 255, 0.2);
+        }
+
+        .emoji-message {
+            padding: 5px;
+            margin-bottom: 5px;
+            color: #ccc;
+            font-size: 0.95em;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: bold;
+            font-family: 'Orbitron', sans-serif;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #4CAFff, #2196F3);
+            color: white;
+            box-shadow: 0 5px 15px rgba(76, 175, 255, 0.4);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: linear-gradient(135deg, #2196F3, #4CAFff);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(76, 175, 255, 0.6);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.4);
+        }
+
+        .btn-success:hover:not(:disabled) {
+            background: linear-gradient(135deg, #45a049, #4CAF50);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(76, 175, 80, 0.6);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ff4444, #cc0000);
+            color: white;
+            box-shadow: 0 5px 15px rgba(255, 68, 68, 0.4);
+        }
+
+        .btn-danger:hover:not(:disabled) {
+            background: linear-gradient(135deg, #cc0000, #ff4444);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(255, 68, 68, 0.6);
+        }
+
+        .btn:disabled {
+            background: linear-gradient(135deg, #555, #333);
+            cursor: not-allowed;
+            opacity: 0.5;
+            box-shadow: none;
+            transform: none;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .title {
+                font-size: 2.5rem;
+            }
+
+            .rooms-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+            }
+
+            .modal-content {
+                width: 95%;
+                margin: 10% auto;
+            }
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(76, 175, 255, 0.5);
+            border-radius: 5px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(76, 175, 255, 0.8);
+        }
+    </style>
+</head>
+<body>
+    <!-- Playerbar Container -->
+    <div id="playerbar"></div>
+
+    <!-- Parallax Background -->
+    <div class="parallax-container">
+        <div class="parallax-layer layer-1"></div>
+        <div class="parallax-layer layer-2"></div>
+        <div class="parallax-layer layer-3">
+            <div class="neon-shape"></div>
+            <div class="neon-shape"></div>
+            <div class="neon-shape"></div>
         </div>
     </div>
 
-    <style>
-        .pb-emoji-btn {
-            background: #2a2a2a;
-            border: 1px solid #555;
-            padding: 6px 10px;
-            border-radius: 5px;
-            font-size: 1.2rem;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .pb-emoji-btn:hover {
-            background: #4CAF50;
-            transform: scale(1.1);
-        }
-        #pb-room-panel::-webkit-scrollbar {
-            width: 8px;
-        }
-        #pb-room-panel::-webkit-scrollbar-track {
-            background: #2a2a2a;
-            border-radius: 4px;
-        }
-        #pb-room-panel::-webkit-scrollbar-thumb {
-            background: #4CAF50;
-            border-radius: 4px;
-        }
-    </style>
-</div>
+    <!-- Main Content -->
+    <div class="content">
+        <h1 class="title">MULTIPLAYER LOBBY</h1>
+        <div class="subtitle">Join or create a room to play with friends</div>
 
-<!-- [REST OF THE AUTH MODALS STAY THE SAME - I'll include them at the end] -->
-
-<script>
-/* ================================================
-   MULTIPLAYER ROOM INTEGRATION
-   ================================================ */
-
-let pbMultiplayerRoom = {
-    roomId: null,
-    players: [],
-    pot: 0,
-    channel: null
-};
-
-// Call this function from your multiplayer games to activate the room panel
-window.initMultiplayerPanel = async function(roomId) {
-    pbMultiplayerRoom.roomId = roomId;
-    
-    // Show the room button
-    document.getElementById('pb-room-toggle').style.display = 'inline-flex';
-    
-    // Load room data
-    await loadRoomData();
-    
-    // Subscribe to room updates
-    subscribeToRoomUpdates();
-};
-
-async function loadRoomData() {
-    if (!pbMultiplayerRoom.roomId) return;
-    
-    try {
-        // Get room info
-        const { data: room } = await supabase
-            .from('rooms')
-            .select('buy_in')
-            .eq('id', pbMultiplayerRoom.roomId)
-            .single();
-        
-        if (room && room.buy_in > 0) {
-            pbMultiplayerRoom.pot = room.buy_in;
-            
-            // Get player count for total pot
-            const { data: players } = await supabase
-                .from('room_players')
-                .select('user_id, player_name')
-                .eq('room_id', pbMultiplayerRoom.roomId);
-            
-            pbMultiplayerRoom.players = players || [];
-            
-            const totalPot = room.buy_in * players.length;
-            document.getElementById('pb-pot-amount').textContent = totalPot;
-            document.getElementById('pb-room-pot').style.display = 'block';
-        } else {
-            document.getElementById('pb-room-pot').style.display = 'none';
-        }
-        
-        renderRoomPlayers();
-        
-    } catch (error) {
-        console.error('Error loading room data:', error);
-    }
-}
-
-function renderRoomPlayers() {
-    const container = document.getElementById('pb-room-players');
-    if (!pbMultiplayerRoom.players || pbMultiplayerRoom.players.length === 0) {
-        container.innerHTML = '<div style="color: #888; text-align: center; padding: 8px;">No players</div>';
-        return;
-    }
-    
-    container.innerHTML = pbMultiplayerRoom.players.map(p => `
-        <div style="
-            background: #2a2a2a;
-            padding: 8px;
-            border-radius: 5px;
-            border: 1px solid #444;
-        ">
-            ${p.player_name}
+        <div class="container">
+            <div class="rooms-grid" id="roomsGrid"></div>
         </div>
-    `).join('');
-}
+    </div>
 
-function subscribeToRoomUpdates() {
-    if (pbMultiplayerRoom.channel) {
-        pbMultiplayerRoom.channel.unsubscribe();
-    }
-    
-    pbMultiplayerRoom.channel = supabase
-        .channel(`playerbar-room-${pbMultiplayerRoom.roomId}`)
-        .on('postgres_changes',
-            { event: '*', schema: 'public', table: 'room_players', filter: `room_id=eq.${pbMultiplayerRoom.roomId}` },
-            () => loadRoomData()
-        )
-        .subscribe();
-}
+    <!-- Room Modal -->
+    <div id="roomModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Room #1</h2>
+                <span class="close" id="closeModal">&times;</span>
+            </div>
+            <div class="modal-body">
+                <!-- Host Controls -->
+                <div id="hostControls" class="host-controls" style="display: none;">
+                    <h3>⚙️ Host Controls</h3>
+                    <div class="control-group">
+                        <label for="gameSelect">Game Type:</label>
+                        <select id="gameSelect">
+                            <option value="">-- Select Game --</option>
+                            <option value="who-said-it-better">Who Said It Better?</option>
+                            <option value="poker">Texas Hold'em Poker</option>
+                            <option value="blackjack">Blackjack</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label for="maxPlayers">Max Players:</label>
+                        <select id="maxPlayers">
+                            <option value="2">2 Players</option>
+                            <option value="3">3 Players</option>
+                            <option value="4">4 Players</option>
+                            <option value="5">5 Players</option>
+                            <option value="6">6 Players</option>
+                            <option value="8" selected>8 Players</option>
+                            <option value="10">10 Players</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label for="buyIn">Buy-in (GunnerCoins):</label>
+                        <input type="number" id="buyIn" min="0" step="10" value="0" placeholder="0 for free play">
+                    </div>
+                </div>
 
-function toggleRoomPanel() {
-    const panel = document.getElementById('pb-room-panel');
-    const menu = document.getElementById('pb-settings-menu');
-    
-    // Close settings menu if open
-    menu.style.display = 'none';
-    
-    // Toggle room panel
-    panel.style.display = (panel.style.display === 'block') ? 'none' : 'block';
-}
+                <!-- Pot Display -->
+                <div id="potDisplay" class="pot-display" style="display: none;">
+                    <h3>💰 TOTAL POT</h3>
+                    <div class="pot-amount" id="potAmount">0 GC</div>
+                </div>
 
-async function leaveMultiplayerRoom() {
-    if (!pbMultiplayerRoom.roomId) return;
-    
-    if (!confirm('Leave this room? You will be redirected to the lobby.')) return;
-    
-    const session = await pbGetSession();
-    if (!session) return;
-    
-    try {
-        const roomId = pbMultiplayerRoom.roomId;
-        
-        // Get room info before leaving
-        const { data: roomData } = await supabase
-            .from('rooms')
-            .select('status')
-            .eq('id', roomId)
-            .single();
-        
-        // Remove from room
-        await supabase
-            .from('room_players')
-            .delete()
-            .eq('room_id', roomId)
-            .eq('user_id', session.user.id);
-        
-        // Get updated player count
-        const { data: players } = await supabase
-            .from('room_players')
-            .select('user_id')
-            .eq('room_id', roomId);
-        
-        const newPlayerCount = players?.length || 0;
-        
-        // If room is now empty, delete it (no point keeping empty rooms)
-        if (newPlayerCount === 0) {
-            await supabase
-                .from('rooms')
-                .delete()
-                .eq('id', roomId);
-            console.log('Cleaned up empty room');
-        }
-        
-        // Cleanup
-        if (pbMultiplayerRoom.channel) {
-            pbMultiplayerRoom.channel.unsubscribe();
-        }
-        
-        // Hide room button
-        document.getElementById('pb-room-toggle').style.display = 'none';
-        document.getElementById('pb-room-panel').style.display = 'none';
-        
-        // Redirect to lobby
-        window.location.href = '/multiplayer.html';
-        
-    } catch (error) {
-        console.error('Error leaving room:', error);
-        alert('Failed to leave room');
-    }
-}
+                <!-- Players List -->
+                <div class="players-section">
+                    <h3>👥 Players (<span id="playerCount">0</span>/<span id="maxPlayerCount">8</span>)</h3>
+                    <div class="player-list" id="playerList"></div>
+                </div>
 
-// Periodic cleanup utility for abandoned rooms
-async function cleanupAbandonedRooms() {
-    try {
-        // Delete empty rooms that haven't been updated in 10+ minutes
-        const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
-        
-        // First find rooms with no players
-        const { data: allRooms } = await supabase
-            .from('rooms')
-            .select('id, updated_at, room_players(user_id)')
-            .lt('updated_at', tenMinutesAgo);
-        
-        if (allRooms) {
-            const emptyRoomIds = allRooms
-                .filter(room => !room.room_players || room.room_players.length === 0)
-                .map(room => room.id);
+                <!-- Emoji Chat -->
+                <div class="emoji-chat">
+                    <h3>💬 Quick Chat</h3>
+                    <div class="emoji-buttons">
+                        <button class="emoji-btn" data-emoji="👋">👋</button>
+                        <button class="emoji-btn" data-emoji="👍">👍</button>
+                        <button class="emoji-btn" data-emoji="😄">😄</button>
+                        <button class="emoji-btn" data-emoji="🎮">🎮</button>
+                        <button class="emoji-btn" data-emoji="🔥">🔥</button>
+                        <button class="emoji-btn" data-emoji="❤️">❤️</button>
+                    </div>
+                    <div class="emoji-messages" id="emojiMessages"></div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="action-buttons">
+                    <button class="btn btn-danger" id="leaveBtn">Leave Room</button>
+                    <button class="btn btn-primary" id="readyBtn" style="display: none;">Ready Up</button>
+                    <button class="btn btn-success" id="startBtn" style="display: none;">Start Game</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Game Script -->
+    <script>
+        // This function will be called after Supabase is initialized
+        function initMultiplayerLobby() {
+            const supabaseClient = window.supabase;
+
+        let currentUser = null;
+        let currentRoomId = null;
+        let currentRoom = null;
+        let isHost = false;
+        let myCoins = 0;
+        let roomSubscription = null;
+        let playersSubscription = null;
+
+        // Initialize
+        async function init() {
+            const { data: { user } } = await supabaseClient.auth.getUser();
             
-            if (emptyRoomIds.length > 0) {
-                const { data: deletedRooms } = await supabase
+            if (!user) {
+                window.location.href = '/auth.html';
+                return;
+            }
+
+            currentUser = user;
+
+            // Get user's coins
+            const { data: profile } = await supabaseClient
+                .from('profiles')
+                .select('gunnercoins')
+                .eq('id', user.id)
+                .single();
+
+            myCoins = profile?.gunnercoins || 0;
+
+            await loadRooms();
+            
+            // Subscribe to room changes
+            supabaseClient
+                .channel('rooms-changes')
+                .on('postgres_changes', 
+                    { event: '*', schema: 'public', table: 'rooms' },
+                    () => loadRooms()
+                )
+                .subscribe();
+        }
+
+
+        // Load all rooms
+        async function loadRooms() {
+            const { data: rooms } = await supabaseClient
+                .from('rooms')
+                .select(`
+                    *,
+                    room_players (
+                        user_id,
+                        player_name
+                    )
+                `)
+                .order('room_number');
+
+            const grid = document.getElementById('roomsGrid');
+            grid.innerHTML = '';
+
+            // Create 4 rooms
+            for (let i = 1; i <= 4; i++) {
+                const room = rooms?.find(r => r.room_number === i);
+                const card = createRoomCard(i, room);
+                grid.appendChild(card);
+            }
+        }
+
+        // Create room card
+        function createRoomCard(roomNumber, room) {
+            const card = document.createElement('div');
+            card.className = 'room-card';
+
+            const playerCount = room?.room_players?.length || 0;
+            const maxPlayers = room?.max_players || 8;
+            const buyIn = room?.buy_in || 0;
+            const gameType = room?.game_type || 'Not selected';
+
+            let status = 'empty';
+            let statusText = 'Empty';
+            
+            if (room) {
+                if (room.status === 'in_progress') {
+                    status = 'in-progress';
+                    statusText = 'In Progress';
+                    card.classList.add('in-progress');
+                } else if (playerCount > 0) {
+                    status = 'occupied';
+                    statusText = 'Waiting';
+                    card.classList.add('occupied');
+                }
+            }
+
+            const gameNames = {
+                'who-said-it-better': 'Who Said It Better?',
+                'poker': 'Texas Hold\'em',
+                'blackjack': 'Blackjack'
+            };
+
+            card.innerHTML = `
+                <div class="room-header">
+                    <div class="room-number">Room ${roomNumber}</div>
+                    <span class="room-status status-${status}">${statusText}</span>
+                </div>
+                <div class="room-info">
+                    <div><strong>Game:</strong> ${gameNames[gameType] || gameType}</div>
+                    <div><strong>Players:</strong> ${playerCount}/${maxPlayers}</div>
+                    ${buyIn > 0 ? `<div><strong>Buy-in:</strong><span class="buy-in-badge">${buyIn} GC</span></div>` : ''}
+                </div>
+                <button class="join-btn" ${status === 'in-progress' ? 'disabled' : ''}>
+                    ${status === 'empty' ? 'Create Room' : 'Join Room'}
+                </button>
+            `;
+
+            if (status !== 'in-progress') {
+                card.querySelector('.join-btn').onclick = () => joinRoom(roomNumber, room?.id);
+            }
+
+            return card;
+        }
+
+        // Join or create room
+        async function joinRoom(roomNumber, roomId) {
+            if (!roomId) {
+                // Create new room
+                const { data: newRoom, error } = await supabaseClient
                     .from('rooms')
-                    .delete()
-                    .in('id', emptyRoomIds)
-                    .select('id');
-                
-                if (deletedRooms && deletedRooms.length > 0) {
-                    console.log(`Cleaned up ${deletedRooms.length} abandoned room(s)`);
+                    .insert({
+                        room_number: roomNumber,
+                        host_user_id: currentUser.id,
+                        status: 'waiting'
+                    })
+                    .select()
+                    .single();
+
+                if (error) {
+                    alert('Failed to create room');
+                    return;
+                }
+
+                roomId = newRoom.id;
+            }
+
+            // Check if room is full
+            const { data: room } = await supabaseClient
+                .from('rooms')
+                .select('*, room_players(*)')
+                .eq('id', roomId)
+                .single();
+
+            if (room.room_players.length >= room.max_players) {
+                alert('Room is full!');
+                return;
+            }
+
+            // Add player to room
+            const { data: profile } = await supabaseClient
+                .from('profiles')
+                .select('player_name')
+                .eq('id', currentUser.id)
+                .single();
+
+            const { error: joinError } = await supabaseClient
+                .from('room_players')
+                .insert({
+                    room_id: roomId,
+                    user_id: currentUser.id,
+                    player_name: profile?.player_name || 'Player'
+                });
+
+            if (joinError) {
+                if (joinError.code === '23505') {
+                    // Already in room
+                } else {
+                    alert('Failed to join room');
+                    return;
+                }
+            }
+
+            openRoomModal(roomId);
+        }
+
+        // Open room modal
+        async function openRoomModal(roomId) {
+            currentRoomId = roomId;
+            
+            const { data: room } = await supabaseClient
+                .from('rooms')
+                .select('*')
+                .eq('id', roomId)
+                .single();
+
+            currentRoom = room;
+            isHost = room.host_user_id === currentUser.id;
+
+            document.getElementById('modalTitle').textContent = `Room #${room.room_number}`;
+            document.getElementById('hostControls').style.display = isHost ? 'block' : 'none';
+            document.getElementById('readyBtn').style.display = isHost ? 'none' : 'block';
+            document.getElementById('startBtn').style.display = isHost ? 'block' : 'none';
+
+            if (isHost) {
+                document.getElementById('gameSelect').value = room.game_type || '';
+                document.getElementById('maxPlayers').value = room.max_players;
+                document.getElementById('buyIn').value = room.buy_in || 0;
+            }
+
+            document.getElementById('roomModal').style.display = 'block';
+
+            // Subscribe to room updates
+            roomSubscription = supabaseClient
+                .channel(`room-${roomId}`)
+                .on('postgres_changes',
+                    { event: '*', schema: 'public', table: 'rooms', filter: `id=eq.${roomId}` },
+                    updateRoomData
+                )
+                .subscribe();
+
+            // Subscribe to player updates
+            playersSubscription = supabaseClient
+                .channel(`players-${roomId}`)
+                .on('postgres_changes',
+                    { event: '*', schema: 'public', table: 'room_players', filter: `room_id=eq.${roomId}` },
+                    updatePlayersList
+                )
+                .subscribe();
+
+            await updatePlayersList();
+            updatePotDisplay();
+            updateReadyButton();
+        }
+
+        // Update room data
+        async function updateRoomData(payload) {
+            if (payload.eventType === 'DELETE') {
+                closeModal();
+                return;
+            }
+
+            const { data: room } = await supabaseClient
+                .from('rooms')
+                .select('*')
+                .eq('id', currentRoomId)
+                .single();
+
+            if (!room) {
+                closeModal();
+                return;
+            }
+
+            currentRoom = room;
+
+            if (!isHost) {
+                document.getElementById('gameSelect').value = room.game_type || '';
+                document.getElementById('maxPlayers').value = room.max_players;
+                document.getElementById('buyIn').value = room.buy_in || 0;
+            }
+
+            document.getElementById('maxPlayerCount').textContent = room.max_players;
+            updatePotDisplay();
+
+            if (room.status === 'in_progress') {
+                redirectToGame(room.game_type);
+            }
+        }
+
+        // Update players list
+        async function updatePlayersList() {
+            const { data: players, error } = await supabaseClient
+                .from('room_players')
+                .select('*')
+                .eq('room_id', currentRoomId)
+                .order('joined_at');
+
+            if (error) {
+                console.error('Error fetching players:', error);
+                return;
+            }
+
+            const playerList = document.getElementById('playerList');
+            playerList.innerHTML = '';
+
+            document.getElementById('playerCount').textContent = players?.length || 0;
+
+            if (!players) return;
+
+            players.forEach(player => {
+                const isPlayerHost = player.user_id === currentRoom.host_user_id;
+                const div = document.createElement('div');
+                div.className = 'player-item';
+
+                let badges = '';
+                if (isPlayerHost) {
+                    badges += '<span class="player-badge badge-host">HOST</span>';
+                }
+                if (player.coins_paid) {
+                    badges += '<span class="player-badge badge-paid">PAID</span>';
+                } else if (player.is_ready) {
+                    badges += '<span class="player-badge badge-ready">READY</span>';
+                } else if (!isPlayerHost) {
+                    badges += '<span class="player-badge badge-waiting">WAITING</span>';
+                }
+
+                div.innerHTML = `
+                    <span class="player-name">${player.player_name}</span>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        ${badges}
+                        ${isHost && player.user_id !== currentUser.id ? 
+                            `<button class="kick-btn" onclick="kickPlayer('${player.user_id}')">Kick</button>` : 
+                            ''}
+                    </div>
+                `;
+
+                playerList.appendChild(div);
+            });
+
+            updateReadyButton();
+        }
+
+        // Update pot display
+        function updatePotDisplay() {
+            const buyIn = parseInt(document.getElementById('buyIn').value) || 0;
+            const potDisplay = document.getElementById('potDisplay');
+
+            if (buyIn > 0) {
+                potDisplay.style.display = 'block';
+                const { data: players } = supabaseClient
+                    .from('room_players')
+                    .select('coins_paid')
+                    .eq('room_id', currentRoomId);
+
+                players.then(result => {
+                    const paidCount = result.data?.filter(p => p.coins_paid).length || 0;
+                    const potAmount = paidCount * buyIn;
+                    document.getElementById('potAmount').textContent = `${potAmount} GC`;
+                });
+            } else {
+                potDisplay.style.display = 'none';
+            }
+        }
+
+        // Update ready button
+        async function updateReadyButton() {
+            if (isHost) return;
+
+            const { data: player } = await supabaseClient
+                .from('room_players')
+                .select('is_ready, coins_paid')
+                .eq('room_id', currentRoomId)
+                .eq('user_id', currentUser.id)
+                .single();
+
+            const readyBtn = document.getElementById('readyBtn');
+            const buyIn = parseInt(document.getElementById('buyIn').value) || 0;
+
+            if (buyIn > 0) {
+                if (player.coins_paid) {
+                    readyBtn.textContent = 'PAID ✓';
+                    readyBtn.disabled = true;
+                    readyBtn.classList.remove('btn-primary');
+                    readyBtn.classList.add('btn-success');
+                } else {
+                    readyBtn.textContent = `PAY ${buyIn} GC`;
+                    readyBtn.disabled = myCoins < buyIn;
+                    readyBtn.classList.add('btn-primary');
+                    readyBtn.classList.remove('btn-success');
+                }
+            } else {
+                readyBtn.textContent = player.is_ready ? 'READY ✓' : 'READY UP';
+                readyBtn.disabled = false;
+                if (player.is_ready) {
+                    readyBtn.classList.remove('btn-primary');
+                    readyBtn.classList.add('btn-success');
+                } else {
+                    readyBtn.classList.add('btn-primary');
+                    readyBtn.classList.remove('btn-success');
                 }
             }
         }
-    } catch (error) {
-        console.error('Error cleaning up abandoned rooms:', error);
-    }
-}
 
-// Close room panel when clicking outside
-document.addEventListener('click', (e) => {
-    const panel = document.getElementById('pb-room-panel');
-    const button = document.getElementById('pb-room-toggle');
-    
-    if (!e.target.closest('#pb-room-panel') && !e.target.closest('#pb-room-toggle')) {
-        panel.style.display = 'none';
-    }
-});
-
-</script>
-
-
-<!-- LOGIN MODAL -->
-<div id="authModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.88); z-index:99999; align-items:center; justify-content:center;">
-    <div class="modal-content" style="background:#111; padding:28px; width:90%; max-width:380px; border-radius:12px; border:2px solid #e94560; position:relative;">
-        <span class="close-modal" onclick="closeModal()" style="position:absolute; top:10px; right:14px; font-size:28px; cursor:pointer;">×</span>
-
-        <h2 style="text-align:center; color:#e94560; margin-bottom:8px;">Login</h2>
-        <p style="text-align:center; color:#888; font-size:13px; margin-bottom:20px; font-style:italic;">
-            Come on, you know the drill...
-        </p>
-
-        <div class="input-group" style="margin-bottom:16px;">
-            <label style="display:block; margin-bottom:6px; color:#ddd; font-size:14px;">Email</label>
-            <input id="loginEmail" class="input-field" type="email" style="
-                width:100%;
-                padding:10px;
-                background:#222;
-                border:1px solid #444;
-                border-radius:6px;
-                color:#fff;
-                font-size:14px;
-                box-sizing:border-box;
-            ">
-        </div>
-        <div class="input-group" style="margin-bottom:16px;">
-            <label style="display:block; margin-bottom:6px; color:#ddd; font-size:14px;">Password</label>
-            <input id="loginPass" class="input-field" type="password" style="
-                width:100%;
-                padding:10px;
-                background:#222;
-                border:1px solid #444;
-                border-radius:6px;
-                color:#fff;
-                font-size:14px;
-                box-sizing:border-box;
-            ">
-        </div>
-
-        <div id="loginError" style="color:#ff4444; display:none; margin-bottom:10px; font-size:13px;"></div>
-
-        <button id="btnLogin" type="button" class="submit-btn"
-            style="width:100%; padding:12px; background:#e94560; color:white; border:none; border-radius:6px; margin-top:10px; font-weight:bold; cursor:pointer; font-size:15px;">
-            LOGIN
-        </button>
-
-        <div class="switch-link" style="text-align:center; margin-top:12px;">
-            <span style="color:#bbb;">No account? </span>
-            <span style="color:#e94560; cursor:pointer; text-decoration:underline;" onclick="openSignup()">Create one</span>
-        </div>
-
-        <div style="text-align:center; margin-top:12px;">
-            <span style="color:#e94560; cursor:pointer; text-decoration:underline;" onclick="openResetPasswordModal()">Forgot Password?</span>
-        </div>
-    </div>
-</div>
-
-<!-- SIGNUP MODAL -->
-<div id="signupModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.88); z-index:99999; align-items:center; justify-content:center;">
-    <div class="modal-content" style="background:#111; padding:28px; width:90%; max-width:380px; border-radius:12px; border:2px solid #e94560; position:relative;">
-        <span class="close-modal" onclick="closeModal()" style="position:absolute; top:10px; right:14px; font-size:28px; cursor:pointer;">×</span>
-
-        <h2 style="text-align:center; color:#e94560;">Create Account</h2>
-
-        <div class="input-group">
-            <label>Name</label>
-            <input id="regName" class="input-field">
-        </div>
-
-        <div class="input-group">
-            <label>Email</label>
-            <input id="regEmail" class="input-field" type="email">
-        </div>
-
-        <div class="input-group">
-            <label>Password</label>
-            <input id="regPass" class="input-field" type="password">
-        </div>
-
-        <div id="signupError" style="color:#ff4444; display:none;"></div>
-
-        <button id="btnSignup" type="button" class="submit-btn"
-            style="width:100%; padding:12px; background:#e94560; color:white; border:none; border-radius:6px; margin-top:10px;">
-            CREATE ACCOUNT
-        </button>
-
-        <div class="switch-link" style="text-align:center; margin-top:12px;">
-            <span style="color:#bbb;">Already have an account? </span>
-            <span style="color:#e94560; cursor:pointer;" onclick="openModal()">Login</span>
-        </div>
-    </div>
-</div>
-
-<!-- RESET PASSWORD MODAL -->
-<div id="resetPasswordModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.88); z-index:99999; align-items:center; justify-content:center;">
-    <div class="modal-content" style="background:#111; padding:28px; width:90%; max-width:380px; border-radius:12px; border:2px solid #e94560; position:relative;">
-        <span class="close-modal" onclick="closeResetPasswordModal()" style="position:absolute; top:10px; right:14px; font-size:28px; cursor:pointer;">×</span>
-
-        <h2 style="text-align:center; color:#e94560;">Reset Password</h2>
-
-        <div class="input-group">
-            <label>Email</label>
-            <input id="resetEmail" class="input-field" type="email">
-        </div>
-
-        <div id="resetError" style="color:#ff4444; display:none;"></div>
-        <div id="resetSuccess" style="color:#44ff44; display:none;"></div>
-
-        <button type="button" onclick="sendPasswordReset()" class="submit-btn"
-            style="width:100%; padding:12px; background:#e94560; color:white; border:none; border-radius:6px; margin-top:10px;">
-            Send Reset Email
-        </button>
-    </div>
-</div>
-
-<!-- CHANGE NAME MODAL -->
-<div id="changeNameModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.88); z-index:99999; align-items:center; justify-content:center;">
-    <div class="modal-content" style="background:#111; padding:28px; width:90%; max-width:380px; border-radius:12px; border:2px solid #e94560; position:relative;">
-        <span class="close-modal" onclick="closeChangeName()" style="position:absolute; top:10px; right:14px; font-size:28px; cursor:pointer;">×</span>
-
-        <h2 style="text-align:center; color:#e94560;">Change Name</h2>
-
-        <div class="input-group">
-            <label>New Name</label>
-            <input id="newPlayerName" class="input-field">
-        </div>
-
-        <div id="nameChangeError" style="color:#ff4444; display:none;"></div>
-
-        <button type="button" onclick="changePlayerName()" class="submit-btn"
-            style="width:100%; padding:12px; background:#e94560; color:white; border:none; border-radius:6px; margin-top:10px;">
-            Update Name
-        </button>
-    </div>
-</div>
-
-<!-- LOW COINS MODAL -->
-<div id="lowCoinsModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.88); z-index:99999; align-items:center; justify-content:center;">
-    <div class="modal-content" style="background:#111; padding:28px; width:90%; max-width:380px; border-radius:12px; border:2px solid #ffd700; position:relative;">
-        <span class="close-modal" onclick="closeLowCoinsModal()" style="position:absolute; top:10px; right:14px; font-size:28px; cursor:pointer;">×</span>
-
-        <h2 style="text-align:center; color:#ffd700;">⚠️ Not Enough Coins!</h2>
-        
-        <p style="text-align:center; color:#fff; margin:20px 0;">
-            You need <strong>1 GunnerCoin</strong> to play arcade games.<br>
-            Play casino games to earn more coins!
-        </p>
-
-        <button type="button" onclick="closeLowCoinsModal()" class="submit-btn"
-            style="width:100%; padding:12px; background:#ffd700; color:#111; border:none; border-radius:6px; margin-top:10px; font-weight:bold;">
-            OK
-        </button>
-    </div>
-</div>
-
-
-<!-- ================================
-     JUKEBOX + MUSIC PLAYER SCRIPTS
-     ================================ -->
-<script src="/songs.js"></script>
-<script src="/playerbar-music.js"></script>
-<script src="/jukebox-modal.js"></script>
-
-
-
-<!-- ================================
-     PLAYER BAR + MODAL JS
-     ================================ -->
-
-<script>
-/* ---------- UI Open/Close Functions ---------- */
-function openModal() {
-    document.getElementById("authModal").style.display = "flex";
-}
-function closeModal() {
-    document.getElementById("authModal").style.display = "none";
-    document.getElementById("signupModal").style.display = "none";
-}
-function openSignup() {
-    document.getElementById("signupModal").style.display = "flex";
-}
-function openResetPasswordModal() {
-    document.getElementById("resetPasswordModal").style.display = "flex";
-}
-function closeResetPasswordModal() {
-    document.getElementById("resetPasswordModal").style.display = "none";
-}
-function openChangeName() {
-    document.getElementById("changeNameModal").style.display = "flex";
-}
-function closeChangeName() {
-    document.getElementById("changeNameModal").style.display = "none";
-}
-function closeLowCoinsModal() {
-    document.getElementById("lowCoinsModal").style.display = "none";
-}
-
-/* ---------- Post-Login Handler ---------- */
-// This function can be called by index-auth.js after successful login
-window.onLoginSuccess = function() {
-    closeModal();
-    pbLoadPlayerData(); // Immediately update the playerbar
-    if (typeof enableGames === "function") enableGames();
-};
-
-window.onSignupSuccess = function() {
-    closeModal();
-    pbLoadPlayerData(); // Immediately update the playerbar
-    if (typeof enableGames === "function") enableGames();
-};
-
-
-/* ---------- Player Bar Logic ---------- */
-async function pbGetSession() {
-    if (typeof supabase === "undefined") return null;
-    const { data: { session } } = await supabase.auth.getSession();
-    return session;
-}
-
-async function pbLoadPlayerData() {
-    const nameSpan = document.getElementById("pb-player-name");
-    const coinSpan = document.getElementById("pb-player-coins");
-    const loginBtn = document.getElementById("pb-login-btn");
-    const settingsBtn = document.querySelector(".pb-settings-btn");
-    const jukeboxBtn = document.querySelector(".pb-jukebox-btn");
-
-    const session = await pbGetSession();
-
-    if (!session) {
-        nameSpan.textContent = "GUEST";
-        coinSpan.textContent = "0";
-        loginBtn.style.display = "inline-flex";
-        settingsBtn.style.display = "none";
-        if (jukeboxBtn) jukeboxBtn.style.display = "none";
-        return;
-    }
-
-    const { data } = await supabase
-        .from("profiles")
-        .select("player_name, gunnercoins")
-        .eq("id", session.user.id)
-        .single();
-
-    if (data) {
-        nameSpan.textContent = data.player_name || "PLAYER";
-        coinSpan.textContent = data.gunnercoins ?? 0;
-    }
-
-    loginBtn.style.display = "none";
-    settingsBtn.style.display = "inline-flex";
-    if (jukeboxBtn) jukeboxBtn.style.display = "inline-flex";
-}
-
-function togglePBMenu(e) {
-    e.stopPropagation();
-    const menu = document.getElementById("pb-settings-menu");
-    menu.style.display = (menu.style.display === "block") ? "none" : "block";
-}
-
-document.addEventListener("click", (e) => {
-    const menu = document.getElementById("pb-settings-menu");
-    if (!e.target.closest("#pb-settings-menu") &&
-        !e.target.closest(".pb-settings-btn")) {
-        menu.style.display = "none";
-    }
-});
-
-async function pbLogout() {
-    await supabase.auth.signOut();
-    localStorage.removeItem("supabase.auth.token");
-    window.location.reload();
-}
-
-/* ---------- Settings Functions ---------- */
-async function sendPasswordReset() {
-    const email = document.getElementById('resetEmail').value;
-    const errorDiv = document.getElementById('resetError');
-    const successDiv = document.getElementById('resetSuccess');
-    
-    errorDiv.style.display = 'none';
-    successDiv.style.display = 'none';
-    
-    if (!email) {
-        errorDiv.textContent = 'Please enter your email';
-        errorDiv.style.display = 'block';
-        return;
-    }
-    
-    try {
-        const { error } = await supabase.auth.resetPasswordForEmail(email, {
-            redirectTo: window.location.origin + '/reset-password.html'
-        });
-        
-        if (error) throw error;
-        
-        successDiv.textContent = 'Password reset email sent! Check your inbox.';
-        successDiv.style.display = 'block';
-        
-        setTimeout(() => {
-            closeResetPasswordModal();
-            document.getElementById('resetEmail').value = '';
-        }, 3000);
-        
-    } catch (error) {
-        console.error('Reset error:', error);
-        errorDiv.textContent = error.message || 'Failed to send reset email';
-        errorDiv.style.display = 'block';
-    }
-}
-
-async function changePlayerName() {
-    const newName = document.getElementById('newPlayerName').value.trim();
-    const errorDiv = document.getElementById('nameChangeError');
-    
-    errorDiv.style.display = 'none';
-    
-    if (!newName) {
-        errorDiv.textContent = 'Please enter a name';
-        errorDiv.style.display = 'block';
-        return;
-    }
-    
-    if (newName.length < 3 || newName.length > 20) {
-        errorDiv.textContent = 'Name must be 3-20 characters';
-        errorDiv.style.display = 'block';
-        return;
-    }
-    
-    const session = await pbGetSession();
-    if (!session) {
-        errorDiv.textContent = 'Not logged in';
-        errorDiv.style.display = 'block';
-        return;
-    }
-    
-    try {
-        const { error } = await supabase
-            .from('profiles')
-            .update({ player_name: newName })
-            .eq('id', session.user.id);
-        
-        if (error) throw error;
-        
-        // Update UI
-        document.getElementById('pb-player-name').textContent = newName;
-        closeChangeName();
-        document.getElementById('newPlayerName').value = '';
-        
-    } catch (error) {
-        console.error('Name change error:', error);
-        errorDiv.textContent = error.message || 'Failed to change name';
-        errorDiv.style.display = 'block';
-    }
-}
-
-async function pbDeleteAccount() {
-    if (!confirm('Are you SURE you want to delete your account? This cannot be undone!')) {
-        return;
-    }
-    
-    if (!confirm('Really? All your progress and coins will be lost forever!')) {
-        return;
-    }
-    
-    const session = await pbGetSession();
-    if (!session) return;
-    
-    try {
-        // Delete profile data
-        const { error: profileError } = await supabase
-            .from('profiles')
-            .delete()
-            .eq('id', session.user.id);
-        
-        if (profileError) throw profileError;
-        
-        // Sign out
-        await supabase.auth.signOut();
-        
-        alert('Account deleted successfully');
-        window.location.href = '/';
-        
-    } catch (error) {
-        console.error('Delete error:', error);
-        alert('Failed to delete account: ' + error.message);
-    }
-}
-
-
-/* ============================================
-   ARCADE COIN SYSTEM
-   ============================================ */
-
-/**
- * Deduct 1 GunnerCoin for playing an arcade game
- * Returns true if successful, false if not enough coins or not logged in
- */
-async function deductArcadeCoin() {
-    const session = await pbGetSession();
-    
-    // Guests cannot play arcade games - show login modal
-    if (!session) {
-        console.log("Guest cannot play - must login");
-        openModal();
-        return false;
-    }
-
-    try {
-        // Get current coin balance
-        const { data: profile, error: fetchError } = await supabase
-            .from("profiles")
-            .select("gunnercoins")
-            .eq("id", session.user.id)
-            .single();
-
-        if (fetchError) throw fetchError;
-
-        const currentCoins = profile.gunnercoins ?? 0;
-
-        // Check if player has enough coins
-        if (currentCoins < 1) {
-            console.log("Not enough coins!");
-            document.getElementById("lowCoinsModal").style.display = "flex";
-            return false;
-        }
-
-        // Deduct 1 coin
-        const { error: updateError } = await supabase
-            .from("profiles")
-            .update({ gunnercoins: currentCoins - 1 })
-            .eq("id", session.user.id);
-
-        if (updateError) throw updateError;
-
-        // Update UI immediately
-        document.getElementById("pb-player-coins").textContent = currentCoins - 1;
-        
-        console.log(`Coin deducted! ${currentCoins - 1} coins remaining`);
-        return true;
-
-    } catch (error) {
-        console.error("Error deducting coin:", error);
-        return false;
-    }
-}
-
-/**
- * Add coins (for casino winnings, rewards, etc.)
- */
-async function addGunnerCoins(amount) {
-    const session = await pbGetSession();
-    if (!session) return false;
-
-    try {
-        const { data: profile } = await supabase
-            .from("profiles")
-            .select("gunnercoins")
-            .eq("id", session.user.id)
-            .single();
-
-        const newBalance = (profile.gunnercoins ?? 0) + amount;
-
-        await supabase
-            .from("profiles")
-            .update({ gunnercoins: newBalance })
-            .eq("id", session.user.id);
-
-        document.getElementById("pb-player-coins").textContent = newBalance;
-        return true;
-    } catch (error) {
-        console.error("Error adding coins:", error);
-        return false;
-    }
-}
-
-/**
- * Get current coin balance
- */
-async function getCurrentCoins() {
-    const session = await pbGetSession();
-    if (!session) return 0;
-
-    try {
-        const { data } = await supabase
-            .from("profiles")
-            .select("gunnercoins")
-            .eq("id", session.user.id)
-            .single();
-
-        return data?.gunnercoins ?? 0;
-    } catch (error) {
-        console.error("Error getting coins:", error);
-        return 0;
-    }
-}
-
-
-/* ---------- Initialize ---------- */
-pbLoadPlayerData();
-setInterval(pbLoadPlayerData, 15000);
-
-/* ---------- Auth State Listener ---------- */
-if (typeof supabase !== "undefined") {
-    supabase.auth.onAuthStateChange((event, session) => {
-        console.log("Auth state changed:", event);
-        
-        if (event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED') {
-            // Reload playerbar data immediately when auth state changes
-            pbLoadPlayerData();
-            
-            // Also enable/disable games based on auth state
-            if (session?.user) {
-                window.currentUser = session.user;
-                if (typeof enableGames === "function") enableGames();
+        // Ready up
+        document.getElementById('readyBtn')?.addEventListener('click', async () => {
+            const { data: player } = await supabaseClient
+                .from('room_players')
+                .select('is_ready, coins_paid')
+                .eq('room_id', currentRoomId)
+                .eq('user_id', currentUser.id)
+                .single();
+
+            const buyIn = parseInt(document.getElementById('buyIn').value) || 0;
+
+            if (buyIn > 0 && !player.coins_paid) {
+                // Pay buy-in
+                if (myCoins < buyIn) {
+                    alert(`You don't have enough GunnerCoins! You need ${buyIn} but only have ${myCoins}.`);
+                    return;
+                }
+
+                // Deduct coins
+                const { error: coinsError } = await supabaseClient
+                    .from('profiles')
+                    .update({ gunnercoins: myCoins - buyIn })
+                    .eq('id', currentUser.id);
+
+                if (coinsError) {
+                    console.error('Error deducting coins:', coinsError);
+                    alert('Failed to deduct coins. Please try again.');
+                    return;
+                }
+
+                myCoins -= buyIn;
+
+                // Mark as paid and ready
+                await supabaseClient
+                    .from('room_players')
+                    .update({ is_ready: true, coins_paid: true })
+                    .eq('room_id', currentRoomId)
+                    .eq('user_id', currentUser.id);
+
+                alert(`${buyIn} GunnerCoins paid! You're in the game. Good luck! 🎮`);
             } else {
-                window.currentUser = null;
-                if (typeof disableGames === "function") disableGames();
+                // No buy-in, just toggle ready
+                const newReadyState = !player.is_ready;
+                await supabaseClient
+                    .from('room_players')
+                    .update({ is_ready: newReadyState })
+                    .eq('room_id', currentRoomId)
+                    .eq('user_id', currentUser.id);
+            }
+
+            updateReadyButton();
+        });
+
+        // Start game (host only)
+        document.getElementById('startBtn')?.addEventListener('click', async () => {
+            const gameType = document.getElementById('gameSelect').value;
+            if (!gameType) {
+                alert('Please select a game first!');
+                return;
+            }
+
+            const buyIn = parseInt(document.getElementById('buyIn').value) || 0;
+
+            // Check if all players are ready/paid
+            const { data: players } = await supabaseClient
+                .from('room_players')
+                .select('is_ready, user_id, coins_paid')
+                .eq('room_id', currentRoomId);
+
+            let allReady;
+            if (buyIn > 0) {
+                // Everyone must have paid
+                allReady = players.every(p => p.coins_paid);
+                if (!allReady) {
+                    alert('All players must pay the buy-in before starting!');
+                    return;
+                }
+            } else {
+                // Everyone must be ready (except host)
+                allReady = players.every(p => p.is_ready || p.user_id === currentUser.id);
+                if (!allReady) {
+                    alert('All players must be ready before starting!');
+                    return;
+                }
+            }
+
+            // If host needs to pay buy-in
+            if (buyIn > 0) {
+                const hostPlayer = players.find(p => p.user_id === currentUser.id);
+                if (!hostPlayer.coins_paid) {
+                    if (myCoins < buyIn) {
+                        alert(`You don't have enough GunnerCoins! You need ${buyIn} but only have ${myCoins}.`);
+                        return;
+                    }
+
+                    // Deduct host's coins
+                    const { error: coinsError } = await supabaseClient
+                        .from('profiles')
+                        .update({ gunnercoins: myCoins - buyIn })
+                        .eq('id', currentUser.id);
+
+                    if (coinsError) {
+                        console.error('Error deducting coins:', coinsError);
+                        alert('Failed to deduct coins. Please try again.');
+                        return;
+                    }
+
+                    // Mark host as paid
+                    await supabaseClient
+                        .from('room_players')
+                        .update({ coins_paid: true })
+                        .eq('room_id', currentRoomId)
+                        .eq('user_id', currentUser.id);
+                }
+            }
+
+            // Update room status
+            await supabaseClient
+                .from('rooms')
+                .update({ status: 'in_progress' })
+                .eq('id', currentRoomId);
+
+            redirectToGame(gameType);
+        });
+
+        // Redirect to game
+        function redirectToGame(gameType) {
+            const gameUrls = {
+                'who-said-it-better': '/games/multiplayer/who-said-it-better.html',
+                'poker': '/casino/poker-multi.html',
+                'blackjack': '/casino/blackjack-multi.html'
+            };
+            
+            const gameUrl = gameUrls[gameType];
+            if (gameUrl) {
+                window.location.href = `${gameUrl}?room=${currentRoomId}`;
             }
         }
-    });
-}
-</script>
+
+        // Kick player
+        async function kickPlayer(userId) {
+            if (confirm('Kick this player from the room? (They will NOT be refunded if they already paid)')) {
+                await supabaseClient
+                    .from('room_players')
+                    .delete()
+                    .eq('room_id', currentRoomId)
+                    .eq('user_id', userId);
+            }
+        }
+
+        // Leave room
+        document.getElementById('leaveBtn')?.addEventListener('click', async () => {
+            // Check if player has paid
+            const { data: myPlayer } = await supabaseClient
+                .from('room_players')
+                .select('coins_paid')
+                .eq('room_id', currentRoomId)
+                .eq('user_id', currentUser.id)
+                .single();
+
+            if (myPlayer?.coins_paid) {
+                if (!confirm('You already paid the buy-in. If you leave, you will NOT be refunded. Continue?')) {
+                    return;
+                }
+            }
+
+            await supabaseClient
+                .from('room_players')
+                .delete()
+                .eq('room_id', currentRoomId)
+                .eq('user_id', currentUser.id);
+
+            // If host left, check if room is empty
+            if (isHost) {
+                const { data: remainingPlayers } = await supabaseClient
+                    .from('room_players')
+                    .select('user_id')
+                    .eq('room_id', currentRoomId);
+
+                if (remainingPlayers.length === 0) {
+                    // Delete empty room
+                    await supabaseClient
+                        .from('rooms')
+                        .delete()
+                        .eq('id', currentRoomId);
+                } else {
+                    // Promote next player to host
+                    const newHost = remainingPlayers[0];
+                    await supabaseClient
+                        .from('rooms')
+                        .update({ host_user_id: newHost.user_id })
+                        .eq('id', currentRoomId);
+                }
+            }
+
+            closeModal();
+        });
+
+        // Host controls change handlers
+        document.getElementById('gameSelect')?.addEventListener('change', async (e) => {
+            if (isHost) {
+                await supabaseClient
+                    .from('rooms')
+                    .update({ game_type: e.target.value })
+                    .eq('id', currentRoomId);
+            }
+        });
+
+        document.getElementById('maxPlayers')?.addEventListener('change', async (e) => {
+            if (isHost) {
+                await supabaseClient
+                    .from('rooms')
+                    .update({ max_players: parseInt(e.target.value) })
+                    .eq('id', currentRoomId);
+            }
+        });
+
+        document.getElementById('buyIn')?.addEventListener('input', async (e) => {
+            if (isHost) {
+                const buyIn = parseInt(e.target.value) || 0;
+                await supabaseClient
+                    .from('rooms')
+                    .update({ buy_in: buyIn })
+                    .eq('id', currentRoomId);
+                updatePotDisplay();
+            }
+        });
+
+        // Emoji chat
+        document.querySelectorAll('.emoji-btn').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const emoji = btn.dataset.emoji;
+                const { data: player } = await supabaseClient
+                    .from('room_players')
+                    .select('player_name')
+                    .eq('room_id', currentRoomId)
+                    .eq('user_id', currentUser.id)
+                    .single();
+
+                const message = `${player.player_name}: ${emoji}`;
+                const messagesDiv = document.getElementById('emojiMessages');
+                const msgEl = document.createElement('div');
+                msgEl.className = 'emoji-message';
+                msgEl.textContent = message;
+                messagesDiv.appendChild(msgEl);
+                messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+                // Auto-clear old messages
+                if (messagesDiv.children.length > 10) {
+                    messagesDiv.removeChild(messagesDiv.firstChild);
+                }
+            });
+        });
+
+        // Modal controls
+        document.getElementById('closeModal').onclick = closeModal;
+
+        function closeModal() {
+            document.getElementById('roomModal').style.display = 'none';
+            if (roomSubscription) roomSubscription.unsubscribe();
+            if (playersSubscription) playersSubscription.unsubscribe();
+            currentRoomId = null;
+            currentRoom = null;
+            loadRooms();
+        }
+
+        window.onclick = function(event) {
+            const modal = document.getElementById('roomModal');
+            if (event.target == modal) {
+                closeModal();
+            }
+        }
+        
+        // Start the game initialization
+        init();
+        } // End of initMultiplayerLobby function
+    </script>
+
+    <!-- Supabase Initialization & Playerbar Loader -->
+    <script type="module">
+        import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+        const SUPABASE_URL = "https://pknhslxhpohrzgsfkisr.supabase.co";
+        const SUPABASE_ANON_KEY = "sb_publishable_-zZw-pi_3q1sdNGhITKuhQ_ECyDARzc";
+        window.supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        console.log('✅ Supabase initialized');
+        
+        // Load playerbar properly (execute scripts)
+        async function loadPlayerBar() {
+            try {
+                const response = await fetch('/playerbar.html');
+                const html = await response.text();
+                const container = document.getElementById('playerbar');
+                
+                // Create temporary div to parse HTML
+                const temp = document.createElement('div');
+                temp.innerHTML = html;
+                
+                // Move all nodes to container
+                Array.from(temp.childNodes).forEach(node => {
+                    if (node.tagName === 'SCRIPT') {
+                        // Skip if it's an external script that's already loaded
+                        if (node.src) {
+                            const scriptExists = Array.from(document.scripts).some(s => s.src === node.src);
+                            if (!scriptExists) {
+                                const script = document.createElement('script');
+                                script.src = node.src;
+                                document.body.appendChild(script);
+                            }
+                        } else {
+                            // For inline scripts, recreate them to execute
+                            const script = document.createElement('script');
+                            script.textContent = node.textContent;
+                            document.body.appendChild(script);
+                        }
+                    } else {
+                        container.appendChild(node);
+                    }
+                });
+                
+                console.log('✅ Playerbar loaded successfully!');
+                
+            } catch (error) {
+                console.error('❌ Error loading playerbar:', error);
+            }
+        }
+        
+        // Initialize everything in proper order
+        async function initAll() {
+            await loadPlayerBar();
+            initMultiplayerLobby();
+        }
+        
+        initAll();
+    </script>
+</body>
+</html>
