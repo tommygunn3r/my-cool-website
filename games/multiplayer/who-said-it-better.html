@@ -502,9 +502,131 @@
             margin: 1rem 0;
             color: var(--text-soft);
         }
+
+        /* FINAL RESULTS OVERLAY */
+        .final-results-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .final-results-overlay.active {
+            display: flex;
+        }
+
+        .final-results-content {
+            background: linear-gradient(135deg, var(--bg-alt) 0%, var(--bg) 100%);
+            border: 3px solid var(--gold);
+            border-radius: 20px;
+            padding: 3rem;
+            max-width: 800px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 10px 50px rgba(255, 215, 0, 0.3);
+        }
+
+        .final-results-title {
+            font-size: 3rem;
+            font-weight: bold;
+            color: var(--gold);
+            margin-bottom: 2rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+        }
+
+        .final-results-podium {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin: 2rem 0;
+            flex-wrap: wrap;
+        }
+
+        .podium-place {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 2rem 1.5rem;
+            min-width: 200px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .podium-place.first {
+            border-color: var(--gold);
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.1) 0%, var(--card-bg) 100%);
+            transform: scale(1.1);
+        }
+
+        .podium-place.second {
+            border-color: #C0C0C0;
+        }
+
+        .podium-place.third {
+            border-color: #CD7F32;
+        }
+
+        .podium-rank {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .podium-rank.first { color: var(--gold); }
+        .podium-rank.second { color: #C0C0C0; }
+        .podium-rank.third { color: #CD7F32; }
+
+        .podium-name {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+            color: var(--text-main);
+        }
+
+        .podium-score {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--gold);
+        }
+
+        .final-results-button {
+            margin-top: 2rem;
+            padding: 1rem 3rem;
+            font-size: 1.2rem;
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            text-transform: uppercase;
+            font-weight: bold;
+            letter-spacing: 0.1em;
+            transition: all 0.3s;
+        }
+
+        .final-results-button:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+        }
     </style>
 </head>
 <body>
+    <!-- FINAL RESULTS OVERLAY -->
+    <div id="finalResultsOverlay" class="final-results-overlay">
+        <div class="final-results-content">
+            <div class="final-results-title" id="finalResultsTitle">🎉 GAME OVER! 🎉</div>
+            <div class="final-results-podium" id="finalResultsPodium"></div>
+            <button class="final-results-button" onclick="returnToLobby()">RETURN TO LOBBY</button>
+        </div>
+    </div>
     <!-- HEADER -->
     <div class="header">
         <div class="logo">WHO SAID IT BETTER?</div>
@@ -905,7 +1027,7 @@
         function setPhaseUI(phase) {
             const tag = document.getElementById("phaseTag");
             tag.className = "phase-tag phase-" + phase;
-            tag.innerText = phase.toUpperCase();
+            tag.innerText = phase.toUpperCase().replace('_', ' ');
 
             const promptBox = document.getElementById("promptBox");
             const handArea = document.getElementById("handArea");
@@ -957,6 +1079,10 @@
                         : "START NEXT ROUND";
                     endGameBtn.style.display = "inline-block";
                 }
+            } else if (phase === "final_results") {
+                // Hide main game UI, show final results overlay
+                statusMessage.style.display = "none";
+                displayFinalResults();
             }
         }
 
@@ -1291,7 +1417,7 @@
             
             // Check if game ended
             if (currentState.phase === 'results' && currentState.round >= currentState.totalRounds) {
-                showFinalResults();
+                await showFinalResults();
                 return;
             }
             
@@ -1351,34 +1477,77 @@
             log(`Round ${currentState.round} started!`);
         }
 
-        function showFinalResults() {
+        async function showFinalResults() {
+            if (!isHost) return;
+            
             const scores = currentState.scores || {};
             const sorted = Object.entries(scores).sort((a, b) => b[1] - a[1]);
             
+            // Update room status to kick all players back to lobby when they click button
+            await supabaseClient
+                .from('rooms')
+                .update({ status: 'completed' })
+                .eq('id', roomId);
+            
+            // Set game state to show final results
+            currentState.phase = 'final_results';
+            currentState.finalScores = sorted;
+            await saveGameState();
+        }
+
+        function displayFinalResults() {
+            const sorted = currentState.finalScores || Object.entries(currentState.scores || {}).sort((a, b) => b[1] - a[1]);
+            
             if (sorted.length === 0) {
-                alert('No scores to show!');
-                window.location.href = '/multiplayer.html';
                 return;
             }
             
-            // Check for tie
+            // Check for tie at top
             const topScore = sorted[0][1];
             const winners = sorted.filter(([id, score]) => score === topScore);
             
-            let message;
+            // Update title
+            const titleEl = document.getElementById('finalResultsTitle');
             if (winners.length > 1) {
-                const winnerNames = winners.map(([id]) => getPlayerName(id)).join(' & ');
-                message = `🎉 GAME OVER - TIE! 🎉\n\nWinners: ${winnerNames}\nScore: ${topScore} points each\n\nThanks for playing!`;
+                titleEl.textContent = '🤝 TIE GAME! 🤝';
             } else {
-                const winnerId = sorted[0][0];
-                const winnerScore = sorted[0][1];
-                const winnerName = getPlayerName(winnerId);
-                message = `🎉 GAME OVER! 🎉\n\nWinner: ${winnerName}\nScore: ${winnerScore} points\n\nThanks for playing!`;
+                titleEl.textContent = '🎉 GAME OVER! 🎉';
             }
             
-            alert(message);
+            // Build podium
+            const podium = document.getElementById('finalResultsPodium');
+            podium.innerHTML = '';
             
-            // Return to multiplayer lobby
+            const places = ['first', 'second', 'third'];
+            const emojis = ['🥇', '🥈', '🥉'];
+            
+            sorted.slice(0, 3).forEach(([playerId, score], index) => {
+                const place = document.createElement('div');
+                place.className = `podium-place ${places[index] || ''}`;
+                
+                const rank = document.createElement('div');
+                rank.className = `podium-rank ${places[index] || ''}`;
+                rank.textContent = emojis[index] || `#${index + 1}`;
+                
+                const name = document.createElement('div');
+                name.className = 'podium-name';
+                name.textContent = getPlayerName(playerId);
+                
+                const scoreEl = document.createElement('div');
+                scoreEl.className = 'podium-score';
+                scoreEl.textContent = `${score} point${score !== 1 ? 's' : ''}`;
+                
+                place.appendChild(rank);
+                place.appendChild(name);
+                place.appendChild(scoreEl);
+                podium.appendChild(place);
+            });
+            
+            // Show overlay
+            document.getElementById('finalResultsOverlay').classList.add('active');
+        }
+
+        function returnToLobby() {
             window.location.href = '/multiplayer.html';
         }
 
@@ -1698,8 +1867,9 @@
                     { event: 'UPDATE', schema: 'public', table: 'rooms', filter: `id=eq.${roomId}` },
                     (payload) => {
                         console.log('Room status changed:', payload.new);
+                        // Don't redirect on completed - let them see final results
                         if (payload.new && payload.new.status === 'waiting') {
-                            alert('Game has ended. Returning to lobby...');
+                            alert('Host ended the game. Returning to lobby...');
                             window.location.href = '/multiplayer.html';
                         }
                     }
