@@ -1942,18 +1942,25 @@
             document.getElementById("hostStartBtn").addEventListener("click", hostStartNewRound);
             document.getElementById("endGameBtn").addEventListener("click", endGame);
             
-            // Cleanup room when host leaves (close tab, back button, etc)
+            // Host cleanup on disconnect - use pagehide which is more reliable
             if (isHost) {
-                window.addEventListener('beforeunload', () => {
-                    // Use navigator.sendBeacon for reliable cleanup on page unload
-                    // This is more reliable than async fetch during unload
-                    if (navigator.sendBeacon) {
-                        // Can't use Supabase client in sendBeacon, so we'll use a simpler approach
-                        // Just mark room as needing cleanup
-                        console.log('Host leaving, cleaning up room');
-                        cleanupRoom(); // Fire and forget
-                    }
-                });
+                const hostCleanup = () => {
+                    // Use fetch with keepalive for reliable cleanup on page unload
+                    const url = `${SUPABASE_URL}/rest/v1/rooms?id=eq.${roomId}`;
+                    fetch(url, {
+                        method: 'DELETE',
+                        keepalive: true,
+                        headers: {
+                            'apikey': SUPABASE_ANON_KEY,
+                            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                };
+                
+                // Use both events for maximum reliability
+                window.addEventListener('pagehide', hostCleanup);
+                window.addEventListener('beforeunload', hostCleanup);
             }
         }
 
