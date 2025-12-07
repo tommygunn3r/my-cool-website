@@ -852,16 +852,23 @@
         }
 
         // === CARD DEALING ===
+        // How it works:
+        // 1. Each player gets a persistent hand of cards (default 7)
+        // 2. Cards are dealt randomly from answers.json
+        // 3. No two players can have the same card at the same time
+        // 4. When a player submits a card, it's removed from their hand
+        // 5. At the start of next round, their hand is refilled with new random cards
+        // 6. This ensures players always have fresh cards while maintaining uniqueness
         function dealCards() {
             const handSize = currentState.handSize || 7;
             const usedIndices = new Set();
             
-            // Collect all currently dealt cards
+            // Collect all currently dealt cards across all players
             Object.values(currentState.playerHands).forEach(hand => {
                 hand.forEach(idx => usedIndices.add(idx));
             });
 
-            // For each player, ensure they have full hand
+            // For each player, ensure they have a full hand
             const players = Object.keys(currentState.scores || {});
             players.forEach(playerId => {
                 if (!currentState.playerHands[playerId]) {
@@ -870,11 +877,11 @@
                 
                 const hand = currentState.playerHands[playerId];
                 
-                // Remove used cards from hand
+                // Remove any invalid card indices
                 const validHand = hand.filter(idx => answers[idx]);
                 currentState.playerHands[playerId] = validHand;
                 
-                // Deal new cards to fill hand
+                // Deal new random cards to fill hand up to handSize
                 while (validHand.length < handSize) {
                     let newIdx;
                     let attempts = 0;
@@ -887,7 +894,8 @@
                         validHand.push(newIdx);
                         usedIndices.add(newIdx);
                     } else {
-                        break; // Safety: avoid infinite loop
+                        break; // Safety: avoid infinite loop if running out of cards
+
                     }
                 }
             });
@@ -1401,7 +1409,29 @@
             if (!isHost) return;
             
             if (confirm('Are you sure you want to end the game? All players will return to the lobby.')) {
+                // Update room status to ended
+                await supabaseClient
+                    .from('rooms')
+                    .update({ status: 'waiting' })
+                    .eq('id', roomId);
+                
+                // Show final results and redirect
                 showFinalResults();
+            }
+        }
+
+        // Watch for room status changes (for non-host players)
+        async function checkRoomStatus() {
+            const { data: room } = await supabaseClient
+                .from('rooms')
+                .select('status')
+                .eq('id', roomId)
+                .maybeSingle();
+                
+            if (room && room.status === 'waiting') {
+                // Game ended, redirect to lobby
+                alert('Game has ended. Returning to lobby...');
+                window.location.href = '/multiplayer.html';
             }
         }
 
@@ -1657,6 +1687,21 @@
                     { event: '*', schema: 'public', table: 'room_players', filter: `room_id=eq.${roomId}` },
                     () => {
                         loadPlayers();
+                    }
+                )
+                .subscribe();
+
+            // Subscribe to room status changes (to detect game end)
+            supabaseClient
+                .channel(`room-status-${roomId}`)
+                .on('postgres_changes',
+                    { event: 'UPDATE', schema: 'public', table: 'rooms', filter: `id=eq.${roomId}` },
+                    (payload) => {
+                        console.log('Room status changed:', payload.new);
+                        if (payload.new && payload.new.status === 'waiting') {
+                            alert('Game has ended. Returning to lobby...');
+                            window.location.href = '/multiplayer.html';
+                        }
                     }
                 )
                 .subscribe();
