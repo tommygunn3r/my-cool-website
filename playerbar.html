@@ -392,12 +392,35 @@ async function leaveMultiplayerRoom() {
     if (!session) return;
     
     try {
+        const roomId = pbMultiplayerRoom.roomId;
+        
+        // Get room info before leaving
+        const { data: roomData } = await supabase
+            .from('game_rooms')
+            .select('is_locked, player_count')
+            .eq('id', roomId)
+            .single();
+        
         // Remove from room
         await supabase
             .from('room_players')
             .delete()
-            .eq('room_id', pbMultiplayerRoom.roomId)
+            .eq('room_id', roomId)
             .eq('user_id', session.user.id);
+        
+        // Check if room should be cleaned up
+        if (roomData) {
+            const newPlayerCount = roomData.player_count - 1;
+            
+            // If locked room is now empty, delete it
+            if (roomData.is_locked && newPlayerCount === 0) {
+                await supabase
+                    .from('game_rooms')
+                    .delete()
+                    .eq('id', roomId);
+                console.log('Cleaned up empty locked room');
+            }
+        }
         
         // Cleanup
         if (pbMultiplayerRoom.channel) {
@@ -414,6 +437,28 @@ async function leaveMultiplayerRoom() {
     } catch (error) {
         console.error('Error leaving room:', error);
         alert('Failed to leave room');
+    }
+}
+
+// Periodic cleanup utility for abandoned locked rooms
+async function cleanupAbandonedLockedRooms() {
+    try {
+        // Delete locked rooms with 0 players that haven't been updated in 10+ minutes
+        const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+        
+        const { data: deletedRooms } = await supabase
+            .from('game_rooms')
+            .delete()
+            .eq('is_locked', true)
+            .eq('player_count', 0)
+            .lt('updated_at', tenMinutesAgo)
+            .select('id');
+        
+        if (deletedRooms && deletedRooms.length > 0) {
+            console.log(`Cleaned up ${deletedRooms.length} abandoned locked room(s)`);
+        }
+    } catch (error) {
+        console.error('Error cleaning up abandoned rooms:', error);
     }
 }
 
