@@ -829,6 +829,10 @@
         const SUPABASE_URL = 'https://pknhslxhpohrzgsfkisr.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_-zZw-pi_3q1sdNGhITKuhQ_ECyDARzc';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        // Make Supabase client globally available for playerbar
+        window.supabaseClient = supabaseClient;
+        window.pbSupabaseClient = supabaseClient;
 
         let currentUser = null;
         let currentRoomId = null;
@@ -899,13 +903,14 @@
                 
                 console.log('✅ Playerbar loaded successfully!');
                 
-                // Wait a bit for scripts to initialize, then load player data
-                setTimeout(() => {
-                    if (typeof pbLoadPlayerData === 'function') {
-                        pbLoadPlayerData();
-                        console.log('✅ Player data loaded');
-                    }
-                }, 500);
+                // Wait for playerbar scripts to initialize
+                await new Promise(resolve => setTimeout(resolve, 500));
+                
+                // Load player data
+                if (typeof pbLoadPlayerData === 'function') {
+                    await pbLoadPlayerData();
+                    console.log('✅ Player data loaded');
+                }
                 
             } catch (error) {
                 console.error('❌ Error loading playerbar:', error);
