@@ -1,1012 +1,1384 @@
-<!-- =======================
-     GLOBAL PLAYER BAR
-     + GLOBAL AUTH MODALS
-     + MULTIPLAYER ROOM CONTROLS
-     ======================= -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Who Said It Better? - GunnersGames</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
 
-<div id="player-bar-wrapper" style="
-    width:100%;
-    padding:12px 22px;
-    background:transparent;
-    border-bottom:0px solid #e94560;
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    color:#fff;
-    font-family:'Segoe UI', sans-serif;
-    position:fixed;
-    top:0;
-    z-index:2000;
-    pointer-events:auto;
-">
-    <div style="display:flex; align-items:center; gap:12px;">
-        <span id="pb-player-name" style="font-size:1.2rem; font-weight:bold;">
-            PLAYER
-        </span>
-        <span style="font-size:1.2rem;">🪙</span>
-        <span id="pb-player-coins" style="font-size:1.1rem;">
-            0
-        </span>
-    </div>
-
-    <!-- Music Player Controls -->
-    <div id="music-controls" style="display: none; align-items: center; gap: 10px;">
-        <button id="music-prev" style="
-            background: #0ff;
-            color: #000;
-            border: none;
-            padding: 5px 10px;
-            cursor: pointer;
-            font-size: 14px;
-            border-radius: 4px;
-            font-weight: bold;
-        ">⏮</button>
-        
-        <button id="music-play-pause" style="
-            background: #00ff00;
-            color: #000;
-            border: none;
-            padding: 5px 15px;
-            cursor: pointer;
-            font-size: 16px;
-            font-weight: bold;
-            border-radius: 4px;
-        ">▶</button>
-        
-        <button id="music-next" style="
-            background: #0ff;
-            color: #000;
-            border: none;
-            padding: 5px 10px;
-            cursor: pointer;
-            font-size: 14px;
-            border-radius: 4px;
-            font-weight: bold;
-        ">⏭</button>
-        
-        <div style="margin-left: 15px; color: #0ff; font-size: 12px; min-width: 200px;">
-            <div id="music-title" style="font-weight: bold; margin-bottom: 2px;">No song playing</div>
-            <div id="music-artist" style="font-size: 10px; color: #88ddff;"></div>
-        </div>
-        
-        <div style="width: 150px; height: 4px; background: rgba(0, 255, 255, 0.2); margin-left: 15px; border-radius: 2px; overflow: hidden;">
-            <div id="music-progress" style="width: 0%; height: 100%; background: #0ff; transition: width 0.1s;"></div>
-        </div>
-
-        <!-- Volume Control -->
-        <div style="display: flex; align-items: center; gap: 8px; margin-left: 15px;">
-            <span style="color: #0ff; font-size: 14px;">🔊</span>
-            <input type="range" id="music-volume" min="0" max="100" value="70" style="
-                width: 80px;
-                height: 4px;
-                -webkit-appearance: none;
-                appearance: none;
-                background: rgba(0, 255, 255, 0.3);
-                border-radius: 2px;
-                outline: none;
-                cursor: pointer;
-            ">
-        </div>
-    </div>
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Cinzel:wght@400;700&display=swap" rel="stylesheet">
 
     <style>
-        #music-volume::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 12px;
-            height: 12px;
-            background: #0ff;
-            border-radius: 50%;
-            cursor: pointer;
-            box-shadow: 0 0 8px rgba(0, 255, 255, 0.8);
+        :root {
+            --bg: #1a1a1a;
+            --bg-alt: #2a2a2a;
+            --card-bg: #333;
+            --gold: #FFD700;
+            --gold-soft: #fbe1a5;
+            --accent: #4CAF50;
+            --accent-soft: rgba(76, 175, 80, 0.2);
+            --danger: #ff4444;
+            --success: #4CAF50;
+            --text-main: #f5f5f5;
+            --text-soft: #b0b0c0;
         }
-        #music-volume::-moz-range-thumb {
-            width: 12px;
-            height: 12px;
-            background: #0ff;
-            border-radius: 50%;
-            cursor: pointer;
-            border: none;
-            box-shadow: 0 0 8px rgba(0, 255, 255, 0.8);
+
+        * {
+            box-sizing: border-box;
         }
-        #music-volume:hover::-webkit-slider-thumb {
-            box-shadow: 0 0 12px rgba(0, 255, 255, 1);
+
+        body {
+            margin: 0;
+            padding-top: 60px;
+            background: #1a1a1a;
+            color: var(--text-main);
+            font-family: "Roboto", sans-serif;
+            min-height: 100vh;
         }
-        #music-volume:hover::-moz-range-thumb {
-            box-shadow: 0 0 12px rgba(0, 255, 255, 1);
-        }
-    </style>
 
-    <div style="display:flex; align-items:center; gap:8px;">
-        <!-- Multiplayer Room Button -->
-        <button id="pb-room-toggle" type="button" onclick="toggleRoomPanel()" style="
-            padding: 8px 16px;
-            background: linear-gradient(180deg, #4CAF50, #2d7a32);
-            border: 2px solid #4CAF50;
-            color: white;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: bold;
-            box-shadow: 0 0 15px rgba(76, 175, 80, 0.5);
-            display: none;
-        ">
-            🎮 ROOM
-        </button>
-
-        <!-- Jukebox Button -->
-        <button type="button" onclick="openJukebox()" style="
-            padding: 8px 16px;
-            background: linear-gradient(180deg, #ff00ff, #aa00aa);
-            border: 2px solid #ff00ff;
-            color: white;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: bold;
-            box-shadow: 0 0 15px rgba(255, 0, 255, 0.5);
-            display: none;
-        " class="pb-jukebox-btn">
-            ♫ JUKE BOX
-        </button>
-
-        <button id="pb-login-btn" type="button"
-            style="
-                padding:8px 14px;
-                background:rgba(233,69,96,0.2);
-                border:2px solid #e94560;
-                color:white;
-                border-radius:8px;
-                cursor:pointer;
-                font-weight:bold;
-                display:none;
-            "
-            onclick="openModal()">
-            Login
-        </button>
-
-        <button type="button" class="pb-settings-btn"
-            style="
-                padding:8px 16px;
-                background:rgba(233,69,96,0.2);
-                border:2px solid #e94560;
-                color:white;
-                border-radius:8px;
-                cursor:pointer;
-                font-weight:bold;
-                display:none;
-            "
-            onclick="togglePBMenu(event)">
-            ⚙ Settings
-        </button>
-    </div>
-
-    <!-- Settings Menu -->
-    <div id="pb-settings-menu" style="
-        position:absolute;
-        top:56px;
-        right:22px;
-        background:#000;
-        border:1px solid #333;
-        border-radius:10px;
-        padding:8px 0;
-        display:none;
-        width:200px;
-        z-index:3000;
-    ">
-        <div onclick="openChangeName()" style="padding:10px 16px; cursor:pointer;">Change Player Name</div>
-        <div onclick="openResetPasswordModal()" style="padding:10px 16px; cursor:pointer;">Reset Password</div>
-        <div onclick="pbDeleteAccount()" style="padding:10px 16px; cursor:pointer;">Delete Account</div>
-        <div onclick="pbLogout()" style="padding:10px 16px; cursor:pointer;">Log Out</div>
-    </div>
-
-    <!-- Multiplayer Room Panel -->
-    <div id="pb-room-panel" style="
-        position: absolute;
-        top: 56px;
-        right: 22px;
-        background: #1a1a1a;
-        border: 2px solid #4CAF50;
-        border-radius: 10px;
-        padding: 15px;
-        display: none;
-        width: 320px;
-        max-height: 400px;
-        overflow-y: auto;
-        z-index: 3000;
-        box-shadow: 0 4px 20px rgba(76, 175, 80, 0.3);
-    ">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid #4CAF50; padding-bottom: 8px;">
-            <h3 style="margin: 0; color: #4CAF50; font-size: 1.1rem;">Room Info</h3>
-            <button onclick="leaveMultiplayerRoom()" style="
-                padding: 5px 12px;
-                background: #ff4444;
-                border: none;
-                color: white;
-                border-radius: 5px;
-                cursor: pointer;
-                font-size: 0.85rem;
-                font-weight: bold;
-            ">Leave</button>
-        </div>
-
-        <div id="pb-room-pot" style="
-            background: linear-gradient(135deg, #FFD700, #FFA500);
-            color: #000;
-            padding: 8px;
-            border-radius: 5px;
-            text-align: center;
-            font-weight: bold;
-            margin-bottom: 12px;
-            display: none;
-        ">
-            💰 Pot: <span id="pb-pot-amount">0</span> Coins
-        </div>
-
-        <div style="margin-bottom: 12px;">
-            <div style="color: #4CAF50; font-size: 0.9rem; font-weight: bold; margin-bottom: 6px;">Players:</div>
-            <div id="pb-room-players" style="display: grid; gap: 6px;"></div>
-        </div>
-    </div>
-
-    <style>
-        .pb-emoji-btn {
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.2rem 1.8rem;
             background: #2a2a2a;
-            border: 1px solid #555;
-            padding: 6px 10px;
-            border-radius: 5px;
+            border-bottom: 2px solid var(--accent);
+            box-shadow: 0 4px 18px rgba(0,0,0,0.5);
+        }
+
+        .logo {
+            font-family: "Cinzel", serif;
+            font-size: 1.5rem;
+            letter-spacing: 0.18em;
+            color: var(--accent);
+        }
+
+        .header-right {
+            display: flex;
+            gap: 1.2rem;
+            align-items: center;
+        }
+
+        .room-pill {
+            padding: 0.4rem 0.9rem;
+            border-radius: 999px;
+            background: rgba(0,0,0,0.4);
+            border: 1px solid rgba(255,255,255,0.2);
+            font-size: 0.85rem;
+        }
+
+        .host-tag {
+            padding: 0.2rem 0.6rem;
+            border-radius: 999px;
+            border: 1px solid var(--gold);
+            background: rgba(255, 215, 0, 0.1);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            color: var(--gold);
+        }
+
+        .pot-display {
+            padding: 0.4rem 0.9rem;
+            border-radius: 999px;
+            background: var(--gold);
+            color: #000;
+            font-weight: bold;
+            font-size: 0.85rem;
+        }
+
+        .main {
+            max-width: 1200px;
+            margin: 1.8rem auto 3rem;
+            padding: 0 1rem;
+            display: grid;
+            grid-template-columns: minmax(0, 2fr) minmax(0, 1.2fr);
+            gap: 1.5rem;
+        }
+
+        @media (max-width: 900px) {
+            .main {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Left Panel (Game Area) */
+        .game-card {
+            background: var(--bg-alt);
+            border-radius: 14px;
+            padding: 1.4rem 1.6rem;
+            box-shadow: 0 6px 24px rgba(0,0,0,0.75);
+            border: 2px solid #3a3a3a;
+            min-height: 420px;
+        }
+
+        .game-title {
+            font-family: "Cinzel", serif;
+            font-size: 1.8rem;
+            letter-spacing: 0.12em;
+            margin-bottom: 0.2rem;
+            color: var(--accent);
+        }
+
+        .game-subtitle {
+            font-size: 0.95rem;
+            color: var(--text-soft);
+            margin-bottom: 1.2rem;
+        }
+
+        .phase-tag {
+            display: inline-block;
+            padding: 0.25rem 0.6rem;
+            border-radius: 999px;
+            border: 1px solid rgba(255,255,255,0.25);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            margin-bottom: 0.7rem;
+        }
+
+        .phase-submit { border-color: var(--accent); color: var(--accent); }
+        .phase-vote { border-color: var(--gold); color: var(--gold-soft); }
+        .phase-results { border-color: var(--success); color: var(--success); }
+        .phase-lobby { border-color: var(--text-soft); color: var(--text-soft); }
+
+        .prompt-box {
+            background: rgba(0,0,0,0.5);
+            border-radius: 10px;
+            padding: 1.1rem 1rem;
+            border: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 1rem;
+        }
+
+        .prompt-source {
+            font-size: 0.8rem;
+            color: var(--text-soft);
+            margin-bottom: 0.4rem;
+        }
+
+        .prompt-text {
+            font-size: 1.1rem;
+            line-height: 1.4;
+        }
+
+        .prompt-text .blank {
+            color: var(--gold);
+            font-weight: bold;
+        }
+
+        .round-label {
+            font-size: 0.85rem;
+            color: var(--text-soft);
+            margin-bottom: 0.4rem;
+        }
+
+        .timer {
             font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--gold);
+            margin-bottom: 0.8rem;
+        }
+
+        .status-msg {
+            background: rgba(76, 175, 80, 0.1);
+            border: 1px solid var(--accent);
+            border-radius: 8px;
+            padding: 0.8rem;
+            margin: 1rem 0;
+            font-size: 0.9rem;
+            color: var(--accent);
+        }
+
+        .answer-input-area {
+            margin: 1.2rem 0;
+        }
+
+        .answer-input {
+            width: 100%;
+            min-height: 100px;
+            padding: 0.8rem;
+            background: rgba(0,0,0,0.5);
+            border: 1px solid #555;
+            border-radius: 8px;
+            color: var(--text-main);
+            font-size: 1rem;
+            font-family: inherit;
+            resize: vertical;
+        }
+
+        .answer-buttons {
+            display: flex;
+            gap: 0.8rem;
+            margin-top: 0.8rem;
+        }
+
+        .btn {
+            padding: 0.7rem 1.4rem;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: #000;
+        }
+
+        .btn-primary:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+        }
+
+        .btn-primary:disabled {
+            background: #555;
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+
+        .btn-ghost {
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.3);
+            color: var(--text-main);
+        }
+
+        .btn-ghost:hover {
+            border-color: var(--accent);
+            background: rgba(76, 175, 80, 0.1);
+        }
+
+        .btn-accent {
+            background: var(--gold);
+            color: #000;
+        }
+
+        .btn-accent:hover {
+            background: #ffd700;
+            transform: translateY(-2px);
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #cc0000;
+        }
+
+        .answers-list {
+            display: grid;
+            gap: 0.8rem;
+            margin: 1.2rem 0;
+        }
+
+        .answer-card {
+            background: rgba(0,0,0,0.5);
+            border: 2px solid #444;
+            border-radius: 10px;
+            padding: 1rem;
             cursor: pointer;
             transition: all 0.2s;
         }
-        .pb-emoji-btn:hover {
-            background: #4CAF50;
-            transform: scale(1.1);
+
+        .answer-card:hover:not(.disabled) {
+            border-color: var(--accent);
+            background: rgba(76, 175, 80, 0.1);
+            transform: translateX(5px);
         }
-        #pb-room-panel::-webkit-scrollbar {
-            width: 8px;
+
+        .answer-card.selected {
+            border-color: var(--gold);
+            background: rgba(255, 215, 0, 0.1);
         }
-        #pb-room-panel::-webkit-scrollbar-track {
-            background: #2a2a2a;
-            border-radius: 4px;
+
+        .answer-card.disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
         }
-        #pb-room-panel::-webkit-scrollbar-thumb {
-            background: #4CAF50;
-            border-radius: 4px;
+
+        .answer-card.winner {
+            border-color: var(--gold);
+            background: rgba(255, 215, 0, 0.15);
+        }
+
+        .answer-author {
+            font-size: 0.85rem;
+            color: var(--text-soft);
+            margin-top: 0.5rem;
+        }
+
+        .results-line {
+            margin-top: 0.6rem;
+            padding-top: 0.6rem;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            font-size: 0.9rem;
+            color: var(--accent);
+        }
+
+        .winner-tag {
+            color: var(--gold);
+            font-weight: bold;
+        }
+
+        /* Right Panel */
+        .side-card {
+            background: var(--bg-alt);
+            border-radius: 10px;
+            padding: 1.2rem;
+            margin-bottom: 1.2rem;
+            border: 2px solid #3a3a3a;
+        }
+
+        .side-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 0.8rem;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+
+        .player-list {
+            display: grid;
+            gap: 0.5rem;
+        }
+
+        .player-item {
+            padding: 0.6rem;
+            background: rgba(0,0,0,0.3);
+            border-radius: 6px;
+            border: 1px solid #444;
+        }
+
+        .player-item.me {
+            border-color: var(--accent);
+            background: rgba(76, 175, 80, 0.1);
+        }
+
+        .player-item.host {
+            border-left: 3px solid var(--gold);
+        }
+
+        .score-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem;
+            background: rgba(0,0,0,0.3);
+            border-radius: 6px;
+            margin-bottom: 0.4rem;
+        }
+
+        .score-item.leader {
+            border-left: 3px solid var(--gold);
+            background: rgba(255, 215, 0, 0.1);
+        }
+
+        .log-box {
+            background: rgba(0,0,0,0.5);
+            border-radius: 6px;
+            padding: 0.8rem;
+            max-height: 200px;
+            overflow-y: auto;
+            font-size: 0.85rem;
+            font-family: monospace;
+        }
+
+        .log-line {
+            margin-bottom: 0.3rem;
+            color: #888;
+        }
+
+        .connection-status {
+            margin-top: 0.6rem;
+            font-size: 0.75rem;
+            color: var(--text-soft);
+            text-align: center;
+        }
+
+        .connection-status.connected {
+            color: var(--success);
+        }
+
+        .connection-status.error {
+            color: var(--danger);
+        }
+
+        .winner-announcement {
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(76, 175, 80, 0.2));
+            border: 2px solid var(--gold);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            text-align: center;
+        }
+
+        .winner-announcement h2 {
+            font-family: "Cinzel", serif;
+            color: var(--gold);
+            margin-bottom: 0.5rem;
+            font-size: 1.8rem;
+        }
+
+        .winner-announcement .prize {
+            font-size: 1.2rem;
+            color: var(--accent);
+            margin-top: 0.5rem;
         }
     </style>
-</div>
+</head>
+<body>
+    <!-- GLOBAL PLAYER BAR -->
+    <div id="playerbar"></div>
 
-<!-- [REST OF THE AUTH MODALS STAY THE SAME - I'll include them at the end] -->
+    <div class="header">
+        <div class="logo">WHO SAID IT BETTER?</div>
+        <div class="header-right">
+            <div class="room-pill" id="roomInfo">Room: ...</div>
+            <div class="host-tag" id="hostTag">PLAYER</div>
+            <div class="pot-display" id="potDisplay" style="display: none;">💰 Pot: 0</div>
+        </div>
+    </div>
 
-<script>
-/* ================================================
-   MULTIPLAYER ROOM INTEGRATION
-   ================================================ */
-
-let pbMultiplayerRoom = {
-    roomId: null,
-    players: [],
-    pot: 0,
-    channel: null
-};
-
-// Call this function from your multiplayer games to activate the room panel
-window.initMultiplayerPanel = async function(roomId) {
-    pbMultiplayerRoom.roomId = roomId;
-    
-    // Show the room button
-    document.getElementById('pb-room-toggle').style.display = 'inline-flex';
-    
-    // Load room data
-    await loadRoomData();
-    
-    // Subscribe to room updates
-    subscribeToRoomUpdates();
-};
-
-async function loadRoomData() {
-    if (!pbMultiplayerRoom.roomId) return;
-    
-    try {
-        // Get room info
-        const { data: room } = await supabase
-            .from('rooms')
-            .select('buy_in')
-            .eq('id', pbMultiplayerRoom.roomId)
-            .single();
-        
-        if (room && room.buy_in > 0) {
-            pbMultiplayerRoom.pot = room.buy_in;
+    <div class="main">
+        <!-- LEFT: GAME AREA -->
+        <div class="game-card">
+            <div class="game-title">Round <span id="roundNumber">0</span></div>
+            <div class="game-subtitle" id="phaseDescription">Waiting for players...</div>
             
-            // Get player count for total pot
-            const { data: players } = await supabase
+            <div>
+                <span class="phase-tag phase-lobby" id="phaseTag">LOBBY</span>
+                <div class="round-label" id="roundLabel">Phase: Lobby</div>
+                <div class="timer" id="timerDisplay">⏱ --</div>
+            </div>
+
+            <div class="prompt-box" id="promptBox" style="display:none;">
+                <div class="prompt-source" id="promptSource">Source</div>
+                <div class="prompt-text" id="promptText">Prompt text here</div>
+            </div>
+
+            <div class="status-msg" id="statusMessage">
+                Waiting for host to start the first round.
+            </div>
+
+            <!-- SUBMIT PHASE UI -->
+            <div id="submitArea" class="answer-input-area" style="display:none;">
+                <textarea id="answerInput" class="answer-input" placeholder="Rewrite the lyric / quote..."></textarea>
+                <div class="answer-buttons">
+                    <button id="randomAnswerBtn" class="btn btn-ghost" type="button">
+                        🎲 Random Answer
+                    </button>
+                    <button id="submitAnswerBtn" class="btn btn-primary" type="button">
+                        SUBMIT ANSWER
+                    </button>
+                </div>
+            </div>
+
+            <!-- VOTE / RESULTS PHASE UI -->
+            <div id="answersArea" class="answers-list" style="display:none;"></div>
+
+            <!-- HOST CONTROLS -->
+            <div style="margin-top: 1.2rem;">
+                <button id="hostStartBtn" class="btn btn-accent" type="button" style="display:none;">
+                    START GAME / NEXT ROUND
+                </button>
+                <button id="endGameBtn" class="btn btn-danger" type="button" style="display:none; margin-left: 0.5rem;">
+                    END GAME
+                </button>
+            </div>
+        </div>
+
+        <!-- RIGHT: PLAYERS / SCORES / LOG -->
+        <div>
+            <div class="side-card">
+                <div class="side-title">Players</div>
+                <div id="playersList" class="player-list">Loading...</div>
+            </div>
+
+            <div class="side-card">
+                <div class="side-title">Scores</div>
+                <div id="scoresList">
+                    No scores yet.
+                </div>
+            </div>
+
+            <div class="side-card">
+                <div class="side-title">Game Log</div>
+                <div id="logBox" class="log-box"></div>
+                <div class="connection-status" id="connectionStatus">Connecting...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Supabase Initialization -->
+    <script type="module">
+        import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.47.10/+esm";
+        const SUPABASE_URL = 'https://pknhslxhpohrzgsfkisr.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_-zZw-pi_3q1sdNGhITKuhQ_ECyDARzc';
+        const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        window.supabase = supabaseClient;
+        console.log('✅ Supabase initialized');
+    </script>
+
+    <script>
+        // Wait for Supabase to be available
+        function waitForSupabase() {
+            return new Promise((resolve) => {
+                if (window.supabase) {
+                    resolve();
+                } else {
+                    setTimeout(() => waitForSupabase().then(resolve), 50);
+                }
+            });
+        }
+        
+        const supabaseClient = window.supabase || { auth: {}, from: () => ({}) }; // Temporary until loaded
+
+        // === TIMING CONFIG ===
+        const SUBMIT_SECONDS = 40;
+        const VOTE_SECONDS = 25;
+        const RESULTS_SECONDS = 8;
+
+        // === STATE ===
+        let roomId = null;
+        let currentUser = null;
+        let myPlayerId = null;
+        let myPlayerName = null;
+        let isHost = false;
+        let buyIn = 0;
+
+        let prompts = [];
+        let answers = [];
+
+        let currentState = {
+            phase: "lobby",
+            round: 0,
+            prompt: null,
+            submissions: {},
+            votes: {},
+            scores: {},
+            lastResults: null,
+            timerEnd: null,
+            voteOrder: [],
+            gameEnded: false,
+            winner: null
+        };
+
+        let hasSubmitted = false;
+        let hasVoted = false;
+        let countdownInterval = null;
+
+        let gameStateChannel = null;
+        let playersChannel = null;
+
+        // === HELPERS ===
+        function getQueryParam(name) {
+            const params = new URLSearchParams(window.location.search);
+            return params.get(name);
+        }
+
+        function log(message) {
+            const box = document.getElementById("logBox");
+            const line = document.createElement("div");
+            line.className = "log-line";
+            line.textContent = "[" + new Date().toLocaleTimeString() + "] " + message;
+            box.appendChild(line);
+            box.scrollTop = box.scrollHeight;
+        }
+
+        function setConnectionStatus(msg, type = 'normal') {
+            const el = document.getElementById("connectionStatus");
+            el.textContent = msg;
+            el.className = 'connection-status';
+            if (type === 'connected') el.classList.add('connected');
+            if (type === 'error') el.classList.add('error');
+        }
+
+        // === DATA LOADING ===
+        async function loadGameData() {
+            try {
+                const [p, a] = await Promise.all([
+                    fetch('data/prompts.json').then(r => r.json()),
+                    fetch('data/answers.json').then(r => r.json())
+                ]);
+                prompts = p.prompts || [];
+                answers = a.answers || [];
+                log(`Loaded ${prompts.length} prompts, ${answers.length} answers.`);
+            } catch (err) {
+                console.error(err);
+                log("Error loading game data files.");
+            }
+        }
+
+        function pickRandomPrompt() {
+            if (prompts.length === 0) return null;
+            return prompts[Math.floor(Math.random() * prompts.length)];
+        }
+
+        function pickRandomAnswerText() {
+            if (answers.length === 0) return "";
+            const ans = answers[Math.floor(Math.random() * answers.length)];
+            return ans.text || "";
+        }
+
+        // === PLAYERS ===
+        async function loadPlayers() {
+            const { data: players, error } = await supabaseClient
                 .from('room_players')
                 .select('user_id, player_name')
-                .eq('room_id', pbMultiplayerRoom.roomId);
-            
-            pbMultiplayerRoom.players = players || [];
-            
-            const totalPot = room.buy_in * players.length;
-            document.getElementById('pb-pot-amount').textContent = totalPot;
-            document.getElementById('pb-room-pot').style.display = 'block';
-        } else {
-            document.getElementById('pb-room-pot').style.display = 'none';
+                .eq('room_id', roomId);
+
+            if (error) {
+                console.error('Error loading players:', error);
+                return;
+            }
+
+            renderPlayers(players);
         }
-        
-        renderRoomPlayers();
-        
-    } catch (error) {
-        console.error('Error loading room data:', error);
-    }
-}
 
-function renderRoomPlayers() {
-    const container = document.getElementById('pb-room-players');
-    if (!pbMultiplayerRoom.players || pbMultiplayerRoom.players.length === 0) {
-        container.innerHTML = '<div style="color: #888; text-align: center; padding: 8px;">No players</div>';
-        return;
-    }
-    
-    container.innerHTML = pbMultiplayerRoom.players.map(p => `
-        <div style="
-            background: #2a2a2a;
-            padding: 8px;
-            border-radius: 5px;
-            border: 1px solid #444;
-        ">
-            ${p.player_name}
-        </div>
-    `).join('');
-}
+        function renderPlayers(players) {
+            const list = document.getElementById('playersList');
+            if (!players || players.length === 0) {
+                list.innerHTML = '<div style="color: #888;">No players</div>';
+                return;
+            }
 
-function subscribeToRoomUpdates() {
-    if (pbMultiplayerRoom.channel) {
-        pbMultiplayerRoom.channel.unsubscribe();
-    }
-    
-    pbMultiplayerRoom.channel = supabase
-        .channel(`playerbar-room-${pbMultiplayerRoom.roomId}`)
-        .on('postgres_changes',
-            { event: '*', schema: 'public', table: 'room_players', filter: `room_id=eq.${pbMultiplayerRoom.roomId}` },
-            () => loadRoomData()
-        )
-        .subscribe();
-}
-
-function toggleRoomPanel() {
-    const panel = document.getElementById('pb-room-panel');
-    const menu = document.getElementById('pb-settings-menu');
-    
-    // Close settings menu if open
-    menu.style.display = 'none';
-    
-    // Toggle room panel
-    panel.style.display = (panel.style.display === 'block') ? 'none' : 'block';
-}
-
-async function leaveMultiplayerRoom() {
-    if (!pbMultiplayerRoom.roomId) return;
-    
-    if (!confirm('Leave this room? You will be redirected to the lobby.')) return;
-    
-    const session = await pbGetSession();
-    if (!session) return;
-    
-    try {
-        const roomId = pbMultiplayerRoom.roomId;
-        
-        // Get room info before leaving
-        const { data: roomData } = await supabase
-            .from('rooms')
-            .select('status')
-            .eq('id', roomId)
-            .single();
-        
-        // Remove from room
-        await supabase
-            .from('room_players')
-            .delete()
-            .eq('room_id', roomId)
-            .eq('user_id', session.user.id);
-        
-        // Get updated player count
-        const { data: players } = await supabase
-            .from('room_players')
-            .select('user_id')
-            .eq('room_id', roomId);
-        
-        const newPlayerCount = players?.length || 0;
-        
-        // If room is now empty, delete it (no point keeping empty rooms)
-        if (newPlayerCount === 0) {
-            await supabase
-                .from('rooms')
-                .delete()
-                .eq('id', roomId);
-            console.log('Cleaned up empty room');
-        }
-        
-        // Cleanup
-        if (pbMultiplayerRoom.channel) {
-            pbMultiplayerRoom.channel.unsubscribe();
-        }
-        
-        // Hide room button
-        document.getElementById('pb-room-toggle').style.display = 'none';
-        document.getElementById('pb-room-panel').style.display = 'none';
-        
-        // Redirect to lobby
-        window.location.href = '/multiplayer.html';
-        
-    } catch (error) {
-        console.error('Error leaving room:', error);
-        alert('Failed to leave room');
-    }
-}
-
-// Periodic cleanup utility for abandoned rooms
-async function cleanupAbandonedRooms() {
-    try {
-        // Delete empty rooms that haven't been updated in 10+ minutes
-        const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
-        
-        // First find rooms with no players
-        const { data: allRooms } = await supabase
-            .from('rooms')
-            .select('id, updated_at, room_players(user_id)')
-            .lt('updated_at', tenMinutesAgo);
-        
-        if (allRooms) {
-            const emptyRoomIds = allRooms
-                .filter(room => !room.room_players || room.room_players.length === 0)
-                .map(room => room.id);
-            
-            if (emptyRoomIds.length > 0) {
-                const { data: deletedRooms } = await supabase
-                    .from('rooms')
-                    .delete()
-                    .in('id', emptyRoomIds)
-                    .select('id');
+            list.innerHTML = players.map(p => {
+                const isMe = p.user_id === myPlayerId;
+                const classes = ['player-item'];
+                if (isMe) classes.push('me');
                 
-                if (deletedRooms && deletedRooms.length > 0) {
-                    console.log(`Cleaned up ${deletedRooms.length} abandoned room(s)`);
+                return `
+                    <div class="${classes.join(' ')}">
+                        ${p.player_name}${isMe ? ' (You)' : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // === SCORES ===
+        function renderScores() {
+            const scores = currentState.scores || {};
+            const sorted = Object.entries(scores).sort((a, b) => b[1] - a[1]);
+            
+            const list = document.getElementById('scoresList');
+            if (sorted.length === 0) {
+                list.innerHTML = '<div style="color: #888;">No scores yet.</div>';
+                return;
+            }
+
+            const maxScore = sorted[0][1];
+            list.innerHTML = sorted.map(([playerId, score]) => {
+                const isLeader = score === maxScore;
+                return `
+                    <div class="score-item ${isLeader ? 'leader' : ''}">
+                        <span>${getPlayerName(playerId)}</span>
+                        <span style="font-weight: bold;">${score}</span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function getPlayerName(playerId) {
+            // Try to get from last known players
+            // For simplicity, just use ID substring
+            return playerId === myPlayerId ? myPlayerName : `Player ${playerId.substring(0, 4)}`;
+        }
+
+        // === UI UPDATES ===
+        function setPhaseUI(phase) {
+            const tag = document.getElementById("phaseTag");
+            tag.className = "phase-tag phase-" + phase;
+            tag.innerText = phase.toUpperCase();
+
+            const submitArea = document.getElementById("submitArea");
+            const answersArea = document.getElementById("answersArea");
+            const hostStartBtn = document.getElementById("hostStartBtn");
+            const endGameBtn = document.getElementById("endGameBtn");
+            const promptBox = document.getElementById("promptBox");
+
+            submitArea.style.display = "none";
+            answersArea.style.display = "none";
+            hostStartBtn.style.display = "none";
+            endGameBtn.style.display = "none";
+            promptBox.style.display = "none";
+
+            const phaseDescription = document.getElementById("phaseDescription");
+            const roundLabel = document.getElementById("roundLabel");
+            const statusMessage = document.getElementById("statusMessage");
+
+            if (phase === "lobby") {
+                phaseDescription.innerText = "Waiting for the host to start the game.";
+                roundLabel.innerText = "Phase: Lobby";
+                statusMessage.innerText = isHost
+                    ? "You are the host. Click START GAME to begin."
+                    : "Waiting for host to start...";
+                if (isHost) {
+                    hostStartBtn.style.display = "inline-block";
+                    hostStartBtn.innerText = "START GAME";
+                }
+            } else if (phase === "submit") {
+                phaseDescription.innerText = "Rewrite the lyric, quote, or line.";
+                roundLabel.innerText = "Phase: Answer Submission";
+                statusMessage.innerText = "Type your answer and hit SUBMIT. Timer is running.";
+                submitArea.style.display = "block";
+                promptBox.style.display = "block";
+                if (isHost) endGameBtn.style.display = "inline-block";
+            } else if (phase === "vote") {
+                phaseDescription.innerText = "Vote for your favorite answer.";
+                roundLabel.innerText = "Phase: Voting";
+                statusMessage.innerText = "Pick the best answer. You can't vote for yourself.";
+                promptBox.style.display = "block";
+                if (isHost) endGameBtn.style.display = "inline-block";
+            } else if (phase === "results") {
+                phaseDescription.innerText = "Round results.";
+                roundLabel.innerText = "Phase: Results";
+                statusMessage.innerText = "Scores updated. Next round coming soon...";
+                promptBox.style.display = "block";
+                if (isHost) {
+                    hostStartBtn.style.display = "inline-block";
+                    hostStartBtn.innerText = "START NEXT ROUND";
+                    endGameBtn.style.display = "inline-block";
                 }
             }
         }
-    } catch (error) {
-        console.error('Error cleaning up abandoned rooms:', error);
-    }
-}
 
-// Close room panel when clicking outside
-document.addEventListener('click', (e) => {
-    const panel = document.getElementById('pb-room-panel');
-    const button = document.getElementById('pb-room-toggle');
-    
-    if (!e.target.closest('#pb-room-panel') && !e.target.closest('#pb-room-toggle')) {
-        panel.style.display = 'none';
-    }
-});
+        function updatePromptDisplay() {
+            const prompt = currentState.prompt;
+            if (!prompt) {
+                document.getElementById('promptBox').style.display = 'none';
+                return;
+            }
 
-</script>
-
-
-<!-- LOGIN MODAL -->
-<div id="authModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.88); z-index:99999; align-items:center; justify-content:center;">
-    <div class="modal-content" style="background:#111; padding:28px; width:90%; max-width:380px; border-radius:12px; border:2px solid #e94560; position:relative;">
-        <span class="close-modal" onclick="closeModal()" style="position:absolute; top:10px; right:14px; font-size:28px; cursor:pointer;">×</span>
-
-        <h2 style="text-align:center; color:#e94560; margin-bottom:8px;">Login</h2>
-        <p style="text-align:center; color:#888; font-size:13px; margin-bottom:20px; font-style:italic;">
-            Come on, you know the drill...
-        </p>
-
-        <div class="input-group" style="margin-bottom:16px;">
-            <label style="display:block; margin-bottom:6px; color:#ddd; font-size:14px;">Email</label>
-            <input id="loginEmail" class="input-field" type="email" style="
-                width:100%;
-                padding:10px;
-                background:#222;
-                border:1px solid #444;
-                border-radius:6px;
-                color:#fff;
-                font-size:14px;
-                box-sizing:border-box;
-            ">
-        </div>
-        <div class="input-group" style="margin-bottom:16px;">
-            <label style="display:block; margin-bottom:6px; color:#ddd; font-size:14px;">Password</label>
-            <input id="loginPass" class="input-field" type="password" style="
-                width:100%;
-                padding:10px;
-                background:#222;
-                border:1px solid #444;
-                border-radius:6px;
-                color:#fff;
-                font-size:14px;
-                box-sizing:border-box;
-            ">
-        </div>
-
-        <div id="loginError" style="color:#ff4444; display:none; margin-bottom:10px; font-size:13px;"></div>
-
-        <button id="btnLogin" type="button" class="submit-btn"
-            style="width:100%; padding:12px; background:#e94560; color:white; border:none; border-radius:6px; margin-top:10px; font-weight:bold; cursor:pointer; font-size:15px;">
-            LOGIN
-        </button>
-
-        <div class="switch-link" style="text-align:center; margin-top:12px;">
-            <span style="color:#bbb;">No account? </span>
-            <span style="color:#e94560; cursor:pointer; text-decoration:underline;" onclick="openSignup()">Create one</span>
-        </div>
-
-        <div style="text-align:center; margin-top:12px;">
-            <span style="color:#e94560; cursor:pointer; text-decoration:underline;" onclick="openResetPasswordModal()">Forgot Password?</span>
-        </div>
-    </div>
-</div>
-
-<!-- SIGNUP MODAL -->
-<div id="signupModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.88); z-index:99999; align-items:center; justify-content:center;">
-    <div class="modal-content" style="background:#111; padding:28px; width:90%; max-width:380px; border-radius:12px; border:2px solid #e94560; position:relative;">
-        <span class="close-modal" onclick="closeModal()" style="position:absolute; top:10px; right:14px; font-size:28px; cursor:pointer;">×</span>
-
-        <h2 style="text-align:center; color:#e94560;">Create Account</h2>
-
-        <div class="input-group">
-            <label>Name</label>
-            <input id="regName" class="input-field">
-        </div>
-
-        <div class="input-group">
-            <label>Email</label>
-            <input id="regEmail" class="input-field" type="email">
-        </div>
-
-        <div class="input-group">
-            <label>Password</label>
-            <input id="regPass" class="input-field" type="password">
-        </div>
-
-        <div id="signupError" style="color:#ff4444; display:none;"></div>
-
-        <button id="btnSignup" type="button" class="submit-btn"
-            style="width:100%; padding:12px; background:#e94560; color:white; border:none; border-radius:6px; margin-top:10px;">
-            CREATE ACCOUNT
-        </button>
-
-        <div class="switch-link" style="text-align:center; margin-top:12px;">
-            <span style="color:#bbb;">Already have an account? </span>
-            <span style="color:#e94560; cursor:pointer;" onclick="openModal()">Login</span>
-        </div>
-    </div>
-</div>
-
-<!-- RESET PASSWORD MODAL -->
-<div id="resetPasswordModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.88); z-index:99999; align-items:center; justify-content:center;">
-    <div class="modal-content" style="background:#111; padding:28px; width:90%; max-width:380px; border-radius:12px; border:2px solid #e94560; position:relative;">
-        <span class="close-modal" onclick="closeResetPasswordModal()" style="position:absolute; top:10px; right:14px; font-size:28px; cursor:pointer;">×</span>
-
-        <h2 style="text-align:center; color:#e94560;">Reset Password</h2>
-
-        <div class="input-group">
-            <label>Email</label>
-            <input id="resetEmail" class="input-field" type="email">
-        </div>
-
-        <div id="resetError" style="color:#ff4444; display:none;"></div>
-        <div id="resetSuccess" style="color:#44ff44; display:none;"></div>
-
-        <button type="button" onclick="sendPasswordReset()" class="submit-btn"
-            style="width:100%; padding:12px; background:#e94560; color:white; border:none; border-radius:6px; margin-top:10px;">
-            Send Reset Email
-        </button>
-    </div>
-</div>
-
-<!-- CHANGE NAME MODAL -->
-<div id="changeNameModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.88); z-index:99999; align-items:center; justify-content:center;">
-    <div class="modal-content" style="background:#111; padding:28px; width:90%; max-width:380px; border-radius:12px; border:2px solid #e94560; position:relative;">
-        <span class="close-modal" onclick="closeChangeName()" style="position:absolute; top:10px; right:14px; font-size:28px; cursor:pointer;">×</span>
-
-        <h2 style="text-align:center; color:#e94560;">Change Name</h2>
-
-        <div class="input-group">
-            <label>New Name</label>
-            <input id="newPlayerName" class="input-field">
-        </div>
-
-        <div id="nameChangeError" style="color:#ff4444; display:none;"></div>
-
-        <button type="button" onclick="changePlayerName()" class="submit-btn"
-            style="width:100%; padding:12px; background:#e94560; color:white; border:none; border-radius:6px; margin-top:10px;">
-            Update Name
-        </button>
-    </div>
-</div>
-
-<!-- LOW COINS MODAL -->
-<div id="lowCoinsModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.88); z-index:99999; align-items:center; justify-content:center;">
-    <div class="modal-content" style="background:#111; padding:28px; width:90%; max-width:380px; border-radius:12px; border:2px solid #ffd700; position:relative;">
-        <span class="close-modal" onclick="closeLowCoinsModal()" style="position:absolute; top:10px; right:14px; font-size:28px; cursor:pointer;">×</span>
-
-        <h2 style="text-align:center; color:#ffd700;">⚠️ Not Enough Coins!</h2>
-        
-        <p style="text-align:center; color:#fff; margin:20px 0;">
-            You need <strong>1 GunnerCoin</strong> to play arcade games.<br>
-            Play casino games to earn more coins!
-        </p>
-
-        <button type="button" onclick="closeLowCoinsModal()" class="submit-btn"
-            style="width:100%; padding:12px; background:#ffd700; color:#111; border:none; border-radius:6px; margin-top:10px; font-weight:bold;">
-            OK
-        </button>
-    </div>
-</div>
-
-
-<!-- ================================
-     JUKEBOX + MUSIC PLAYER SCRIPTS
-     ================================ -->
-<script src="/songs.js"></script>
-<script src="/playerbar-music.js"></script>
-<script src="/jukebox-modal.js"></script>
-
-
-
-<!-- ================================
-     PLAYER BAR + MODAL JS
-     ================================ -->
-
-<script>
-/* ---------- UI Open/Close Functions ---------- */
-function openModal() {
-    document.getElementById("authModal").style.display = "flex";
-}
-function closeModal() {
-    document.getElementById("authModal").style.display = "none";
-    document.getElementById("signupModal").style.display = "none";
-}
-function openSignup() {
-    document.getElementById("signupModal").style.display = "flex";
-}
-function openResetPasswordModal() {
-    document.getElementById("resetPasswordModal").style.display = "flex";
-}
-function closeResetPasswordModal() {
-    document.getElementById("resetPasswordModal").style.display = "none";
-}
-function openChangeName() {
-    document.getElementById("changeNameModal").style.display = "flex";
-}
-function closeChangeName() {
-    document.getElementById("changeNameModal").style.display = "none";
-}
-function closeLowCoinsModal() {
-    document.getElementById("lowCoinsModal").style.display = "none";
-}
-
-/* ---------- Post-Login Handler ---------- */
-// This function can be called by index-auth.js after successful login
-window.onLoginSuccess = function() {
-    closeModal();
-    pbLoadPlayerData(); // Immediately update the playerbar
-    if (typeof enableGames === "function") enableGames();
-};
-
-window.onSignupSuccess = function() {
-    closeModal();
-    pbLoadPlayerData(); // Immediately update the playerbar
-    if (typeof enableGames === "function") enableGames();
-};
-
-
-/* ---------- Player Bar Logic ---------- */
-async function pbGetSession() {
-    if (typeof supabase === "undefined") return null;
-    const { data: { session } } = await supabase.auth.getSession();
-    return session;
-}
-
-async function pbLoadPlayerData() {
-    const nameSpan = document.getElementById("pb-player-name");
-    const coinSpan = document.getElementById("pb-player-coins");
-    const loginBtn = document.getElementById("pb-login-btn");
-    const settingsBtn = document.querySelector(".pb-settings-btn");
-    const jukeboxBtn = document.querySelector(".pb-jukebox-btn");
-
-    const session = await pbGetSession();
-
-    if (!session) {
-        nameSpan.textContent = "GUEST";
-        coinSpan.textContent = "0";
-        loginBtn.style.display = "inline-flex";
-        settingsBtn.style.display = "none";
-        if (jukeboxBtn) jukeboxBtn.style.display = "none";
-        return;
-    }
-
-    const { data } = await supabase
-        .from("profiles")
-        .select("player_name, gunnercoins")
-        .eq("id", session.user.id)
-        .single();
-
-    if (data) {
-        nameSpan.textContent = data.player_name || "PLAYER";
-        coinSpan.textContent = data.gunnercoins ?? 0;
-    }
-
-    loginBtn.style.display = "none";
-    settingsBtn.style.display = "inline-flex";
-    if (jukeboxBtn) jukeboxBtn.style.display = "inline-flex";
-}
-
-function togglePBMenu(e) {
-    e.stopPropagation();
-    const menu = document.getElementById("pb-settings-menu");
-    menu.style.display = (menu.style.display === "block") ? "none" : "block";
-}
-
-document.addEventListener("click", (e) => {
-    const menu = document.getElementById("pb-settings-menu");
-    if (!e.target.closest("#pb-settings-menu") &&
-        !e.target.closest(".pb-settings-btn")) {
-        menu.style.display = "none";
-    }
-});
-
-async function pbLogout() {
-    await supabase.auth.signOut();
-    localStorage.removeItem("supabase.auth.token");
-    window.location.reload();
-}
-
-/* ---------- Settings Functions ---------- */
-async function sendPasswordReset() {
-    const email = document.getElementById('resetEmail').value;
-    const errorDiv = document.getElementById('resetError');
-    const successDiv = document.getElementById('resetSuccess');
-    
-    errorDiv.style.display = 'none';
-    successDiv.style.display = 'none';
-    
-    if (!email) {
-        errorDiv.textContent = 'Please enter your email';
-        errorDiv.style.display = 'block';
-        return;
-    }
-    
-    try {
-        const { error } = await supabase.auth.resetPasswordForEmail(email, {
-            redirectTo: window.location.origin + '/reset-password.html'
-        });
-        
-        if (error) throw error;
-        
-        successDiv.textContent = 'Password reset email sent! Check your inbox.';
-        successDiv.style.display = 'block';
-        
-        setTimeout(() => {
-            closeResetPasswordModal();
-            document.getElementById('resetEmail').value = '';
-        }, 3000);
-        
-    } catch (error) {
-        console.error('Reset error:', error);
-        errorDiv.textContent = error.message || 'Failed to send reset email';
-        errorDiv.style.display = 'block';
-    }
-}
-
-async function changePlayerName() {
-    const newName = document.getElementById('newPlayerName').value.trim();
-    const errorDiv = document.getElementById('nameChangeError');
-    
-    errorDiv.style.display = 'none';
-    
-    if (!newName) {
-        errorDiv.textContent = 'Please enter a name';
-        errorDiv.style.display = 'block';
-        return;
-    }
-    
-    if (newName.length < 3 || newName.length > 20) {
-        errorDiv.textContent = 'Name must be 3-20 characters';
-        errorDiv.style.display = 'block';
-        return;
-    }
-    
-    const session = await pbGetSession();
-    if (!session) {
-        errorDiv.textContent = 'Not logged in';
-        errorDiv.style.display = 'block';
-        return;
-    }
-    
-    try {
-        const { error } = await supabase
-            .from('profiles')
-            .update({ player_name: newName })
-            .eq('id', session.user.id);
-        
-        if (error) throw error;
-        
-        // Update UI
-        document.getElementById('pb-player-name').textContent = newName;
-        closeChangeName();
-        document.getElementById('newPlayerName').value = '';
-        
-    } catch (error) {
-        console.error('Name change error:', error);
-        errorDiv.textContent = error.message || 'Failed to change name';
-        errorDiv.style.display = 'block';
-    }
-}
-
-async function pbDeleteAccount() {
-    if (!confirm('Are you SURE you want to delete your account? This cannot be undone!')) {
-        return;
-    }
-    
-    if (!confirm('Really? All your progress and coins will be lost forever!')) {
-        return;
-    }
-    
-    const session = await pbGetSession();
-    if (!session) return;
-    
-    try {
-        // Delete profile data
-        const { error: profileError } = await supabase
-            .from('profiles')
-            .delete()
-            .eq('id', session.user.id);
-        
-        if (profileError) throw profileError;
-        
-        // Sign out
-        await supabase.auth.signOut();
-        
-        alert('Account deleted successfully');
-        window.location.href = '/';
-        
-    } catch (error) {
-        console.error('Delete error:', error);
-        alert('Failed to delete account: ' + error.message);
-    }
-}
-
-
-/* ============================================
-   ARCADE COIN SYSTEM
-   ============================================ */
-
-/**
- * Deduct 1 GunnerCoin for playing an arcade game
- * Returns true if successful, false if not enough coins or not logged in
- */
-async function deductArcadeCoin() {
-    const session = await pbGetSession();
-    
-    // Guests cannot play arcade games - show login modal
-    if (!session) {
-        console.log("Guest cannot play - must login");
-        openModal();
-        return false;
-    }
-
-    try {
-        // Get current coin balance
-        const { data: profile, error: fetchError } = await supabase
-            .from("profiles")
-            .select("gunnercoins")
-            .eq("id", session.user.id)
-            .single();
-
-        if (fetchError) throw fetchError;
-
-        const currentCoins = profile.gunnercoins ?? 0;
-
-        // Check if player has enough coins
-        if (currentCoins < 1) {
-            console.log("Not enough coins!");
-            document.getElementById("lowCoinsModal").style.display = "flex";
-            return false;
+            document.getElementById('promptSource').textContent = prompt.source || 'Unknown Source';
+            
+            let text = prompt.text || '';
+            // Replace [blank] with highlighted version
+            text = text.replace(/\[blank\]/gi, '<span class="blank">[_____]</span>');
+            document.getElementById('promptText').innerHTML = text;
         }
 
-        // Deduct 1 coin
-        const { error: updateError } = await supabase
-            .from("profiles")
-            .update({ gunnercoins: currentCoins - 1 })
-            .eq("id", session.user.id);
+        function updateTimerDisplay() {
+            const el = document.getElementById("timerDisplay");
+            if (!currentState.timerEnd) {
+                el.innerText = "⏱ --";
+                return;
+            }
+            const now = Date.now();
+            const remaining = Math.max(0, Math.round((currentState.timerEnd - now) / 1000));
+            el.innerText = "⏱ " + remaining + "s";
+        }
 
-        if (updateError) throw updateError;
+        function startCountdown(phase) {
+            if (countdownInterval) clearInterval(countdownInterval);
+            updateTimerDisplay();
+            countdownInterval = setInterval(() => {
+                updateTimerDisplay();
+                if (!currentState.timerEnd) return;
+                const now = Date.now();
+                if (now >= currentState.timerEnd) {
+                    clearInterval(countdownInterval);
+                    countdownInterval = null;
+                    if (isHost) {
+                        handlePhaseTimeout(phase);
+                    }
+                }
+            }, 1000);
+        }
 
-        // Update UI immediately
-        document.getElementById("pb-player-coins").textContent = currentCoins - 1;
-        
-        console.log(`Coin deducted! ${currentCoins - 1} coins remaining`);
-        return true;
-
-    } catch (error) {
-        console.error("Error deducting coin:", error);
-        return false;
-    }
-}
-
-/**
- * Add coins (for casino winnings, rewards, etc.)
- */
-async function addGunnerCoins(amount) {
-    const session = await pbGetSession();
-    if (!session) return false;
-
-    try {
-        const { data: profile } = await supabase
-            .from("profiles")
-            .select("gunnercoins")
-            .eq("id", session.user.id)
-            .single();
-
-        const newBalance = (profile.gunnercoins ?? 0) + amount;
-
-        await supabase
-            .from("profiles")
-            .update({ gunnercoins: newBalance })
-            .eq("id", session.user.id);
-
-        document.getElementById("pb-player-coins").textContent = newBalance;
-        return true;
-    } catch (error) {
-        console.error("Error adding coins:", error);
-        return false;
-    }
-}
-
-/**
- * Get current coin balance
- */
-async function getCurrentCoins() {
-    const session = await pbGetSession();
-    if (!session) return 0;
-
-    try {
-        const { data } = await supabase
-            .from("profiles")
-            .select("gunnercoins")
-            .eq("id", session.user.id)
-            .single();
-
-        return data?.gunnercoins ?? 0;
-    } catch (error) {
-        console.error("Error getting coins:", error);
-        return 0;
-    }
-}
-
-
-/* ---------- Initialize ---------- */
-pbLoadPlayerData();
-setInterval(pbLoadPlayerData, 15000);
-
-/* ---------- Auth State Listener ---------- */
-if (typeof supabase !== "undefined") {
-    supabase.auth.onAuthStateChange((event, session) => {
-        console.log("Auth state changed:", event);
-        
-        if (event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED') {
-            // Reload playerbar data immediately when auth state changes
-            pbLoadPlayerData();
+        function renderAnswers() {
+            const container = document.getElementById('answersArea');
+            const phase = currentState.phase;
             
-            // Also enable/disable games based on auth state
-            if (session?.user) {
-                window.currentUser = session.user;
-                if (typeof enableGames === "function") enableGames();
-            } else {
-                window.currentUser = null;
-                if (typeof disableGames === "function") disableGames();
+            if (phase !== 'vote' && phase !== 'results') {
+                container.style.display = 'none';
+                return;
+            }
+
+            const voteOrder = currentState.voteOrder || [];
+            if (voteOrder.length === 0) {
+                container.innerHTML = '<div style="color: #888; text-align: center;">No answers to display.</div>';
+                container.style.display = 'block';
+                return;
+            }
+
+            container.style.display = "block";
+            container.innerHTML = '';
+
+            const votes = currentState.votes || {};
+            const myVote = votes[myPlayerId] || null;
+
+            voteOrder.forEach(entry => {
+                const card = document.createElement("div");
+                card.className = "answer-card";
+
+                const main = document.createElement("div");
+                main.innerText = entry.text;
+                card.appendChild(main);
+
+                const author = document.createElement("div");
+                author.className = "answer-author";
+                let label = entry.name || "Player";
+                if (entry.playerId === myPlayerId) label += " (You)";
+                author.innerText = label;
+                card.appendChild(author);
+
+                const isMe = entry.playerId === myPlayerId;
+
+                if (phase === "vote") {
+                    if (isMe) {
+                        card.classList.add("disabled");
+                        card.style.opacity = "0.6";
+                    } else {
+                        card.addEventListener("click", () => {
+                            handleVote(entry.playerId, card);
+                        });
+                    }
+                    if (myVote === entry.playerId) {
+                        card.classList.add("selected");
+                    }
+                }
+
+                if (phase === "results") {
+                    const last = currentState.lastResults;
+                    if (last && last.details) {
+                        const detail = last.details.find(d => d.playerId === entry.playerId);
+                        if (detail) {
+                            const rLine = document.createElement("div");
+                            rLine.className = "results-line";
+                            rLine.innerText = `Votes: ${detail.votes}`;
+                            if (detail.votes === Math.max(...last.details.map(d => d.votes))) {
+                                rLine.classList.add("winner-tag");
+                                rLine.innerText += "  ← Winner";
+                                card.classList.add("winner");
+                            }
+                            card.appendChild(rLine);
+                        }
+                    }
+                    card.classList.add("disabled");
+                }
+
+                container.appendChild(card);
+            });
+        }
+
+        // === ACTIONS ===
+        async function handleSubmit() {
+            if (hasSubmitted) {
+                alert("You already submitted this round.");
+                return;
+            }
+            if (currentState.phase !== "submit") {
+                alert("It's not submission time right now.");
+                return;
+            }
+            const input = document.getElementById("answerInput");
+            const text = input.value.trim();
+            if (!text) {
+                alert("Type an answer first.");
+                return;
+            }
+
+            hasSubmitted = true;
+            document.getElementById("submitAnswerBtn").disabled = true;
+            input.disabled = true;
+
+            // Add submission to state
+            currentState.submissions[myPlayerId] = {
+                text: text,
+                name: myPlayerName
+            };
+
+            // Update state
+            await saveGameState();
+            log("You submitted an answer.");
+        }
+
+        async function handleVote(targetPlayerId, cardElem) {
+            if (hasVoted) {
+                alert("You already voted this round.");
+                return;
+            }
+            if (currentState.phase !== "vote") {
+                alert("It's not voting time right now.");
+                return;
+            }
+            if (!targetPlayerId) return;
+
+            hasVoted = true;
+            currentState.votes[myPlayerId] = targetPlayerId;
+
+            await saveGameState();
+            log("You cast your vote.");
+
+            // Highlight selection locally
+            const all = document.querySelectorAll(".answer-card");
+            all.forEach(c => c.classList.remove("selected"));
+            cardElem.classList.add("selected");
+        }
+
+        async function hostStartNewRound() {
+            if (!isHost) return;
+
+            const nextRound = (currentState.round || 0) + 1;
+            const prompt = pickRandomPrompt();
+            if (!prompt) {
+                alert("No prompts loaded yet.");
+                return;
+            }
+
+            const now = Date.now();
+            currentState = {
+                phase: "submit",
+                round: nextRound,
+                prompt: prompt,
+                submissions: {},
+                votes: {},
+                scores: currentState.scores || {},
+                lastResults: null,
+                timerEnd: now + SUBMIT_SECONDS * 1000,
+                voteOrder: [],
+                gameEnded: false,
+                winner: null
+            };
+
+            log("Starting round " + nextRound + " as host.");
+            await saveGameState();
+        }
+
+        async function handlePhaseTimeout(phase) {
+            if (!isHost) return;
+
+            if (phase === "submit") {
+                const submissions = currentState.submissions || {};
+                const submitters = Object.keys(submissions);
+
+                if (submitters.length === 0) {
+                    currentState.lastResults = {
+                        message: "No submissions this round.",
+                        details: []
+                    };
+                    currentState.phase = "results";
+                    currentState.timerEnd = Date.now() + RESULTS_SECONDS * 1000;
+                    log("No submissions. Moving to results.");
+                } else if (submitters.length === 1) {
+                    const winnerId = submitters[0];
+                    currentState.scores[winnerId] = (currentState.scores[winnerId] || 0) + 1;
+                    currentState.lastResults = {
+                        message: "Only one submission.",
+                        details: [{
+                            playerId: winnerId,
+                            votes: 1
+                        }]
+                    };
+                    currentState.phase = "results";
+                    currentState.timerEnd = Date.now() + RESULTS_SECONDS * 1000;
+                    log("Only one answer. Auto-win.");
+                } else {
+                    // Move to voting
+                    currentState.phase = "vote";
+                    currentState.timerEnd = Date.now() + VOTE_SECONDS * 1000;
+                    
+                    // Shuffle submissions for voting
+                    const voteOrder = Object.entries(submissions).map(([playerId, data]) => ({
+                        playerId,
+                        name: data.name,
+                        text: data.text
+                    }));
+                    // Shuffle
+                    for (let i = voteOrder.length - 1; i > 0; i--) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        [voteOrder[i], voteOrder[j]] = [voteOrder[j], voteOrder[i]];
+                    }
+                    currentState.voteOrder = voteOrder;
+                    log("Moving to voting phase.");
+                }
+                await saveGameState();
+            } else if (phase === "vote") {
+                // Tally votes
+                const votes = currentState.votes || {};
+                const tally = {};
+                
+                Object.values(votes).forEach(targetId => {
+                    tally[targetId] = (tally[targetId] || 0) + 1;
+                });
+
+                const voteOrder = currentState.voteOrder || [];
+                const details = voteOrder.map(entry => ({
+                    playerId: entry.playerId,
+                    votes: tally[entry.playerId] || 0
+                }));
+
+                const maxVotes = Math.max(...details.map(d => d.votes), 0);
+                const winners = details.filter(d => d.votes === maxVotes);
+
+                winners.forEach(w => {
+                    currentState.scores[w.playerId] = (currentState.scores[w.playerId] || 0) + 1;
+                });
+
+                currentState.lastResults = { details };
+                currentState.phase = "results";
+                currentState.timerEnd = Date.now() + RESULTS_SECONDS * 1000;
+                
+                log("Voting complete. Results tallied.");
+                await saveGameState();
+            } else if (phase === "results") {
+                // Auto-start next round
+                await hostStartNewRound();
             }
         }
-    });
-}
-</script>
+
+        async function endGame() {
+            if (!isHost) return;
+            if (!confirm("Are you sure you want to end the game?")) return;
+
+            // Determine winner
+            const scores = currentState.scores || {};
+            const sorted = Object.entries(scores).sort((a, b) => b[1] - a[1]);
+            
+            let winnerId = null;
+            let winnerScore = 0;
+            
+            if (sorted.length > 0) {
+                winnerId = sorted[0][0];
+                winnerScore = sorted[0][1];
+            }
+
+            currentState.gameEnded = true;
+            currentState.winner = winnerId;
+            currentState.phase = "ended";
+
+            await saveGameState();
+
+            // Award pot to winner
+            if (winnerId && buyIn > 0) {
+                const { data: players } = await supabaseClient
+                    .from('room_players')
+                    .select('user_id')
+                    .eq('room_id', roomId);
+
+                const totalPot = buyIn * players.length;
+
+                // Get winner's current coins
+                const { data: profile } = await supabaseClient
+                    .from('profiles')
+                    .select('gunnercoins')
+                    .eq('user_id', winnerId)
+                    .single();
+
+                // Award pot
+                await supabaseClient
+                    .from('profiles')
+                    .update({ gunnercoins: (profile?.gunnercoins || 0) + totalPot })
+                    .eq('user_id', winnerId);
+
+                log(`Winner awarded ${totalPot} GunnerCoins!`);
+            }
+
+            // Update room status
+            await supabaseClient
+                .from('rooms')
+                .update({ status: 'finished' })
+                .eq('id', roomId);
+
+            showGameEndScreen(winnerId, winnerScore);
+        }
+
+        function showGameEndScreen(winnerId, score) {
+            const gameCard = document.querySelector('.game-card');
+            
+            let winnerName = winnerId === myPlayerId ? myPlayerName : getPlayerName(winnerId);
+            const totalPot = buyIn > 0 ? `Won ${buyIn} × players = Total Pot!` : '';
+            
+            gameCard.innerHTML = `
+                <div class="winner-announcement">
+                    <h2>🎉 GAME OVER! 🎉</h2>
+                    <p style="font-size: 1.5rem; margin: 1rem 0;">
+                        Winner: <strong>${winnerName}</strong>
+                    </p>
+                    <p style="font-size: 1.2rem;">
+                        Final Score: <strong>${score}</strong> points
+                    </p>
+                    ${totalPot ? `<p class="prize">${totalPot}</p>` : ''}
+                    <div style="margin-top: 2rem;">
+                        <a href="/multiplayer.html" class="btn btn-primary">Back to Lobby</a>
+                    </div>
+                </div>
+            `;
+        }
+
+        // === STATE MANAGEMENT ===
+        async function saveGameState() {
+            if (!isHost) return;
+
+            const { error } = await supabaseClient
+                .from('game_states')
+                .upsert({
+                    room_id: roomId,
+                    game_type: 'who-said-it-better',
+                    state: currentState,
+                    updated_at: new Date().toISOString()
+                }, {
+                    onConflict: 'room_id'
+                });
+
+            if (error) {
+                console.error('Error saving game state:', error);
+            }
+        }
+
+        async function loadGameState() {
+            const { data, error } = await supabaseClient
+                .from('game_states')
+                .select('state')
+                .eq('room_id', roomId)
+                .eq('game_type', 'who-said-it-better')
+                .single();
+
+            if (error) {
+                if (error.code !== 'PGRST116') { // Not found is ok
+                    console.error('Error loading game state:', error);
+                }
+                return;
+            }
+
+            if (data && data.state) {
+                applyState(data.state);
+            }
+        }
+
+        function applyState(state) {
+            if (!state || !state.phase) {
+                currentState.phase = "lobby";
+                currentState.round = 0;
+                currentState.prompt = null;
+                currentState.submissions = {};
+                currentState.votes = {};
+                currentState.scores = {};
+                currentState.lastResults = null;
+                currentState.timerEnd = null;
+                currentState.voteOrder = [];
+                currentState.gameEnded = false;
+                currentState.winner = null;
+            } else {
+                currentState = state;
+            }
+
+            // Check if game ended
+            if (currentState.gameEnded && currentState.winner) {
+                const scores = currentState.scores || {};
+                const winnerScore = scores[currentState.winner] || 0;
+                showGameEndScreen(currentState.winner, winnerScore);
+                return;
+            }
+
+            document.getElementById("roundNumber").innerText = currentState.round || 0;
+            
+            // Reset submission/vote flags for new rounds
+            const mySubmission = currentState.submissions && currentState.submissions[myPlayerId];
+            hasSubmitted = !!mySubmission;
+            
+            const myVote = currentState.votes && currentState.votes[myPlayerId];
+            hasVoted = !!myVote;
+
+            // Update UI
+            setPhaseUI(currentState.phase);
+            updatePromptDisplay();
+            renderScores();
+            renderAnswers();
+
+            // Handle timers
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+                countdownInterval = null;
+            }
+
+            if (currentState.timerEnd && currentState.phase !== 'lobby') {
+                startCountdown(currentState.phase);
+            } else {
+                updateTimerDisplay();
+            }
+
+            // Reset input for new round
+            if (currentState.phase === 'submit') {
+                const input = document.getElementById("answerInput");
+                const btn = document.getElementById("submitAnswerBtn");
+                if (!hasSubmitted) {
+                    input.value = '';
+                    input.disabled = false;
+                    btn.disabled = false;
+                } else {
+                    input.disabled = true;
+                    btn.disabled = true;
+                }
+            }
+        }
+
+        // === INITIALIZATION ===
+        async function init() {
+            roomId = getQueryParam('room');
+            if (!roomId) {
+                alert('No room ID provided!');
+                window.location.href = '/multiplayer.html';
+                return;
+            }
+
+            // Get current user
+            const { data: { user } } = await supabaseClient.auth.getUser();
+            if (!user) {
+                window.location.href = '/login.html';
+                return;
+            }
+
+            currentUser = user;
+            myPlayerId = user.id;
+
+            // Get player name
+            const { data: profile } = await supabaseClient
+                .from('profiles')
+                .select('player_name')
+                .eq('id', myPlayerId)
+                .single();
+
+            myPlayerName = profile?.player_name || 'Player';
+
+            // Get room info
+            const { data: room } = await supabaseClient
+                .from('rooms')
+                .select('host_user_id, buy_in')
+                .eq('id', roomId)
+                .single();
+
+            if (!room) {
+                alert('Room not found!');
+                window.location.href = '/multiplayer.html';
+                return;
+            }
+
+            isHost = room.host_user_id === myPlayerId;
+            buyIn = room.buy_in || 0;
+
+            document.getElementById("roomInfo").innerText = "Room: " + roomId.substring(0, 8);
+            document.getElementById("hostTag").innerText = isHost ? "HOST" : "PLAYER";
+            
+            if (buyIn > 0) {
+                document.getElementById('potDisplay').style.display = 'block';
+                // Calculate pot from player count
+                const { data: players } = await supabaseClient
+                    .from('room_players')
+                    .select('user_id')
+                    .eq('room_id', roomId);
+                const totalPot = buyIn * (players?.length || 0);
+                document.getElementById('potDisplay').textContent = `💰 Pot: ${totalPot}`;
+            }
+
+            log(`Joined room as ${myPlayerName} (${isHost ? 'HOST' : 'PLAYER'})`);
+            setConnectionStatus('Loading...', 'normal');
+
+            // Load game data
+            await loadGameData();
+
+            // Load initial players
+            await loadPlayers();
+
+            // Load game state
+            await loadGameState();
+
+            // Subscribe to game state updates
+            gameStateChannel = supabaseClient
+                .channel(`game-state-${roomId}`)
+                .on('postgres_changes',
+                    { event: '*', schema: 'public', table: 'game_states', filter: `room_id=eq.${roomId}` },
+                    (payload) => {
+                        if (payload.new && payload.new.state) {
+                            applyState(payload.new.state);
+                        }
+                    }
+                )
+                .subscribe((status) => {
+                    if (status === 'SUBSCRIBED') {
+                        setConnectionStatus('Connected', 'connected');
+                        log('Connected to game.');
+                    }
+                });
+
+            // Subscribe to player updates
+            playersChannel = supabaseClient
+                .channel(`players-${roomId}`)
+                .on('postgres_changes',
+                    { event: '*', schema: 'public', table: 'room_players', filter: `room_id=eq.${roomId}` },
+                    () => {
+                        loadPlayers();
+                        // Update pot if buy-in
+                        if (buyIn > 0) {
+                            supabaseClient
+                                .from('room_players')
+                                .select('user_id')
+                                .eq('room_id', roomId)
+                                .then(({ data }) => {
+                                    const totalPot = buyIn * (data?.length || 0);
+                                    document.getElementById('potDisplay').textContent = `💰 Pot: ${totalPot}`;
+                                });
+                        }
+                    }
+                )
+                .subscribe();
+
+            // Event listeners
+            document.getElementById("hostStartBtn").addEventListener("click", hostStartNewRound);
+            document.getElementById("endGameBtn").addEventListener("click", endGame);
+            document.getElementById("submitAnswerBtn").addEventListener("click", handleSubmit);
+            document.getElementById("randomAnswerBtn").addEventListener("click", () => {
+                const input = document.getElementById("answerInput");
+                input.value = pickRandomAnswerText();
+            });
+
+            // Initialize multiplayer panel in playerbar
+            console.log('Initializing multiplayer panel with roomId:', roomId);
+            if (typeof window.initMultiplayerPanel === 'function') {
+                window.initMultiplayerPanel(roomId);
+            } else {
+                console.warn('initMultiplayerPanel not available yet');
+            }
+        }
+
+        // Load playerbar first, then initialize
+        async function loadPlayerBar(){
+            try {
+                const res = await fetch("/playerbar.html");
+                const html = await res.text();
+                const container = document.getElementById("playerbar");
+                const temp = document.createElement("div");
+                temp.innerHTML = html;
+
+                Array.from(temp.childNodes).forEach(node => {
+                    if (node.tagName === "SCRIPT") {
+                        const s = document.createElement("script");
+                        if (node.src) s.src = node.src;
+                        else s.textContent = node.textContent;
+                        document.body.appendChild(s);
+                    } else {
+                        container.appendChild(node);
+                    }
+                });
+
+                // Wait for playerbar scripts to load and Supabase
+                await waitForSupabase();
+                setTimeout(async () => {
+                    await init();
+                }, 200);
+            } catch (e) { console.error(e); }
+        }
+        document.addEventListener("DOMContentLoaded", loadPlayerBar);
+    </script>
+
+    <!-- LOAD PLAYERBAR -->
+    <script>
+    async function loadPlayerBar(){
+</body>
+</html>
