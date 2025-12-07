@@ -1519,14 +1519,20 @@
             const scores = currentState.scores || {};
             const sorted = Object.entries(scores).sort((a, b) => b[1] - a[1]);
             
-            // Set local state to show final results (don't save to DB, we're deleting it)
+            // Set state to show final results and SAVE IT so non-host players see it
             currentState.phase = 'final_results';
             currentState.finalScores = sorted;
             
-            // Trigger UI update locally
-            displayFinalResults();
+            // Save the final_results state so all players can see it
+            // This needs to happen BEFORE we set isCleaningUp flag
+            await saveGameState();
             
-            // Clean up room - this deletes everything from database
+            console.log('Final results state saved, waiting for sync...');
+            
+            // Wait a few seconds so players can see the results sync
+            await new Promise(resolve => setTimeout(resolve, 3000));
+            
+            // Now clean up the room (this sets isCleaningUp flag)
             await cleanupRoom();
         }
 
@@ -1647,11 +1653,8 @@
             if (!isHost) return;
             
             if (confirm('Are you sure you want to end the game? All players will return to the lobby.')) {
-                // Clean up room
-                await cleanupRoom();
-                
-                // Show final results and redirect
-                showFinalResults();
+                // Show final results (which will handle cleanup)
+                await showFinalResults();
             }
         }
 
