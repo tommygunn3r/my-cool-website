@@ -1113,6 +1113,13 @@
                 
             if (!players) return;
             
+            console.log('Checking votes:', {
+                players: players.map(p => p.user_id),
+                votes: Object.keys(currentState.votes),
+                voteData: currentState.votes,
+                allVoted: players.every(p => currentState.votes[p.user_id])
+            });
+            
             const allVoted = players.every(p => currentState.votes[p.user_id]);
             
             if (allVoted) {
@@ -1413,14 +1420,14 @@
                 selectedCardIndex = null;
                 
                 // If host and in submit phase, check if everyone submitted
-                if (isHost && !hasSubmitted) {
+                if (isHost) {
                     setTimeout(() => checkAllSubmitted(), 1000);
                 }
             } else if (currentState.phase === 'vote') {
                 hasVoted = !!(currentState.votes && currentState.votes[myPlayerId]);
                 
                 // If host and in vote phase, check if everyone voted
-                if (isHost && !hasVoted) {
+                if (isHost) {
                     setTimeout(() => checkAllVoted(), 1000);
                 }
             } else if (currentState.phase === 'results' || currentState.phase === 'lobby') {
