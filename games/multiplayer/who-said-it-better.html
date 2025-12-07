@@ -700,9 +700,13 @@
         async function loadGameData() {
             try {
                 const [promptsRes, answersRes] = await Promise.all([
-                    fetch('/data/prompts.json'),
-                    fetch('/data/answers.json')
+                    fetch('prompts.json'),
+                    fetch('answers.json')
                 ]);
+                
+                if (!promptsRes.ok || !answersRes.ok) {
+                    throw new Error('Failed to load JSON files');
+                }
                 
                 const promptsData = await promptsRes.json();
                 const answersData = await answersRes.json();
@@ -713,7 +717,7 @@
                 log(`Loaded ${prompts.length} prompts, ${answers.length} answers.`);
             } catch (error) {
                 console.error('Error loading game data:', error);
-                alert('Failed to load game data. Please refresh.');
+                alert('Failed to load game data. Please make sure prompts.json and answers.json are in the same folder as this game.');
             }
         }
 
@@ -1410,7 +1414,7 @@
             
             if (!room) {
                 console.error('Room not found in database');
-                alert('Room not found!');
+                // Room doesn't exist, redirect back
                 window.location.href = '/multiplayer.html';
                 return;
             }
