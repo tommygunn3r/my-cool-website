@@ -721,6 +721,9 @@
             }
         }
 
+        // Store loaded players for name lookup
+        let loadedPlayers = {};
+
         // === PLAYER MANAGEMENT ===
         async function loadPlayers() {
             const { data, error } = await supabaseClient
@@ -734,12 +737,19 @@
                 return;
             }
 
+            // Store for name lookups
+            loadedPlayers = {};
+            data.forEach(p => {
+                loadedPlayers[p.user_id] = p.player_name;
+            });
+
             const playersList = document.getElementById('playersList');
             playersList.innerHTML = '';
 
             data.forEach(p => {
                 const div = document.createElement('div');
                 div.className = 'player-item';
+                div.dataset.playerId = p.user_id;
                 
                 const name = document.createElement('span');
                 name.textContent = p.player_name;
@@ -796,12 +806,18 @@
         }
 
         function getPlayerName(playerId) {
-            // Try to get from loaded players
+            // Try stored players first
+            if (loadedPlayers[playerId]) {
+                return loadedPlayers[playerId];
+            }
+            
+            // Try to get from DOM
             const playerEl = Array.from(document.querySelectorAll('.player-item'))
                 .find(el => el.dataset.playerId === playerId);
             if (playerEl) return playerEl.querySelector('span').textContent;
             
-            return playerId.substring(0, 8);
+            // Fallback to shortened ID
+            return playerId.substring(0, 9);
         }
 
         // === CARD DEALING ===
@@ -1004,6 +1020,12 @@
                 .eq('room_id', roomId);
                 
             if (!players) return;
+            
+            console.log('Checking submissions:', {
+                players: players.map(p => p.user_id),
+                submissions: Object.keys(currentState.submissions),
+                allSubmitted: players.every(p => currentState.submissions[p.user_id])
+            });
             
             const allSubmitted = players.every(p => currentState.submissions[p.user_id]);
             
@@ -1341,8 +1363,18 @@
             if (currentState.phase === 'submit') {
                 hasSubmitted = !!(currentState.submissions && currentState.submissions[myPlayerId]);
                 selectedCardIndex = null;
+                
+                // If host and in submit phase, check if everyone submitted
+                if (isHost && !hasSubmitted) {
+                    setTimeout(() => checkAllSubmitted(), 1000);
+                }
             } else if (currentState.phase === 'vote') {
                 hasVoted = !!(currentState.votes && currentState.votes[myPlayerId]);
+                
+                // If host and in vote phase, check if everyone voted
+                if (isHost && !hasVoted) {
+                    setTimeout(() => checkAllVoted(), 1000);
+                }
             } else if (currentState.phase === 'results' || currentState.phase === 'lobby') {
                 hasSubmitted = false;
                 hasVoted = false;
@@ -1352,6 +1384,7 @@
             setPhaseUI(currentState.phase);
             updatePromptDisplay();
             renderScores();
+            loadPlayers(); // Refresh player list to show submission status
         }
 
         let isInitialized = false;
