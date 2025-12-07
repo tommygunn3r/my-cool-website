@@ -620,8 +620,8 @@
     <script>
         // === SUPABASE CONFIG ===
         const SUPABASE_URL = 'https://pknhslxhpohrzgsfkisr.supabase.co';
-        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBrbmhzbHhocG9ocnpnc2ZraXNyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU1OTQ4NjAsImV4cCI6MjA1MTE3MDg2MH0.lxH_iPtF2vwTolckWcYICyJIVRSIkp4FImjgxkiFDJw';
-        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const SUPABASE_ANON_KEY = 'sb_publishable_-zZw-pi_3q1sdNGhITKuhQ_ECyDARzc';
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         // === STATE ===
         let roomId = null;
@@ -1350,8 +1350,16 @@
             renderScores();
         }
 
+        let isInitialized = false;
+
         // === INIT ===
         async function init() {
+            if (isInitialized) {
+                console.log('Already initialized, skipping...');
+                return;
+            }
+            isInitialized = true;
+
             roomId = getQueryParam('room');
             if (!roomId) {
                 alert('No room specified!');
@@ -1369,9 +1377,6 @@
 
             currentUser = session.user;
             myPlayerId = currentUser.id;
-
-            // Small delay to ensure auth token is set in client
-            await new Promise(resolve => setTimeout(resolve, 100));
 
             const { data: profile, error: profileError } = await supabaseClient
                 .from('profiles')
