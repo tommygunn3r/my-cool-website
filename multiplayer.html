@@ -1100,16 +1100,23 @@
 
         // Update players list
         async function updatePlayersList() {
-            const { data: players } = await supabaseClient
+            const { data: players, error } = await supabaseClient
                 .from('room_players')
                 .select('*')
                 .eq('room_id', currentRoomId)
-                .order('created_at');
+                .order('joined_at');
+
+            if (error) {
+                console.error('Error fetching players:', error);
+                return;
+            }
 
             const playerList = document.getElementById('playerList');
             playerList.innerHTML = '';
 
-            document.getElementById('playerCount').textContent = players.length;
+            document.getElementById('playerCount').textContent = players?.length || 0;
+
+            if (!players) return;
 
             players.forEach(player => {
                 const isPlayerHost = player.user_id === currentRoom.host_user_id;
