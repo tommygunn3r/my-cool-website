@@ -522,6 +522,31 @@
             color: var(--text-soft);
         }
 
+        /* TIMER */
+        .timer-display {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 8rem;
+            font-weight: bold;
+            color: var(--gold);
+            text-shadow: 0 0 30px rgba(255, 215, 0, 0.8);
+            z-index: 1000;
+            pointer-events: none;
+            animation: timerPulse 1s ease-in-out infinite;
+        }
+        
+        .timer-display.warning {
+            color: var(--danger);
+            text-shadow: 0 0 30px rgba(255, 68, 68, 0.8);
+        }
+        
+        @keyframes timerPulse {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); }
+            50% { transform: translate(-50%, -50%) scale(1.1); }
+        }
+
         .status-msg {
             text-align: center;
             padding: 1rem;
@@ -647,6 +672,9 @@
     </style>
 </head>
 <body>
+    <!-- TIMER DISPLAY -->
+    <div id="timerDisplay" class="timer-display" style="display:none;"></div>
+    
     <!-- FINAL RESULTS OVERLAY -->
     <div id="finalResultsOverlay" class="final-results-overlay">
         <div class="final-results-content">
@@ -692,6 +720,16 @@
                     <option value="5">5 Cards</option>
                     <option value="7" selected>7 Cards</option>
                     <option value="10">10 Cards</option>
+                </select>
+            </div>
+            <div class="setting-group">
+                <label class="setting-label">Answer Timer</label>
+                <select id="timerInput" class="setting-input">
+                    <option value="0" selected>No Timer</option>
+                    <option value="5">5 Seconds</option>
+                    <option value="10">10 Seconds</option>
+                    <option value="30">30 Seconds</option>
+                    <option value="60">60 Seconds</option>
                 </select>
             </div>
             <div class="setting-group">
@@ -809,11 +847,6 @@
             <div class="side-card">
                 <div class="side-title">Actions</div>
                 <div id="sidebarActions" style="display: flex; flex-direction: column; gap: 0.8rem;">
-                    <!-- Player action -->
-                    <button id="confirmCardBtnSidebar" class="btn btn-primary" style="display:none; width: 100%;" onclick="submitCard()">
-                        CONFIRM SELECTION
-                    </button>
-                    
                     <!-- Host actions -->
                     <button id="hostSettingsBtn" class="btn btn-primary" type="button" style="display:none; width: 100%;" onclick="openSettings()">
                         ⚙️ GAME SETTINGS
@@ -867,6 +900,10 @@
         let hasSubmitted = false;
         let hasVoted = false;
         let isCleaningUp = false; // Flag to prevent saves during cleanup
+        
+        // Timer variables
+        let timerInterval = null;
+        let timerEndTime = null;
 
         let gameStateChannel = null;
         let playersChannel = null;
@@ -887,6 +924,58 @@
             el.textContent = msg;
             el.className = 'connection-status ' + status;
         }
+        
+        // === TIMER FUNCTIONS ===
+        function startTimer(seconds) {
+            stopTimer(); // Clear any existing timer
+            
+            if (seconds === 0) return; // No timer
+            
+            timerEndTime = Date.now() + (seconds * 1000);
+            
+            const timerDisplay = document.getElementById('timerDisplay');
+            timerDisplay.style.display = 'block';
+            
+            timerInterval = setInterval(() => {
+                const remaining = Math.max(0, Math.ceil((timerEndTime - Date.now()) / 1000));
+                timerDisplay.textContent = remaining;
+                
+                // Warning color for last 5 seconds
+                if (remaining <= 5) {
+                    timerDisplay.classList.add('warning');
+                } else {
+                    timerDisplay.classList.remove('warning');
+                }
+                
+                if (remaining === 0) {
+                    stopTimer();
+                    // Auto-submit if timer runs out
+                    if (currentState.phase === 'submit' && !hasSubmitted) {
+                        autoSubmitRandomCard();
+                    }
+                }
+            }, 100);
+        }
+        
+        function stopTimer() {
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+            timerEndTime = null;
+            document.getElementById('timerDisplay').style.display = 'none';
+        }
+        
+        async function autoSubmitRandomCard() {
+            if (hasSubmitted || myHand.length === 0) return;
+            
+            // Pick a random card from hand
+            const randomIdx = Math.floor(Math.random() * myHand.length);
+            selectedCardIndex = myHand[randomIdx];
+            
+            log('Time\'s up! Auto-submitting random card...');
+            await submitCard();
+        }
 
         // === SETTINGS MODAL ===
         function openSettings() {
@@ -902,13 +991,15 @@
             const handSize = parseInt(document.getElementById('handSizeInput').value);
             const rating = document.getElementById('ratingInput').value;
             const pack = document.getElementById('packInput').value;
+            const timer = parseInt(document.getElementById('timerInput').value);
             
             currentState.totalRounds = totalRounds;
             currentState.handSize = handSize;
             currentState.rating = rating;
             currentState.pack = pack;
+            currentState.timer = timer;
             
-            log(`Settings: ${totalRounds} rounds, ${handSize} cards, ${rating} rating, ${pack} pack`);
+            log(`Settings: ${totalRounds} rounds, ${handSize} cards, ${rating} rating, ${pack} pack, ${timer}s timer`);
             
             closeSettings();
             hostStartNewRound();
@@ -1131,12 +1222,20 @@
                 statusMessage.style.display = "none";
                 renderMyHand();
                 if (isHost) endGameBtn.style.display = "inline-block";
+                
+                // Start timer if configured
+                if (currentState.timer && currentState.timer > 0) {
+                    startTimer(currentState.timer);
+                }
             } else if (phase === "vote") {
                 promptBox.style.display = "block";
                 votingArea.style.display = "block";
                 statusMessage.innerText = "Vote for the best answer! (Can't vote for your own)";
                 renderVoting();
                 if (isHost) endGameBtn.style.display = "inline-block";
+                
+                // Stop any running timer
+                stopTimer();
             } else if (phase === "results") {
                 promptBox.style.display = "block";
                 resultsArea.style.display = "block";
@@ -1200,26 +1299,23 @@
                 
                 grid.appendChild(card);
             });
-
-            // Update confirm button
-            const confirmBtn = document.getElementById('confirmCardBtnSidebar');
-            confirmBtn.style.display = selectedCardIndex !== null && !hasSubmitted ? 'block' : 'none';
         }
 
-        function selectCard(index) {
+        async function selectCard(index) {
             if (hasSubmitted) return;
             
-            // Deselect all
-            document.querySelectorAll('.answer-card').forEach(c => c.classList.remove('selected'));
-            
-            // Select this one
+            // Get the card data
             const cards = document.querySelectorAll('.answer-card');
-            if (cards[index]) {
-                cards[index].classList.add('selected');
-                selectedCardIndex = parseInt(cards[index].dataset.answerIdx);
-            }
+            if (!cards[index]) return;
             
-            document.getElementById('confirmCardBtnSidebar').style.display = 'block';
+            selectedCardIndex = parseInt(cards[index].dataset.answerIdx);
+            
+            // Mark as selected visually
+            document.querySelectorAll('.answer-card').forEach(c => c.classList.remove('selected'));
+            cards[index].classList.add('selected');
+            
+            // Submit immediately (no confirmation needed)
+            await submitCard();
         }
 
         async function submitCard() {
@@ -1645,7 +1741,8 @@
                 totalRounds: currentState.totalRounds,
                 handSize: currentState.handSize,
                 rating: currentState.rating,
-                pack: currentState.pack
+                pack: currentState.pack,
+                timer: currentState.timer || 0
             };
             
             // Reset game state but keep settings
@@ -1656,6 +1753,7 @@
                 handSize: savedSettings.handSize,
                 rating: savedSettings.rating,
                 pack: savedSettings.pack,
+                timer: savedSettings.timer,
                 prompt: null,
                 playerHands: {},
                 submissions: {},
