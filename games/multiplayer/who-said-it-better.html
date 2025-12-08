@@ -1055,8 +1055,14 @@
                 hand.forEach(idx => usedIndices.add(idx));
             });
 
-            // For each player, ensure they have a full hand
-            const players = Object.keys(currentState.scores || {});
+            // Get list of players - use scores if available, otherwise use all players in room
+            let players = Object.keys(currentState.scores || {});
+            
+            // If no scores yet (like after playAgain), use all loaded players
+            if (players.length === 0) {
+                players = Object.keys(loadedPlayers);
+            }
+            
             players.forEach(playerId => {
                 if (!currentState.playerHands[playerId]) {
                     currentState.playerHands[playerId] = [];
@@ -1082,7 +1088,6 @@
                         usedIndices.add(newIdx);
                     } else {
                         break; // Safety: avoid infinite loop if running out of cards
-
                     }
                 }
             });
