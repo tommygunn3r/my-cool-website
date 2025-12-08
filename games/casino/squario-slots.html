@@ -495,8 +495,26 @@
             text-align: center;
             box-shadow: 0 0 50px rgba(0,0,0,0.9), 0 0 30px rgba(212, 175, 55, 0.6);
             z-index: 500;
-            animation: fadeIn 0.3s ease;
+            animation: floatUpAndFade 2s ease-out forwards;
             pointer-events: none;
+        }
+
+        @keyframes floatUpAndFade {
+            0% {
+                opacity: 0;
+                transform: translate(-50%, -50%) translateY(0);
+            }
+            10% {
+                opacity: 1;
+            }
+            60% {
+                opacity: 1;
+                transform: translate(-50%, -50%) translateY(-60px);
+            }
+            100% {
+                opacity: 0;
+                transform: translate(-50%, -50%) translateY(-120px);
+            }
         }
 
         .message-overlay small {
@@ -1150,13 +1168,13 @@
         // BALANCED SYMBOL WEIGHTS - Made high-value symbols much rarer
         function getRandomSymbol() {
             const rand = Math.random();
-            if (rand < 0.25) return 'coin';       // 25% (was 18%)
-            if (rand < 0.48) return 'block';      // 23% (was 18%)
-            if (rand < 0.70) return 'pipe';       // 22% (was 16%)
-            if (rand < 0.86) return 'mushroom';   // 16% (was 16%)
-            if (rand < 0.95) return 'star';       // 9% (was 14%)
-            if (rand < 0.99) return 'squario';    // 4% (was 12%)
-            return 'powerup';                     // 1% (was 6%)
+            if (rand < 0.24) return 'coin';       // 24% (was 25%)
+            if (rand < 0.46) return 'block';      // 22% (was 23%)
+            if (rand < 0.67) return 'pipe';       // 21% (was 22%)
+            if (rand < 0.82) return 'mushroom';   // 15% (was 16%)
+            if (rand < 0.91) return 'star';       // 9%
+            if (rand < 0.95) return 'squario';    // 4%
+            return 'powerup';                     // 5% (was 1%) - More visible now!
         }
 
         function createSymbolElement(symbol, col, row) {
@@ -1490,6 +1508,7 @@
             updateStatsDisplay();
 
             if (result.totalWin > 0) {
+                sessionStats.totalWon += result.totalWin; // Track total won
                 if (result.totalWin >= bet * 15) { // Adjusted threshold from 20 to 15
                     playBigWin();
                     showMessage('BIG WIN!', `+${result.totalWin.toLocaleString()} G`);
