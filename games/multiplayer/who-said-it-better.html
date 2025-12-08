@@ -504,27 +504,6 @@
             font-weight: bold;
         }
 
-        .log-box {
-            max-height: 200px;
-            overflow-y: auto;
-            font-size: 0.8rem;
-            color: var(--text-soft);
-            background: var(--card-bg);
-            padding: 0.8rem;
-            border-radius: 6px;
-            /* Hidden by default, shown only for host */
-            display: none;
-        }
-        
-        .log-box.host-only {
-            display: block;
-        }
-
-        .log-entry {
-            margin-bottom: 0.4rem;
-            line-height: 1.4;
-        }
-
         .connection-status {
             margin-top: 0.8rem;
             text-align: center;
@@ -794,11 +773,6 @@
             <div id="handArea" class="hand-area" style="display:none;">
                 <div class="hand-title">Select your answer card:</div>
                 <div class="cards-grid" id="cardsGrid"></div>
-                <div style="text-align: center;">
-                    <button id="confirmCardBtn" class="btn btn-primary" style="display:none;" onclick="submitCard()">
-                        CONFIRM SELECTION
-                    </button>
-                </div>
             </div>
 
             <!-- VOTING AREA -->
@@ -839,9 +813,13 @@
             </div>
 
             <div class="side-card">
-                <div class="side-title">Game Log</div>
-                <div id="logBox" class="log-box"></div>
-                <div class="connection-status" id="connectionStatus">Connecting...</div>
+                <div class="side-title">Actions</div>
+                <div id="sidebarActions" style="text-align: center;">
+                    <button id="confirmCardBtnSidebar" class="btn btn-primary" style="display:none; width: 100%;" onclick="submitCard()">
+                        CONFIRM SELECTION
+                    </button>
+                    <div class="connection-status" id="connectionStatus">Connecting...</div>
+                </div>
             </div>
         </div>
     </div>
@@ -893,13 +871,8 @@
         }
 
         function log(msg) {
-            const logBox = document.getElementById('logBox');
-            const entry = document.createElement('div');
-            entry.className = 'log-entry';
-            const time = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
-            entry.textContent = `[${time}] ${msg}`;
-            logBox.appendChild(entry);
-            logBox.scrollTop = logBox.scrollHeight;
+            // Game log removed - keeping function for compatibility
+            console.log('[GAME]', msg);
         }
 
         function setConnectionStatus(msg, status = 'normal') {
@@ -1217,8 +1190,8 @@
             });
 
             // Update confirm button
-            const confirmBtn = document.getElementById('confirmCardBtn');
-            confirmBtn.style.display = selectedCardIndex !== null && !hasSubmitted ? 'inline-block' : 'none';
+            const confirmBtn = document.getElementById('confirmCardBtnSidebar');
+            confirmBtn.style.display = selectedCardIndex !== null && !hasSubmitted ? 'block' : 'none';
         }
 
         function selectCard(index) {
@@ -1234,7 +1207,7 @@
                 selectedCardIndex = parseInt(cards[index].dataset.answerIdx);
             }
             
-            document.getElementById('confirmCardBtn').style.display = 'inline-block';
+            document.getElementById('confirmCardBtnSidebar').style.display = 'block';
         }
 
         async function submitCard() {
@@ -1953,11 +1926,6 @@
 
             document.getElementById("roomInfo").innerText = "Room: " + roomId.substring(0, 8);
             document.getElementById("hostTag").innerText = isHost ? "HOST" : "PLAYER";
-            
-            // Show game log only for host
-            if (isHost) {
-                document.getElementById("logBox").classList.add("host-only");
-            }
 
             log(`Joined room as ${myPlayerName} (${isHost ? 'HOST' : 'PLAYER'})`);
             setConnectionStatus('Loading...', 'normal');
