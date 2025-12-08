@@ -986,7 +986,7 @@
             document.getElementById('settingsModal').classList.remove('active');
         }
 
-        function saveSettings() {
+        async function saveSettings() {
             const totalRounds = parseInt(document.getElementById('roundsInput').value);
             const handSize = parseInt(document.getElementById('handSizeInput').value);
             const rating = document.getElementById('ratingInput').value;
@@ -1002,7 +1002,7 @@
             log(`Settings: ${totalRounds} rounds, ${handSize} cards, ${rating} rating, ${pack} pack, ${timer}s timer`);
             
             closeSettings();
-            hostStartNewRound();
+            await hostStartNewRound();
         }
 
         // === LOAD DATA ===
@@ -1579,12 +1579,34 @@
 
         // === HOST ACTIONS ===
         async function hostStartNewRound() {
-            if (!isHost) return;
+            if (!isHost) {
+                console.log('Not host, cannot start round');
+                return;
+            }
+            
+            console.log('hostStartNewRound called', { 
+                phase: currentState.phase, 
+                round: currentState.round, 
+                totalRounds: currentState.totalRounds,
+                promptsLoaded: prompts.length,
+                answersLoaded: answers.length
+            });
             
             // Check if game ended
             if (currentState.phase === 'results' && currentState.round >= currentState.totalRounds) {
+                console.log('Game ended, showing final results');
                 await showFinalResults();
                 return;
+            }
+            
+            // Make sure we have data loaded
+            if (!prompts || prompts.length === 0 || !answers || answers.length === 0) {
+                console.error('Game data not loaded! Reloading...');
+                await loadGameData();
+                if (!prompts || prompts.length === 0) {
+                    alert('Failed to load game data. Please refresh the page.');
+                    return;
+                }
             }
             
             // Initialize scores for all players
@@ -1592,6 +1614,8 @@
                 .from('room_players')
                 .select('user_id')
                 .eq('room_id', roomId);
+                
+            console.log('Players loaded:', players);
                 
             if (players) {
                 players.forEach(p => {
@@ -1607,6 +1631,8 @@
             currentState.submissions = {};
             currentState.votes = {};
             currentState.roundWinner = null;
+            
+            console.log('Starting round', currentState.round);
             
             // Pick random prompt based on filters
             let filteredPrompts = prompts;
