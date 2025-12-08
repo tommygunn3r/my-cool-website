@@ -652,7 +652,14 @@
         <div class="final-results-content">
             <div class="final-results-title" id="finalResultsTitle">🎉 GAME OVER! 🎉</div>
             <div class="final-results-podium" id="finalResultsPodium"></div>
-            <button class="final-results-button" onclick="returnToLobby()">RETURN TO LOBBY</button>
+            <div style="display: flex; gap: 1rem; margin-top: 2rem; justify-content: center;">
+                <button id="playAgainBtn" class="final-results-button" onclick="playAgain()" style="display:none;">
+                    🔄 PLAY AGAIN
+                </button>
+                <button class="final-results-button" onclick="returnToLobby()">
+                    RETURN TO LOBBY
+                </button>
+            </div>
         </div>
     </div>
     <!-- HEADER -->
@@ -1610,10 +1617,64 @@
             
             // Show overlay
             document.getElementById('finalResultsOverlay').classList.add('active');
+            
+            // Show Play Again button only for host
+            if (isHost) {
+                document.getElementById('playAgainBtn').style.display = 'inline-block';
+            }
         }
 
         function returnToLobby() {
             window.location.href = '/multiplayer.html';
+        }
+        
+        async function playAgain() {
+            if (!isHost) return;
+            
+            if (!confirm('Start a new game with the same settings?')) {
+                return;
+            }
+            
+            // Save current settings
+            const savedSettings = {
+                totalRounds: currentState.totalRounds,
+                handSize: currentState.handSize,
+                rating: currentState.rating,
+                pack: currentState.pack
+            };
+            
+            // Reset game state but keep settings
+            currentState = {
+                phase: 'lobby',
+                round: 0,
+                totalRounds: savedSettings.totalRounds,
+                handSize: savedSettings.handSize,
+                rating: savedSettings.rating,
+                pack: savedSettings.pack,
+                prompt: null,
+                playerHands: {},
+                submissions: {},
+                votes: {},
+                scores: {},
+                roundWinner: null
+            };
+            
+            // Clear player hands and reset
+            myHand = [];
+            hasSubmitted = false;
+            hasVoted = false;
+            selectedCardIndex = null;
+            
+            // Save the reset state
+            await saveGameState();
+            
+            // Close the final results overlay
+            document.getElementById('finalResultsOverlay').classList.remove('active');
+            
+            // Update UI
+            setPhaseUI('lobby');
+            
+            log('Game reset - ready to play again!');
         }
 
         function resetGame() {
