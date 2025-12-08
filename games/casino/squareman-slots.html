@@ -113,6 +113,14 @@
         }
         .settings-button:hover { background: rgba(212, 175, 55, 0.2); transform: rotate(90deg); }
 
+        .paylines-button {
+            background: rgba(0, 0, 0, 0.6); border: 2px solid var(--gold); color: var(--gold);
+            width: 34px; height: 34px; border-radius: 50%; cursor: pointer; font-size: 1rem; transition: all 0.3s;
+            display: flex; align-items: center; justify-content: center;
+            text-decoration: none;
+        }
+        .paylines-button:hover { background: rgba(212, 175, 55, 0.2); transform: scale(1.1); }
+
         .game-area {
             flex: 1;
             display: flex;
@@ -275,134 +283,115 @@
         }
 
         /* --- Controls --- */
-        .bet-control {
-            background: rgba(0,0,0,0.7);
-            border-radius: 15px;
-            padding: 0.8rem 1rem;
-            border: 2px solid rgba(212, 175, 55, 0.4);
+        .betting-area {
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 0.8rem;
+            padding: 1.2rem;
+            background: rgba(0,0,0,0.4);
+            border-radius: 12px;
+            border: 2px solid rgba(212, 175, 55, 0.3);
             width: 100%;
         }
 
         .bet-label {
+            font-size: 1.1rem;
             color: var(--gold);
-            font-size: 1rem;
             font-weight: 600;
-            letter-spacing: 0.08em;
-            margin-bottom: 0.4rem;
+            letter-spacing: 0.1em;
             text-align: center;
-        }
-
-        .bet-input-row {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
         }
 
         .bet-input {
-            flex: 1;
-            background: rgba(0,0,0,0.6);
+            width: 100%;
+            padding: 0.6rem;
+            background: rgba(0,0,0,0.7);
             border: 2px solid var(--gold);
-            border-radius: 8px;
             color: var(--cream);
-            font-size: 1.1rem;
-            padding: 0.5rem;
+            font-size: 1.2rem;
+            border-radius: 8px;
             text-align: center;
             font-weight: 600;
-            font-family: 'Cormorant Garamond', serif;
         }
 
-        .max-bet-button {
-            background: linear-gradient(135deg, var(--gold-dark), var(--gold));
-            border: none;
-            border-radius: 8px;
-            color: var(--dark);
-            padding: 0.5rem 0.8rem;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-size: 0.9rem;
-            letter-spacing: 0.05em;
+        .game-button {
             font-family: 'Cinzel', serif;
-        }
-
-        .max-bet-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(212, 175, 55, 0.5);
-        }
-
-        .spin-button {
-            background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
-            border: none;
-            border-radius: 15px;
-            color: var(--dark);
             font-size: 1.3rem;
             font-weight: 700;
+            letter-spacing: 0.1em;
             padding: 1rem 2rem;
+            border: none;
+            border-radius: 15px;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.3s ease;
+            background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
+            color: var(--dark);
             box-shadow: 0 6px 20px rgba(212, 175, 55, 0.4);
-            letter-spacing: 0.12em;
-            font-family: 'Cinzel', serif;
             width: 100%;
         }
 
-        .spin-button:hover {
+        .game-button:hover {
             transform: translateY(-3px);
             box-shadow: 0 10px 30px rgba(212, 175, 55, 0.6);
         }
 
-        .spin-button:active {
-            transform: translateY(-1px);
+        .game-button.secondary-button {
+            font-size: 1rem;
+            padding: 0.6rem 1rem;
+            background: linear-gradient(135deg, var(--gold-dark), var(--gold));
+        }
+
+        .spin-button-container {
+            width: 100%;
         }
 
         /* --- Lever --- */
         .lever-container {
-            position: relative;
-            width: 50px;
-            height: 180px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 1rem;
             cursor: pointer;
             user-select: none;
         }
 
-        .lever-base {
-            position: absolute;
-            bottom: 0;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 60px;
-            height: 35px;
-            background: linear-gradient(135deg, #2a2a2a, #1a1a1a);
-            border-radius: 8px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+        .lever-handle {
+            width: 12px;
+            height: 80px;
+            background: linear-gradient(90deg, #8b4513 0%, #a0522d 50%, #8b4513 100%);
+            border-radius: 6px;
+            position: relative;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.5);
+            transition: transform 0.15s ease, height 0.15s ease;
         }
 
-        .lever-handle {
+        .lever-handle::before {
+            content: '';
             position: absolute;
-            bottom: 30px;
+            top: -15px;
             left: 50%;
             transform: translateX(-50%);
-            width: 12px;
-            height: 120px;
-            background: linear-gradient(90deg, #c0c0c0, #888);
-            border-radius: 6px;
-            transition: height 0.15s, bottom 0.15s;
+            width: 40px;
+            height: 40px;
+            background: radial-gradient(circle, #ff4444 0%, #cc0000 100%);
+            border-radius: 50%;
+            border: 3px solid var(--gold);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.6), inset 0 2px 5px rgba(255,255,255,0.3);
         }
 
         .lever-handle.pulled {
+            transform: translateY(30px);
             height: 50px;
-            bottom: 30px;
         }
 
-        .lever-knob {
-            position: absolute;
-            top: -25px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 35px;
-            height: 45px;
-            background: radial-gradient(circle, var(--red), #5a0000);
-            border-radius: 50% 50% 45% 45%;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.4), inset 0 -3px 8px rgba(0,0,0,0.3);
+        .lever-base {
+            width: 60px;
+            height: 20px;
+            background: linear-gradient(135deg, #2a2a2a, #1a1a1a);
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.6);
         }
 
         /* --- Message Overlay --- */
@@ -698,6 +687,69 @@
             margin-top: 1.5rem;
         }
 
+        /* --- Credits Screen --- */
+        #creditsScreen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(135deg, var(--dark) 0%, #1a0f0a 100%);
+            display: none; flex-direction: column; align-items: center; justify-content: center;
+            z-index: 3000; padding: 2rem;
+        }
+        #creditsScreen.active { display: flex; }
+        
+        .credits-content {
+            text-align: center; max-width: 800px;
+            animation: fadeInUp 1s ease-out;
+        }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .credits-title {
+            font-family: 'Cinzel', serif; font-size: 3.5rem; color: var(--gold);
+            margin-bottom: 2rem; text-shadow: 0 0 30px rgba(212, 175, 55, 0.6);
+            letter-spacing: 0.2em;
+        }
+        
+        .credits-stats {
+            background: rgba(0, 0, 0, 0.6); padding: 2rem; border-radius: 15px;
+            border: 2px solid var(--gold); margin-bottom: 2rem;
+        }
+        
+        .stat-row {
+            display: flex; justify-content: space-between; padding: 1rem;
+            border-bottom: 1px solid rgba(212, 175, 55, 0.3); font-size: 1.4rem;
+        }
+        .stat-row:last-child { border-bottom: none; }
+        .stat-label { color: var(--cream); font-weight: 600; }
+        .stat-value { color: var(--gold); font-family: 'Cinzel', serif; font-weight: 700; }
+        .stat-value.positive { color: #4ade80; }
+        .stat-value.negative { color: #ef4444; }
+        
+        .credits-message {
+            font-family: 'Cinzel', serif; font-size: 1.8rem; color: var(--gold);
+            margin: 2rem 0; letter-spacing: 0.1em;
+        }
+        
+        .credits-buttons {
+            display: flex; gap: 1rem; justify-content: center; margin-top: 2rem;
+        }
+        
+        .credits-button {
+            font-family: 'Cinzel', serif; font-size: 1.2rem; padding: 1rem 3rem;
+            background: linear-gradient(135deg, var(--gold) 0%, var(--gold-dark) 100%);
+            color: var(--dark); border: none; border-radius: 50px; cursor: pointer;
+            font-weight: 600; letter-spacing: 0.1em; transition: all 0.3s ease;
+            box-shadow: 0 5px 20px rgba(212, 175, 55, 0.4);
+        }
+        .credits-button:hover {
+            transform: translateY(-3px); box-shadow: 0 8px 30px rgba(212, 175, 55, 0.6);
+        }
+        .credits-button.secondary {
+            background: rgba(0, 0, 0, 0.6); color: var(--gold);
+            border: 2px solid var(--gold);
+        }
+
         /* --- Responsive --- */
         @media (max-width: 900px) {
             .slot-content { flex-direction: column; gap: 1rem; }
@@ -705,6 +757,9 @@
             .lever-container { display: none; }
             .selector-title { font-size: 2rem; }
             .message-overlay { font-size: 1.8rem; padding: 1.5rem 2rem; }
+            .credits-title { font-size: 2.5rem; }
+            .stat-row { font-size: 1.1rem; }
+            .credits-buttons { flex-direction: column; }
         }
     </style>
 </head>
@@ -718,14 +773,13 @@
 
     <div id="gameContainer" style="display: none;">
         <div class="header">
-            <div class="logo" onclick="closeGame()" style="cursor: pointer;">GUNNERSGAMES</div>
-            <div class="game-title" id="playerLabel">PLAYER</div>
-            <div style="display: flex; align-items: center; gap: 1rem;">
-                <div class="balance">
-                    <div class="coin-icon">G</div>
-                    <span id="balance">0</span>
-                </div>
-                <button class="settings-button" id="settingsBtn">⚙</button>
+            <div class="logo">GUNNERSGAMES</div>
+            <div class="game-title">SQUARE-MAN MAZE SLOTS</div>
+            <a href="/slots-paylines.html" class="paylines-button" title="View Paylines" target="_blank">📊</a>
+            <button class="settings-button" id="settingsBtn">⚙</button>
+            <div class="balance">
+                <div class="coin-icon">G</div>
+                <span id="balance">...</span>
             </div>
         </div>
 
@@ -733,17 +787,26 @@
             <div class="slot-wrapper">
                 <div class="slot-header-row">
                     <div class="slot-status">
-                        <span class="status-label">LAST WIN:</span>
-                        <span class="status-value" id="lastWin">0</span> G
+                        <span class="status-label">PLAYER:</span>
+                        <span id="playerLabel" class="status-value">LOADING...</span>
                     </div>
-
-                    <div class="free-spin-indicator hidden" id="freeSpinBadge">
-                        ⚡ <span id="freeSpinCount">0</span> FREE SPINS
+                    <div id="freeSpinBadge" class="free-spin-indicator hidden">
+                        ⚡ FREE SPINS: <span id="freeSpinCount">0</span>
                     </div>
-
                     <div class="slot-status" style="text-align: right;">
-                        <span class="status-label">SESSION:</span>
-                        <span class="status-value" id="sessionTotal">0</span> G
+                        <span class="status-label">LINES:</span>
+                        <span class="status-value">10</span>
+                    </div>
+                </div>
+
+                <div class="slot-header-row" style="grid-template-columns: 1fr 1fr;">
+                    <div class="slot-status">
+                        <span class="status-label">LAST WIN:</span>
+                        <span id="lastWin" class="status-value">0</span>
+                    </div>
+                    <div class="slot-status" style="text-align: right;">
+                        <span class="status-label">SESSION TOTAL:</span>
+                        <span id="sessionTotal" class="status-value">0</span>
                     </div>
                 </div>
 
@@ -757,21 +820,19 @@
                     </div>
 
                     <div class="slot-right">
-                        <div class="bet-control">
-                            <div class="bet-label">BET AMOUNT</div>
-                            <div class="bet-input-row">
-                                <input type="number" class="bet-input" id="betAmount" value="10" min="1" max="100">
-                                <button class="max-bet-button" id="maxBetBtn">MAX</button>
-                            </div>
+                        <div class="betting-area">
+                            <span class="bet-label">BET AMOUNT</span>
+                            <input type="number" id="betAmount" class="bet-input" value="10" min="1" max="100" step="10">
+                            <button class="game-button secondary-button" id="maxBetBtn">MAX BET</button>
                         </div>
 
-                        <button class="spin-button" id="spinBtn">SPIN</button>
-
                         <div class="lever-container" id="leverContainer">
+                            <div class="lever-handle" id="leverHandle"></div>
                             <div class="lever-base"></div>
-                            <div class="lever-handle" id="leverHandle">
-                                <div class="lever-knob"></div>
-                            </div>
+                        </div>
+
+                        <div class="spin-button-container">
+                            <button class="game-button" id="spinBtn">SPIN</button>
                         </div>
                     </div>
                 </div>
@@ -803,10 +864,50 @@
                     <option value="blue">Midnight Blue</option>
                 </select>
             </div>
+            <div class="setting-row">
+                <button class="game-button" id="exitGame" style="width: 100%; margin-top: 1rem;">LEAVE TABLE</button>
+            </div>
             <button class="game-button close-button" id="closeSettings">CLOSE</button>
         </div>
     </div>
 
+
+    <!-- Credits Screen -->
+    <div id="creditsScreen">
+        <div class="credits-content">
+            <div class="credits-title">SESSION COMPLETE</div>
+            
+            <div class="credits-stats">
+                <div class="stat-row">
+                    <span class="stat-label">Spins Played</span>
+                    <span class="stat-value" id="spinsPlayed">0</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Total Wagered</span>
+                    <span class="stat-value" id="totalWagered">0 G</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Total Won</span>
+                    <span class="stat-value" id="totalWon">0 G</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Session Profit</span>
+                    <span class="stat-value" id="sessionProfit">0 G</span>
+                </div>
+                <div class="stat-row">
+                    <span class="stat-label">Final Balance</span>
+                    <span class="stat-value" id="finalBalance">0 G</span>
+                </div>
+            </div>
+            
+            <div class="credits-message" id="creditsMessage">Thank you for playing!</div>
+            
+            <div class="credits-buttons">
+                <button class="credits-button" id="returnToCasino">RETURN TO CASINO</button>
+                <button class="credits-button secondary" id="playAgain">PLAY AGAIN</button>
+            </div>
+        </div>
+    </div>
 
 
     <script type="module">
@@ -1337,6 +1438,77 @@
             }
         }
 
+        async function submitSessionScore() {
+            if (!userId) return;
+
+            const sessionProfit = balance - sessionStats.startingBalance;
+            
+            // Only submit if profit is positive
+            if (sessionProfit <= 0) {
+                console.log('No profit to report');
+                return;
+            }
+
+            try {
+                const { error } = await supabase
+                    .from('user_scores')
+                    .insert({
+                        user_id: userId,
+                        game_name: 'squareman-slots',
+                        score: sessionProfit
+                    });
+
+                if (error) {
+                    console.error('Error submitting score:', error);
+                } else {
+                    console.log('Session profit reported:', sessionProfit);
+                }
+            } catch (err) {
+                console.error('Score submission error:', err);
+            }
+        }
+
+        async function showCreditsScreen() {
+            const sessionProfit = balance - sessionStats.startingBalance;
+            
+            document.getElementById('spinsPlayed').textContent = sessionStats.spinsPlayed;
+            document.getElementById('totalWagered').textContent = sessionStats.totalWagered + ' G';
+            document.getElementById('totalWon').textContent = sessionStats.totalWon + ' G';
+            
+            const profitEl = document.getElementById('sessionProfit');
+            profitEl.textContent = (sessionProfit >= 0 ? '+' : '') + sessionProfit + ' G';
+            profitEl.className = 'stat-value ' + (sessionProfit > 0 ? 'positive' : sessionProfit < 0 ? 'negative' : '');
+            
+            document.getElementById('finalBalance').textContent = balance + ' G';
+            
+            const messageEl = document.getElementById('creditsMessage');
+            if (sessionProfit > 500) {
+                messageEl.textContent = 'JACKPOT PERFORMANCE!';
+            } else if (sessionProfit > 100) {
+                messageEl.textContent = 'OUTSTANDING WIN!';
+            } else if (sessionProfit > 0) {
+                messageEl.textContent = 'NICE PROFIT!';
+            } else if (sessionProfit === 0) {
+                messageEl.textContent = 'EVEN MONEY!';
+            } else {
+                messageEl.textContent = 'BETTER LUCK NEXT TIME!';
+            }
+            
+            // Submit score to leaderboard if positive
+            await submitSessionScore();
+            
+            document.getElementById('creditsScreen').classList.add('active');
+        }
+
+        function resetSession() {
+            sessionStats = {
+                spinsPlayed: 0,
+                totalWagered: 0,
+                totalWon: 0,
+                startingBalance: balance
+            };
+        }
+
         async function initGameSystem() {
             // Default to green table
             selectedTable = 'green';
@@ -1425,6 +1597,20 @@
                 applyTableVisuals();
                 document.querySelectorAll('#tableSelect').forEach(s => s.value = selectedTable);
             });
+        });
+
+        document.getElementById('exitGame').addEventListener('click', async () => {
+            document.getElementById('settingsModal').classList.remove('active');
+            await showCreditsScreen();
+        });
+
+        document.getElementById('returnToCasino').addEventListener('click', () => {
+            window.location.href = '/casino';
+        });
+
+        document.getElementById('playAgain').addEventListener('click', () => {
+            document.getElementById('creditsScreen').classList.remove('active');
+            resetSession();
         });
 
         initGameSystem();
