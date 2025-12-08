@@ -495,8 +495,26 @@
             text-align: center;
             box-shadow: 0 0 50px rgba(0,0,0,0.9), 0 0 30px rgba(212, 175, 55, 0.6);
             z-index: 500;
-            animation: fadeIn 0.3s ease;
+            animation: floatUpAndFade 2s ease-out forwards;
             pointer-events: none;
+        }
+
+        @keyframes floatUpAndFade {
+            0% {
+                opacity: 0;
+                transform: translate(-50%, -50%) translateY(0);
+            }
+            10% {
+                opacity: 1;
+            }
+            60% {
+                opacity: 1;
+                transform: translate(-50%, -50%) translateY(-60px);
+            }
+            100% {
+                opacity: 0;
+                transform: translate(-50%, -50%) translateY(-120px);
+            }
         }
 
         .message-overlay small {
@@ -954,6 +972,7 @@
         let freeSpinsRemaining = 0;
         let sessionTotalWin = 0;
         let lastWinAmount = 0;
+        let bonusActive = false; // Track if bonus game is running
 
         // Session tracking
         let sessionStats = {
@@ -1036,6 +1055,11 @@
         function playBonusOpen() {
             playSound(880,0.25,'square',0.35);
             setTimeout(()=>playSound(1046.5,0.25,'square',0.35),220);
+        }
+        function playBonusReveal() {
+            playSound(500,0.2,'square',0.3);
+            setTimeout(()=>playSound(650,0.2,'square',0.3),150);
+            setTimeout(()=>playSound(800,0.25,'square',0.3),300);
         }
 
         function showMessage(text, sub = '') {
@@ -1140,13 +1164,13 @@
         // BALANCED SYMBOL WEIGHTS - Made high-value symbols much rarer
         function getRandomSymbol() {
             const rand = Math.random();
-            if (rand < 0.25) return 'coin';         // 25%
-            if (rand < 0.48) return 'cloud';        // 23%
-            if (rand < 0.70) return 'pipe';         // 22%
-            if (rand < 0.86) return 'nest';         // 16%
-            if (rand < 0.95) return 'egg';          // 9%
-            if (rand < 0.99) return 'squarebird';   // 4%
-            return 'birdpower';                     // 1% (scatter)
+            if (rand < 0.24) return 'coin';         // 24% (was 25%)
+            if (rand < 0.46) return 'cloud';        // 22% (was 23%)
+            if (rand < 0.67) return 'pipe';         // 21% (was 22%)
+            if (rand < 0.82) return 'nest';         // 15% (was 16%)
+            if (rand < 0.91) return 'egg';          // 9%
+            if (rand < 0.95) return 'squarebird';   // 4%
+            return 'birdpower';                     // 5% (was 1%) - More visible now!
         }
 
         function createSymbolElement(symbol, col, row) {
@@ -1208,11 +1232,13 @@
             let totalWin = 0;
             let freeSpinsAwarded = 0;
             let scatterCount = 0;
+            let squarebirdCount = 0; // Count squarebird symbols for bonus
 
             for (let c = 0; c < REELS; c++) {
                 for (let r = 0; r < ROWS; r++) {
                     const sym = currentGrid[c][r];
                     if (sym === 'birdpower') scatterCount++;
+                    if (sym === 'squarebird') squarebirdCount++; // Track bonus symbols
                 }
             }
 
@@ -1251,11 +1277,89 @@
                 }
             });
 
-            return { totalWin, freeSpinsAwarded };
+            return { totalWin, freeSpinsAwarded, squarebirdCount };
+        }
+
+        // BONUS GAME: Egg Hunt - Click eggs to reveal prizes!
+        function launchBonusGame(squarebirdCount, bet) {
+            bonusActive = true;
+            const picks = squarebirdCount; // 3, 4, or 5 picks based on squarebird count
+            let picksRemaining = picks;
+            let totalBonusWin = 0;
+
+            const overlay = document.createElement('div');
+            overlay.className = 'bonus-overlay';
+            overlay.innerHTML = `
+                <div class="bonus-window">
+                    <div class="bonus-title">🥚 SQUARE BIRD BONUS 🥚</div>
+                    <div class="bonus-subtitle">Pick ${picks} eggs to reveal your prizes!</div>
+                    <div class="bonus-block-grid" id="bonusBlocks"></div>
+                    <div id="bonusResults" style="margin-top: 1rem;"></div>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+
+            // Generate 9 eggs with random multipliers
+            const multipliers = [2, 3, 3, 4, 4, 5, 5, 8, 10];
+            shuffleArray(multipliers);
+
+            const grid = overlay.querySelector('#bonusBlocks');
+            for (let i = 0; i < 9; i++) {
+                const block = document.createElement('div');
+                block.className = 'bonus-block';
+                block.innerHTML = '🥚';
+                block.dataset.multiplier = multipliers[i];
+                
+                block.addEventListener('click', function() {
+                    if (this.classList.contains('disabled') || picksRemaining <= 0) return;
+                    
+                    this.classList.add('disabled', 'revealing');
+                    const mult = parseInt(this.dataset.multiplier);
+                    const win = bet * mult;
+                    totalBonusWin += win;
+                    
+                    this.innerHTML = `${mult}x`;
+                    playBonusReveal();
+                    
+                    picksRemaining--;
+                    
+                    if (picksRemaining === 0) {
+                        setTimeout(() => {
+                            const results = overlay.querySelector('#bonusResults');
+                            results.innerHTML = `
+                                <div class="bonus-result-text">
+                                    <strong>TOTAL BONUS WIN: ${totalBonusWin.toLocaleString()} G</strong>
+                                </div>
+                                <div class="bonus-close-hint">Click anywhere to continue</div>
+                            `;
+                            
+                            overlay.style.cursor = 'pointer';
+                            overlay.addEventListener('click', function closeBonus(e) {
+                                if (e.target === overlay || e.target.closest('.bonus-close-hint')) {
+                                    overlay.remove();
+                                    updateBalance(totalBonusWin);
+                                    sessionStats.totalWon += totalBonusWin;
+                                    showMessage('BONUS COMPLETE!', `+${totalBonusWin.toLocaleString()} G`);
+                                    bonusActive = false;
+                                }
+                            });
+                        }, 800);
+                    }
+                });
+                
+                grid.appendChild(block);
+            }
+        }
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
         }
 
         async function handleSpinClick() {
-            if (spinning || !userId) return;
+            if (spinning || bonusActive || !userId) return;
 
             const betInput = document.getElementById('betAmount');
             let bet = parseInt(betInput.value, 10);
@@ -1347,8 +1451,11 @@
             // Log spin - no longer needed with Supabase
             // Individual spins are not logged, only session totals are tracked
 
-            // Award free spins if scatters hit
-            if (result.freeSpinsAwarded > 0) {
+            // BONUS GAME has priority over free spins
+            if (result.squarebirdCount >= 3) {
+                setTimeout(() => launchBonusGame(result.squarebirdCount, bet), 600);
+            } else if (result.freeSpinsAwarded > 0) {
+                // Award free spins if scatters hit
                 freeSpinsRemaining += result.freeSpinsAwarded;
                 updateFreeSpinBadge();
                 playBonusOpen();
@@ -1357,8 +1464,8 @@
 
             spinning = false;
 
-            // Auto-play free spins
-            if (freeSpinsRemaining > 0) {
+            // Auto-play free spins (but not during bonus)
+            if (!bonusActive && freeSpinsRemaining > 0) {
                 setTimeout(() => handleSpinClick(), 900);
             }
         }
