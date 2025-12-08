@@ -1656,7 +1656,8 @@
                 submissions: {},
                 votes: {},
                 scores: {},
-                roundWinner: null
+                roundWinner: null,
+                finalScores: null
             };
             
             // Clear player hands and reset
@@ -1665,14 +1666,16 @@
             hasVoted = false;
             selectedCardIndex = null;
             
-            // Save the reset state
+            // Save the reset state - this will sync to all players
             await saveGameState();
             
-            // Close the final results overlay
+            // Close the final results overlay for host
             document.getElementById('finalResultsOverlay').classList.remove('active');
+            document.getElementById('playAgainBtn').style.display = 'none';
             
             // Update UI
             setPhaseUI('lobby');
+            renderScores();
             
             log('Game reset - ready to play again!');
         }
@@ -1910,6 +1913,13 @@
                 hasSubmitted = false;
                 hasVoted = false;
                 selectedCardIndex = null;
+                
+                // If returning to lobby from final results, close the overlay
+                if (currentState.phase === 'lobby') {
+                    document.getElementById('finalResultsOverlay').classList.remove('active');
+                    // Also reset player hands
+                    myHand = [];
+                }
             }
 
             setPhaseUI(currentState.phase);
