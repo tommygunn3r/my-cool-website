@@ -436,10 +436,149 @@
         }
 
         @keyframes messageSlide {
-            0% { opacity: 0; transform: translate(-50%, -60%); }
-            10% { opacity: 1; transform: translate(-50%, -50%); }
-            90% { opacity: 1; transform: translate(-50%, -50%); }
-            100% { opacity: 0; transform: translate(-50%, -40%); }
+            0% { 
+                opacity: 0; 
+                transform: translate(-50%, -50%) translateY(0); 
+            }
+            10% { 
+                opacity: 1; 
+                transform: translate(-50%, -50%) translateY(0); 
+            }
+            60% { 
+                opacity: 1; 
+                transform: translate(-50%, -50%) translateY(-60px); 
+            }
+            100% { 
+                opacity: 0; 
+                transform: translate(-50%, -50%) translateY(-120px); 
+            }
+        }
+
+        /* --- Bonus Game Overlay --- */
+        .bonus-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.94);
+            z-index: 1500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .bonus-window {
+            background: radial-gradient(circle at top, rgba(255,255,255,0.08), rgba(0,0,0,0.95));
+            border-radius: 24px;
+            border: 3px solid var(--gold);
+            box-shadow: 0 0 40px rgba(0,0,0,0.9);
+            padding: 1.8rem 1.4rem 1.4rem;
+            max-width: 480px;
+            width: 94vw;
+            max-height: 92vh;
+            overflow-y: auto;
+            text-align: center;
+            color: var(--cream);
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        .bonus-title {
+            font-family: 'Cinzel', serif;
+            font-size: 1.5rem;
+            letter-spacing: 0.18em;
+            color: var(--gold);
+            margin-bottom: 0.4rem;
+        }
+
+        .bonus-subtitle {
+            font-size: 0.9rem;
+            letter-spacing: 0.08em;
+            margin-bottom: 1rem;
+            color: var(--accent);
+        }
+
+        .bonus-block-grid {
+            display: flex;
+            justify-content: center;
+            gap: 0.7rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .bonus-block {
+            width: 76px;
+            height: 76px;
+            border-radius: 14px;
+            background: linear-gradient(145deg, #4a90e2, #2e5c8a);
+            border: 2px solid #1e3a5f;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Cinzel', serif;
+            font-weight: 700;
+            font-size: 2rem;
+            color: #fff;
+            box-shadow: 0 8px 0 #1e3a5f, 0 0 20px rgba(74,144,226,0.7);
+            cursor: pointer;
+            position: relative;
+            transform-origin: center bottom;
+            animation: blockIdle 1.2s ease-in-out infinite;
+        }
+
+        .bonus-block.disabled {
+            cursor: default;
+            opacity: 0.5;
+            box-shadow: 0 4px 0 #1e3a5f;
+            animation: none;
+        }
+
+        .bonus-block::after {
+            content: '';
+            position: absolute;
+            inset: -3px;
+            border-radius: inherit;
+            border: 2px solid rgba(255,255,255,0.3);
+            pointer-events: none;
+        }
+
+        .bonus-block:hover:not(.disabled) {
+            box-shadow: 0 10px 0 #1e3a5f, 0 0 25px rgba(255,255,255,0.85);
+            transform: translateY(-4px);
+        }
+
+        .bonus-block.revealing {
+            animation: blockReveal 0.45s ease forwards;
+        }
+
+        @keyframes blockIdle {
+            0%,100% { transform: translateY(0); }
+            50% { transform: translateY(-4px); }
+        }
+
+        @keyframes blockReveal {
+            0% { transform: translateY(-4px) scale(1); }
+            30% { transform: translateY(-12px) scale(1.05); }
+            60% { transform: translateY(4px) scale(0.96); }
+            100% { transform: translateY(0) scale(1); }
+        }
+
+        .bonus-result-text {
+            font-size: 1rem;
+            margin-bottom: 0.4rem;
+        }
+
+        .bonus-result-text strong {
+            color: var(--gold-light);
+        }
+
+        .bonus-close-hint {
+            font-size: 0.8rem;
+            opacity: 0.8;
         }
 
         /* --- Modal --- */
@@ -689,6 +828,15 @@
         let freeSpinsRemaining = 0;
         let sessionTotalWin = 0;
         let lastWinAmount = 0;
+        let bonusActive = false; // Track if bonus game is running
+
+        // Session tracking
+        let sessionStats = {
+            spinsPlayed: 0,
+            totalWagered: 0,
+            totalWon: 0,
+            startingBalance: 0
+        };
 
         const audioContext = new (window.AudioContext || window.webkitAudioContext)();
 
@@ -764,6 +912,11 @@
             playSound(880,0.25,'square',0.35);
             setTimeout(()=>playSound(1046.5,0.25,'square',0.35),220);
         }
+        function playBonusReveal() {
+            playSound(500,0.2,'square',0.3);
+            setTimeout(()=>playSound(650,0.2,'square',0.3),150);
+            setTimeout(()=>playSound(800,0.25,'square',0.3),300);
+        }
 
         function showMessage(text, sub = '') {
             const el = document.createElement('div');
@@ -816,10 +969,12 @@
                     playerName = profile.player_name || 'Player';
                 }
 
+                sessionStats.startingBalance = balance; // Initialize starting balance
                 updateBalanceDisplay();
             } catch (err) {
                 console.error('Balance load error:', err);
                 balance = 1000;
+                sessionStats.startingBalance = 1000;
                 updateBalanceDisplay();
             }
         }
@@ -886,13 +1041,13 @@
         // BALANCED SYMBOL WEIGHTS - Made high-value symbols much rarer
         function getRandomSymbol() {
             const rand = Math.random();
-            if (rand < 0.25) return 'coin';         // 25%
-            if (rand < 0.48) return 'portal';       // 23%
-            if (rand < 0.70) return 'maze';         // 22%
-            if (rand < 0.86) return 'fruit';        // 16%
-            if (rand < 0.95) return 'ghost';        // 9%
-            if (rand < 0.99) return 'squareman';    // 4%
-            return 'powerpellet';                   // 1% (scatter)
+            if (rand < 0.24) return 'coin';         // 24% (was 25%)
+            if (rand < 0.46) return 'portal';       // 22% (was 23%)
+            if (rand < 0.67) return 'maze';         // 21% (was 22%)
+            if (rand < 0.82) return 'fruit';        // 15% (was 16%)
+            if (rand < 0.91) return 'ghost';        // 9%
+            if (rand < 0.95) return 'squareman';    // 4%
+            return 'powerpellet';                   // 5% (was 1%) - More visible now!
         }
 
         function createSymbolElement(symbol, col, row) {
@@ -945,12 +1100,14 @@
         function evaluateGrid(bet) {
             let totalWin = 0;
             let freeSpinsAwarded = 0;
+            let squaremanCount = 0; // Count squareman symbols for bonus
 
             // Check for scatter (powerpellet)
             let scatterCount = 0;
             for (let col = 0; col < REELS; col++) {
                 for (let row = 0; row < ROWS; row++) {
                     if (currentGrid[col][row] === 'powerpellet') scatterCount++;
+                    if (currentGrid[col][row] === 'squareman') squaremanCount++; // Track bonus symbols
                 }
             }
             if (scatterCount >= 3) {
@@ -986,11 +1143,89 @@
                 }
             });
 
-            return { totalWin, freeSpinsAwarded };
+            return { totalWin, freeSpinsAwarded, squaremanCount };
+        }
+
+        // BONUS GAME: Maze Run - Navigate the maze to find ghosts with prizes!
+        function launchBonusGame(squaremanCount, bet) {
+            bonusActive = true;
+            const picks = squaremanCount; // 3, 4, or 5 picks based on squareman count
+            let picksRemaining = picks;
+            let totalBonusWin = 0;
+
+            const overlay = document.createElement('div');
+            overlay.className = 'bonus-overlay';
+            overlay.innerHTML = `
+                <div class="bonus-window">
+                    <div class="bonus-title">👻 MAZE BONUS GAME 👻</div>
+                    <div class="bonus-subtitle">Navigate ${picks} maze paths to find your prizes!</div>
+                    <div class="bonus-block-grid" id="bonusBlocks"></div>
+                    <div id="bonusResults" style="margin-top: 1rem;"></div>
+                </div>
+            `;
+            document.body.appendChild(overlay);
+
+            // Generate 9 maze paths with random multipliers
+            const multipliers = [2, 3, 3, 4, 4, 5, 5, 8, 10];
+            shuffleArray(multipliers);
+
+            const grid = overlay.querySelector('#bonusBlocks');
+            for (let i = 0; i < 9; i++) {
+                const block = document.createElement('div');
+                block.className = 'bonus-block';
+                block.innerHTML = '🚪';
+                block.dataset.multiplier = multipliers[i];
+                
+                block.addEventListener('click', function() {
+                    if (this.classList.contains('disabled') || picksRemaining <= 0) return;
+                    
+                    this.classList.add('disabled', 'revealing');
+                    const mult = parseInt(this.dataset.multiplier);
+                    const win = bet * mult;
+                    totalBonusWin += win;
+                    
+                    this.innerHTML = `${mult}x`;
+                    playBonusReveal();
+                    
+                    picksRemaining--;
+                    
+                    if (picksRemaining === 0) {
+                        setTimeout(() => {
+                            const results = overlay.querySelector('#bonusResults');
+                            results.innerHTML = `
+                                <div class="bonus-result-text">
+                                    <strong>TOTAL BONUS WIN: ${totalBonusWin.toLocaleString()} G</strong>
+                                </div>
+                                <div class="bonus-close-hint">Click anywhere to continue</div>
+                            `;
+                            
+                            overlay.style.cursor = 'pointer';
+                            overlay.addEventListener('click', function closeBonus(e) {
+                                if (e.target === overlay || e.target.closest('.bonus-close-hint')) {
+                                    overlay.remove();
+                                    updateBalance(totalBonusWin);
+                                    sessionStats.totalWon += totalBonusWin;
+                                    showMessage('BONUS COMPLETE!', `+${totalBonusWin.toLocaleString()} G`);
+                                    bonusActive = false;
+                                }
+                            });
+                        }, 800);
+                    }
+                });
+                
+                grid.appendChild(block);
+            }
+        }
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
         }
 
         async function handleSpinClick() {
-            if (spinning || !userId) return;
+            if (spinning || bonusActive || !userId) return;
 
             const betInput = document.getElementById('betAmount');
             let bet = parseInt(betInput.value, 10);
@@ -1016,6 +1251,8 @@
 
             if (!usingFreeSpin) {
                 await updateBalance(-bet);
+                sessionStats.spinsPlayed++; // Track spins
+                sessionStats.totalWagered += bet; // Track total wagered
             } else {
                 freeSpinsRemaining--;
                 updateFreeSpinBadge();
@@ -1064,6 +1301,7 @@
             updateStatsDisplay();
 
             if (result.totalWin > 0) {
+                sessionStats.totalWon += result.totalWin; // Track total won
                 if (result.totalWin >= bet * 15) {
                     playBigWin();
                     showMessage('BIG WIN!', `+${result.totalWin.toLocaleString()} G`);
@@ -1080,8 +1318,11 @@
             const simpleGrid = currentGrid.map(col => col.slice());
             await logSpinToSupabase(bet, result.totalWin, simpleGrid, usingFreeSpin);
 
-            // Award free spins if scatters hit
-            if (result.freeSpinsAwarded > 0) {
+            // BONUS GAME has priority over free spins
+            if (result.squaremanCount >= 3) {
+                setTimeout(() => launchBonusGame(result.squaremanCount, bet), 600);
+            } else if (result.freeSpinsAwarded > 0) {
+                // Award free spins if scatters hit
                 freeSpinsRemaining += result.freeSpinsAwarded;
                 updateFreeSpinBadge();
                 playBonusOpen();
@@ -1090,8 +1331,8 @@
 
             spinning = false;
 
-            // Auto-play free spins
-            if (freeSpinsRemaining > 0) {
+            // Auto-play free spins (but not during bonus)
+            if (!bonusActive && freeSpinsRemaining > 0) {
                 setTimeout(() => handleSpinClick(), 900);
             }
         }
