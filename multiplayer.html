@@ -1170,7 +1170,7 @@
                     <div style="display: flex; gap: 10px; align-items: center;">
                         ${badges}
                         ${isHost && player.user_id !== currentUser.id ? 
-                            `<button class="kick-btn" onclick="kickPlayer('${player.user_id}')">Kick</button>` : 
+                            `<button class="kick-btn" data-user-id="${player.user_id}">Kick</button>` : 
                             ''}
                     </div>
                 `;
@@ -1178,12 +1178,20 @@
                 playerList.appendChild(div);
             });
 
+            // Add event listeners to kick buttons
+            document.querySelectorAll('.kick-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const userId = this.getAttribute('data-user-id');
+                    kickPlayer(userId);
+                });
+            });
+
             updateReadyButton();
         }
 
         // Update pot display
         function updatePotDisplay() {
-            const buyIn = parseInt(document.getElementById('buyIn').value) || 0;
+            const buyIn = parseInt(document.getElementById('buyIn')?.value || 0);
             const potDisplay = document.getElementById('potDisplay');
 
             if (buyIn > 0) {
@@ -1215,7 +1223,7 @@
                 .single();
 
             const readyBtn = document.getElementById('readyBtn');
-            const buyIn = parseInt(document.getElementById('buyIn').value) || 0;
+            const buyIn = parseInt(document.getElementById('buyIn')?.value || 0);
 
             if (buyIn > 0) {
                 if (player.coins_paid) {
@@ -1251,7 +1259,7 @@
                 .eq('user_id', currentUser.id)
                 .single();
 
-            const buyIn = parseInt(document.getElementById('buyIn').value) || 0;
+            const buyIn = parseInt(document.getElementById('buyIn')?.value || 0);
 
             if (buyIn > 0 && !player.coins_paid) {
                 // Pay buy-in
@@ -1303,7 +1311,7 @@
                 return;
             }
 
-            const buyIn = parseInt(document.getElementById('buyIn').value) || 0;
+            const buyIn = parseInt(document.getElementById('buyIn')?.value || 0);
 
             // Check if all players are ready/paid
             const { data: players } = await supabaseClient
