@@ -783,22 +783,9 @@
 
             <!-- RESULTS AREA -->
             <div id="resultsArea" style="display:none;"></div>
-
-            <!-- HOST CONTROLS -->
-            <div style="margin-top: 1.2rem; text-align: center;">
-                <button id="hostSettingsBtn" class="btn btn-primary" type="button" style="display:none;" onclick="openSettings()">
-                    ⚙️ GAME SETTINGS
-                </button>
-                <button id="hostStartBtn" class="btn btn-primary" type="button" style="display:none;">
-                    START NEXT ROUND
-                </button>
-                <button id="endGameBtn" class="btn btn-danger" type="button" style="display:none;">
-                    END GAME
-                </button>
-            </div>
         </div>
 
-        <!-- RIGHT: PLAYERS / SCORES / LOG -->
+        <!-- RIGHT: PLAYERS / SCORES / ACTIONS -->
         <div>
             <div class="side-card">
                 <div class="side-title">Players</div>
@@ -814,10 +801,23 @@
 
             <div class="side-card">
                 <div class="side-title">Actions</div>
-                <div id="sidebarActions" style="text-align: center;">
+                <div id="sidebarActions" style="display: flex; flex-direction: column; gap: 0.8rem;">
+                    <!-- Player action -->
                     <button id="confirmCardBtnSidebar" class="btn btn-primary" style="display:none; width: 100%;" onclick="submitCard()">
                         CONFIRM SELECTION
                     </button>
+                    
+                    <!-- Host actions -->
+                    <button id="hostSettingsBtn" class="btn btn-primary" type="button" style="display:none; width: 100%;" onclick="openSettings()">
+                        ⚙️ GAME SETTINGS
+                    </button>
+                    <button id="hostStartBtn" class="btn btn-primary" type="button" style="display:none; width: 100%;">
+                        START NEXT ROUND
+                    </button>
+                    <button id="endGameBtn" class="btn btn-danger" type="button" style="display:none; width: 100%;">
+                        END GAME
+                    </button>
+                    
                     <div class="connection-status" id="connectionStatus">Connecting...</div>
                 </div>
             </div>
