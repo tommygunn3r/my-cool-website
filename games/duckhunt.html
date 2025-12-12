@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AR Duck Hunt</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body {
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            font-family: 'Courier New', monospace;
+            background: #000;
+        }
+
+        #videoContainer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            background: linear-gradient(to bottom, #87CEEB 0%, #87CEEB 70%, #90EE90 70%, #90EE90 100%);
+        }
+
+        #video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        #video.hidden {
+            display: none;
+        }
+
+        #gameCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2;
+            cursor: crosshair;
+        }
+
+        #ui {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 3;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+            font-size: 24px;
+            pointer-events: none;
+        }
+
+        #startScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            text-align: center;
+            padding: 20px;
+        }
+
+        #startScreen h1 {
+            font-size: 48px;
+            margin-bottom: 20px;
+            color: #ff6600;
+        }
+
+        #startScreen p {
+            font-size: 18px;
+            margin-bottom: 30px;
+            max-width: 400px;
+        }
+
+        #startButton {
+            padding: 20px 40px;
+            font-size: 24px;
+            background: #ff6600;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+        }
+
+        #startButton:active {
+            background: #cc5200;
+        }
+
+        #crosshair {
+            position: fixed;
+            width: 40px;
+            height: 40px;
+            border: 3px solid red;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 4;
+            box-shadow: 0 0 10px rgba(255,0,0,0.5);
+        }
+
+        #crosshair::before,
+        #crosshair::after {
+            content: '';
+            position: absolute;
+            background: red;
+        }
+
+        #crosshair::before {
+            width: 2px;
+            height: 20px;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        #crosshair::after {
+            width: 20px;
+            height: 2px;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .hit-marker {
+            position: fixed;
+            color: red;
+            font-size: 48px;
+            font-weight: bold;
+            pointer-events: none;
+            z-index: 5;
+            animation: hitFade 0.5s ease-out;
+        }
+
+        @keyframes hitFade {
+            0% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            100% {
+                opacity: 0;
+                transform: scale(2);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="startScreen">
+        <h1>🦆 AR DUCK HUNT 🦆</h1>
+        <p>Move your phone to aim<br>Tap anywhere to shoot<br><br><small>(Camera optional - will work with or without AR)</small></p>
+        <button id="startButton">START HUNT</button>
+    </div>
+
+    <div id="videoContainer">
+        <video id="video" autoplay playsinline muted></video>
+    </div>
+
+    <canvas id="gameCanvas"></canvas>
+
+    <div id="crosshair"></div>
+
+    <div id="ui">
+        <div>Score: <span id="score">0</span></div>
+        <div>Ammo: <span id="ammo">10</span></div>
+        <div>Ducks: <span id="ducksLeft">10</span></div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const video = document.getElementById('video');
+        const startScreen = document.getElementById('startScreen');
+        const startButton = document.getElementById('startButton');
+        const crosshair = document.getElementById('crosshair');
+
+        let score = 0;
+        let ammo = 10;
+        let ducksLeft = 10;
+        let gameStarted = false;
+        let ducks = [];
+        let crosshairX = 0;
+        let crosshairY = 0;
+
+        // Device orientation tracking
+        let orientationAlpha = 0;
+        let orientationBeta = 0;
+        let orientationGamma = 0;
+        let baseAlpha = null;
+        let baseBeta = null;
+        let baseGamma = null;
+
+        // Resize canvas
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        // Duck class
+        class Duck {
+            constructor() {
+                this.size = 60 + Math.random() * 40;
+                this.x = Math.random() * canvas.width;
+                this.y = canvas.height + this.size;
+                this.targetY = Math.random() * (canvas.height * 0.7);
+                this.speedY = -2 - Math.random() * 2;
+                this.speedX = (Math.random() - 0.5) * 3;
+                this.angle = 0;
+                this.flap = 0;
+                this.alive = true;
+                this.falling = false;
+                this.fallSpeed = 0;
+            }
+
+            update() {
+                if (this.falling) {
+                    this.y += this.fallSpeed;
+                    this.fallSpeed += 0.5; // Gravity
+                    this.angle += 15;
+                    return this.y < canvas.height + 100;
+                }
+
+                this.y += this.speedY;
+                this.x += this.speedX;
+                this.flap += 0.3;
+                this.angle = Math.sin(this.flap) * 10;
+
+                // Bounce off sides
+                if (this.x < 0 || this.x > canvas.width) {
+                    this.speedX *= -1;
+                }
+
+                // Remove if too high
+                if (this.y < -100) {
+                    this.alive = false;
+                    ducksLeft--;
+                    updateUI();
+                }
+
+                return this.alive;
+            }
+
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate((this.angle * Math.PI) / 180);
+
+                if (this.falling) {
+                    // Dead duck
+                    ctx.fillStyle = '#8B4513';
+                } else {
+                    // Flying duck
+                    ctx.fillStyle = '#654321';
+                }
+
+                // Body
+                ctx.beginPath();
+                ctx.ellipse(0, 0, this.size * 0.6, this.size * 0.4, 0, 0, Math.PI * 2);
+                ctx.fill();
+
+                if (!this.falling) {
+                    // Wings
+                    const wingFlap = Math.sin(this.flap) * 20;
+                    ctx.fillStyle = '#8B6914';
+                    
+                    // Left wing
+                    ctx.beginPath();
+                    ctx.ellipse(-this.size * 0.3, wingFlap, this.size * 0.4, this.size * 0.2, -30 * Math.PI / 180, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // Right wing
+                    ctx.beginPath();
+                    ctx.ellipse(this.size * 0.3, wingFlap, this.size * 0.4, this.size * 0.2, 30 * Math.PI / 180, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                // Head
+                ctx.fillStyle = '#2F4F2F';
+                ctx.beginPath();
+                ctx.arc(this.size * 0.4, -this.size * 0.1, this.size * 0.3, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Beak
+                ctx.fillStyle = '#FFA500';
+                ctx.beginPath();
+                ctx.moveTo(this.size * 0.6, -this.size * 0.1);
+                ctx.lineTo(this.size * 0.8, -this.size * 0.05);
+                ctx.lineTo(this.size * 0.6, 0);
+                ctx.closePath();
+                ctx.fill();
+
+                // Eye
+                if (!this.falling) {
+                    ctx.fillStyle = 'black';
+                    ctx.beginPath();
+                    ctx.arc(this.size * 0.5, -this.size * 0.15, this.size * 0.08, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                ctx.restore();
+            }
+
+            checkHit(x, y) {
+                const dx = x - this.x;
+                const dy = y - this.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+                return distance < this.size * 0.8;
+            }
+
+            shoot() {
+                this.falling = true;
+                this.fallSpeed = 2;
+            }
+        }
+
+        // Spawn ducks
+        function spawnDuck() {
+            if (ducksLeft > 0) {
+                ducks.push(new Duck());
+                ducksLeft--;
+                updateUI();
+            }
+        }
+
+        // Update UI
+        function updateUI() {
+            document.getElementById('score').textContent = score;
+            document.getElementById('ammo').textContent = ammo;
+            document.getElementById('ducksLeft').textContent = ducksLeft;
+
+            if (ammo === 0 && ducksLeft === 0 && ducks.every(d => !d.alive || d.falling)) {
+                endGame();
+            }
+        }
+
+        // Show hit marker
+        function showHitMarker(x, y) {
+            const marker = document.createElement('div');
+            marker.className = 'hit-marker';
+            marker.textContent = 'HIT!';
+            marker.style.left = x + 'px';
+            marker.style.top = y + 'px';
+            document.body.appendChild(marker);
+            setTimeout(() => marker.remove(), 500);
+        }
+
+        // Shoot
+        function shoot(x, y) {
+            if (ammo <= 0 || !gameStarted) return;
+
+            ammo--;
+            updateUI();
+
+            // Play gunshot sound (simple)
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            oscillator.frequency.value = 100;
+            oscillator.type = 'sawtooth';
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.1);
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.1);
+
+            // Check hits
+            for (let duck of ducks) {
+                if (!duck.falling && duck.checkHit(x, y)) {
+                    duck.shoot();
+                    score += 100;
+                    updateUI();
+                    showHitMarker(x, y);
+
+                    // Quack sound
+                    const quackOsc = audioContext.createOscillator();
+                    const quackGain = audioContext.createGain();
+                    quackOsc.connect(quackGain);
+                    quackGain.connect(audioContext.destination);
+                    quackOsc.frequency.setValueAtTime(800, audioContext.currentTime);
+                    quackOsc.frequency.exponentialRampToValueAtTime(200, audioContext.currentTime + 0.2);
+                    quackGain.gain.setValueAtTime(0.2, audioContext.currentTime);
+                    quackGain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+                    quackOsc.start(audioContext.currentTime);
+                    quackOsc.stop(audioContext.currentTime + 0.2);
+                    break;
+                }
+            }
+        }
+
+        // Handle device orientation
+        function handleOrientation(event) {
+            if (!gameStarted) return;
+
+            // Set baseline on first read
+            if (baseAlpha === null) {
+                baseAlpha = event.alpha || 0;
+                baseBeta = event.beta || 0;
+                baseGamma = event.gamma || 0;
+                return;
+            }
+
+            // Get relative orientation
+            const deltaGamma = (event.gamma || 0) - baseGamma;
+            const deltaBeta = (event.beta || 0) - baseBeta;
+
+            // Map to screen coordinates (sensitivity adjustments)
+            crosshairX = (canvas.width / 2) + (deltaGamma * 15);
+            crosshairY = (canvas.height / 2) + (deltaBeta * 15);
+
+            // Clamp to screen bounds
+            crosshairX = Math.max(20, Math.min(canvas.width - 20, crosshairX));
+            crosshairY = Math.max(20, Math.min(canvas.height - 20, crosshairY));
+
+            // Update crosshair position
+            crosshair.style.left = (crosshairX - 20) + 'px';
+            crosshair.style.top = (crosshairY - 20) + 'px';
+        }
+
+        // Request device orientation permission (iOS 13+)
+        async function requestOrientationPermission() {
+            if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+                try {
+                    const permission = await DeviceOrientationEvent.requestPermission();
+                    if (permission === 'granted') {
+                        window.addEventListener('deviceorientation', handleOrientation);
+                    }
+                } catch (error) {
+                    console.error('Error requesting orientation permission:', error);
+                }
+            } else {
+                // Non-iOS 13+ devices
+                window.addEventListener('deviceorientation', handleOrientation);
+            }
+        }
+
+        // Start camera
+        async function startCamera() {
+            try {
+                // Check if getUserMedia is available
+                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                    console.log('Camera API not available');
+                    video.classList.add('hidden');
+                    return;
+                }
+
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { 
+                        facingMode: 'environment',
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    }
+                });
+                video.srcObject = stream;
+                console.log('Camera started successfully');
+            } catch (error) {
+                console.log('Camera not available:', error.name);
+                // Hide video element and show gradient background
+                video.classList.add('hidden');
+                // Continue without camera - game still works!
+            }
+        }
+
+        // Game loop
+        function gameLoop() {
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Update and draw ducks
+            ducks = ducks.filter(duck => duck.update());
+            ducks.forEach(duck => duck.draw());
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Start game
+        async function startGame() {
+            startScreen.style.display = 'none';
+            gameStarted = true;
+
+            // Center crosshair initially
+            crosshairX = canvas.width / 2;
+            crosshairY = canvas.height / 2;
+            crosshair.style.left = (crosshairX - 20) + 'px';
+            crosshair.style.top = (crosshairY - 20) + 'px';
+
+            await startCamera();
+            await requestOrientationPermission();
+
+            // Spawn ducks over time
+            const spawnInterval = setInterval(() => {
+                if (ducksLeft > 0) {
+                    spawnDuck();
+                } else {
+                    clearInterval(spawnInterval);
+                }
+            }, 2000);
+
+            // Initial ducks
+            spawnDuck();
+            spawnDuck();
+
+            gameLoop();
+        }
+
+        // End game
+        function endGame() {
+            alert(`Game Over!\n\nFinal Score: ${score}\n\nTap OK to reload`);
+            location.reload();
+        }
+
+        // Event listeners
+        startButton.addEventListener('click', startGame);
+
+        canvas.addEventListener('click', (e) => {
+            shoot(crosshairX, crosshairY);
+        });
+
+        // Touch support
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            shoot(crosshairX, crosshairY);
+        });
+    </script>
+</body>
+</html>
