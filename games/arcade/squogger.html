@@ -175,7 +175,7 @@
             <p>🚗 Avoid traffic</p>
             <p>🪵 Hop on logs and lily pads</p>
             <p>🎯 Reach the goal zones at the top</p>
-            <button onclick="startGame()">START GAME</button>
+            <button id="startButton">START GAME</button>
         </div>
 
         <div class="game-over-screen" id="gameOverScreen">
@@ -240,11 +240,10 @@
                     .eq('game_id', 'squogger')
                     .eq('user_id', currentUser.id)
                     .order('score', { ascending: false })
-                    .limit(1)
-                    .single();
+                    .limit(1);
 
-                if (data && !error) {
-                    highScore = data.score;
+                if (data && data.length > 0 && !error) {
+                    highScore = data[0].score;
                     document.getElementById('highScore').textContent = highScore;
                 }
             } catch (error) {
@@ -402,6 +401,9 @@
             gameRunning = true;
             gameLoop();
         }
+
+        // Attach event listener to start button
+        document.getElementById('startButton').addEventListener('click', startGame);
 
         function resetGame() {
             score = 0;
