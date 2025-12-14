@@ -736,13 +736,22 @@
         }
 
         async function joinTable(tableId, playerNum) {
-            const { data: profile } = await supabaseClient
-                .from('profiles')
-                .select('username')
-                .eq('id', currentUser.id)
-                .single();
+            let username = currentUser.email.split('@')[0];
             
-            const username = profile?.username || currentUser.email.split('@')[0];
+            // Try to get username from profiles, but don't fail if it doesn't exist
+            try {
+                const { data: profile, error } = await supabaseClient
+                    .from('profiles')
+                    .select('username')
+                    .eq('id', currentUser.id)
+                    .single();
+                
+                if (!error && profile?.username) {
+                    username = profile.username;
+                }
+            } catch (e) {
+                console.log('Using email as username (profiles table not accessible)');
+            }
             
             const updates = playerNum === 1 
                 ? { player1_id: currentUser.id, player1_name: username, player1_ready: false }
