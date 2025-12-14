@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Square Kong</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            overflow: hidden; 
+            background: #000; 
+            font-family: 'Courier New', monospace; 
+        }
+        canvas { 
+            display: block; 
+            background: #000; 
+            width: 100vw; 
+            height: 100vh; 
+        }
+        #ui {
+            position: absolute; 
+            top: 20px; 
+            left: 20px; 
+            color: #ff0000; 
+            font-size: 20px;
+            text-shadow: 0 0 10px #ff0000; 
+            z-index: 10;
+        }
+        #title {
+            position: absolute; 
+            top: 20px; 
+            left: 50%; 
+            transform: translateX(-50%);
+            color: #ff0000; 
+            font-size: 42px; 
+            font-weight: bold; 
+            text-shadow: 0 0 20px #ff0000;
+            z-index: 10;
+        }
+        #lives-display {
+            position: absolute;
+            bottom: 30px;
+            left: 30px;
+            z-index: 10;
+        }
+        #gameOver {
+            position: absolute; 
+            top: 50%; 
+            left: 50%; 
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.95); 
+            color: #ff0000; 
+            padding: 40px; 
+            border: 3px solid #ff0000;
+            border-radius: 10px;
+            text-align: center; 
+            display: none; 
+            z-index: 20; 
+            max-width: 600px;
+            box-shadow: 0 0 30px #ff0000;
+        }
+        
+        #startScreen {
+            position: absolute; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%;
+            background: #000;
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: flex-start; 
+            z-index: 30; 
+            color: #ff0000; 
+            overflow-y: auto; 
+            padding: 40px 20px; 
+            box-sizing: border-box; 
+        }
+        #startScreen h1 {
+            font-size: 64px; 
+            margin-bottom: 15px;
+            text-shadow: 0 0 30px #ff0000;
+            animation: pulse 2s infinite; 
+            text-align: center;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        #startScreen .instructions {
+            background: rgba(100,0,0,0.3); 
+            padding: 20px; 
+            border: 2px solid #ff0000;
+            border-radius: 15px;
+            margin: 20px; 
+            max-width: 500px;
+            box-shadow: 0 0 20px #ff0000;
+        }
+        #startScreen .instructions h2 { 
+            margin-bottom: 15px; 
+            font-size: 28px; 
+            color: #ff8800;
+            text-shadow: 0 0 10px #ff8800;
+        }
+        #startScreen .instructions p { 
+            margin: 10px 0; 
+            font-size: 16px; 
+            line-height: 1.6; 
+        }
+        #startScreen button {
+            margin-top: 30px; 
+            padding: 15px 50px; 
+            font-size: 28px; 
+            cursor: pointer;
+            background: #ff0000; 
+            color: #000; 
+            border: none; 
+            border-radius: 10px;
+            font-weight: bold; 
+            box-shadow: 0 0 20px #ff0000; 
+            transition: transform 0.2s;
+            margin-bottom: 20px;
+            font-family: 'Courier New', monospace;
+        }
+        #startScreen button:hover { 
+            background: #cc0000; 
+            transform: scale(1.05); 
+        }
+    </style>
+</head>
+<body>
+    <div id="startScreen">
+        <h1>🦍 SQUARE KONG 🦍</h1>
+        <div class="instructions">
+            <h2>HOW TO PLAY</h2>
+            <p><strong>OBJECTIVE:</strong> Climb to the top and rescue the princess!</p>
+            <p><strong>CONTROLS:</strong></p>
+            <p>A / D - Move left/right</p>
+            <p>SPACE - Jump</p>
+            <p>↑ / ↓ - Climb ladders</p>
+            <p><strong>OBSTACLES:</strong></p>
+            <p>🛢️ Barrels - Jump over or smash with hammer</p>
+            <p><strong>POWER-UPS:</strong></p>
+            <p>🔨 Hammer - Smash barrels for 10 seconds!</p>
+            <p><strong>SCORING:</strong></p>
+            <p>• Jump barrel: +100 points</p>
+            <p>• Smash barrel: +300 points</p>
+            <p>• Reach top: +1000 points</p>
+            <p><strong>TIPS:</strong></p>
+            <p>• Time your jumps carefully!</p>
+            <p>• Use ladders to avoid barrels</p>
+            <p>• Grab the hammer for an advantage!</p>
+        </div>
+        <button onclick="startGame()">START GAME</button>
+    </div>
+    <div id="title">SQUARE KONG</div>
+    <div id="ui">
+        <div>SCORE: <span id="score">0</span></div>
+        <div>LEVEL: <span id="level">1</span></div>
+        <div>HIGH SCORE: <span id="highScore">0</span></div>
+    </div>
+    <div id="lives-display"></div>
+    <div id="gameOver">
+        <h1 id="endMessage">GAME OVER!</h1>
+        <p id="finalScore"></p>
+        <p id="currentHighScore"></p>
+        <div id="credits" style="margin-top: 30px; height: 250px; overflow: hidden; position: relative;">
+            <div id="creditsScroll" style="position: absolute; width: 100%; animation: scrollUp 8s linear 1;">
+                <div style="text-align: center; font-size: 18px; line-height: 2.5; color: #ff0000;">
+                    <p style="font-size: 24px; color: #ff8800; margin-bottom: 20px;">━━━━━━━━━━━━━━━━</p>
+                    
+                    <p style="font-size: 20px; color: #ff8800; margin-top: 30px;">GAME DESIGN</p>
+                    <p style="color: #ff0000;">GunnersGames Studio</p>
+                    
+                    <p style="font-size: 20px; color: #ff8800; margin-top: 30px;">DEVELOPMENT</p>
+                    <p style="color: #ff0000;">Claude AI Assistant</p>
+                    
+                    <p style="font-size: 20px; color: #ff8800; margin-top: 30px;">SPECIAL THANKS</p>
+                    <p style="color: #ff0000;">All GunnersGames Players</p>
+                    
+                    <p style="font-size: 24px; color: #ff8800; margin-top: 40px;">━━━━━━━━━━━━━━━━</p>
+                    
+                    <p style="margin-top: 40px; color: #888; font-size: 14px;">
+                        Returning to arcade in 5 seconds...
+                    </p>
+                    
+                    <p style="margin-top: 60px; color: #666; font-size: 16px;">
+                        THANKS FOR PLAYING!
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <style>
+        @keyframes scrollUp {
+            0% { top: 100%; }
+            100% { top: -100%; }
+        }
+    </style>
+    <canvas id="game"></canvas>
+
+    <script type="module">
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.1/+esm';
+
+        // Supabase configuration
+        const SUPABASE_URL = 'https://nlqhnzevzxbxnzyfykpt.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5scWhuemV2enhieG56eWZ5a3B0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzM3NTg3MjYsImV4cCI6MjA0OTMzNDcyNn0.x95_kN4xNSFIuhQjxaTb_EYR6ueBVbhgvw-6B12YCZk';
+        const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        // Score Manager
+        class ScoreManager {
+            constructor(gameName) {
+                this.gameName = gameName;
+                this.sessionStartTime = Date.now();
+                this.userId = null;
+                this.checkAuth();
+            }
+
+            async checkAuth() {
+                const { data: { user } } = await supabase.auth.getUser();
+                this.userId = user?.id || null;
+            }
+
+            async submitGameResult(score) {
+                if (!this.userId) return;
+                const playTime = Math.floor((Date.now() - this.sessionStartTime) / 1000);
+                try {
+                    await supabase.from('game_sessions').insert({
+                        user_id: this.userId,
+                        game_name: this.gameName,
+                        score: score,
+                        play_time_seconds: playTime
+                    });
+                } catch (error) {
+                    console.error('Error submitting score:', error);
+                }
+            }
+
+            getElapsedTimeFormatted() {
+                const seconds = Math.floor((Date.now() - this.sessionStartTime) / 1000);
+                const mins = Math.floor(seconds / 60);
+                const secs = seconds % 60;
+                return `${mins}:${secs.toString().padStart(2, '0')}`;
+            }
+        }
+
+        const scoreManager = new ScoreManager('square_kong');
+
+        const canvas = document.getElementById('game');
+        const ctx = canvas.getContext('2d');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+
+        // Audio context
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        function playSound(type) {
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            
+            if (type === 'jump') {
+                osc.frequency.value = 400;
+                osc.type = 'square';
+                gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.2);
+            } else if (type === 'barrel_jump') {
+                osc.frequency.value = 600;
+                osc.type = 'sine';
+                gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.15);
+            } else if (type === 'smash') {
+                osc.frequency.value = 150;
+                osc.type = 'sawtooth';
+                gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.2);
+            } else if (type === 'death') {
+                osc.frequency.value = 100;
+                osc.type = 'sawtooth';
+                gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.5);
+            } else if (type === 'victory') {
+                osc.frequency.value = 800;
+                osc.type = 'sine';
+                gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.4);
+            } else if (type === 'hammer') {
+                osc.frequency.value = 500;
+                osc.type = 'square';
+                gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.25);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.25);
+            }
+        }
+
+        // Game state
+        const gameState = {
+            score: 0,
+            lives: 3,
+            level: 1,
+            highScore: parseInt(localStorage.getItem('squareKongHighScore') || '0'),
+            gameRunning: false,
+            barrelSpeed: 150
+        };
+
+        // Keyboard input
+        const keys = {};
+        window.addEventListener('keydown', (e) => {
+            keys[e.key] = true;
+            keys[e.key.toLowerCase()] = true;
+            if (e.key === ' ') {
+                e.preventDefault();
+                if (!player.jumping && player.onGround) {
+                    player.jumping = true;
+                    player.vy = -500;
+                    playSound('jump');
+                }
+            }
+        });
+        window.addEventListener('keyup', (e) => {
+            keys[e.key] = false;
+            keys[e.key.toLowerCase()] = false;
+        });
+
+        // Player
+        const player = {
+            x: 100,
+            y: canvas.height - 110,
+            width: 24,
+            height: 28,
+            vx: 0,
+            vy: 0,
+            speed: 200,
+            jumpPower: -500,
+            jumping: false,
+            onGround: false,
+            onLadder: false,
+            climbing: false,
+            color: '#ff0000',
+            hasHammer: false,
+            hammerTimer: 0
+        };
+
+        // Platforms (sloped)
+        const platforms = [
+            // Bottom platform (FLAT - FULL WIDTH)
+            { x1: 0, y1: canvas.height - 80, x2: canvas.width, y2: canvas.height - 80, height: 15 },
+            // Second platform (slope down-left)
+            { x1: canvas.width - 100, y1: canvas.height - 200, x2: 150, y2: canvas.height - 160, height: 15 },
+            // Third platform (slope down-right)
+            { x1: 150, y1: canvas.height - 320, x2: canvas.width - 100, y2: canvas.height - 360, height: 15 },
+            // Fourth platform (slope down-left)
+            { x1: canvas.width - 100, y1: canvas.height - 480, x2: 150, y2: canvas.height - 440, height: 15 },
+            // Fifth platform (slope down-right)
+            { x1: 150, y1: canvas.height - 600, x2: canvas.width - 100, y2: canvas.height - 640, height: 15 },
+            // Top platform for princess (FLAT)
+            { x1: canvas.width - 250, y1: canvas.height - 720, x2: canvas.width - 50, y2: canvas.height - 720, height: 15 }
+        ];
+
+        // Ladders
+        const ladders = [
+            { x: canvas.width / 2 - 15, y: canvas.height - 200, height: 120, width: 30 },
+            { x: 200, y: canvas.height - 340, height: 140, width: 30 },
+            { x: canvas.width - 200, y: canvas.height - 500, height: 160, width: 30 },
+            { x: 200, y: canvas.height - 660, height: 160, width: 30 },
+            { x: canvas.width - 150, y: canvas.height - 720, height: 80, width: 30 } // To princess
+        ];
+
+        // Kong at top left
+        const kong = {
+            x: 50,
+            y: canvas.height - 710,
+            width: 50,
+            height: 50,
+            color: '#8B4513'
+        };
+
+        // Princess at top right platform
+        const princess = {
+            x: canvas.width - 150,
+            y: canvas.height - 780,
+            width: 30,
+            height: 40,
+            color: '#ffb6c1'
+        };
+
+        // Barrels
+        let barrels = [];
+        const barrelSize = 20;
+        let barrelTimer = 0;
+        let barrelSpawnRate = 2;
+
+        function spawnBarrel() {
+            barrels.push({
+                x: kong.x + kong.width,
+                y: kong.y + kong.height,
+                size: barrelSize,
+                vx: gameState.barrelSpeed,
+                vy: 0,
+                onPlatform: false,
+                color: '#ff8800'
+            });
+        }
+
+        // Hammer
+        let hammer = null;
+        const hammerSize = 25;
+
+        function spawnHammer() {
+            if (!hammer && Math.random() < 0.3) {
+                const platform = platforms[Math.floor(Math.random() * (platforms.length - 1)) + 1];
+                const x = (platform.x1 + platform.x2) / 2;
+                const y = (platform.y1 + platform.y2) / 2 - 40;
+                hammer = {
+                    x: x,
+                    y: y,
+                    size: hammerSize,
+                    color: '#ffff00'
+                };
+            }
+        }
+
+        // Get Y position on platform at given X
+        function getPlatformY(platform, x) {
+            if (x < Math.min(platform.x1, platform.x2) || x > Math.max(platform.x1, platform.x2)) {
+                return null;
+            }
+            const slope = (platform.y2 - platform.y1) / (platform.x2 - platform.x1);
+            return platform.y1 + slope * (x - platform.x1);
+        }
+
+        // Check if point is on platform
+        function isOnPlatform(x, y, platform) {
+            const platformY = getPlatformY(platform, x);
+            if (platformY === null) return false;
+            return y >= platformY - 5 && y <= platformY + platform.height;
+        }
+
+        // Update player
+        function updatePlayer(dt) {
+            // Horizontal movement
+            player.vx = 0;
+            if (keys['a'] || keys['A']) {
+                player.vx = -player.speed;
+            }
+            if (keys['d'] || keys['D']) {
+                player.vx = player.speed;
+            }
+
+            // Check if on ladder
+            player.onLadder = false;
+            for (const ladder of ladders) {
+                const playerCenterX = player.x + player.width / 2;
+                if (playerCenterX > ladder.x &&
+                    playerCenterX < ladder.x + ladder.width &&
+                    player.y + player.height > ladder.y &&
+                    player.y < ladder.y + ladder.height) {
+                    player.onLadder = true;
+                    break;
+                }
+            }
+
+            // Ladder climbing
+            if (player.onLadder) {
+                if (keys['ArrowUp']) {
+                    player.climbing = true;
+                    player.vy = -150;
+                    player.jumping = false;
+                    player.onGround = false;
+                } else if (keys['ArrowDown']) {
+                    player.climbing = true;
+                    player.vy = 150;
+                    player.jumping = false;
+                    player.onGround = false;
+                } else if (player.climbing) {
+                    player.vy = 0;
+                }
+                
+                // Center player on ladder when climbing
+                if (player.climbing) {
+                    const ladder = ladders.find(l => {
+                        const playerCenterX = player.x + player.width / 2;
+                        return playerCenterX > l.x && playerCenterX < l.x + l.width &&
+                               player.y + player.height > l.y && player.y < l.y + l.height;
+                    });
+                    if (ladder) {
+                        const targetX = ladder.x + ladder.width / 2 - player.width / 2;
+                        player.x += (targetX - player.x) * 0.1;
+                    }
+                }
+            } else {
+                player.climbing = false;
+            }
+
+            // Gravity
+            if (!player.climbing) {
+                player.vy += 1500 * dt; // Gravity
+            }
+
+            // Apply velocity
+            player.x += player.vx * dt;
+            player.y += player.vy * dt;
+
+            // Keep player in bounds
+            player.x = Math.max(0, Math.min(canvas.width - player.width, player.x));
+
+            // Platform collision
+            player.onGround = false;
+            for (const platform of platforms) {
+                const playerCenterX = player.x + player.width / 2;
+                const platformY = getPlatformY(platform, playerCenterX);
+                
+                if (platformY !== null && player.vy >= 0) {
+                    if (player.y + player.height >= platformY &&
+                        player.y + player.height <= platformY + platform.height + 10) {
+                        player.y = platformY - player.height;
+                        player.vy = 0;
+                        player.onGround = true;
+                        player.jumping = false;
+                        break;
+                    }
+                }
+            }
+
+            // Hammer timer
+            if (player.hasHammer) {
+                player.hammerTimer -= dt;
+                if (player.hammerTimer <= 0) {
+                    player.hasHammer = false;
+                }
+            }
+
+            // Check if reached princess
+            if (player.x + player.width > princess.x &&
+                player.x < princess.x + princess.width &&
+                player.y + player.height > princess.y &&
+                player.y < princess.y + princess.height) {
+                reachTop();
+            }
+
+            // Fall off screen
+            if (player.y > canvas.height) {
+                playerDeath();
+            }
+        }
+
+        // Update barrels
+        function updateBarrels(dt) {
+            barrelTimer += dt;
+            if (barrelTimer > barrelSpawnRate) {
+                spawnBarrel();
+                barrelTimer = 0;
+            }
+
+            for (let i = barrels.length - 1; i >= 0; i--) {
+                const barrel = barrels[i];
+                
+                // Apply gravity
+                barrel.vy += 1500 * dt;
+                
+                // Move barrel
+                barrel.x += barrel.vx * dt;
+                barrel.y += barrel.vy * dt;
+
+                // Platform collision for barrels
+                barrel.onPlatform = false;
+                for (const platform of platforms) {
+                    const barrelCenterX = barrel.x + barrel.size / 2;
+                    const platformY = getPlatformY(platform, barrelCenterX);
+                    
+                    if (platformY !== null && barrel.vy >= 0) {
+                        if (barrel.y + barrel.size >= platformY &&
+                            barrel.y + barrel.size <= platformY + platform.height + 10) {
+                            barrel.y = platformY - barrel.size;
+                            barrel.vy = 0;
+                            barrel.onPlatform = true;
+                            
+                            // Calculate slope direction
+                            const slope = (platform.y2 - platform.y1) / (platform.x2 - platform.x1);
+                            
+                            // Check if barrel is near platform edge
+                            const minX = Math.min(platform.x1, platform.x2);
+                            const maxX = Math.max(platform.x1, platform.x2);
+                            
+                            if (barrelCenterX < minX + 30) {
+                                // Near left edge - fall off or bounce
+                                barrel.vx = 0;
+                                barrel.onPlatform = false;
+                            } else if (barrelCenterX > maxX - 30) {
+                                // Near right edge - fall off or bounce
+                                barrel.vx = 0;
+                                barrel.onPlatform = false;
+                            } else {
+                                // On platform - roll based on slope
+                                if (Math.abs(slope) < 0.01) {
+                                    // Flat platform - maintain direction
+                                    if (barrel.vx === 0) barrel.vx = gameState.barrelSpeed;
+                                } else if (slope > 0) {
+                                    // Slope down-right
+                                    barrel.vx = gameState.barrelSpeed;
+                                } else {
+                                    // Slope down-left
+                                    barrel.vx = -gameState.barrelSpeed;
+                                }
+                            }
+                            break;
+                        }
+                    }
+                }
+
+                // Remove if off screen
+                if (barrel.y > canvas.height + 50) {
+                    barrels.splice(i, 1);
+                    continue;
+                }
+
+                // Check collision with player
+                if (barrel.x < player.x + player.width &&
+                    barrel.x + barrel.size > player.x &&
+                    barrel.y < player.y + player.height &&
+                    barrel.y + barrel.size > player.y) {
+                    
+                    if (player.hasHammer) {
+                        // Smash barrel
+                        barrels.splice(i, 1);
+                        gameState.score += 300;
+                        playSound('smash');
+                    } else {
+                        // Player hit
+                        playerDeath();
+                    }
+                    continue;
+                }
+
+                // Check if player jumped over barrel (within jump arc)
+                if (player.jumping && player.vy < 0) {
+                    const playerBottom = player.y + player.height;
+                    const barrelTop = barrel.y;
+                    
+                    if (Math.abs(player.x - barrel.x) < 40 &&
+                        playerBottom > barrelTop - 20 &&
+                        playerBottom < barrelTop + 20) {
+                        if (!barrel.jumpedOver) {
+                            barrel.jumpedOver = true;
+                            gameState.score += 100;
+                            playSound('barrel_jump');
+                        }
+                    }
+                }
+            }
+        }
+
+        // Update hammer
+        function updateHammer() {
+            if (hammer) {
+                if (player.x + player.width > hammer.x &&
+                    player.x < hammer.x + hammer.size &&
+                    player.y + player.height > hammer.y &&
+                    player.y < hammer.y + hammer.size) {
+                    player.hasHammer = true;
+                    player.hammerTimer = 10;
+                    hammer = null;
+                    playSound('hammer');
+                }
+            }
+        }
+
+        function playerDeath() {
+            gameState.lives--;
+            playSound('death');
+            
+            if (gameState.lives <= 0) {
+                endGame();
+            } else {
+                // Reset player position to bottom platform
+                player.x = 100;
+                player.y = canvas.height - 110;
+                player.vx = 0;
+                player.vy = 0;
+                player.jumping = false;
+                player.climbing = false;
+                player.hasHammer = false;
+                barrels = [];
+            }
+        }
+
+        function reachTop() {
+            gameState.score += 1000;
+            gameState.level++;
+            gameState.barrelSpeed += 30;
+            barrelSpawnRate = Math.max(0.8, barrelSpawnRate - 0.2);
+            playSound('victory');
+            
+            // Reset to bottom platform
+            player.x = 100;
+            player.y = canvas.height - 110;
+            player.vx = 0;
+            player.vy = 0;
+            player.jumping = false;
+            player.climbing = false;
+            player.hasHammer = false;
+            barrels = [];
+            hammer = null;
+            
+            spawnHammer();
+        }
+
+        // Drawing functions
+        function drawPlayer() {
+            ctx.fillStyle = player.color;
+            ctx.fillRect(player.x, player.y, player.width, player.height);
+            
+            // Draw hammer if player has it
+            if (player.hasHammer) {
+                ctx.fillStyle = '#ffff00';
+                ctx.fillRect(player.x + player.width, player.y + 5, 15, 15);
+                
+                // Show timer
+                ctx.fillStyle = '#ffff00';
+                ctx.font = '12px Arial';
+                ctx.fillText(Math.ceil(player.hammerTimer), player.x + player.width / 2 - 5, player.y - 5);
+            }
+        }
+
+        function drawPlatforms() {
+            ctx.fillStyle = '#0066cc';
+            for (const platform of platforms) {
+                ctx.beginPath();
+                ctx.moveTo(platform.x1, platform.y1);
+                ctx.lineTo(platform.x2, platform.y2);
+                ctx.lineTo(platform.x2, platform.y2 + platform.height);
+                ctx.lineTo(platform.x1, platform.y1 + platform.height);
+                ctx.closePath();
+                ctx.fill();
+                
+                // Draw border
+                ctx.strokeStyle = '#004488';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+            }
+        }
+
+        function drawLadders() {
+            ctx.fillStyle = '#ff8800';
+            for (const ladder of ladders) {
+                // Draw sides
+                ctx.fillRect(ladder.x, ladder.y, 5, ladder.height);
+                ctx.fillRect(ladder.x + ladder.width - 5, ladder.y, 5, ladder.height);
+                
+                // Draw rungs
+                const rungs = Math.floor(ladder.height / 15);
+                for (let i = 0; i < rungs; i++) {
+                    ctx.fillRect(ladder.x, ladder.y + i * 15, ladder.width, 3);
+                }
+            }
+        }
+
+        function drawKong() {
+            ctx.fillStyle = kong.color;
+            ctx.fillRect(kong.x, kong.y, kong.width, kong.height);
+            
+            // Draw eyes
+            ctx.fillStyle = '#fff';
+            ctx.fillRect(kong.x + 10, kong.y + 15, 8, 8);
+            ctx.fillRect(kong.x + 32, kong.y + 15, 8, 8);
+            
+            // Label
+            ctx.fillStyle = '#ff0000';
+            ctx.font = 'bold 14px Arial';
+            ctx.fillText('KONG', kong.x + 5, kong.y - 5);
+        }
+
+        function drawPrincess() {
+            ctx.fillStyle = princess.color;
+            ctx.fillRect(princess.x, princess.y, princess.width, princess.height);
+            
+            // Draw crown
+            ctx.fillStyle = '#ffd700';
+            ctx.fillRect(princess.x + 5, princess.y - 10, 20, 8);
+            
+            // Label
+            ctx.fillStyle = '#ff0000';
+            ctx.font = 'bold 12px Arial';
+            ctx.fillText('HELP!', princess.x - 5, princess.y - 15);
+        }
+
+        function drawBarrels() {
+            for (const barrel of barrels) {
+                ctx.fillStyle = barrel.color;
+                ctx.fillRect(barrel.x, barrel.y, barrel.size, barrel.size);
+                
+                // Draw barrel lines
+                ctx.strokeStyle = '#000';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(barrel.x, barrel.y + barrel.size / 3);
+                ctx.lineTo(barrel.x + barrel.size, barrel.y + barrel.size / 3);
+                ctx.moveTo(barrel.x, barrel.y + (barrel.size * 2 / 3));
+                ctx.lineTo(barrel.x + barrel.size, barrel.y + (barrel.size * 2 / 3));
+                ctx.stroke();
+            }
+        }
+
+        function drawHammer() {
+            if (hammer) {
+                ctx.fillStyle = hammer.color;
+                ctx.fillRect(hammer.x, hammer.y, hammer.size, hammer.size);
+                ctx.fillRect(hammer.x + 5, hammer.y + hammer.size, 5, 15);
+            }
+        }
+
+        function drawLives() {
+            const livesDisplay = document.getElementById('lives-display');
+            livesDisplay.innerHTML = '';
+            for (let i = 0; i < gameState.lives; i++) {
+                const life = document.createElement('span');
+                life.style.color = '#ff0000';
+                life.style.fontSize = '30px';
+                life.style.marginRight = '10px';
+                life.style.textShadow = '0 0 10px #ff0000';
+                life.textContent = '♥';
+                livesDisplay.appendChild(life);
+            }
+        }
+
+        // Update function
+        function update(dt) {
+            if (!gameState.gameRunning) return;
+
+            updatePlayer(dt);
+            updateBarrels(dt);
+            updateHammer();
+
+            // Update UI
+            document.getElementById('score').textContent = gameState.score;
+            document.getElementById('level').textContent = gameState.level;
+            document.getElementById('highScore').textContent = gameState.highScore;
+            drawLives();
+        }
+
+        function endGame() {
+            gameState.gameRunning = false;
+            
+            // Submit to Supabase
+            scoreManager.submitGameResult(gameState.score);
+            
+            const endDiv = document.getElementById('gameOver');
+            document.getElementById('endMessage').textContent = 'GAME OVER!';
+            
+            const playTime = scoreManager.getElapsedTimeFormatted();
+            document.getElementById('finalScore').textContent = `FINAL SCORE: ${gameState.score} | TIME: ${playTime}`;
+            
+            // Update local high score
+            if (gameState.score > gameState.highScore) {
+                gameState.highScore = gameState.score;
+                localStorage.setItem('squareKongHighScore', gameState.highScore);
+                document.getElementById('currentHighScore').textContent = `NEW HIGH SCORE: ${gameState.highScore}!`;
+                document.getElementById('currentHighScore').style.color = '#ff8800';
+            } else {
+                document.getElementById('currentHighScore').textContent = `HIGH SCORE: ${gameState.highScore}`;
+                document.getElementById('currentHighScore').style.color = '#ff0000';
+            }
+            endDiv.style.display = 'block';
+            
+            // Auto-redirect to arcade after 5 seconds
+            setTimeout(() => {
+                window.location.href = '/arcade.html';
+            }, 5000);
+        }
+
+        window.startGame = function() {
+            document.getElementById('startScreen').style.display = 'none';
+            gameState.gameRunning = true;
+            gameState.score = 0;
+            gameState.lives = 3;
+            gameState.level = 1;
+            gameState.barrelSpeed = 150;
+            barrelSpawnRate = 2;
+            
+            player.x = 100;
+            player.y = canvas.height - 110;
+            player.vx = 0;
+            player.vy = 0;
+            player.jumping = false;
+            player.climbing = false;
+            player.hasHammer = false;
+            
+            barrels = [];
+            hammer = null;
+            barrelTimer = 0;
+            
+            spawnHammer();
+            
+            scoreManager.sessionStartTime = Date.now();
+        }
+
+        // Game loop
+        let lastTime = 0;
+        function gameLoop(timestamp) {
+            if (!lastTime) lastTime = timestamp;
+            const dt = (timestamp - lastTime) / 1000;
+            lastTime = timestamp;
+            
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw everything
+            drawPlatforms();
+            drawLadders();
+            drawKong();
+            drawPrincess();
+            drawBarrels();
+            drawHammer();
+            drawPlayer();
+            
+            // Update game state
+            update(dt);
+            
+            requestAnimationFrame(gameLoop);
+        }
+        gameLoop(0);
+    </script>
+</body>
+</html>
