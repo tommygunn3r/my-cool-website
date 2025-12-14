@@ -139,7 +139,7 @@
             <p><strong>CONTROLS:</strong></p>
             <p>A / D - Move left/right</p>
             <p>SPACE - Jump</p>
-            <p>↑ / ↓ - Climb ladders</p>
+            <p>W / S or ↑ / ↓ - Climb ladders</p>
             <p><strong>OBSTACLES:</strong></p>
             <p>🛢️ Barrels - Jump over or smash with hammer</p>
             <p><strong>POWER-UPS:</strong></p>
@@ -482,12 +482,12 @@
 
             // Ladder climbing
             if (player.onLadder) {
-                if (keys['ArrowUp']) {
+                if (keys['ArrowUp'] || keys['w'] || keys['W']) {
                     player.climbing = true;
                     player.vy = -150;
                     player.jumping = false;
                     player.onGround = false;
-                } else if (keys['ArrowDown']) {
+                } else if (keys['ArrowDown'] || keys['s'] || keys['S']) {
                     player.climbing = true;
                     player.vy = 150;
                     player.jumping = false;
