@@ -594,6 +594,9 @@
         }
 
         async function loadTables() {
+            // First, cleanup abandoned tables
+            await cleanupAbandonedTables();
+            
             const { data: tables, error } = await supabaseClient
                 .from('pool_tables')
                 .select('*')
@@ -610,6 +613,62 @@
             tables.forEach(table => {
                 grid.appendChild(createTableCard(table));
             });
+        }
+
+        async function cleanupAbandonedTables() {
+            // Reset tables that are stuck in waiting/ready status for more than 5 minutes
+            const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+            
+            const { data: abandonedTables } = await supabaseClient
+                .from('pool_tables')
+                .select('*')
+                .in('status', ['waiting', 'ready'])
+                .lt('updated_at', fiveMinutesAgo);
+            
+            if (abandonedTables && abandonedTables.length > 0) {
+                console.log('Cleaning up abandoned tables:', abandonedTables.map(t => t.id));
+                
+                for (const table of abandonedTables) {
+                    await supabaseClient
+                        .from('pool_tables')
+                        .update({
+                            player1_id: null,
+                            player1_name: null,
+                            player1_ready: false,
+                            player1_paid: false,
+                            player2_id: null,
+                            player2_name: null,
+                            player2_ready: false,
+                            player2_paid: false,
+                            status: 'waiting',
+                            wager: 0
+                        })
+                        .eq('id', table.id);
+                }
+            }
+        }
+
+        async function resetTable(tableId) {
+            if (!confirm('Reset this table? All players will be removed.')) {
+                return;
+            }
+            
+            await supabaseClient
+                .from('pool_tables')
+                .update({
+                    player1_id: null,
+                    player1_name: null,
+                    player1_ready: false,
+                    player1_paid: false,
+                    player2_id: null,
+                    player2_name: null,
+                    player2_ready: false,
+                    player2_paid: false,
+                    status: 'waiting',
+                    wager: 0,
+                    game_state: {}
+                })
+                .eq('id', tableId);
         }
 
         function createTableCard(table) {
@@ -634,6 +693,12 @@
                     <div class="table-number">TABLE ${table.id}</div>
                     <div class="table-status status-${table.status}">${table.status}</div>
                 </div>
+                
+                ${!isPlayer && (table.player1_id || table.player2_id) ? `
+                    <div style="text-align: right; margin-bottom: 10px;">
+                        <button class="btn" style="padding: 4px 10px; font-size: 0.8em; opacity: 0.5;" onclick="resetTable(${table.id})">⟳ Reset</button>
+                    </div>
+                ` : ''}
                 
                 <div class="pool-table-visual">
                     <div class="pocket top-left"></div>
