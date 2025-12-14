@@ -193,7 +193,99 @@
         </div>
     </div>
 
-    <script>
+    <script type="module">
+        // ===== SUPABASE INTEGRATION =====
+        import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+        const SUPABASE_URL = "https://pknhslxhpohrzgsfkisr.supabase.co";
+        const SUPABASE_ANON_KEY = "sb_publishable_-zZw-pi_3q1sdNGhITKuhQ_ECyDARzc";
+
+        const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        let currentUser = null;
+        let playerName = "Anonymous";
+
+        // Check for logged in user
+        async function initGameAuth() {
+            try {
+                console.log("Checking authentication...");
+                const { data: { session } } = await supabase.auth.getSession();
+
+                if (!session?.user) {
+                    console.log("Not logged in - playing as guest");
+                    console.log("Scores will not be saved to leaderboard");
+                    return;
+                }
+
+                currentUser = session.user;
+                playerName = session.user.user_metadata?.display_name ||
+                            session.user.email?.split('@')[0] ||
+                            "Anonymous";
+                console.log("✓ Authenticated as:", playerName);
+                console.log("✓ User ID:", session.user.id);
+
+                await loadHighScore();
+            } catch (err) {
+                console.error("Auth check failed:", err);
+            }
+        }
+
+        async function loadHighScore() {
+            if (!currentUser) return;
+
+            try {
+                const { data, error } = await supabase
+                    .from('game_highscores')
+                    .select('score')
+                    .eq('game_id', 'squogger')
+                    .eq('user_id', currentUser.id)
+                    .order('score', { ascending: false })
+                    .limit(1)
+                    .single();
+
+                if (data && !error) {
+                    highScore = data.score;
+                    document.getElementById('highScore').textContent = highScore;
+                }
+            } catch (error) {
+                console.warn('Could not load high score:', error);
+            }
+        }
+
+        async function submitHighScore(finalScore) {
+            if (!currentUser) {
+                console.log("Playing as guest - score not saved to leaderboard");
+                return;
+            }
+
+            try {
+                console.log("Attempting to submit score:", {
+                    user_id: currentUser.id,
+                    game_id: 'squogger',
+                    player_name: playerName,
+                    score: Math.floor(finalScore)
+                });
+
+                const { data, error } = await supabase
+                    .from('game_highscores')
+                    .insert({
+                        user_id: currentUser.id,
+                        game_id: 'squogger',
+                        player_name: playerName,
+                        score: Math.floor(finalScore)
+                    });
+
+                if (error) {
+                    console.error("Supabase error details:", error);
+                    throw error;
+                }
+                console.log("Score submitted successfully:", finalScore);
+            } catch (error) {
+                console.error("Score submission failed:", error.message);
+            }
+        }
+
+        // ===== GAME CODE =====
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
 
@@ -300,6 +392,9 @@
         // Initialize game
         document.getElementById('highScore').textContent = highScore;
         document.getElementById('startScreen').style.display = 'block';
+
+        // Initialize authentication
+        initGameAuth();
 
         function startGame() {
             document.getElementById('startScreen').style.display = 'none';
@@ -614,14 +709,18 @@
             updateDisplay();
         }
 
-        function gameOver() {
+        async function gameOver() {
             gameRunning = false;
-            
+
             if (score > highScore) {
                 highScore = score;
                 localStorage.setItem('squoggerHighScore', highScore);
+                document.getElementById('highScore').textContent = highScore;
             }
-            
+
+            // Submit score to Supabase
+            await submitHighScore(score);
+
             document.getElementById('finalScore').textContent = score;
             document.getElementById('finalLevel').textContent = level;
             document.getElementById('gameOverScreen').style.display = 'block';
