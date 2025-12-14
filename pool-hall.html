@@ -734,8 +734,8 @@
                     <div class="setting-row">
                         <div class="setting-label">Game Type:</div>
                         <select class="game-select" ${!isPlayer1 ? 'disabled' : ''} onchange="changeGameType(${table.id}, this.value)">
+                            <option value="8-ball" ${table.game_type === '8-ball' ? 'selected' : ''}>8-Ball</option>
                             <option value="9-ball" ${table.game_type === '9-ball' ? 'selected' : ''}>9-Ball</option>
-                            <option value="8-ball" ${table.game_type === '8-ball' ? 'selected' : ''}>8-Ball (Coming Soon)</option>
                         </select>
                     </div>
                     <div class="setting-row">
@@ -991,12 +991,6 @@
         }
 
         async function changeGameType(tableId, gameType) {
-            if (gameType === '8-ball') {
-                alert('8-Ball coming soon! Stay tuned.');
-                await loadTables(); // Reload to reset dropdown
-                return;
-            }
-            
             const { error } = await supabaseClient
                 .from('pool_tables')
                 .update({ game_type: gameType })
