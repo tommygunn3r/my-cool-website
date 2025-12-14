@@ -14,8 +14,6 @@
         canvas { 
             display: block; 
             background: #000; 
-            width: 100vw; 
-            height: 100vh; 
         }
         #ui {
             position: absolute; 
@@ -251,13 +249,18 @@
 
         const canvas = document.getElementById('game');
         const ctx = canvas.getContext('2d');
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-
-        window.addEventListener('resize', () => {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-        });
+        
+        // Fixed classic arcade dimensions (3:4 portrait)
+        canvas.width = 600;
+        canvas.height = 800;
+        
+        // Center canvas with CSS
+        canvas.style.position = 'absolute';
+        canvas.style.left = '50%';
+        canvas.style.top = '50%';
+        canvas.style.transform = 'translate(-50%, -50%)';
+        canvas.style.border = '5px solid #ff0000';
+        canvas.style.boxShadow = '0 0 30px rgba(255, 0, 0, 0.5)';
 
         // Audio context
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -313,6 +316,31 @@
             }
         }
 
+        function playStartTune() {
+            const notes = [
+                { freq: 262, time: 0, duration: 0.15 },      // C
+                { freq: 330, time: 0.15, duration: 0.15 },   // E
+                { freq: 392, time: 0.3, duration: 0.15 },    // G
+                { freq: 523, time: 0.45, duration: 0.3 }     // C high
+            ];
+            
+            notes.forEach(note => {
+                setTimeout(() => {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    
+                    osc.frequency.value = note.freq;
+                    osc.type = 'square';
+                    gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + note.duration);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + note.duration);
+                }, note.time * 1000);
+            });
+        }
+
         // Game state
         const gameState = {
             score: 0,
@@ -320,7 +348,9 @@
             level: 1,
             highScore: parseInt(localStorage.getItem('squareKongHighScore') || '0'),
             gameRunning: false,
-            barrelSpeed: 150
+            barrelSpeed: 150,
+            introSequence: false,
+            introTimer: 0
         };
 
         // Keyboard input
@@ -330,9 +360,9 @@
             keys[e.key.toLowerCase()] = true;
             if (e.key === ' ') {
                 e.preventDefault();
-                if (!player.jumping && player.onGround) {
+                if (!player.jumping && player.onGround && !gameState.introSequence) {
                     player.jumping = true;
-                    player.vy = -500;
+                    player.vy = player.jumpPower; // Use player's jumpPower
                     playSound('jump');
                 }
             }
@@ -351,7 +381,7 @@
             vx: 0,
             vy: 0,
             speed: 200,
-            jumpPower: -500,
+            jumpPower: -400, // Reduced from -500 to -400
             jumping: false,
             onGround: false,
             onLadder: false,
@@ -361,48 +391,109 @@
             hammerTimer: 0
         };
 
-        // Platforms (sloped)
-        const platforms = [
-            // Bottom platform (FLAT - FULL WIDTH)
-            { x1: 0, y1: canvas.height - 80, x2: canvas.width, y2: canvas.height - 80, height: 15 },
-            // Second platform (slope down-left)
-            { x1: canvas.width - 100, y1: canvas.height - 200, x2: 150, y2: canvas.height - 160, height: 15 },
-            // Third platform (slope down-right)
-            { x1: 150, y1: canvas.height - 320, x2: canvas.width - 100, y2: canvas.height - 360, height: 15 },
-            // Fourth platform (slope down-left)
-            { x1: canvas.width - 100, y1: canvas.height - 480, x2: 150, y2: canvas.height - 440, height: 15 },
-            // Fifth platform (slope down-right)
-            { x1: 150, y1: canvas.height - 600, x2: canvas.width - 100, y2: canvas.height - 640, height: 15 },
-            // Top platform for princess (FLAT)
-            { x1: canvas.width - 250, y1: canvas.height - 720, x2: canvas.width - 50, y2: canvas.height - 720, height: 15 }
+        // Level layouts - different platform configurations
+        const levelLayouts = [
+            // Level 1 - Classic layout
+            {
+                platforms: [
+                    { x1: 0, y1: 720, x2: 600, y2: 720, height: 15 },
+                    { x1: 80, y1: 640, x2: 600, y2: 680, height: 15 },
+                    { x1: 0, y1: 520, x2: 520, y2: 560, height: 15 },
+                    { x1: 80, y1: 440, x2: 600, y2: 400, height: 15 },
+                    { x1: 0, y1: 320, x2: 520, y2: 360, height: 15 },
+                    { x1: 350, y1: 240, x2: 550, y2: 240, height: 15 }
+                ],
+                ladders: [
+                    { x: 285, y: 620, height: 100, width: 30 },
+                    { x: 450, y: 500, height: 100, width: 30 },
+                    { x: 150, y: 380, height: 120, width: 30 },
+                    { x: 450, y: 280, height: 100, width: 30 },
+                    { x: 480, y: 240, height: 80, width: 30 }
+                ],
+                kongY: 250,
+                princessX: 450,
+                princessY: 180
+            },
+            // Level 2 - Steeper slopes
+            {
+                platforms: [
+                    { x1: 0, y1: 720, x2: 600, y2: 720, height: 15 },
+                    { x1: 100, y1: 630, x2: 600, y2: 690, height: 15 },
+                    { x1: 0, y1: 500, x2: 500, y2: 570, height: 15 },
+                    { x1: 100, y1: 420, x2: 600, y2: 370, height: 15 },
+                    { x1: 0, y1: 290, x2: 500, y2: 350, height: 15 },
+                    { x1: 350, y1: 220, x2: 550, y2: 220, height: 15 }
+                ],
+                ladders: [
+                    { x: 300, y: 610, height: 110, width: 30 },
+                    { x: 450, y: 490, height: 110, width: 30 },
+                    { x: 200, y: 360, height: 130, width: 30 },
+                    { x: 450, y: 260, height: 110, width: 30 },
+                    { x: 480, y: 220, height: 80, width: 30 }
+                ],
+                kongY: 230,
+                princessX: 450,
+                princessY: 160
+            },
+            // Level 3 - Shorter platforms (more gaps)
+            {
+                platforms: [
+                    { x1: 0, y1: 720, x2: 600, y2: 720, height: 15 },
+                    { x1: 150, y1: 640, x2: 600, y2: 680, height: 15 },
+                    { x1: 0, y1: 520, x2: 450, y2: 560, height: 15 },
+                    { x1: 150, y1: 440, x2: 600, y2: 400, height: 15 },
+                    { x1: 0, y1: 320, x2: 450, y2: 360, height: 15 },
+                    { x1: 350, y1: 240, x2: 550, y2: 240, height: 15 }
+                ],
+                ladders: [
+                    { x: 400, y: 620, height: 100, width: 30 },
+                    { x: 400, y: 500, height: 100, width: 30 },
+                    { x: 300, y: 380, height: 120, width: 30 },
+                    { x: 400, y: 280, height: 100, width: 30 },
+                    { x: 480, y: 240, height: 80, width: 30 }
+                ],
+                kongY: 250,
+                princessX: 450,
+                princessY: 180
+            }
         ];
 
-        // Ladders
-        const ladders = [
-            { x: canvas.width / 2 - 15, y: canvas.height - 200, height: 120, width: 30 },
-            { x: 200, y: canvas.height - 340, height: 140, width: 30 },
-            { x: canvas.width - 200, y: canvas.height - 500, height: 160, width: 30 },
-            { x: 200, y: canvas.height - 660, height: 160, width: 30 },
-            { x: canvas.width - 150, y: canvas.height - 720, height: 80, width: 30 } // To princess
-        ];
+        let currentLevel = 0;
+        let platforms = [];
+        let ladders = [];
 
-        // Kong at top left
+        function loadLevel(levelIndex) {
+            currentLevel = levelIndex % levelLayouts.length;
+            const layout = levelLayouts[currentLevel];
+            
+            platforms = layout.platforms.map(p => ({...p}));
+            ladders = layout.ladders.map(l => ({...l}));
+            
+            kong.y = layout.kongY;
+            princess.x = layout.princessX;
+            princess.y = layout.princessY;
+        }
+
+        // Kong at top left (initial position, will be updated by loadLevel)
         const kong = {
             x: 50,
-            y: canvas.height - 710,
+            y: 250,
             width: 50,
             height: 50,
             color: '#8B4513'
         };
 
-        // Princess at top right platform
+        // Princess at top right platform (initial position, will be updated by loadLevel)
         const princess = {
-            x: canvas.width - 150,
-            y: canvas.height - 780,
+            x: 450,
+            y: 180,
             width: 30,
             height: 40,
             color: '#ffb6c1'
         };
+
+        // Initialize with level 1
+        loadLevel(0);
 
         // Barrels
         let barrels = [];
@@ -411,12 +502,13 @@
         let barrelSpawnRate = 2;
 
         function spawnBarrel() {
+            const speedMultiplier = gameState.introSequence ? 1.5 : 1; // Faster during intro
             barrels.push({
                 x: kong.x + kong.width,
                 y: kong.y + kong.height,
                 size: barrelSize,
-                vx: gameState.barrelSpeed,
-                vy: 0,
+                vx: gameState.barrelSpeed * 0.5 * speedMultiplier, // Start moving RIGHT (down the top slope)
+                vy: 50, // Small downward velocity to start falling
                 onPlatform: false,
                 color: '#ff8800'
             });
@@ -458,6 +550,9 @@
 
         // Update player
         function updatePlayer(dt) {
+            // Disable movement during intro
+            if (gameState.introSequence) return;
+            
             // Horizontal movement
             player.vx = 0;
             if (keys['a'] || keys['A']) {
@@ -531,8 +626,11 @@
                 const platformY = getPlatformY(platform, playerCenterX);
                 
                 if (platformY !== null && player.vy >= 0) {
-                    if (player.y + player.height >= platformY &&
-                        player.y + player.height <= platformY + platform.height + 10) {
+                    // Check if player's bottom is near platform top
+                    const distanceToplatform = (player.y + player.height) - platformY;
+                    
+                    // Land on platform if within reasonable range (15 pixels) and moving down
+                    if (distanceToplatform >= 0 && distanceToplatform <= 15) {
                         player.y = platformY - player.height;
                         player.vy = 0;
                         player.onGround = true;
@@ -575,6 +673,9 @@
             for (let i = barrels.length - 1; i >= 0; i--) {
                 const barrel = barrels[i];
                 
+                // Safety check
+                if (!barrel) continue;
+                
                 // Apply gravity
                 barrel.vy += 1500 * dt;
                 
@@ -598,30 +699,16 @@
                             // Calculate slope direction
                             const slope = (platform.y2 - platform.y1) / (platform.x2 - platform.x1);
                             
-                            // Check if barrel is near platform edge
-                            const minX = Math.min(platform.x1, platform.x2);
-                            const maxX = Math.max(platform.x1, platform.x2);
-                            
-                            if (barrelCenterX < minX + 30) {
-                                // Near left edge - fall off or bounce
-                                barrel.vx = 0;
-                                barrel.onPlatform = false;
-                            } else if (barrelCenterX > maxX - 30) {
-                                // Near right edge - fall off or bounce
-                                barrel.vx = 0;
-                                barrel.onPlatform = false;
+                            // On platform - roll based on slope
+                            if (Math.abs(slope) < 0.01) {
+                                // Flat platform - maintain direction
+                                if (barrel.vx === 0) barrel.vx = gameState.barrelSpeed;
+                            } else if (slope < 0) {
+                                // Negative slope - roll LEFT
+                                barrel.vx = -gameState.barrelSpeed;
                             } else {
-                                // On platform - roll based on slope
-                                if (Math.abs(slope) < 0.01) {
-                                    // Flat platform - maintain direction
-                                    if (barrel.vx === 0) barrel.vx = gameState.barrelSpeed;
-                                } else if (slope > 0) {
-                                    // Slope down-right
-                                    barrel.vx = gameState.barrelSpeed;
-                                } else {
-                                    // Slope down-left
-                                    barrel.vx = -gameState.barrelSpeed;
-                                }
+                                // Positive slope - roll RIGHT
+                                barrel.vx = gameState.barrelSpeed;
                             }
                             break;
                         }
@@ -692,15 +779,32 @@
             if (gameState.lives <= 0) {
                 endGame();
             } else {
-                // Reset player position to bottom platform
-                player.x = 100;
-                player.y = canvas.height - 110;
-                player.vx = 0;
-                player.vy = 0;
-                player.jumping = false;
-                player.climbing = false;
-                player.hasHammer = false;
-                barrels = [];
+                // Briefly pause game
+                gameState.gameRunning = false;
+                
+                setTimeout(() => {
+                    // Reset player position to bottom platform
+                    player.x = 100;
+                    player.y = 690;
+                    player.vx = 0;
+                    player.vy = 0;
+                    player.jumping = false;
+                    player.climbing = false;
+                    player.hasHammer = false;
+                    player.onGround = false;
+                    barrels = [];
+                    barrelTimer = 0;
+                    
+                    // Start intro sequence again to repopulate ramps
+                    gameState.introSequence = true;
+                    gameState.introTimer = 0;
+                    
+                    // Play start tune again
+                    playStartTune();
+                    
+                    // Resume game
+                    gameState.gameRunning = true;
+                }, 1000); // Slightly longer pause before restart
             }
         }
 
@@ -711,9 +815,12 @@
             barrelSpawnRate = Math.max(0.8, barrelSpawnRate - 0.2);
             playSound('victory');
             
+            // Load next level layout
+            loadLevel(gameState.level - 1);
+            
             // Reset to bottom platform
             player.x = 100;
-            player.y = canvas.height - 110;
+            player.y = 690;
             player.vx = 0;
             player.vy = 0;
             player.jumping = false;
@@ -721,6 +828,12 @@
             player.hasHammer = false;
             barrels = [];
             hammer = null;
+            barrelTimer = 0;
+            
+            // Start intro sequence
+            gameState.introSequence = true;
+            gameState.introTimer = 0;
+            playStartTune();
             
             spawnHammer();
         }
@@ -777,12 +890,22 @@
 
         function drawKong() {
             ctx.fillStyle = kong.color;
-            ctx.fillRect(kong.x, kong.y, kong.width, kong.height);
+            
+            // Kong dance animation during intro
+            let offsetX = 0;
+            let offsetY = 0;
+            if (gameState.introSequence) {
+                const bounce = Math.sin(gameState.introTimer * 10) * 5;
+                offsetY = bounce;
+                offsetX = Math.sin(gameState.introTimer * 5) * 3;
+            }
+            
+            ctx.fillRect(kong.x + offsetX, kong.y + offsetY, kong.width, kong.height);
             
             // Draw eyes
             ctx.fillStyle = '#fff';
-            ctx.fillRect(kong.x + 10, kong.y + 15, 8, 8);
-            ctx.fillRect(kong.x + 32, kong.y + 15, 8, 8);
+            ctx.fillRect(kong.x + 10 + offsetX, kong.y + 15 + offsetY, 8, 8);
+            ctx.fillRect(kong.x + 32 + offsetX, kong.y + 15 + offsetY, 8, 8);
             
             // Label
             ctx.fillStyle = '#ff0000';
@@ -847,6 +970,30 @@
         function update(dt) {
             if (!gameState.gameRunning) return;
 
+            // Handle intro sequence
+            if (gameState.introSequence) {
+                gameState.introTimer += dt;
+                
+                // Spawn fewer barrels during intro - half as many
+                if (gameState.introTimer > 0.5 && gameState.introTimer < 3.5) {
+                    barrelTimer += dt;
+                    if (barrelTimer > 2.4) { // Increased to 2.4 seconds (was 1.2)
+                        spawnBarrel();
+                        barrelTimer = 0;
+                    }
+                }
+                
+                // End intro after 4 seconds (extended to allow more barrel drops)
+                if (gameState.introTimer > 4) {
+                    gameState.introSequence = false;
+                    spawnHammer(); // Spawn hammer when gameplay starts
+                }
+                
+                // Continue updating barrels during intro
+                updateBarrels(dt);
+                return;
+            }
+
             updatePlayer(dt);
             updateBarrels(dt);
             updateHammer();
@@ -896,9 +1043,14 @@
             gameState.level = 1;
             gameState.barrelSpeed = 150;
             barrelSpawnRate = 2;
+            gameState.introSequence = true;
+            gameState.introTimer = 0;
+            
+            // Load first level
+            loadLevel(0);
             
             player.x = 100;
-            player.y = canvas.height - 110;
+            player.y = 690;
             player.vx = 0;
             player.vy = 0;
             player.jumping = false;
@@ -909,7 +1061,8 @@
             hammer = null;
             barrelTimer = 0;
             
-            spawnHammer();
+            // Play start tune
+            playStartTune();
             
             scoreManager.sessionStartTime = Date.now();
         }
