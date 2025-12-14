@@ -673,6 +673,22 @@
                             <option value="8-ball" ${table.game_type === '8-ball' ? 'selected' : ''}>8-Ball (Coming Soon)</option>
                         </select>
                     </div>
+                    <div class="setting-row">
+                        <div class="setting-label">Wager (GunnerCoins):</div>
+                        <input type="number" 
+                               class="game-select" 
+                               style="width: 120px; text-align: right;"
+                               min="0" 
+                               max="10000" 
+                               value="${table.wager || 0}"
+                               ${!isPlayer1 ? 'disabled' : ''}
+                               onchange="changeWager(${table.id}, this.value)">
+                    </div>
+                    ${table.wager > 0 ? `
+                        <div class="setting-row" style="font-size: 0.9em; color: #FFA500; border: none;">
+                            <div>Winner takes ${table.wager * 2} GC</div>
+                        </div>
+                    ` : ''}
                 </div>
                 
                 ${isPlayer1 && !table.player2_id ? `
@@ -715,19 +731,51 @@
             
             // Player is at the table
             let buttons = '';
+            const wager = table.wager || 0;
+            const hasBot = table.player2_name && table.player2_name.includes('BOT');
             
             if (isPlayer1) {
                 const readyText = table.player1_ready ? 'UNREADY' : 'READY';
                 buttons += `<button class="btn btn-ready" onclick="toggleReady(${table.id}, 1)">${readyText}</button>`;
                 
-                if (table.player2_id && table.player1_ready && table.player2_ready) {
-                    buttons += `<button class="btn btn-play" onclick="startGame(${table.id})">START GAME</button>`;
-                } else if (table.player2_name && table.player2_name.includes('BOT') && table.player1_ready) {
-                    buttons += `<button class="btn btn-play" onclick="startGame(${table.id})">START GAME</button>`;
+                // Check if can start game
+                const canStart = table.player2_id && table.player1_ready && table.player2_ready;
+                const canStartBot = hasBot && table.player1_ready;
+                
+                if (canStart || canStartBot) {
+                    if (wager > 0) {
+                        // Show payment status
+                        const bothPaid = (hasBot || table.player2_paid) && table.player1_paid;
+                        const myPaid = table.player1_paid;
+                        
+                        if (bothPaid) {
+                            buttons += `<button class="btn btn-play" onclick="startGame(${table.id})">START GAME</button>`;
+                        } else if (myPaid) {
+                            buttons += `<button class="btn" disabled>WAITING FOR OPPONENT</button>`;
+                        } else {
+                            buttons += `<button class="btn btn-ready" onclick="startGame(${table.id})">PAY ${wager} GC</button>`;
+                        }
+                    } else {
+                        buttons += `<button class="btn btn-play" onclick="startGame(${table.id})">START GAME</button>`;
+                    }
                 }
             } else if (isPlayer2) {
                 const readyText = table.player2_ready ? 'UNREADY' : 'READY';
                 buttons += `<button class="btn btn-ready" onclick="toggleReady(${table.id}, 2)">${readyText}</button>`;
+                
+                // Show payment button if wager and both ready
+                if (wager > 0 && table.player1_ready && table.player2_ready) {
+                    const bothPaid = table.player1_paid && table.player2_paid;
+                    const myPaid = table.player2_paid;
+                    
+                    if (bothPaid) {
+                        buttons += `<button class="btn" disabled>WAITING FOR HOST</button>`;
+                    } else if (myPaid) {
+                        buttons += `<button class="btn" disabled>WAITING FOR HOST</button>`;
+                    } else {
+                        buttons += `<button class="btn btn-ready" onclick="startGame(${table.id})">PAY ${wager} GC</button>`;
+                    }
+                }
             }
             
             buttons += `<button class="btn btn-leave" onclick="leaveTable(${table.id})">LEAVE</button>`;
@@ -742,12 +790,12 @@
             try {
                 const { data: profile, error } = await supabaseClient
                     .from('profiles')
-                    .select('username')
+                    .select('player_name')
                     .eq('id', currentUser.id)
                     .single();
                 
-                if (!error && profile?.username) {
-                    username = profile.username;
+                if (!error && profile?.player_name) {
+                    username = profile.player_name;
                 }
             } catch (e) {
                 console.log('Using email as username (profiles table not accessible)');
@@ -814,6 +862,13 @@
             let updates = {};
             
             if (table.player1_id === currentUser.id) {
+                // Check if player 1 paid and warn them
+                if (table.player1_paid && table.wager > 0) {
+                    if (!confirm(`You already paid ${table.wager} GunnerCoins. If you leave, you will NOT be refunded. Continue?`)) {
+                        return;
+                    }
+                }
+                
                 // Player 1 leaving
                 if (table.player2_id && table.player2_id !== 'BOT') {
                     // Move player 2 to player 1
@@ -821,9 +876,11 @@
                         player1_id: table.player2_id,
                         player1_name: table.player2_name,
                         player1_ready: table.player2_ready,
+                        player1_paid: table.player2_paid,
                         player2_id: null,
                         player2_name: null,
-                        player2_ready: false
+                        player2_ready: false,
+                        player2_paid: false
                     };
                 } else {
                     // Clear player 1
@@ -831,17 +888,28 @@
                         player1_id: null,
                         player1_name: null,
                         player1_ready: false,
+                        player1_paid: false,
                         player2_id: null,
                         player2_name: null,
-                        player2_ready: false
+                        player2_ready: false,
+                        player2_paid: false,
+                        wager: 0
                     };
                 }
             } else {
+                // Check if player 2 paid and warn them
+                if (table.player2_paid && table.wager > 0) {
+                    if (!confirm(`You already paid ${table.wager} GunnerCoins. If you leave, you will NOT be refunded. Continue?`)) {
+                        return;
+                    }
+                }
+                
                 // Player 2 leaving
                 updates = {
                     player2_id: null,
                     player2_name: null,
-                    player2_ready: false
+                    player2_ready: false,
+                    player2_paid: false
                 };
             }
             
@@ -874,7 +942,84 @@
             }
         }
 
+        async function changeWager(tableId, wagerValue) {
+            const wager = parseInt(wagerValue) || 0;
+            
+            const { error } = await supabaseClient
+                .from('pool_tables')
+                .update({ 
+                    wager: wager,
+                    player1_paid: false,
+                    player2_paid: false
+                })
+                .eq('id', tableId);
+            
+            if (error) {
+                console.error('Error changing wager:', error);
+            }
+        }
+
         async function startGame(tableId) {
+            const { data: table } = await supabaseClient
+                .from('pool_tables')
+                .select('*')
+                .eq('id', tableId)
+                .single();
+            
+            const wager = table.wager || 0;
+            
+            // Check if wager payments are needed
+            if (wager > 0) {
+                // Get current user's coins
+                const { data: profile } = await supabaseClient
+                    .from('profiles')
+                    .select('gunnercoins')
+                    .eq('id', currentUser.id)
+                    .single();
+                
+                const myCoins = profile?.gunnercoins || 0;
+                
+                // Check if current player has paid
+                const isPlayer1 = table.player1_id === currentUser.id;
+                const hasPaid = isPlayer1 ? table.player1_paid : table.player2_paid;
+                
+                if (!hasPaid) {
+                    if (myCoins < wager) {
+                        alert(`You don't have enough GunnerCoins! You need ${wager} but only have ${myCoins}.`);
+                        return;
+                    }
+                    
+                    // Deduct coins
+                    const { error: coinsError } = await supabaseClient
+                        .from('profiles')
+                        .update({ gunnercoins: myCoins - wager })
+                        .eq('id', currentUser.id);
+                    
+                    if (coinsError) {
+                        console.error('Error deducting coins:', coinsError);
+                        alert('Failed to deduct coins. Please try again.');
+                        return;
+                    }
+                    
+                    // Mark as paid
+                    const paidField = isPlayer1 ? 'player1_paid' : 'player2_paid';
+                    await supabaseClient
+                        .from('pool_tables')
+                        .update({ [paidField]: true })
+                        .eq('id', tableId);
+                    
+                    alert(`${wager} GunnerCoins deducted. Waiting for opponent...`);
+                    return;
+                }
+                
+                // Check if both players have paid (or if playing against bot)
+                const hasBot = table.player2_name && table.player2_name.includes('BOT');
+                if (!hasBot && (!table.player1_paid || !table.player2_paid)) {
+                    alert('Waiting for both players to pay the wager...');
+                    return;
+                }
+            }
+            
             const { error } = await supabaseClient
                 .from('pool_tables')
                 .update({ status: 'playing' })
