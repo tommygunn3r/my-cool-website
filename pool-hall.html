@@ -305,8 +305,8 @@
         .pocket.top-right { top: 5px; right: 5px; }
         .pocket.bottom-left { bottom: 5px; left: 5px; }
         .pocket.bottom-right { bottom: 5px; right: 5px; }
-        .pocket.middle-left { top: 50%; left: 5px; transform: translateY(-50%); }
-        .pocket.middle-right { top: 50%; right: 5px; transform: translateY(-50%); }
+        .pocket.middle-top { top: 5px; left: 50%; transform: translateX(-50%); }
+        .pocket.middle-bottom { bottom: 5px; left: 50%; transform: translateX(-50%); }
 
         .players-section {
             margin-bottom: 15px;
@@ -637,10 +637,10 @@
                 
                 <div class="pool-table-visual">
                     <div class="pocket top-left"></div>
+                    <div class="pocket middle-top"></div>
                     <div class="pocket top-right"></div>
-                    <div class="pocket middle-left"></div>
-                    <div class="pocket middle-right"></div>
                     <div class="pocket bottom-left"></div>
+                    <div class="pocket middle-bottom"></div>
                     <div class="pocket bottom-right"></div>
                 </div>
                 
