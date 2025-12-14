@@ -166,7 +166,7 @@
         <canvas id="gameCanvas" width="800" height="600"></canvas>
 
         <div class="controls">
-            🎮 Use ARROW KEYS to move | Reach the top safely!
+            🎮 Use ARROW KEYS or WASD to move | Reach the top safely!
         </div>
 
         <div class="start-screen" id="startScreen">
@@ -630,10 +630,12 @@
         // Controls
         document.addEventListener('keydown', (e) => {
             if (!gameRunning) return;
-            
+
             let moved = false;
             switch(e.key) {
                 case 'ArrowUp':
+                case 'w':
+                case 'W':
                     if (player.y > 40) {
                         player.y -= player.moveDistance;
                         score += 10;
@@ -641,25 +643,31 @@
                     }
                     break;
                 case 'ArrowDown':
+                case 's':
+                case 'S':
                     if (player.y < player.startY) {
                         player.y += player.moveDistance;
                         moved = true;
                     }
                     break;
                 case 'ArrowLeft':
+                case 'a':
+                case 'A':
                     if (player.x > 0) {
                         player.x -= player.moveDistance;
                         moved = true;
                     }
                     break;
                 case 'ArrowRight':
+                case 'd':
+                case 'D':
                     if (player.x < canvas.width - player.size) {
                         player.x += player.moveDistance;
                         moved = true;
                     }
                     break;
             }
-            
+
             if (moved) {
                 playBoing();
             }
