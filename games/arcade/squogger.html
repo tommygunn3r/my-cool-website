@@ -182,7 +182,14 @@
             <h2>GAME OVER</h2>
             <p>Final Score: <span id="finalScore">0</span></p>
             <p>Level Reached: <span id="finalLevel">1</span></p>
-            <button onclick="restartGame()">PLAY AGAIN</button>
+            <div style="margin-top: 30px; font-size: 0.9em; color: #9370db;">
+                <p>── CREDITS ──</p>
+                <p style="margin-top: 15px;">Game Design & Development</p>
+                <p style="color: #ffff00;">GunnersGames</p>
+                <p style="margin-top: 10px;">Inspired by the classic</p>
+                <p style="color: #ffff00;">Frogger (1981)</p>
+                <p style="margin-top: 15px;">Thanks for playing!</p>
+            </div>
         </div>
     </div>
 
@@ -620,12 +627,6 @@
             document.getElementById('gameOverScreen').style.display = 'block';
         }
 
-        function restartGame() {
-            document.getElementById('gameOverScreen').style.display = 'none';
-            resetGame();
-            gameRunning = true;
-            gameLoop();
-        }
 
         // Controls
         document.addEventListener('keydown', (e) => {
