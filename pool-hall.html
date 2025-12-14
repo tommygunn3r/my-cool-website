@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Square Pool Hall - Gunner's Games</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            background: #000000;
+            color: #e0e0e0;
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+            margin: 0;
+            padding: 0;
+            width: 100%;
+        }
+
+        /* Parallax Background Layers */
+        .parallax-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+        
+        /* Playerbar positioning */
+        #playerbar {
+            position: relative;
+            z-index: 100;
+            pointer-events: auto;
+        }
+
+        .parallax-layer {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Layer 1 - Deep background with grid */
+        .layer-1 {
+            background: 
+                linear-gradient(0deg, transparent 24%, rgba(76, 175, 255, 0.05) 25%, rgba(76, 175, 255, 0.05) 26%, transparent 27%, transparent 74%, rgba(76, 175, 255, 0.05) 75%, rgba(76, 175, 255, 0.05) 76%, transparent 77%, transparent),
+                linear-gradient(90deg, transparent 24%, rgba(76, 175, 255, 0.05) 25%, rgba(76, 175, 255, 0.05) 26%, transparent 27%, transparent 74%, rgba(76, 175, 255, 0.05) 75%, rgba(76, 175, 255, 0.05) 76%, transparent 77%, transparent);
+            background-size: 50px 50px;
+            animation: gridMove 20s linear infinite;
+        }
+
+        @keyframes gridMove {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(50px); }
+        }
+
+        /* Layer 2 - Floating neon particles */
+        .layer-2 {
+            background-image: 
+                radial-gradient(circle at 20% 30%, rgba(76, 175, 255, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(34, 139, 34, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 50% 50%, rgba(76, 175, 255, 0.08) 0%, transparent 50%);
+            animation: floatParticles 15s ease-in-out infinite;
+        }
+
+        @keyframes floatParticles {
+            0%, 100% { transform: translate(0, 0); }
+            50% { transform: translate(30px, -20px); }
+        }
+
+        /* Layer 3 - Geometric neon shapes */
+        .neon-shape {
+            position: absolute;
+            border: 2px solid rgba(34, 139, 34, 0.3);
+            border-radius: 10%;
+            animation: rotate 30s linear infinite;
+        }
+
+        .neon-shape:nth-child(1) {
+            width: 300px;
+            height: 300px;
+            top: 10%;
+            left: 10%;
+            box-shadow: 0 0 20px rgba(34, 139, 34, 0.2);
+        }
+
+        .neon-shape:nth-child(2) {
+            width: 200px;
+            height: 200px;
+            top: 60%;
+            right: 15%;
+            animation-duration: 25s;
+            animation-direction: reverse;
+            box-shadow: 0 0 15px rgba(76, 175, 255, 0.2);
+            border-color: rgba(76, 175, 255, 0.3);
+        }
+
+        .neon-shape:nth-child(3) {
+            width: 150px;
+            height: 150px;
+            bottom: 20%;
+            left: 30%;
+            animation-duration: 35s;
+            box-shadow: 0 0 10px rgba(34, 139, 34, 0.2);
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* Main Content */
+        .content {
+            position: relative;
+            z-index: 1;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px 20px;
+        }
+
+        .title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 3.5rem;
+            font-weight: 900;
+            text-align: center;
+            margin-bottom: 20px;
+            margin-top: 20px;
+            color: #fff;
+            text-shadow: 
+                0 0 10px rgba(34, 139, 34, 0.8),
+                0 0 20px rgba(34, 139, 34, 0.6),
+                0 0 30px rgba(34, 139, 34, 0.4);
+            letter-spacing: 4px;
+        }
+
+        .subtitle {
+            font-family: 'Rajdhani', sans-serif;
+            text-align: center;
+            color: #888;
+            margin-bottom: 40px;
+            font-size: 1.2em;
+            font-weight: 300;
+            letter-spacing: 1px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+        }
+
+        .tables-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .table-card {
+            background: rgba(10, 10, 20, 0.8);
+            border: 2px solid rgba(34, 139, 34, 0.3);
+            border-radius: 15px;
+            padding: 25px;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+
+        .table-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(34, 139, 34, 0.05) 0%, transparent 100%);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            pointer-events: none;
+        }
+
+        .table-card:hover {
+            border-color: rgba(34, 139, 34, 0.8);
+            transform: translateY(-8px);
+            box-shadow: 
+                0 15px 40px rgba(34, 139, 34, 0.3),
+                0 0 30px rgba(34, 139, 34, 0.2);
+        }
+
+        .table-card:hover::before {
+            opacity: 1;
+        }
+
+        .table-card.occupied {
+            border-color: rgba(255, 165, 0, 0.5);
+        }
+
+        .table-card.occupied:hover {
+            border-color: rgba(255, 165, 0, 0.8);
+            box-shadow: 
+                0 15px 40px rgba(255, 165, 0, 0.3),
+                0 0 30px rgba(255, 165, 0, 0.2);
+        }
+
+        .table-card.in-progress {
+            border-color: rgba(255, 68, 68, 0.3);
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+        .table-card.in-progress:hover {
+            transform: none;
+            box-shadow: none;
+        }
+
+        .table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .table-number {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #4CAF50;
+            text-shadow: 0 0 10px rgba(34, 139, 34, 0.5);
+        }
+
+        .table-status {
+            padding: 6px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .status-waiting {
+            background: rgba(76, 175, 255, 0.2);
+            color: #4CAF50;
+            border: 1px solid rgba(34, 139, 34, 0.4);
+        }
+
+        .status-ready {
+            background: rgba(255, 165, 0, 0.2);
+            color: #FFA500;
+            border: 1px solid rgba(255, 165, 0, 0.4);
+        }
+
+        .status-playing {
+            background: rgba(255, 68, 68, 0.2);
+            color: #ff4444;
+            border: 1px solid rgba(255, 68, 68, 0.4);
+        }
+
+        /* Pool Table Visual */
+        .pool-table-visual {
+            width: 100%;
+            height: 200px;
+            background: linear-gradient(135deg, #1a4d2e 0%, #0d2818 100%);
+            border: 8px solid #8B4513;
+            border-radius: 10px;
+            position: relative;
+            margin-bottom: 20px;
+            box-shadow: 
+                inset 0 0 30px rgba(0, 0, 0, 0.5),
+                0 5px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .pool-table-visual::before {
+            content: '';
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            bottom: 10px;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+        }
+
+        /* Pocket indicators */
+        .pocket {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: radial-gradient(circle, #000 60%, transparent 100%);
+            border-radius: 50%;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.8);
+        }
+
+        .pocket.top-left { top: 5px; left: 5px; }
+        .pocket.top-right { top: 5px; right: 5px; }
+        .pocket.bottom-left { bottom: 5px; left: 5px; }
+        .pocket.bottom-right { bottom: 5px; right: 5px; }
+
+        .players-section {
+            margin-bottom: 15px;
+        }
+
+        .player-slot {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .player-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .player-icon {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #4CAF50, #2E7D32);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.1em;
+        }
+
+        .player-name {
+            font-size: 1.1em;
+            font-weight: 500;
+        }
+
+        .empty-slot {
+            color: #666;
+            font-style: italic;
+        }
+
+        .ready-badge {
+            padding: 4px 12px;
+            background: rgba(34, 139, 34, 0.3);
+            color: #4CAF50;
+            border-radius: 12px;
+            font-size: 0.85em;
+            font-weight: 600;
+            border: 1px solid rgba(34, 139, 34, 0.5);
+        }
+
+        .game-settings {
+            margin-bottom: 20px;
+        }
+
+        .setting-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .setting-label {
+            font-size: 1em;
+            color: #aaa;
+        }
+
+        .game-select {
+            padding: 8px 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(34, 139, 34, 0.3);
+            border-radius: 6px;
+            color: #e0e0e0;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .game-select:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(34, 139, 34, 0.6);
+        }
+
+        .game-select:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 1.1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-join {
+            background: linear-gradient(135deg, #4CAF50, #2E7D32);
+            color: white;
+            box-shadow: 0 4px 15px rgba(34, 139, 34, 0.3);
+        }
+
+        .btn-join:hover {
+            background: linear-gradient(135deg, #66BB6A, #4CAF50);
+            box-shadow: 0 6px 20px rgba(34, 139, 34, 0.5);
+            transform: translateY(-2px);
+        }
+
+        .btn-ready {
+            background: linear-gradient(135deg, #FFA500, #FF8C00);
+            color: white;
+            box-shadow: 0 4px 15px rgba(255, 165, 0, 0.3);
+        }
+
+        .btn-ready:hover {
+            background: linear-gradient(135deg, #FFB732, #FFA500);
+            box-shadow: 0 6px 20px rgba(255, 165, 0, 0.5);
+            transform: translateY(-2px);
+        }
+
+        .btn-play {
+            background: linear-gradient(135deg, #4CAF50, #2E7D32);
+            color: white;
+            box-shadow: 0 4px 15px rgba(34, 139, 34, 0.3);
+        }
+
+        .btn-play:hover {
+            background: linear-gradient(135deg, #66BB6A, #4CAF50);
+            box-shadow: 0 6px 20px rgba(34, 139, 34, 0.5);
+            transform: translateY(-2px);
+        }
+
+        .btn-leave {
+            background: rgba(255, 68, 68, 0.2);
+            color: #ff4444;
+            border: 1px solid rgba(255, 68, 68, 0.4);
+        }
+
+        .btn-leave:hover {
+            background: rgba(255, 68, 68, 0.3);
+            border-color: rgba(255, 68, 68, 0.6);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        /* Bot Selection */
+        .bot-controls {
+            margin-top: 10px;
+            padding: 10px;
+            background: rgba(138, 43, 226, 0.1);
+            border-radius: 8px;
+            border: 1px solid rgba(138, 43, 226, 0.3);
+        }
+
+        .bot-label {
+            font-size: 0.9em;
+            color: #aaa;
+            margin-bottom: 8px;
+        }
+
+        .bot-difficulty {
+            display: flex;
+            gap: 8px;
+        }
+
+        .bot-btn {
+            flex: 1;
+            padding: 8px;
+            background: rgba(138, 43, 226, 0.2);
+            border: 1px solid rgba(138, 43, 226, 0.4);
+            border-radius: 6px;
+            color: #e0e0e0;
+            font-size: 0.9em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .bot-btn:hover {
+            background: rgba(138, 43, 226, 0.3);
+            border-color: rgba(138, 43, 226, 0.6);
+        }
+
+        .bot-btn.active {
+            background: rgba(138, 43, 226, 0.5);
+            border-color: rgba(138, 43, 226, 0.8);
+            box-shadow: 0 0 10px rgba(138, 43, 226, 0.5);
+        }
+
+        @media (max-width: 1200px) {
+            .tables-grid {
+                grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            }
+        }
+
+        @media (max-width: 768px) {
+            .tables-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .title {
+                font-size: 2.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Background Layers -->
+    <div class="parallax-container">
+        <div class="parallax-layer layer-1"></div>
+        <div class="parallax-layer layer-2"></div>
+        <div class="parallax-layer layer-3">
+            <div class="neon-shape"></div>
+            <div class="neon-shape"></div>
+            <div class="neon-shape"></div>
+        </div>
+    </div>
+
+    <!-- Playerbar Container -->
+    <div id="playerbar"></div>
+
+    <!-- Main Content -->
+    <div class="content">
+        <h1 class="title">SQUARE POOL HALL</h1>
+        <p class="subtitle">Choose a table and challenge a friend or the bot</p>
+
+        <div class="container">
+            <div class="tables-grid" id="tablesGrid">
+                <!-- Tables will be populated by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let supabaseClient;
+        let currentUser = null;
+        let tableSubscriptions = [];
+
+        async function initPoolHall() {
+            console.log('🎱 Initializing Pool Hall...');
+            
+            // Wait for Supabase to be available
+            if (!window.supabase) {
+                console.error('❌ Supabase not loaded');
+                return;
+            }
+            
+            supabaseClient = window.supabase;
+            
+            // Get current user
+            const { data: { user } } = await supabaseClient.auth.getUser();
+            if (!user) {
+                alert('Please log in to play pool!');
+                window.location.href = '/login.html';
+                return;
+            }
+            
+            currentUser = user;
+            console.log('✅ User logged in:', currentUser.email);
+            
+            // Load tables
+            await loadTables();
+            
+            // Subscribe to table changes
+            subscribeToTables();
+        }
+
+        async function loadTables() {
+            const { data: tables, error } = await supabaseClient
+                .from('pool_tables')
+                .select('*')
+                .order('id');
+            
+            if (error) {
+                console.error('Error loading tables:', error);
+                return;
+            }
+            
+            const grid = document.getElementById('tablesGrid');
+            grid.innerHTML = '';
+            
+            tables.forEach(table => {
+                grid.appendChild(createTableCard(table));
+            });
+        }
+
+        function createTableCard(table) {
+            const card = document.createElement('div');
+            card.className = 'table-card';
+            
+            // Determine status class
+            if (table.status === 'playing') {
+                card.classList.add('in-progress');
+            } else if (table.player2_id || table.player2_name === 'BOT') {
+                card.classList.add('occupied');
+            }
+            
+            // Check if current user is at this table
+            const isPlayer = table.player1_id === currentUser.id || table.player2_id === currentUser.id;
+            const isPlayer1 = table.player1_id === currentUser.id;
+            const isPlayer2 = table.player2_id === currentUser.id;
+            const hasBot = table.player2_name && table.player2_name.includes('BOT');
+            
+            card.innerHTML = `
+                <div class="table-header">
+                    <div class="table-number">TABLE ${table.id}</div>
+                    <div class="table-status status-${table.status}">${table.status}</div>
+                </div>
+                
+                <div class="pool-table-visual">
+                    <div class="pocket top-left"></div>
+                    <div class="pocket top-right"></div>
+                    <div class="pocket bottom-left"></div>
+                    <div class="pocket bottom-right"></div>
+                </div>
+                
+                <div class="players-section">
+                    <div class="player-slot">
+                        <div class="player-info">
+                            <div class="player-icon">P1</div>
+                            <div class="player-name ${!table.player1_name ? 'empty-slot' : ''}">
+                                ${table.player1_name || 'Empty'}
+                            </div>
+                        </div>
+                        ${table.player1_ready && isPlayer ? '<div class="ready-badge">READY</div>' : ''}
+                    </div>
+                    <div class="player-slot">
+                        <div class="player-info">
+                            <div class="player-icon" style="background: linear-gradient(135deg, #FFA500, #FF8C00);">P2</div>
+                            <div class="player-name ${!table.player2_name ? 'empty-slot' : ''}">
+                                ${table.player2_name || 'Empty'}
+                            </div>
+                        </div>
+                        ${table.player2_ready && isPlayer && !hasBot ? '<div class="ready-badge">READY</div>' : ''}
+                    </div>
+                </div>
+                
+                <div class="game-settings">
+                    <div class="setting-row">
+                        <div class="setting-label">Game Type:</div>
+                        <select class="game-select" ${!isPlayer1 ? 'disabled' : ''} onchange="changeGameType(${table.id}, this.value)">
+                            <option value="9-ball" ${table.game_type === '9-ball' ? 'selected' : ''}>9-Ball</option>
+                            <option value="8-ball" ${table.game_type === '8-ball' ? 'selected' : ''}>8-Ball (Coming Soon)</option>
+                        </select>
+                    </div>
+                </div>
+                
+                ${isPlayer1 && !table.player2_id ? `
+                    <div class="bot-controls">
+                        <div class="bot-label">Or play against a bot:</div>
+                        <div class="bot-difficulty">
+                            <button class="bot-btn" onclick="addBot(${table.id}, 'Easy')">Easy</button>
+                            <button class="bot-btn" onclick="addBot(${table.id}, 'Medium')">Medium</button>
+                            <button class="bot-btn" onclick="addBot(${table.id}, 'Hard')">Hard</button>
+                        </div>
+                    </div>
+                ` : ''}
+                
+                <div class="action-buttons">
+                    ${getActionButtons(table, isPlayer, isPlayer1, isPlayer2)}
+                </div>
+            `;
+            
+            return card;
+        }
+
+        function getActionButtons(table, isPlayer, isPlayer1, isPlayer2) {
+            if (table.status === 'playing') {
+                if (isPlayer) {
+                    return `<button class="btn btn-play" onclick="joinGame(${table.id})">REJOIN GAME</button>`;
+                } else {
+                    return `<button class="btn" disabled>IN PROGRESS</button>`;
+                }
+            }
+            
+            if (!isPlayer) {
+                if (!table.player1_id) {
+                    return `<button class="btn btn-join" onclick="joinTable(${table.id}, 1)">JOIN TABLE</button>`;
+                } else if (!table.player2_id) {
+                    return `<button class="btn btn-join" onclick="joinTable(${table.id}, 2)">JOIN AS PLAYER 2</button>`;
+                } else {
+                    return `<button class="btn" disabled>TABLE FULL</button>`;
+                }
+            }
+            
+            // Player is at the table
+            let buttons = '';
+            
+            if (isPlayer1) {
+                const readyText = table.player1_ready ? 'UNREADY' : 'READY';
+                buttons += `<button class="btn btn-ready" onclick="toggleReady(${table.id}, 1)">${readyText}</button>`;
+                
+                if (table.player2_id && table.player1_ready && table.player2_ready) {
+                    buttons += `<button class="btn btn-play" onclick="startGame(${table.id})">START GAME</button>`;
+                } else if (table.player2_name && table.player2_name.includes('BOT') && table.player1_ready) {
+                    buttons += `<button class="btn btn-play" onclick="startGame(${table.id})">START GAME</button>`;
+                }
+            } else if (isPlayer2) {
+                const readyText = table.player2_ready ? 'UNREADY' : 'READY';
+                buttons += `<button class="btn btn-ready" onclick="toggleReady(${table.id}, 2)">${readyText}</button>`;
+            }
+            
+            buttons += `<button class="btn btn-leave" onclick="leaveTable(${table.id})">LEAVE</button>`;
+            
+            return buttons;
+        }
+
+        async function joinTable(tableId, playerNum) {
+            const { data: profile } = await supabaseClient
+                .from('profiles')
+                .select('username')
+                .eq('id', currentUser.id)
+                .single();
+            
+            const username = profile?.username || currentUser.email.split('@')[0];
+            
+            const updates = playerNum === 1 
+                ? { player1_id: currentUser.id, player1_name: username, player1_ready: false }
+                : { player2_id: currentUser.id, player2_name: username, player2_ready: false };
+            
+            const { error } = await supabaseClient
+                .from('pool_tables')
+                .update(updates)
+                .eq('id', tableId);
+            
+            if (error) {
+                console.error('Error joining table:', error);
+                alert('Failed to join table');
+            }
+        }
+
+        async function addBot(tableId, difficulty) {
+            const { error } = await supabaseClient
+                .from('pool_tables')
+                .update({ 
+                    player2_id: 'BOT',
+                    player2_name: `BOT (${difficulty})`,
+                    player2_ready: true 
+                })
+                .eq('id', tableId);
+            
+            if (error) {
+                console.error('Error adding bot:', error);
+                alert('Failed to add bot');
+            }
+        }
+
+        async function toggleReady(tableId, playerNum) {
+            const { data: table } = await supabaseClient
+                .from('pool_tables')
+                .select('*')
+                .eq('id', tableId)
+                .single();
+            
+            const readyField = playerNum === 1 ? 'player1_ready' : 'player2_ready';
+            const currentReady = table[readyField];
+            
+            const { error } = await supabaseClient
+                .from('pool_tables')
+                .update({ [readyField]: !currentReady })
+                .eq('id', tableId);
+            
+            if (error) {
+                console.error('Error toggling ready:', error);
+            }
+        }
+
+        async function leaveTable(tableId) {
+            const { data: table } = await supabaseClient
+                .from('pool_tables')
+                .select('*')
+                .eq('id', tableId)
+                .single();
+            
+            let updates = {};
+            
+            if (table.player1_id === currentUser.id) {
+                // Player 1 leaving
+                if (table.player2_id && table.player2_id !== 'BOT') {
+                    // Move player 2 to player 1
+                    updates = {
+                        player1_id: table.player2_id,
+                        player1_name: table.player2_name,
+                        player1_ready: table.player2_ready,
+                        player2_id: null,
+                        player2_name: null,
+                        player2_ready: false
+                    };
+                } else {
+                    // Clear player 1
+                    updates = {
+                        player1_id: null,
+                        player1_name: null,
+                        player1_ready: false,
+                        player2_id: null,
+                        player2_name: null,
+                        player2_ready: false
+                    };
+                }
+            } else {
+                // Player 2 leaving
+                updates = {
+                    player2_id: null,
+                    player2_name: null,
+                    player2_ready: false
+                };
+            }
+            
+            updates.status = 'waiting';
+            
+            const { error } = await supabaseClient
+                .from('pool_tables')
+                .update(updates)
+                .eq('id', tableId);
+            
+            if (error) {
+                console.error('Error leaving table:', error);
+            }
+        }
+
+        async function changeGameType(tableId, gameType) {
+            if (gameType === '8-ball') {
+                alert('8-Ball coming soon! Stay tuned.');
+                await loadTables(); // Reload to reset dropdown
+                return;
+            }
+            
+            const { error } = await supabaseClient
+                .from('pool_tables')
+                .update({ game_type: gameType })
+                .eq('id', tableId);
+            
+            if (error) {
+                console.error('Error changing game type:', error);
+            }
+        }
+
+        async function startGame(tableId) {
+            const { error } = await supabaseClient
+                .from('pool_tables')
+                .update({ status: 'playing' })
+                .eq('id', tableId);
+            
+            if (error) {
+                console.error('Error starting game:', error);
+                return;
+            }
+            
+            joinGame(tableId);
+        }
+
+        function joinGame(tableId) {
+            window.location.href = `/pool/pool-game.html?table=${tableId}`;
+        }
+
+        function subscribeToTables() {
+            // Unsubscribe from any existing subscriptions
+            tableSubscriptions.forEach(sub => sub.unsubscribe());
+            tableSubscriptions = [];
+            
+            // Subscribe to pool_tables changes
+            const subscription = supabaseClient
+                .channel('pool_tables_changes')
+                .on('postgres_changes', 
+                    { event: '*', schema: 'public', table: 'pool_tables' },
+                    () => {
+                        loadTables();
+                    }
+                )
+                .subscribe();
+            
+            tableSubscriptions.push(subscription);
+        }
+
+        // Initialize when page loads
+        window.addEventListener('load', () => {
+            // Small delay to ensure Supabase is ready
+            setTimeout(initPoolHall, 100);
+        });
+    </script>
+
+    <!-- Supabase Initialization & Playerbar Loader -->
+    <script type="module">
+        import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+        const SUPABASE_URL = "https://pknhslxhpohrzgsfkisr.supabase.co";
+        const SUPABASE_ANON_KEY = "sb_publishable_-zZw-pi_3q1sdNGhITKuhQ_ECyDARzc";
+        window.supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        console.log('✅ Supabase initialized');
+        
+        // Load playerbar properly (execute scripts)
+        async function loadPlayerBar() {
+            try {
+                const response = await fetch('/playerbar.html');
+                const html = await response.text();
+                const container = document.getElementById('playerbar');
+                
+                // Create temporary div to parse HTML
+                const temp = document.createElement('div');
+                temp.innerHTML = html;
+                
+                // Move all nodes to container
+                Array.from(temp.childNodes).forEach(node => {
+                    if (node.tagName === 'SCRIPT') {
+                        // Skip if it's an external script that's already loaded
+                        if (node.src) {
+                            const scriptExists = Array.from(document.scripts).some(s => s.src === node.src);
+                            if (!scriptExists) {
+                                const script = document.createElement('script');
+                                script.src = node.src;
+                                document.body.appendChild(script);
+                            }
+                        } else {
+                            // For inline scripts, recreate them to execute
+                            const script = document.createElement('script');
+                            script.textContent = node.textContent;
+                            document.body.appendChild(script);
+                        }
+                    } else {
+                        container.appendChild(node);
+                    }
+                });
+                
+                console.log('✅ Playerbar loaded successfully!');
+                
+            } catch (error) {
+                console.error('❌ Error loading playerbar:', error);
+            }
+        }
+        
+        loadPlayerBar();
+    </script>
+</body>
+</html>
