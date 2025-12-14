@@ -330,10 +330,30 @@
         // Mouse tracking
         let mouseX = canvas.width / 2;
         let mousePressed = false;
+        let isMouseOverCanvas = false;
 
+        // Track mouse on canvas
         canvas.addEventListener('mousemove', (e) => {
             const rect = canvas.getBoundingClientRect();
             mouseX = e.clientX - rect.left;
+        });
+
+        // Track mouse on entire document when mouse leaves canvas
+        document.addEventListener('mousemove', (e) => {
+            if (!isMouseOverCanvas) {
+                const rect = canvas.getBoundingClientRect();
+                const relativeX = e.clientX - rect.left;
+                // Clamp to canvas bounds
+                mouseX = Math.max(0, Math.min(canvas.width, relativeX));
+            }
+        });
+
+        canvas.addEventListener('mouseenter', () => {
+            isMouseOverCanvas = true;
+        });
+
+        canvas.addEventListener('mouseleave', () => {
+            isMouseOverCanvas = false;
         });
 
         canvas.addEventListener('click', () => {
