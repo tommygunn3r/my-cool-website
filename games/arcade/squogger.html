@@ -17,33 +17,36 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            min-height: 100vh;
+            height: 100vh;
             color: white;
+            overflow: hidden;
         }
 
         .game-container {
             text-align: center;
-            padding: 20px;
+            padding: 10px;
+            max-height: 100vh;
+            overflow: hidden;
         }
 
         h1 {
-            font-size: 3em;
+            font-size: 2em;
             color: #ffff00;
             text-shadow: 0 0 20px #ffaa00, 0 0 40px #ffaa00;
-            margin-bottom: 10px;
+            margin-bottom: 5px;
         }
 
         .game-info {
             display: flex;
             justify-content: space-around;
             max-width: 600px;
-            margin: 20px auto;
-            font-size: 1.2em;
+            margin: 5px auto;
+            font-size: 0.9em;
         }
 
         .info-item {
             background: rgba(255, 255, 255, 0.1);
-            padding: 10px 20px;
+            padding: 5px 15px;
             border-radius: 10px;
             border: 2px solid #9370db;
             box-shadow: 0 0 10px #9370db;
@@ -65,14 +68,15 @@
             box-shadow: 0 0 30px #9370db, inset 0 0 20px rgba(147, 112, 219, 0.2);
             background: #000;
             display: block;
-            margin: 20px auto;
-            max-width: 95vw;
+            margin: 10px auto;
+            width: 800px;
+            height: 600px;
         }
 
         .controls {
-            margin-top: 20px;
+            margin-top: 5px;
             color: #ffff00;
-            font-size: 1.1em;
+            font-size: 0.9em;
         }
 
         .game-over-screen, .start-screen {
@@ -124,14 +128,14 @@
 
         .lives {
             display: flex;
-            gap: 10px;
+            gap: 8px;
             justify-content: center;
-            margin-top: 10px;
+            margin-top: 5px;
         }
 
         .life {
-            width: 30px;
-            height: 30px;
+            width: 25px;
+            height: 25px;
             background: #ffff00;
             border: 2px solid #fff;
             box-shadow: 0 0 10px #ffaa00;
