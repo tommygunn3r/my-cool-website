@@ -298,6 +298,8 @@ let gameState = {
     isBreak: true,
     ballInHand: false,
     shooting: false,
+    aimingCue: false,
+    cueAimSet: false,
     dragStart: null,
     power: 0,
     feltColor: 'green',
@@ -308,7 +310,8 @@ let gameState = {
     botDifficulty: 'medium',
     foul: false,
     pocketedThisTurn: [],
-    lowestBallHit: null
+    lowestBallHit: null,
+    shotTaken: false
 };
 
 let balls = [];
@@ -407,14 +410,15 @@ function shoot(startX, startY, endX, endY, power) {
     const dx = startX - endX;
     const dy = startY - endY;
     const angle = Math.atan2(dy, dx);
-    
+
     const force = power / 10;
     cueBall.vx = Math.cos(angle) * force;
     cueBall.vy = Math.sin(angle) * force;
-    
+
     gameState.pocketedThisTurn = [];
     gameState.lowestBallHit = null;
-    
+    gameState.shotTaken = true;
+
     // Send shot to Supabase if multiplayer
     if (!gameState.isBot && window.supabaseClient) {
         sendShot({ angle, power, timestamp: Date.now() });
@@ -556,8 +560,9 @@ function updatePhysics() {
         return trail.life > 0;
     });
     
-    // Check if turn is over
-    if (!ballsMoving() && gameState.pocketedThisTurn.length >= 0) {
+    // Check if turn is over (only end once after balls stop)
+    if (!ballsMoving() && !gameState.shooting && gameState.shotTaken) {
+        gameState.shotTaken = false;
         setTimeout(endTurn, 500);
     }
 }
@@ -742,9 +747,10 @@ function botTurn() {
     const force = power / 10;
     cueBall.vx = Math.cos(angle) * force;
     cueBall.vy = Math.sin(angle) * force;
-    
+
     gameState.pocketedThisTurn = [];
     gameState.lowestBallHit = null;
+    gameState.shotTaken = true;
 }
 
 // ============================================
@@ -768,8 +774,8 @@ function render(ctx) {
         });
     }
     
-    // Draw cue stick
-    if (gameState.shooting && gameState.dragStart && !cueBall.pocketed) {
+    // Draw cue stick (during aiming or shooting)
+    if ((gameState.aimingCue || gameState.shooting) && gameState.dragStart && !cueBall.pocketed) {
         drawCueStick(ctx);
     }
     
@@ -912,44 +918,66 @@ function drawCueStick(ctx) {
     const dx = gameState.dragStart.x - cueBall.x;
     const dy = gameState.dragStart.y - cueBall.y;
     const angle = Math.atan2(dy, dx);
-    
-    const dist = Math.min(Math.sqrt(dx*dx + dy*dy), CUE_LENGTH);
-    const startX = cueBall.x + Math.cos(angle) * (BALL_SIZE/2 + 10);
-    const startY = cueBall.y + Math.sin(angle) * (BALL_SIZE/2 + 10);
-    const endX = startX + Math.cos(angle) * dist;
-    const endY = startY + Math.sin(angle) * dist;
-    
+
+    // Calculate cue stick position
+    let pullback = 10; // Default gap from ball
+    if (gameState.shooting && gameState.cueAimSet) {
+        // During power phase, pull back based on power
+        pullback = 10 + (gameState.power * 1.5);
+    }
+
+    const cueStartX = cueBall.x + Math.cos(angle) * (BALL_SIZE/2 + pullback);
+    const cueStartY = cueBall.y + Math.sin(angle) * (BALL_SIZE/2 + pullback);
+    const cueEndX = cueStartX + Math.cos(angle) * CUE_LENGTH;
+    const cueEndY = cueStartY + Math.sin(angle) * CUE_LENGTH;
+
+    // Draw cue stick
     if (gameState.visualStyle === 'neon') {
+        // Neon style cue
         ctx.strokeStyle = '#0FF';
-        ctx.lineWidth = 4;
+        ctx.lineWidth = 5;
         ctx.shadowBlur = 15;
         ctx.shadowColor = '#0FF';
     } else {
-        ctx.strokeStyle = '#8B4513';
-        ctx.lineWidth = 6;
+        // Realistic wood cue
+        const gradient = ctx.createLinearGradient(cueStartX, cueStartY, cueEndX, cueEndY);
+        gradient.addColorStop(0, '#D2691E'); // Lighter brown at tip
+        gradient.addColorStop(0.3, '#8B4513'); // Dark brown
+        gradient.addColorStop(0.7, '#A0522D'); // Medium brown
+        gradient.addColorStop(1, '#654321'); // Dark at handle
+
+        ctx.strokeStyle = gradient;
+        ctx.lineWidth = 8;
+        ctx.lineCap = 'round';
     }
-    
+
     ctx.beginPath();
-    ctx.moveTo(startX, startY);
-    ctx.lineTo(endX, endY);
+    ctx.moveTo(cueStartX, cueStartY);
+    ctx.lineTo(cueEndX, cueEndY);
     ctx.stroke();
     ctx.shadowBlur = 0;
-    
-    // Aiming line
+
+    // Draw cue tip (darker)
+    ctx.fillStyle = gameState.visualStyle === 'neon' ? '#0FF' : '#654321';
+    ctx.beginPath();
+    ctx.arc(cueStartX, cueStartY, 4, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Aiming line from cue ball
     if (gameState.visualStyle === 'neon') {
-        ctx.strokeStyle = '#0FF4';
+        ctx.strokeStyle = '#0FF6';
     } else {
-        ctx.strokeStyle = '#FFF4';
+        ctx.strokeStyle = '#FFF5';
     }
-    ctx.lineWidth = 1;
-    ctx.setLineDash([5, 5]);
-    
-    const aimLength = 300;
+    ctx.lineWidth = 2;
+    ctx.setLineDash([10, 10]);
+
+    const aimLength = 400;
     const aimStartX = cueBall.x - Math.cos(angle) * (BALL_SIZE/2);
     const aimStartY = cueBall.y - Math.sin(angle) * (BALL_SIZE/2);
     const aimEndX = aimStartX - Math.cos(angle) * aimLength;
     const aimEndY = aimStartY - Math.sin(angle) * aimLength;
-    
+
     ctx.beginPath();
     ctx.moveTo(aimStartX, aimStartY);
     ctx.lineTo(aimEndX, aimEndY);
@@ -1078,11 +1106,11 @@ function exitGame() {
 
 function onMouseDown(e) {
     if (gameState.shooting || !isMyTurn() || ballsMoving()) return;
-    
+
     const rect = canvas.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
-    
+
     if (gameState.ballInHand) {
         if (canPlaceCueBall(x, y)) {
             cueBall.x = x;
@@ -1092,41 +1120,54 @@ function onMouseDown(e) {
             updateGameStatus();
         }
     } else {
+        // First click: set aim point for cue stick
+        gameState.aimingCue = true;
         gameState.dragStart = { x, y };
-        gameState.shooting = true;
-        document.getElementById('powerMeter').style.display = 'block';
     }
 }
 
 function onMouseMove(e) {
-    if (!gameState.shooting || !gameState.dragStart) return;
-    
     const rect = canvas.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
-    
-    const dx = gameState.dragStart.x - x;
-    const dy = gameState.dragStart.y - y;
-    const distance = Math.sqrt(dx * dx + dy * dy);
-    
-    gameState.power = Math.min(distance / 2, 100);
-    document.getElementById('powerBarFill').style.width = gameState.power + '%';
+
+    if (gameState.aimingCue && gameState.dragStart) {
+        // Update drag position for aiming
+        gameState.dragStart.x = x;
+        gameState.dragStart.y = y;
+    } else if (gameState.shooting && gameState.cueAimSet) {
+        // Pull back cue stick to build power
+        const dx = x - cueBall.x;
+        const dy = y - cueBall.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+
+        gameState.power = Math.min(distance / 2, 100);
+        document.getElementById('powerBarFill').style.width = gameState.power + '%';
+    }
 }
 
 function onMouseUp(e) {
-    if (!gameState.shooting || !gameState.dragStart) return;
-    
     const rect = canvas.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
-    
-    shoot(gameState.dragStart.x, gameState.dragStart.y, x, y, gameState.power);
-    
-    gameState.shooting = false;
-    gameState.dragStart = null;
-    gameState.power = 0;
-    document.getElementById('powerMeter').style.display = 'none';
-    document.getElementById('powerBarFill').style.width = '0%';
+
+    if (gameState.aimingCue && !gameState.shooting) {
+        // Lock in aim direction, now ready to shoot
+        gameState.aimingCue = false;
+        gameState.shooting = true;
+        gameState.cueAimSet = true;
+        document.getElementById('powerMeter').style.display = 'block';
+    } else if (gameState.shooting && gameState.cueAimSet) {
+        // Execute shot
+        shoot(gameState.dragStart.x, gameState.dragStart.y, x, y, gameState.power);
+
+        gameState.shooting = false;
+        gameState.cueAimSet = false;
+        gameState.dragStart = null;
+        gameState.power = 0;
+        document.getElementById('powerMeter').style.display = 'none';
+        document.getElementById('powerBarFill').style.width = '0%';
+    }
 }
 
 function canPlaceCueBall(x, y) {
