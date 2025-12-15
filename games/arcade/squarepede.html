@@ -12,11 +12,10 @@
             font-family: 'Courier New', monospace; 
             cursor: none;
         }
-        canvas { 
-            display: block; 
-            background: #000; 
-            width: 100vw; 
-            height: 100vh; 
+        canvas {
+            display: block;
+            background: #000;
+            margin: 0 auto;
         }
         #ui {
             position: absolute; 
@@ -253,13 +252,8 @@
 
         const canvas = document.getElementById('game');
         const ctx = canvas.getContext('2d');
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-
-        window.addEventListener('resize', () => {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-        });
+        canvas.width = 800;
+        canvas.height = 600;
 
         // Audio context
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
