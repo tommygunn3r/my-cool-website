@@ -996,15 +996,25 @@
         }
 
         async function addBot(tableId, difficulty) {
+            // Random bot names
+            const botNames = [
+                "Striker", "Ace", "Shark", "Hustler", "Nine-Ball",
+                "Eight-Ball", "Scratch", "Breaker", "Pocket", "Cue Master",
+                "Rail Rider", "Corner", "Diamond", "Combo King"
+            ];
+
+            const randomName = botNames[Math.floor(Math.random() * botNames.length)];
+            const botDisplayName = `${randomName} (Bot)`;
+
             const { error } = await supabaseClient
                 .from('pool_tables')
-                .update({ 
+                .update({
                     player2_id: 'BOT',
-                    player2_name: `BOT (${difficulty})`,
-                    player2_ready: true 
+                    player2_name: botDisplayName,
+                    player2_ready: true
                 })
                 .eq('id', tableId);
-            
+
             if (error) {
                 console.error('Error adding bot:', error);
                 alert('Failed to add bot');
