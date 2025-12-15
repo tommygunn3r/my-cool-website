@@ -818,22 +818,27 @@ function endTurn() {
     }
     
     gameState.isBreak = false;
-    
+
     // Switch players if not keeping turn
     if (!keepTurn) {
         gameState.currentPlayer = gameState.currentPlayer === 1 ? 2 : 1;
         updatePlayerIndicators();
-        
+
         // Bot turn
         if (gameState.isBot && gameState.currentPlayer === 2) {
             setTimeout(botTurn, 1500);
         }
+    } else {
+        // Keeping turn - if it's the bot's turn, trigger another bot shot
+        if (gameState.isBot && gameState.currentPlayer === 2) {
+            setTimeout(botTurn, 1500);
+        }
     }
-    
+
     gameState.foul = false;
     gameState.pocketedThisTurn = [];
     gameState.lowestBallHit = null;
-    
+
     updateGameStatus();
 }
 
@@ -936,6 +941,9 @@ function botTurn() {
 
     cueBall.vx = Math.cos(angle) * velocity;
     cueBall.vy = Math.sin(angle) * velocity;
+
+    // Play cue hit sound
+    playCueHitSound(velocity);
 
     gameState.pocketedThisTurn = [];
     gameState.lowestBallHit = null;
