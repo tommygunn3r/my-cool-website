@@ -696,12 +696,22 @@ function endTurn() {
 // ============================================
 
 function botTurn() {
+    console.log('🤖 Bot turn called, currentPlayer:', gameState.currentPlayer);
+
+    // Only proceed if it's actually player 2's turn
+    if (gameState.currentPlayer !== 2) {
+        console.log('❌ Not bot\'s turn!');
+        return;
+    }
+
     if (ballsMoving()) {
+        console.log('⏳ Balls still moving, waiting...');
         setTimeout(botTurn, 100);
         return;
     }
-    
+
     if (gameState.ballInHand) {
+        console.log('📍 Bot placing cue ball');
         // Place cue ball
         const safeX = TABLE_PADDING + TABLE_WIDTH / 4;
         const safeY = CANVAS_HEIGHT / 2;
@@ -712,7 +722,7 @@ function botTurn() {
         setTimeout(botTurn, 500);
         return;
     }
-    
+
     // Find target ball
     let targetBall = null;
     
@@ -768,6 +778,8 @@ function botTurn() {
     // Execute shot using same system as player
     const normalizedPower = Math.min(Math.max(power, 0), MAX_POWER);
     const velocity = (normalizedPower / MAX_POWER) * (MAX_POWER * POWER_MULTIPLIER);
+
+    console.log(`🎱 Bot shooting! Power: ${normalizedPower.toFixed(1)}, Velocity: ${velocity.toFixed(1)}`);
 
     cueBall.vx = Math.cos(angle) * velocity;
     cueBall.vy = Math.sin(angle) * velocity;
