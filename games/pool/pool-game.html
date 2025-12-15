@@ -457,6 +457,8 @@ let gameState = {
 let balls = [];
 let cueBall = null;
 let feltImage = null;
+let woodImage = null;
+let woodPattern = null;
 let ballTrails = [];
 
 function setupBalls() {
@@ -996,10 +998,17 @@ function render(ctx) {
 }
 
 function drawTable(ctx) {
-    // Wood border
-    ctx.fillStyle = '#8B4513';
-    ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
-    
+    // Wood border/frame with tileable pattern
+    if (woodPattern) {
+        // Use tileable wood pattern
+        ctx.fillStyle = woodPattern;
+        ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+    } else {
+        // Fallback solid wood color
+        ctx.fillStyle = '#8B4513';
+        ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+    }
+
     // Felt
     if (feltImage && feltImage.complete) {
         ctx.drawImage(feltImage, TABLE_PADDING, TABLE_PADDING, TABLE_WIDTH, TABLE_HEIGHT);
@@ -1252,6 +1261,18 @@ function cycleStyle() {
 function loadFeltImage() {
     feltImage = new Image();
     feltImage.src = `/games/assets/pool/${gameState.feltColor}top.png`;
+}
+
+function loadWoodImage() {
+    woodImage = new Image();
+    woodImage.src = `/games/assets/pool/wood.png`;
+
+    // Create pattern once image loads
+    woodImage.onload = function() {
+        const tempCanvas = document.createElement('canvas');
+        const tempCtx = tempCanvas.getContext('2d');
+        woodPattern = tempCtx.createPattern(woodImage, 'repeat');
+    };
 }
 
 async function endGame(winner) {
@@ -1538,6 +1559,7 @@ async function initGame() {
     await loadTableData();
     setupBalls();
     loadFeltImage();
+    loadWoodImage();
     
     canvas.addEventListener('mousedown', onMouseDown);
     canvas.addEventListener('mousemove', onMouseMove);
