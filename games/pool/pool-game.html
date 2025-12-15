@@ -1379,8 +1379,14 @@ async function initGame() {
     subscribeToShots();
     updatePlayerIndicators();
     updateGameStatus();
-    
+
     gameLoop();
+
+    // Trigger bot turn after everything is initialized
+    if (gameState.isBot && gameState.currentPlayer === 2) {
+        console.log('⏰ Scheduling bot turn in 2 seconds...');
+        setTimeout(botTurn, 2000);
+    }
 }
 
 async function loadTableData() {
@@ -1424,11 +1430,6 @@ async function loadTableData() {
 
     if (table.game_state && Object.keys(table.game_state).length > 0) {
         loadGameState(table.game_state);
-    } else {
-        // If bot won coin flip, let bot break
-        if (gameState.isBot && gameState.currentPlayer === 2) {
-            setTimeout(botTurn, 2000);
-        }
     }
 }
 
