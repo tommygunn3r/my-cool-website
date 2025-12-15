@@ -1450,14 +1450,20 @@ async function initGame() {
 
     gameLoop();
 
+    // Debug log
+    console.log('🎮 Game initialized', {
+        isBot: gameState.isBot,
+        currentPlayer: gameState.currentPlayer,
+        ballInHand: gameState.ballInHand,
+        willTriggerBot: gameState.isBot && gameState.currentPlayer === 2
+    });
+
     // Trigger bot turn after everything is initialized
     if (gameState.isBot && gameState.currentPlayer === 2) {
-        console.log('⏰ Scheduling bot turn in 2 seconds...', {
-            ballInHand: gameState.ballInHand,
-            currentPlayer: gameState.currentPlayer,
-            isBreak: gameState.isBreak
-        });
+        console.log('⏰ Scheduling bot turn in 2 seconds...');
         setTimeout(botTurn, 2000);
+    } else if (gameState.isBot) {
+        console.log('👤 Human player breaks first (Player 1)');
     }
 }
 
