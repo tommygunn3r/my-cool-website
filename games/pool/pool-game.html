@@ -1248,6 +1248,12 @@ function onMouseDown(e) {
             cueBall.pocketed = false;
             gameState.ballInHand = false;
             updateGameStatus();
+
+            // If bot game and it's bot's turn, trigger bot to shoot
+            if (gameState.isBot && gameState.currentPlayer === 2) {
+                console.log('🎱 Ball placed for bot, triggering bot turn...');
+                setTimeout(botTurn, 1000);
+            }
         }
     } else if (!gameState.shooting && isMyTurn()) {
         // First click: enter aiming mode
@@ -1479,8 +1485,8 @@ async function loadTableData() {
     const isPlayer1 = table.player1_id === window.currentUser.id;
     gameState.isPlayer1 = isPlayer1;
 
-    // Coin flip to determine who goes first
-    const coinFlip = Math.random() < 0.5 ? 1 : 2;
+    // Coin flip to determine who goes first (use table ID for deterministic result across clients)
+    const coinFlip = (gameState.tableId % 2) + 1; // tableId mod 2 gives 0 or 1, add 1 to get 1 or 2
     gameState.currentPlayer = coinFlip;
 
     console.log(`🪙 Coin flip: Player ${coinFlip} breaks first!`);
