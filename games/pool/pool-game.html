@@ -376,7 +376,7 @@ function setupBalls() {
             xOffset += spacing * 0.866; // Move right for next column
         });
     } else {
-        // 8-ball triangle rack
+        // 8-ball triangle rack (point facing toward breaking end)
         const rack = [
             [1],
             [2, 3],
@@ -384,10 +384,10 @@ function setupBalls() {
             [6, 7, 9, 10],
             [11, 12, 13, 14, 15]
         ];
-        
-        let yOffset = 0;
+
+        let xOffset = 0;
         rack.forEach(row => {
-            let xOffset = -((row.length - 1) * spacing / 2);
+            let yOffset = -((row.length - 1) * spacing / 2);
             row.forEach(num => {
                 balls.push({
                     id: num,
@@ -399,9 +399,9 @@ function setupBalls() {
                     pocketed: false,
                     type: num === 8 ? '8ball' : (num <= 7 ? 'solid' : 'stripe')
                 });
-                xOffset += spacing;
+                yOffset += spacing;
             });
-            yOffset += spacing * 0.866;
+            xOffset += spacing * 0.866; // Move right for next row
         });
     }
 }
@@ -415,8 +415,9 @@ function isMyTurn() {
 }
 
 function shoot(startX, startY, endX, endY, power) {
-    const dx = startX - endX;
-    const dy = startY - endY;
+    // Calculate angle from cue ball TO the aim point (reverse of cue stick direction)
+    const dx = endX - startX;
+    const dy = endY - startY;
     const angle = Math.atan2(dy, dx);
 
     // Normalize power to 0-100 range, then apply multiplier
@@ -1213,8 +1214,8 @@ function onMouseUp(e) {
         document.getElementById('powerMeter').style.display = 'block';
     } else if (gameState.shooting && gameState.cueAimSet) {
         // Execute shot using the locked aim direction (dragStart)
-        // Don't use current mouse position - it's for power, not direction
-        shoot(gameState.dragStart.x, gameState.dragStart.y, cueBall.x, cueBall.y, gameState.power);
+        // Shoot from cueBall position toward dragStart position (away from cue stick)
+        shoot(cueBall.x, cueBall.y, gameState.dragStart.x, gameState.dragStart.y, gameState.power);
 
         gameState.shooting = false;
         gameState.cueAimSet = false;
