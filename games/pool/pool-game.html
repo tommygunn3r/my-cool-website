@@ -738,7 +738,12 @@ function endTurn() {
 // ============================================
 
 function botTurn() {
-    console.log('🤖 Bot turn called, currentPlayer:', gameState.currentPlayer);
+    console.log('🤖 Bot turn called', {
+        currentPlayer: gameState.currentPlayer,
+        ballInHand: gameState.ballInHand,
+        ballsMoving: ballsMoving(),
+        cueBallPocketed: cueBall?.pocketed
+    });
 
     // Only proceed if it's actually player 2's turn
     if (gameState.currentPlayer !== 2) {
@@ -753,7 +758,7 @@ function botTurn() {
     }
 
     if (gameState.ballInHand) {
-        console.log('📍 Bot placing cue ball');
+        console.log('📍 Bot placing cue ball at break position');
         // Place cue ball
         const safeX = TABLE_PADDING + TABLE_WIDTH / 4;
         const safeY = CANVAS_HEIGHT / 2;
@@ -761,6 +766,7 @@ function botTurn() {
         cueBall.y = safeY;
         cueBall.pocketed = false;
         gameState.ballInHand = false;
+        console.log('✅ Bot placed ball, scheduling next turn in 500ms');
         updateGameStatus();
         setTimeout(botTurn, 500);
         return;
@@ -1446,7 +1452,11 @@ async function initGame() {
 
     // Trigger bot turn after everything is initialized
     if (gameState.isBot && gameState.currentPlayer === 2) {
-        console.log('⏰ Scheduling bot turn in 2 seconds...');
+        console.log('⏰ Scheduling bot turn in 2 seconds...', {
+            ballInHand: gameState.ballInHand,
+            currentPlayer: gameState.currentPlayer,
+            isBreak: gameState.isBreak
+        });
         setTimeout(botTurn, 2000);
     }
 }
