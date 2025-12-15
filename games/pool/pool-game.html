@@ -29,61 +29,64 @@
         }
         
         .hud {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            right: 20px;
+            position: fixed;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
             display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
+            gap: 15px;
+            align-items: center;
             pointer-events: none;
             z-index: 10;
-        }
-        
-        .player-info {
-            background: rgba(10, 10, 20, 0.9);
+            background: rgba(10, 10, 20, 0.95);
             border: 2px solid rgba(76, 175, 255, 0.3);
             border-radius: 10px;
-            padding: 15px 20px;
-            min-width: 200px;
+            padding: 10px 20px;
             backdrop-filter: blur(10px);
         }
-        
+
+        .player-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 5px 10px;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
         .player-info.active {
-            border-color: rgba(76, 175, 255, 0.8);
-            box-shadow: 0 0 20px rgba(76, 175, 255, 0.5);
+            background: rgba(76, 175, 255, 0.2);
+            box-shadow: 0 0 10px rgba(76, 175, 255, 0.3);
         }
-        
+
         .player-name {
-            font-size: 1.2em;
+            font-size: 0.95em;
             font-weight: 600;
-            margin-bottom: 5px;
         }
-        
+
         .player-score {
-            font-size: 0.9em;
+            font-size: 0.85em;
             color: #aaa;
         }
-        
+
         .game-info {
-            background: rgba(10, 10, 20, 0.9);
-            border: 2px solid rgba(76, 175, 255, 0.3);
-            border-radius: 10px;
-            padding: 15px 20px;
-            text-align: center;
-            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 0 15px;
+            border-left: 2px solid rgba(76, 175, 255, 0.3);
+            border-right: 2px solid rgba(76, 175, 255, 0.3);
         }
-        
+
         .game-mode {
             font-family: 'Orbitron', sans-serif;
-            font-size: 1.3em;
+            font-size: 1.1em;
             font-weight: 700;
             color: #4CAF50;
-            margin-bottom: 5px;
         }
-        
+
         .game-status {
-            font-size: 0.9em;
+            font-size: 0.85em;
             color: #aaa;
         }
         
@@ -194,18 +197,19 @@
     <div id="gameContainer">
         <div class="hud">
             <div class="player-info" id="player1Info">
-                <div class="player-name" id="player1Name">Player 1</div>
-                <div class="player-score" id="player1Score">Balls: 0</div>
+                <span class="player-name" id="player1Name">Player 1</span>
+                <span class="player-score" id="player1Score">-</span>
             </div>
-            
+
             <div class="game-info">
-                <div class="game-mode" id="gameMode">8-BALL</div>
-                <div class="game-status" id="gameStatus">Break Shot</div>
+                <span class="game-mode" id="gameMode">8-BALL</span>
+                <span style="color: #666;">•</span>
+                <span class="game-status" id="gameStatus">Break Shot</span>
             </div>
-            
+
             <div class="player-info" id="player2Info">
-                <div class="player-name" id="player2Name">Player 2</div>
-                <div class="player-score" id="player2Score">Balls: 0</div>
+                <span class="player-name" id="player2Name">Player 2</span>
+                <span class="player-score" id="player2Score">-</span>
             </div>
         </div>
         
@@ -474,13 +478,12 @@ function updatePhysics() {
             ball.vy = -ball.vy * BOUNCE_DAMPING;
         }
         
-        // Check pockets
+        // Check pockets (square pockets)
         POCKETS.forEach(pocket => {
-            const dx = ball.x - pocket.x;
-            const dy = ball.y - pocket.y;
-            const dist = Math.sqrt(dx*dx + dy*dy);
-            
-            if (dist < POCKET_RADIUS) {
+            const dx = Math.abs(ball.x - pocket.x);
+            const dy = Math.abs(ball.y - pocket.y);
+
+            if (dx < POCKET_RADIUS && dy < POCKET_RADIUS) {
                 ball.pocketed = true;
                 ball.vx = 0;
                 ball.vy = 0;
@@ -826,29 +829,29 @@ function drawTable(ctx) {
     ctx.strokeRect(TABLE_PADDING, TABLE_PADDING, TABLE_WIDTH, TABLE_HEIGHT);
     ctx.shadowBlur = 0;
     
-    // Pockets
+    // Pockets (square)
     POCKETS.forEach(pocket => {
+        const pocketSize = POCKET_RADIUS * 2;
+        const px = pocket.x - POCKET_RADIUS;
+        const py = pocket.y - POCKET_RADIUS;
+
         if (gameState.visualStyle === 'neon') {
             ctx.fillStyle = '#000';
             ctx.shadowBlur = 30;
             ctx.shadowColor = '#F0F';
-            ctx.beginPath();
-            ctx.arc(pocket.x, pocket.y, POCKET_RADIUS, 0, Math.PI * 2);
-            ctx.fill();
-            
+            ctx.fillRect(px, py, pocketSize, pocketSize);
+
             ctx.strokeStyle = '#F0F';
             ctx.lineWidth = 2;
-            ctx.stroke();
+            ctx.strokeRect(px, py, pocketSize, pocketSize);
             ctx.shadowBlur = 0;
         } else {
             ctx.fillStyle = '#000';
-            ctx.beginPath();
-            ctx.arc(pocket.x, pocket.y, POCKET_RADIUS, 0, Math.PI * 2);
-            ctx.fill();
-            
+            ctx.fillRect(px, py, pocketSize, pocketSize);
+
             ctx.strokeStyle = '#333';
             ctx.lineWidth = 2;
-            ctx.stroke();
+            ctx.strokeRect(px, py, pocketSize, pocketSize);
         }
     });
 }
@@ -1004,19 +1007,19 @@ function updateGameStatus() {
 function updatePlayerIndicators() {
     document.getElementById('player1Info').classList.toggle('active', gameState.currentPlayer === 1);
     document.getElementById('player2Info').classList.toggle('active', gameState.currentPlayer === 2);
-    
+
     // Update scores
     if (gameState.mode === '8-ball') {
-        const p1Type = gameState.player1.type || 'Unknown';
-        const p2Type = gameState.player2.type || 'Unknown';
-        document.getElementById('player1Score').textContent = 
-            `${p1Type.charAt(0).toUpperCase() + p1Type.slice(1)} (${gameState.player1.balls.length}/7)`;
-        document.getElementById('player2Score').textContent = 
-            `${p2Type.charAt(0).toUpperCase() + p2Type.slice(1)} (${gameState.player2.balls.length}/7)`;
+        const p1Type = gameState.player1.type ? gameState.player1.type.charAt(0).toUpperCase() : '?';
+        const p2Type = gameState.player2.type ? gameState.player2.type.charAt(0).toUpperCase() : '?';
+        document.getElementById('player1Score').textContent =
+            `${p1Type}: ${gameState.player1.balls.length}/7`;
+        document.getElementById('player2Score').textContent =
+            `${p2Type}: ${gameState.player2.balls.length}/7`;
     } else {
-        const p1Remaining = 9 - balls.filter(b => b.pocketed && b.number > 0).length;
-        document.getElementById('player1Score').textContent = `Balls Left: ${p1Remaining}`;
-        document.getElementById('player2Score').textContent = `Balls Left: ${p1Remaining}`;
+        const remaining = 9 - balls.filter(b => b.pocketed && b.number > 0).length;
+        document.getElementById('player1Score').textContent = `${remaining} left`;
+        document.getElementById('player2Score').textContent = `${remaining} left`;
     }
 }
 
@@ -1040,15 +1043,15 @@ function loadFeltImage() {
     feltImage.src = `/games/assets/pool/${gameState.feltColor}top.png`;
 }
 
-function endGame(winner) {
+async function endGame(winner) {
     const winnerName = winner === 1 ? gameState.player1.name : gameState.player2.name;
     document.getElementById('modalTitle').textContent = winnerName + ' WINS!';
-    
+
     let modalText = '';
     if (gameState.wager > 0) {
         const pot = gameState.wager * 2;
         modalText = `Winnings: ${pot} GunnerCoins`;
-        
+
         // Award coins if you won
         if ((winner === 1 && !gameState.isBot) || (winner === 2 && gameState.isBot)) {
             awardCoins(pot);
@@ -1056,12 +1059,24 @@ function endGame(winner) {
     }
     document.getElementById('modalText').textContent = modalText;
     document.getElementById('endGameModal').style.display = 'block';
-    
-    // Update table status
+
+    // Clean up table in database
     if (window.supabaseClient && gameState.tableId) {
-        window.supabaseClient
+        await window.supabaseClient
             .from('pool_tables')
-            .update({ status: 'finished' })
+            .update({
+                player1_id: null,
+                player1_name: null,
+                player1_ready: false,
+                player1_paid: false,
+                player2_id: null,
+                player2_name: null,
+                player2_ready: false,
+                player2_paid: false,
+                status: 'waiting',
+                wager: 0,
+                game_state: {}
+            })
             .eq('id', gameState.tableId);
     }
 }
@@ -1096,7 +1111,33 @@ function rematch() {
     updateGameStatus();
 }
 
-function exitGame() {
+async function exitGame() {
+    // Clean up the table in the database
+    if (window.supabaseClient && gameState.tableId) {
+        try {
+            await window.supabaseClient
+                .from('pool_tables')
+                .update({
+                    player1_id: null,
+                    player1_name: null,
+                    player1_ready: false,
+                    player1_paid: false,
+                    player2_id: null,
+                    player2_name: null,
+                    player2_ready: false,
+                    player2_paid: false,
+                    status: 'waiting',
+                    wager: 0,
+                    game_state: {}
+                })
+                .eq('id', gameState.tableId);
+
+            console.log('Table cleaned up successfully');
+        } catch (error) {
+            console.error('Error cleaning up table:', error);
+        }
+    }
+
     window.location.href = '/pool-hall.html';
 }
 
