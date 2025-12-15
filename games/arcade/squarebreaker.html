@@ -340,18 +340,34 @@
         // Mouse tracking
         let mouseX = canvas.width / 2;
         let mousePressed = false;
-        let isMouseOverCanvas = false;
 
-        // Track mouse on entire document
-        document.addEventListener('mousemove', (e) => {
-            const rect = canvas.getBoundingClientRect();
-            const relativeX = e.clientX - rect.left;
-            // Clamp to canvas bounds
-            mouseX = Math.max(0, Math.min(canvas.width, relativeX));
-        });
+        // Use pointer lock for better mouse control
+        let pointerLocked = false;
 
         canvas.addEventListener('click', () => {
+            if (!pointerLocked && gameState.gameRunning) {
+                canvas.requestPointerLock();
+            }
             mousePressed = true;
+        });
+
+        document.addEventListener('pointerlockchange', () => {
+            pointerLocked = document.pointerLockElement === canvas;
+        });
+
+        // Track mouse movement
+        document.addEventListener('mousemove', (e) => {
+            if (pointerLocked) {
+                // Use movement delta when pointer is locked
+                mouseX += e.movementX;
+                // Clamp to canvas bounds
+                mouseX = Math.max(0, Math.min(canvas.width, mouseX));
+            } else {
+                // Fallback to absolute position
+                const rect = canvas.getBoundingClientRect();
+                const relativeX = e.clientX - rect.left;
+                mouseX = Math.max(0, Math.min(canvas.width, relativeX));
+            }
         });
 
         // Paddle
@@ -834,7 +850,12 @@
 
         function endGame() {
             gameState.gameRunning = false;
-            
+
+            // Release pointer lock
+            if (document.pointerLockElement === canvas) {
+                document.exitPointerLock();
+            }
+
             // Submit to Supabase
             scoreManager.submitGameResult(gameState.score);
             
