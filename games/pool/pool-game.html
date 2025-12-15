@@ -1083,12 +1083,24 @@ function updatePlayerIndicators() {
 
     // Update scores
     if (gameState.mode === '8-ball') {
-        const p1Type = gameState.player1.type ? gameState.player1.type.charAt(0).toUpperCase() : '?';
-        const p2Type = gameState.player2.type ? gameState.player2.type.charAt(0).toUpperCase() : '?';
-        document.getElementById('player1Score').textContent =
-            `${p1Type}: ${gameState.player1.balls.length}/7`;
-        document.getElementById('player2Score').textContent =
-            `${p2Type}: ${gameState.player2.balls.length}/7`;
+        const p1Type = gameState.player1.type;
+        const p2Type = gameState.player2.type;
+
+        if (p1Type === 'solid') {
+            document.getElementById('player1Score').textContent = `●SOLIDS: ${gameState.player1.balls.length}/7`;
+        } else if (p1Type === 'stripe') {
+            document.getElementById('player1Score').textContent = `◐STRIPES: ${gameState.player1.balls.length}/7`;
+        } else {
+            document.getElementById('player1Score').textContent = '?: 0/7';
+        }
+
+        if (p2Type === 'solid') {
+            document.getElementById('player2Score').textContent = `●SOLIDS: ${gameState.player2.balls.length}/7`;
+        } else if (p2Type === 'stripe') {
+            document.getElementById('player2Score').textContent = `◐STRIPES: ${gameState.player2.balls.length}/7`;
+        } else {
+            document.getElementById('player2Score').textContent = '?: 0/7';
+        }
     } else {
         const remaining = 9 - balls.filter(b => b.pocketed && b.number > 0).length;
         document.getElementById('player1Score').textContent = `${remaining} left`;
@@ -1310,9 +1322,11 @@ function onRightClick(e) {
 
 function canPlaceCueBall(x, y) {
     const minX = TABLE_PADDING + BALL_SIZE/2;
-    const maxX = CANVAS_WIDTH - TABLE_PADDING - BALL_SIZE/2;
     const minY = TABLE_PADDING + BALL_SIZE/2;
     const maxY = CANVAS_HEIGHT - TABLE_PADDING - BALL_SIZE/2;
+
+    // Limit to break side (left quarter of table)
+    const maxX = TABLE_PADDING + (TABLE_WIDTH / 4);
 
     if (x < minX || x > maxX || y < minY || y > maxY) return false;
 
