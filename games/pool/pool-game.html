@@ -336,6 +336,100 @@ const BALL_COLORS = {
     15: '#8B0000'  // Maroon stripe
 };
 
+// Audio context for sound effects
+let audioContext = null;
+
+// Initialize audio on first user interaction
+function initAudio() {
+    if (!audioContext) {
+        audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    }
+}
+
+// Play stick hitting ball sound
+function playCueHitSound(velocity) {
+    if (!audioContext) return;
+
+    const now = audioContext.currentTime;
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+
+    // Higher velocity = lower pitch and louder
+    const volume = Math.min(velocity / 30, 1) * 0.3;
+    const frequency = 200 - (velocity * 2); // 200Hz down to ~140Hz for hard hits
+
+    oscillator.type = 'sine';
+    oscillator.frequency.setValueAtTime(frequency, now);
+    oscillator.frequency.exponentialRampToValueAtTime(frequency * 0.5, now + 0.05);
+
+    gainNode.gain.setValueAtTime(volume, now);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+
+    oscillator.start(now);
+    oscillator.stop(now + 0.08);
+}
+
+// Play ball hitting ball sound
+function playBallCollisionSound(velocity) {
+    if (!audioContext) return;
+
+    const now = audioContext.currentTime;
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+
+    // Volume based on collision velocity
+    const volume = Math.min(velocity / 20, 1) * 0.2;
+    const frequency = 300 + (velocity * 5); // Higher pitch for faster collisions
+
+    oscillator.type = 'triangle';
+    oscillator.frequency.setValueAtTime(frequency, now);
+    oscillator.frequency.exponentialRampToValueAtTime(frequency * 0.7, now + 0.03);
+
+    gainNode.gain.setValueAtTime(volume, now);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
+
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+
+    oscillator.start(now);
+    oscillator.stop(now + 0.05);
+}
+
+// Play ball in pocket sound
+function playPocketSound() {
+    if (!audioContext) return;
+
+    const now = audioContext.currentTime;
+
+    // Two-tone dropping sound
+    const osc1 = audioContext.createOscillator();
+    const osc2 = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+
+    osc1.type = 'sine';
+    osc1.frequency.setValueAtTime(400, now);
+    osc1.frequency.exponentialRampToValueAtTime(200, now + 0.15);
+
+    osc2.type = 'sine';
+    osc2.frequency.setValueAtTime(600, now);
+    osc2.frequency.exponentialRampToValueAtTime(300, now + 0.15);
+
+    gainNode.gain.setValueAtTime(0.15, now);
+    gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+
+    osc1.connect(gainNode);
+    osc2.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+
+    osc1.start(now);
+    osc2.start(now);
+    osc1.stop(now + 0.15);
+    osc2.stop(now + 0.15);
+}
+
 let gameState = {
     mode: '8-ball',
     currentPlayer: 1,
@@ -478,6 +572,9 @@ function shoot(startX, startY, endX, endY, power) {
     cueBall.vx = Math.cos(angle) * velocity;
     cueBall.vy = Math.sin(angle) * velocity;
 
+    // Play cue hit sound
+    playCueHitSound(velocity);
+
     gameState.pocketedThisTurn = [];
     gameState.lowestBallHit = null;
     gameState.shotTaken = true;
@@ -547,6 +644,7 @@ function updatePhysics() {
                 ball.vx = 0;
                 ball.vy = 0;
                 gameState.pocketedThisTurn.push(ball.number);
+                playPocketSound();
                 handleBallPocketed(ball);
             }
         });
@@ -581,18 +679,24 @@ function updatePhysics() {
                 } else if (b2.number === 0 && gameState.lowestBallHit === null) {
                     gameState.lowestBallHit = b1.number;
                 }
-                
+
+                // Play collision sound based on relative velocity
+                const relativeVelocity = Math.sqrt(
+                    Math.pow(b1.vx - b2.vx, 2) + Math.pow(b1.vy - b2.vy, 2)
+                );
+                playBallCollisionSound(relativeVelocity);
+
                 // Collision response
                 const angle = Math.atan2(dy, dx);
                 const sin = Math.sin(angle);
                 const cos = Math.cos(angle);
-                
+
                 // Rotate velocities
                 const vx1 = b1.vx * cos + b1.vy * sin;
                 const vy1 = b1.vy * cos - b1.vx * sin;
                 const vx2 = b2.vx * cos + b2.vy * sin;
                 const vy2 = b2.vy * cos - b2.vx * sin;
-                
+
                 // Swap x velocities
                 const temp = vx1;
                 const newVx1 = vx2;
@@ -1245,6 +1349,9 @@ async function exitGame() {
 // ============================================
 
 function onMouseDown(e) {
+    // Initialize audio on first user interaction
+    initAudio();
+
     if (ballsMoving()) return;
 
     const rect = canvas.getBoundingClientRect();
