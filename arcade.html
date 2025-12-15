@@ -727,7 +727,7 @@
         function closeGame() {
             gameOverlay.classList.remove('active');
             if (gameNavOverlay) {
-                gameNavOverlay.style.removeProperty('display');
+                gameNavOverlay.style.display = 'none';
             }
             setTimeout(() => {
                 gameFrame.src = '';
