@@ -248,7 +248,7 @@
                         .from('game_highscores')
                         .insert([{
                             game_id: this.gameName,
-                            player_name: this.player_name,
+                            player_name: this.playerName,
                             score: this.hasScore ? score : 0,
                             created_at: new Date().toISOString()
                         }]);
