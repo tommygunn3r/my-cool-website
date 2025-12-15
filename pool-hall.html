@@ -911,48 +911,48 @@
             // Player is at the table
             let buttons = '';
             const wager = table.wager || 0;
-            const hasBot = table.player2_name && table.player2_name.includes('BOT');
-            
+            const hasBot = table.player2_name && table.player2_name.includes('(Bot)');
+            const gameFee = 5;
+            const totalCost = gameFee + wager;
+
             if (isPlayer1) {
                 const readyText = table.player1_ready ? 'UNREADY' : 'READY';
                 buttons += `<button class="btn btn-ready" onclick="toggleReady(${table.id}, 1)">${readyText}</button>`;
-                
+
                 // Check if can start game
                 const canStart = table.player2_id && table.player1_ready && table.player2_ready;
                 const canStartBot = hasBot && table.player1_ready;
-                
+
                 if (canStart || canStartBot) {
-                    if (wager > 0) {
-                        // Show payment status
-                        const bothPaid = (hasBot || table.player2_paid) && table.player1_paid;
-                        const myPaid = table.player1_paid;
-                        
-                        if (bothPaid) {
-                            buttons += `<button class="btn btn-play" onclick="startGame(${table.id})">START GAME</button>`;
-                        } else if (myPaid) {
-                            buttons += `<button class="btn" disabled>WAITING FOR OPPONENT</button>`;
-                        } else {
-                            buttons += `<button class="btn btn-ready" onclick="startGame(${table.id})">PAY ${wager} GC</button>`;
-                        }
-                    } else {
+                    // Show payment status
+                    const bothPaid = (hasBot || table.player2_paid) && table.player1_paid;
+                    const myPaid = table.player1_paid;
+
+                    if (bothPaid) {
                         buttons += `<button class="btn btn-play" onclick="startGame(${table.id})">START GAME</button>`;
+                    } else if (myPaid) {
+                        buttons += `<button class="btn" disabled>WAITING FOR OPPONENT</button>`;
+                    } else {
+                        const payText = wager > 0 ? `PAY ${totalCost} GC (${gameFee}+${wager})` : `PAY ${gameFee} GC`;
+                        buttons += `<button class="btn btn-ready" onclick="startGame(${table.id})">${payText}</button>`;
                     }
                 }
             } else if (isPlayer2) {
                 const readyText = table.player2_ready ? 'UNREADY' : 'READY';
                 buttons += `<button class="btn btn-ready" onclick="toggleReady(${table.id}, 2)">${readyText}</button>`;
-                
-                // Show payment button if wager and both ready
-                if (wager > 0 && table.player1_ready && table.player2_ready) {
+
+                // Show payment button if both ready
+                if (table.player1_ready && table.player2_ready) {
                     const bothPaid = table.player1_paid && table.player2_paid;
                     const myPaid = table.player2_paid;
-                    
+
                     if (bothPaid) {
                         buttons += `<button class="btn" disabled>WAITING FOR HOST</button>`;
                     } else if (myPaid) {
                         buttons += `<button class="btn" disabled>WAITING FOR HOST</button>`;
                     } else {
-                        buttons += `<button class="btn btn-ready" onclick="startGame(${table.id})">PAY ${wager} GC</button>`;
+                        const payText = wager > 0 ? `PAY ${totalCost} GC (${gameFee}+${wager})` : `PAY ${gameFee} GC`;
+                        buttons += `<button class="btn btn-ready" onclick="startGame(${table.id})">${payText}</button>`;
                     }
                 }
             }
@@ -1148,72 +1148,98 @@
                 .select('*')
                 .eq('id', tableId)
                 .single();
-            
+
             const wager = table.wager || 0;
-            
-            // Check if wager payments are needed
-            if (wager > 0) {
-                // Get current user's coins
-                const { data: profile } = await supabaseClient
+            const hasBot = table.player2_name && table.player2_name.includes('(Bot)');
+            const isPlayer1 = table.player1_id === currentUser.id;
+
+            // Game fee: 5 GC for bot games, 5 GC per player for 2-player games
+            const gameFee = 5;
+
+            // Get current user's coins
+            const { data: profile } = await supabaseClient
+                .from('profiles')
+                .select('gunnercoins')
+                .eq('id', currentUser.id)
+                .single();
+
+            const myCoins = profile?.gunnercoins || 0;
+
+            // Calculate total cost for current player (game fee + wager)
+            const totalCost = gameFee + wager;
+
+            // Check if current player has paid
+            const hasPaid = isPlayer1 ? table.player1_paid : table.player2_paid;
+
+            if (!hasPaid) {
+                // Check if player has enough coins
+                if (myCoins < totalCost) {
+                    const breakdown = wager > 0
+                        ? `${gameFee} GC game fee + ${wager} GC wager = ${totalCost} GC`
+                        : `${gameFee} GC game fee`;
+                    alert(`You don't have enough GunnerCoins! You need ${breakdown} but only have ${myCoins} GC.`);
+                    return;
+                }
+
+                // Deduct coins (game fee + wager)
+                const { error: coinsError } = await supabaseClient
                     .from('profiles')
-                    .select('gunnercoins')
-                    .eq('id', currentUser.id)
-                    .single();
-                
-                const myCoins = profile?.gunnercoins || 0;
-                
-                // Check if current player has paid
-                const isPlayer1 = table.player1_id === currentUser.id;
-                const hasPaid = isPlayer1 ? table.player1_paid : table.player2_paid;
-                
-                if (!hasPaid) {
-                    if (myCoins < wager) {
-                        alert(`You don't have enough GunnerCoins! You need ${wager} but only have ${myCoins}.`);
-                        return;
-                    }
-                    
-                    // Deduct coins
-                    const { error: coinsError } = await supabaseClient
-                        .from('profiles')
-                        .update({ gunnercoins: myCoins - wager })
-                        .eq('id', currentUser.id);
-                    
-                    if (coinsError) {
-                        console.error('Error deducting coins:', coinsError);
-                        alert('Failed to deduct coins. Please try again.');
-                        return;
-                    }
-                    
-                    // Mark as paid
-                    const paidField = isPlayer1 ? 'player1_paid' : 'player2_paid';
-                    await supabaseClient
+                    .update({ gunnercoins: myCoins - totalCost })
+                    .eq('id', currentUser.id);
+
+                if (coinsError) {
+                    console.error('Error deducting coins:', coinsError);
+                    alert('Failed to deduct coins. Please try again.');
+                    return;
+                }
+
+                // Mark as paid
+                const paidField = isPlayer1 ? 'player1_paid' : 'player2_paid';
+                await supabaseClient
+                    .from('pool_tables')
+                    .update({ [paidField]: true })
+                    .eq('id', tableId);
+
+                const message = wager > 0
+                    ? `${totalCost} GunnerCoins deducted (${gameFee} GC game fee + ${wager} GC wager). ${hasBot ? 'Starting game...' : 'Waiting for opponent...'}`
+                    : `${gameFee} GunnerCoins deducted (game fee). ${hasBot ? 'Starting game...' : 'Waiting for opponent...'}`;
+
+                alert(message);
+
+                // If playing bot, start immediately after payment
+                if (hasBot) {
+                    const { error } = await supabaseClient
                         .from('pool_tables')
-                        .update({ [paidField]: true })
+                        .update({ status: 'playing' })
                         .eq('id', tableId);
-                    
-                    alert(`${wager} GunnerCoins deducted. Waiting for opponent...`);
-                    return;
+
+                    if (error) {
+                        console.error('Error starting game:', error);
+                        return;
+                    }
+
+                    joinGame(tableId);
                 }
-                
-                // Check if both players have paid (or if playing against bot)
-                const hasBot = table.player2_name && table.player2_name.includes('BOT');
-                if (!hasBot && (!table.player1_paid || !table.player2_paid)) {
-                    alert('Waiting for both players to pay the wager...');
-                    return;
-                }
-            }
-            
-            const { error } = await supabaseClient
-                .from('pool_tables')
-                .update({ status: 'playing' })
-                .eq('id', tableId);
-            
-            if (error) {
-                console.error('Error starting game:', error);
+
                 return;
             }
-            
-            joinGame(tableId);
+
+            // If both players have paid (or playing against bot), start the game
+            if (hasBot || (table.player1_paid && table.player2_paid)) {
+                const { error } = await supabaseClient
+                    .from('pool_tables')
+                    .update({ status: 'playing' })
+                    .eq('id', tableId);
+
+                if (error) {
+                    console.error('Error starting game:', error);
+                    return;
+                }
+
+                joinGame(tableId);
+            } else {
+                alert('Waiting for both players to pay...');
+            }
         }
 
         function joinGame(tableId) {
