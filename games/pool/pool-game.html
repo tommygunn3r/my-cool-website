@@ -347,17 +347,19 @@ function setupBalls() {
     const spacing = BALL_SIZE + 2;
     
     if (gameState.mode === '9-ball') {
-        // 9-ball diamond rack
+        // 9-ball diamond rack (viewed from side - diamond orientation)
+        // Row positions from left side of table (horizontal diamond)
         const rack = [
-            [1],
+            [1],           // Point facing left
             [2, 3],
-            [4, 9, 5],
-            [6, 7, 8]
+            [4, 9, 5],     // 9-ball in center
+            [6, 7],
+            [8]            // Point facing right
         ];
-        
-        let yOffset = 0;
+
+        let xOffset = 0;
         rack.forEach(row => {
-            let xOffset = -((row.length - 1) * spacing / 2);
+            let yOffset = -((row.length - 1) * spacing / 2);
             row.forEach(num => {
                 balls.push({
                     id: num,
@@ -369,9 +371,9 @@ function setupBalls() {
                     pocketed: false,
                     type: 'numbered'
                 });
-                xOffset += spacing;
+                yOffset += spacing;
             });
-            yOffset += spacing * 0.866;
+            xOffset += spacing * 0.866; // Move right for next column
         });
     } else {
         // 8-ball triangle rack
@@ -1210,9 +1212,25 @@ function onMouseUp(e) {
         gameState.cueAimSet = true;
         document.getElementById('powerMeter').style.display = 'block';
     } else if (gameState.shooting && gameState.cueAimSet) {
-        // Execute shot
-        shoot(gameState.dragStart.x, gameState.dragStart.y, x, y, gameState.power);
+        // Execute shot using the locked aim direction (dragStart)
+        // Don't use current mouse position - it's for power, not direction
+        shoot(gameState.dragStart.x, gameState.dragStart.y, cueBall.x, cueBall.y, gameState.power);
 
+        gameState.shooting = false;
+        gameState.cueAimSet = false;
+        gameState.dragStart = null;
+        gameState.power = 0;
+        document.getElementById('powerMeter').style.display = 'none';
+        document.getElementById('powerBarFill').style.width = '0%';
+    }
+}
+
+function onRightClick(e) {
+    e.preventDefault(); // Prevent context menu from appearing
+
+    // Right-click cancels aiming or shooting and lets you reposition
+    if (gameState.aimingCue || (gameState.shooting && gameState.cueAimSet)) {
+        gameState.aimingCue = false;
         gameState.shooting = false;
         gameState.cueAimSet = false;
         gameState.dragStart = null;
@@ -1227,9 +1245,9 @@ function canPlaceCueBall(x, y) {
     const maxX = CANVAS_WIDTH - TABLE_PADDING - BALL_SIZE/2;
     const minY = TABLE_PADDING + BALL_SIZE/2;
     const maxY = CANVAS_HEIGHT - TABLE_PADDING - BALL_SIZE/2;
-    
+
     if (x < minX || x > maxX || y < minY || y > maxY) return false;
-    
+
     // Check if overlapping with other balls
     for (const ball of balls) {
         if (ball.pocketed || ball.number === 0) continue;
@@ -1238,7 +1256,7 @@ function canPlaceCueBall(x, y) {
         const dist = Math.sqrt(dx*dx + dy*dy);
         if (dist < BALL_SIZE) return false;
     }
-    
+
     return true;
 }
 
@@ -1328,6 +1346,7 @@ async function initGame() {
     canvas.addEventListener('mousedown', onMouseDown);
     canvas.addEventListener('mousemove', onMouseMove);
     canvas.addEventListener('mouseup', onMouseUp);
+    canvas.addEventListener('contextmenu', onRightClick);
     document.getElementById('feltBtn').addEventListener('click', cycleFelt);
     document.getElementById('styleBtn').addEventListener('click', cycleStyle);
     document.getElementById('exitBtn').addEventListener('click', exitGame);
