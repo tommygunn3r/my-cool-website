@@ -341,7 +341,7 @@
             // Redirect to arcade after 15 seconds
             setTimeout(() => {
                 if (window.parent !== window) {
-                    window.parent.postMessage({ action: 'closeGame' }, '*');
+                    // Removed postMessage - user should use "Back to Arcade" button
                 } else {
                     window.location.href = '/arcade.html';
                 }

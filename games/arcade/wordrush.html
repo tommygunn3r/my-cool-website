@@ -434,7 +434,7 @@ h1 { color: #333; margin-bottom: 10px; }
         // Return to arcade after showing credits
         setTimeout(() => {
             if (window.parent !== window) {
-                window.parent.postMessage({ action: 'closeGame' }, '*');
+                // Removed postMessage - user should use "Back to Arcade" button
             } else {
                 window.location.href = '/arcade.html';
             }

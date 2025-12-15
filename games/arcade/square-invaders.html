@@ -217,26 +217,37 @@
                 this.gameName = gameName;
                 this.sessionStartTime = Date.now();
                 this.userId = null;
+                this.playerName = null;
                 this.checkAuth();
             }
 
             async checkAuth() {
                 const { data: { user } } = await supabase.auth.getUser();
                 this.userId = user?.id || null;
+                if (user) {
+                    this.playerName = user.user_metadata?.display_name || user.email?.split('@')[0] || 'Anonymous';
+                }
             }
 
             async submitGameResult(score) {
-                if (!this.userId) return;
-                const playTime = Math.floor((Date.now() - this.sessionStartTime) / 1000);
+                if (!this.userId) {
+                    console.log("Playing as guest - score not saved to leaderboard");
+                    return;
+                }
                 try {
-                    await supabase.from('game_sessions').insert({
+                    const { data, error } = await supabase.from('game_highscores').insert({
                         user_id: this.userId,
-                        game_name: this.gameName,
-                        score: score,
-                        play_time_seconds: playTime
+                        game_id: 'square-invaders',
+                        player_name: this.playerName,
+                        score: Math.floor(score)
                     });
+                    if (error) {
+                        console.error('Error submitting score:', error);
+                        throw error;
+                    }
+                    console.log('Score submitted successfully:', score);
                 } catch (error) {
-                    console.error('Error submitting score:', error);
+                    console.error('Score submission failed:', error.message);
                 }
             }
 

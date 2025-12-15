@@ -214,26 +214,37 @@
                 this.gameName = gameName;
                 this.sessionStartTime = Date.now();
                 this.userId = null;
+                this.playerName = null;
                 this.checkAuth();
             }
 
             async checkAuth() {
                 const { data: { user } } = await supabase.auth.getUser();
                 this.userId = user?.id || null;
+                if (user) {
+                    this.playerName = user.user_metadata?.display_name || user.email?.split('@')[0] || 'Anonymous';
+                }
             }
 
             async submitGameResult(score) {
-                if (!this.userId) return;
-                const playTime = Math.floor((Date.now() - this.sessionStartTime) / 1000);
+                if (!this.userId) {
+                    console.log("Playing as guest - score not saved to leaderboard");
+                    return;
+                }
                 try {
-                    await supabase.from('game_sessions').insert({
+                    const { data, error } = await supabase.from('game_highscores').insert({
                         user_id: this.userId,
-                        game_name: this.gameName,
-                        score: score,
-                        play_time_seconds: playTime
+                        game_id: 'square-kong',
+                        player_name: this.playerName,
+                        score: Math.floor(score)
                     });
+                    if (error) {
+                        console.error('Error submitting score:', error);
+                        throw error;
+                    }
+                    console.log('Score submitted successfully:', score);
                 } catch (error) {
-                    console.error('Error submitting score:', error);
+                    console.error('Score submission failed:', error.message);
                 }
             }
 
@@ -418,9 +429,9 @@
             {
                 platforms: [
                     { x1: 0, y1: 720, x2: 600, y2: 720, height: 15 },
-                    { x1: 100, y1: 630, x2: 600, y2: 690, height: 15 },
+                    { x1: 100, y1: 690, x2: 600, y2: 630, height: 15 },
                     { x1: 0, y1: 500, x2: 500, y2: 570, height: 15 },
-                    { x1: 100, y1: 370, x2: 600, y2: 420, height: 15 },
+                    { x1: 100, y1: 420, x2: 600, y2: 370, height: 15 },
                     { x1: 0, y1: 290, x2: 500, y2: 350, height: 15 },
                     { x1: 350, y1: 220, x2: 550, y2: 220, height: 15 }
                 ],
