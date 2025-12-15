@@ -368,8 +368,8 @@ let ballTrails = [];
 function setupBalls() {
     balls = [];
     ballTrails = [];
-    
-    // Cue ball
+
+    // Cue ball - start with ball-in-hand for break
     cueBall = {
         id: 0,
         number: 0,
@@ -381,6 +381,9 @@ function setupBalls() {
         type: 'cue'
     };
     balls.push(cueBall);
+
+    // Starting player gets ball-in-hand for break shot
+    gameState.ballInHand = true;
     
     const rackX = TABLE_PADDING + (TABLE_WIDTH * 3/4);
     const rackY = CANVAS_HEIGHT / 2;
@@ -758,6 +761,7 @@ function botTurn() {
         cueBall.y = safeY;
         cueBall.pocketed = false;
         gameState.ballInHand = false;
+        updateGameStatus();
         setTimeout(botTurn, 500);
         return;
     }
@@ -1242,18 +1246,13 @@ function onMouseDown(e) {
     const y = e.clientY - rect.top;
 
     if (gameState.ballInHand) {
-        if (canPlaceCueBall(x, y)) {
+        // Only allow player to place ball on their own turn
+        if (isMyTurn() && canPlaceCueBall(x, y)) {
             cueBall.x = x;
             cueBall.y = y;
             cueBall.pocketed = false;
             gameState.ballInHand = false;
             updateGameStatus();
-
-            // If bot game and it's bot's turn, trigger bot to shoot
-            if (gameState.isBot && gameState.currentPlayer === 2) {
-                console.log('🎱 Ball placed for bot, triggering bot turn...');
-                setTimeout(botTurn, 1000);
-            }
         }
     } else if (!gameState.shooting && isMyTurn()) {
         // First click: enter aiming mode
