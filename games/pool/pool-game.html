@@ -1489,7 +1489,7 @@ async function loadTableData() {
     document.getElementById('player1Name').textContent = gameState.player1.name;
     document.getElementById('player2Name').textContent = gameState.player2.name;
     
-    if (table.player2_name && table.player2_name.includes('BOT')) {
+    if (table.player2_name && table.player2_name.includes('(Bot)')) {
         gameState.isBot = true;
         const diffMatch = table.player2_name.match(/\((.*?)\)/);
         gameState.botDifficulty = diffMatch ? diffMatch[1].toLowerCase() : 'medium';
