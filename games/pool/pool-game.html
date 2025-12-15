@@ -89,38 +89,75 @@
             font-size: 0.85em;
             color: #aaa;
         }
-        
-        .controls {
-            position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            display: flex;
-            gap: 10px;
+
+        .settings-dropdown {
+            position: relative;
             pointer-events: auto;
         }
-        
-        .btn {
-            padding: 10px 20px;
+
+        .settings-btn {
             background: rgba(76, 175, 255, 0.2);
-            border: 2px solid rgba(76, 175, 255, 0.5);
-            border-radius: 8px;
-            color: #e0e0e0;
-            font-family: 'Rajdhani', sans-serif;
-            font-size: 1em;
-            font-weight: 600;
+            border: 2px solid rgba(76, 175, 255, 0.3);
+            border-radius: 6px;
+            padding: 6px 12px;
+            color: #fff;
+            font-size: 1.1em;
             cursor: pointer;
             transition: all 0.3s ease;
         }
-        
-        .btn:hover {
+
+        .settings-btn:hover {
             background: rgba(76, 175, 255, 0.3);
-            border-color: rgba(76, 175, 255, 0.8);
+            border-color: rgba(76, 175, 255, 0.5);
         }
-        
-        .btn.active {
-            background: rgba(76, 175, 255, 0.5);
-            border-color: rgba(76, 175, 255, 1);
+
+        .dropdown-menu {
+            position: absolute;
+            top: calc(100% + 8px);
+            right: 0;
+            background: rgba(10, 10, 20, 0.98);
+            border: 2px solid rgba(76, 175, 255, 0.3);
+            border-radius: 8px;
+            padding: 8px;
+            min-width: 180px;
+            display: none;
+            flex-direction: column;
+            gap: 6px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
+        }
+
+        .dropdown-menu.show {
+            display: flex;
+        }
+
+        .dropdown-item {
+            padding: 10px 14px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(76, 175, 255, 0.2);
+            border-radius: 6px;
+            color: #fff;
+            font-size: 0.9em;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: left;
+            white-space: nowrap;
+        }
+
+        .dropdown-item:hover {
+            background: rgba(76, 175, 255, 0.2);
+            border-color: rgba(76, 175, 255, 0.4);
+        }
+
+        .dropdown-item.exit {
+            background: rgba(255, 68, 68, 0.2);
+            border-color: rgba(255, 68, 68, 0.3);
+        }
+
+        .dropdown-item.exit:hover {
+            background: rgba(255, 68, 68, 0.3);
+            border-color: rgba(255, 68, 68, 0.5);
         }
         
         .power-meter {
@@ -211,21 +248,24 @@
                 <span class="player-name" id="player2Name">Player 2</span>
                 <span class="player-score" id="player2Score">-</span>
             </div>
+
+            <div class="settings-dropdown">
+                <button class="settings-btn" id="settingsBtn">⚙️</button>
+                <div class="dropdown-menu" id="dropdownMenu">
+                    <div class="dropdown-item" id="feltBtn">Felt: Green</div>
+                    <div class="dropdown-item" id="styleBtn">Style: Classic</div>
+                    <div class="dropdown-item exit" id="exitBtn">Exit Game</div>
+                </div>
+            </div>
         </div>
-        
+
         <canvas id="gameCanvas"></canvas>
-        
+
         <div class="power-meter" id="powerMeter" style="display: none;">
             <div class="power-label">SHOT POWER</div>
             <div class="power-bar-bg">
                 <div class="power-bar-fill" id="powerBarFill"></div>
             </div>
-        </div>
-        
-        <div class="controls">
-            <button class="btn" id="feltBtn">Felt: Green</button>
-            <button class="btn" id="styleBtn">Style: Classic</button>
-            <button class="btn" id="exitBtn">Exit</button>
         </div>
         
         <div id="endGameModal">
@@ -1056,18 +1096,23 @@ function updatePlayerIndicators() {
     }
 }
 
+function toggleDropdown(e) {
+    e.stopPropagation();
+    document.getElementById('dropdownMenu').classList.toggle('show');
+}
+
 function cycleFelt() {
     const felts = ['green', 'blue', 'red'];
     const currentIndex = felts.indexOf(gameState.feltColor);
     gameState.feltColor = felts[(currentIndex + 1) % felts.length];
-    document.getElementById('feltBtn').textContent = 
+    document.getElementById('feltBtn').textContent =
         `Felt: ${gameState.feltColor.charAt(0).toUpperCase() + gameState.feltColor.slice(1)}`;
     loadFeltImage();
 }
 
 function cycleStyle() {
     gameState.visualStyle = gameState.visualStyle === 'classic' ? 'neon' : 'classic';
-    document.getElementById('styleBtn').textContent = 
+    document.getElementById('styleBtn').textContent =
         `Style: ${gameState.visualStyle.charAt(0).toUpperCase() + gameState.visualStyle.slice(1)}`;
 }
 
@@ -1370,11 +1415,21 @@ async function initGame() {
     canvas.addEventListener('mousemove', onMouseMove);
     canvas.addEventListener('mouseup', onMouseUp);
     canvas.addEventListener('contextmenu', onRightClick);
+
+    // Settings dropdown
+    document.getElementById('settingsBtn').addEventListener('click', toggleDropdown);
     document.getElementById('feltBtn').addEventListener('click', cycleFelt);
     document.getElementById('styleBtn').addEventListener('click', cycleStyle);
     document.getElementById('exitBtn').addEventListener('click', exitGame);
     document.getElementById('rematchBtn').addEventListener('click', rematch);
     document.getElementById('exitModalBtn').addEventListener('click', exitGame);
+
+    // Close dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.settings-dropdown')) {
+            document.getElementById('dropdownMenu').classList.remove('show');
+        }
+    });
     
     subscribeToShots();
     updatePlayerIndicators();
