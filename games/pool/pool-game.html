@@ -344,7 +344,6 @@ let gameState = {
     isBreak: true,
     ballInHand: false,
     shooting: false,
-    aimingCue: false,
     cueAimSet: false,
     dragStart: null,
     power: 0,
@@ -850,8 +849,8 @@ function render(ctx) {
         });
     }
     
-    // Draw cue stick (during aiming or shooting)
-    if ((gameState.aimingCue || gameState.shooting) && gameState.dragStart && !cueBall.pocketed) {
+    // Draw cue stick (during shooting)
+    if (gameState.shooting && gameState.dragStart && !cueBall.pocketed) {
         drawCueStick(ctx);
     }
     
@@ -1236,7 +1235,7 @@ async function exitGame() {
 // ============================================
 
 function onMouseDown(e) {
-    if (gameState.shooting || !isMyTurn() || ballsMoving()) return;
+    if (ballsMoving()) return;
 
     const rect = canvas.getBoundingClientRect();
     const x = e.clientX - rect.left;
@@ -1250,50 +1249,14 @@ function onMouseDown(e) {
             gameState.ballInHand = false;
             updateGameStatus();
         }
-    } else {
-        // First click: set aim point for cue stick
-        gameState.aimingCue = true;
-        gameState.dragStart = { x, y };
-    }
-}
-
-function onMouseMove(e) {
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-
-    if (gameState.aimingCue && gameState.dragStart) {
-        // Update drag position for aiming
-        gameState.dragStart.x = x;
-        gameState.dragStart.y = y;
-    } else if (gameState.shooting && gameState.cueAimSet) {
-        // Pull back cue stick to build power
-        // Normalize power based on canvas size (max pull = 200 pixels = 100% power)
-        const dx = x - cueBall.x;
-        const dy = y - cueBall.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-
-        // Scale distance to 0-100 range (200 pixels = max power)
-        gameState.power = Math.min((distance / 200) * MAX_POWER, MAX_POWER);
-        document.getElementById('powerBarFill').style.width = gameState.power + '%';
-    }
-}
-
-function onMouseUp(e) {
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-
-    if (gameState.aimingCue && !gameState.shooting) {
-        // Lock in aim direction, now ready to shoot
-        gameState.aimingCue = false;
+    } else if (!gameState.shooting && isMyTurn()) {
+        // First click: enter aiming mode
         gameState.shooting = true;
         gameState.cueAimSet = true;
+        gameState.dragStart = { x, y }; // This will update as mouse moves
         document.getElementById('powerMeter').style.display = 'block';
-    } else if (gameState.shooting && gameState.cueAimSet) {
-        // Execute shot using the locked aim direction (dragStart)
-        // The cue stick is at dragStart, so shoot AWAY from dragStart (from dragStart toward cueBall)
-        // This means we reverse the direction: shoot away from where the cue stick is
+    } else if (gameState.shooting && gameState.cueAimSet && isMyTurn()) {
+        // Second click: execute shot with current power
         shoot(gameState.dragStart.x, gameState.dragStart.y, cueBall.x, cueBall.y, gameState.power);
 
         gameState.shooting = false;
@@ -1305,12 +1268,37 @@ function onMouseUp(e) {
     }
 }
 
+function onMouseMove(e) {
+    const rect = canvas.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    if (gameState.shooting && gameState.cueAimSet) {
+        // Update aim direction - mouse position sets where the cue stick points
+        gameState.dragStart.x = x;
+        gameState.dragStart.y = y;
+
+        // Calculate power based on mouse distance from cue ball
+        // The further the mouse is from the cue ball, the more power
+        const dx = x - cueBall.x;
+        const dy = y - cueBall.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+
+        // Scale distance to 0-100 range (200 pixels = max power)
+        gameState.power = Math.min((distance / 200) * MAX_POWER, MAX_POWER);
+        document.getElementById('powerBarFill').style.width = gameState.power + '%';
+    }
+}
+
+function onMouseUp(e) {
+    // No longer needed - all click handling is in onMouseDown
+}
+
 function onRightClick(e) {
     e.preventDefault(); // Prevent context menu from appearing
 
-    // Right-click cancels aiming or shooting and lets you reposition
-    if (gameState.aimingCue || (gameState.shooting && gameState.cueAimSet)) {
-        gameState.aimingCue = false;
+    // Right-click cancels aiming/shooting and lets you reposition
+    if (gameState.shooting && gameState.cueAimSet) {
         gameState.shooting = false;
         gameState.cueAimSet = false;
         gameState.dragStart = null;
