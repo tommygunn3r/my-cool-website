@@ -317,7 +317,8 @@ let gameState = {
     foul: false,
     pocketedThisTurn: [],
     lowestBallHit: null,
-    shotTaken: false
+    shotTaken: false,
+    isPlayer1: true  // Track if current user is player 1
 };
 
 let balls = [];
@@ -377,12 +378,13 @@ function setupBalls() {
         });
     } else {
         // 8-ball triangle rack (point facing toward breaking end)
+        // 1 ball at front, 8-ball in center, alternating solids/stripes
         const rack = [
-            [1],
-            [2, 3],
-            [4, 8, 5],
-            [6, 7, 9, 10],
-            [11, 12, 13, 14, 15]
+            [1],              // 1-ball at point
+            [9, 2],           // stripe, solid
+            [3, 8, 10],       // solid, 8-ball, stripe
+            [11, 4, 5, 12],   // stripe, solid, solid, stripe
+            [6, 13, 7, 14, 15] // solid, stripe, solid, stripe, stripe
         ];
 
         let xOffset = 0;
@@ -411,7 +413,14 @@ function ballsMoving() {
 }
 
 function isMyTurn() {
-    return !gameState.isBot || gameState.currentPlayer === 1;
+    // For bot games: only my turn if I'm the current player
+    if (gameState.isBot) {
+        return gameState.currentPlayer === 1;  // Human is always player 1 in bot games
+    }
+
+    // For multiplayer: check if current player matches who I am
+    return (gameState.isPlayer1 && gameState.currentPlayer === 1) ||
+           (!gameState.isPlayer1 && gameState.currentPlayer === 2);
 }
 
 function shoot(startX, startY, endX, endY, power) {
@@ -1214,8 +1223,9 @@ function onMouseUp(e) {
         document.getElementById('powerMeter').style.display = 'block';
     } else if (gameState.shooting && gameState.cueAimSet) {
         // Execute shot using the locked aim direction (dragStart)
-        // Shoot from cueBall position toward dragStart position (away from cue stick)
-        shoot(cueBall.x, cueBall.y, gameState.dragStart.x, gameState.dragStart.y, gameState.power);
+        // The cue stick is at dragStart, so shoot AWAY from dragStart (from dragStart toward cueBall)
+        // This means we reverse the direction: shoot away from where the cue stick is
+        shoot(gameState.dragStart.x, gameState.dragStart.y, cueBall.x, cueBall.y, gameState.power);
 
         gameState.shooting = false;
         gameState.cueAimSet = false;
@@ -1390,12 +1400,23 @@ async function loadTableData() {
     }
     
     gameState.wager = table.wager || 0;
-    
+
     const isPlayer1 = table.player1_id === window.currentUser.id;
-    gameState.currentPlayer = isPlayer1 ? 1 : 2;
-    
+    gameState.isPlayer1 = isPlayer1;
+
+    // Coin flip to determine who goes first
+    const coinFlip = Math.random() < 0.5 ? 1 : 2;
+    gameState.currentPlayer = coinFlip;
+
+    console.log(`🪙 Coin flip: Player ${coinFlip} breaks first!`);
+
     if (table.game_state && Object.keys(table.game_state).length > 0) {
         loadGameState(table.game_state);
+    } else {
+        // If bot won coin flip, let bot break
+        if (gameState.isBot && gameState.currentPlayer === 2) {
+            setTimeout(botTurn, 2000);
+        }
     }
 }
 
