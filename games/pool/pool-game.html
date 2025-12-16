@@ -753,13 +753,16 @@ function handleBallPocketed(ball) {
             }
         } else {
             // Regular ball
-            currentPlayerData.balls.push(ball.number);
-            
-            // Assign type if first ball pocketed
+            // Assign type if first ball pocketed (determines groups)
             if (!currentPlayerData.type) {
                 currentPlayerData.type = ball.type;
                 const otherPlayer = gameState.currentPlayer === 1 ? gameState.player2 : gameState.player1;
                 otherPlayer.type = ball.type === 'solid' ? 'stripe' : 'solid';
+            }
+
+            // Only add to score if it's the player's own ball type
+            if (ball.type === currentPlayerData.type) {
+                currentPlayerData.balls.push(ball.number);
             }
         }
     } else if (gameState.mode === '9-ball') {
@@ -799,16 +802,36 @@ function endTurn() {
         const currentPlayerData = gameState.currentPlayer === 1 ? gameState.player1 : gameState.player2;
         
         if (currentPlayerData.type) {
-            // Check if hit own ball first
+            // Check if player has cleared all their balls
+            const allBallsCleared = currentPlayerData.balls.length === 7;
+
+            // Check if hit own ball first (or 8-ball if all balls are cleared)
             const hitBall = balls.find(b => b.number === gameState.lowestBallHit);
-            if (hitBall && hitBall.type !== currentPlayerData.type && hitBall.number !== 8) {
-                gameState.foul = true;
-                gameState.ballInHand = true;
-            } else if (gameState.pocketedThisTurn.length > 0) {
-                // Check if pocketed own ball
+            if (hitBall) {
+                if (allBallsCleared) {
+                    // Must hit 8-ball when all balls are cleared
+                    if (hitBall.number !== 8) {
+                        gameState.foul = true;
+                        gameState.ballInHand = true;
+                    }
+                } else {
+                    // Must hit own ball type (not 8-ball or opponent's balls)
+                    if (hitBall.type !== currentPlayerData.type && hitBall.number !== 8) {
+                        gameState.foul = true;
+                        gameState.ballInHand = true;
+                    } else if (hitBall.number === 8) {
+                        // Hit 8-ball too early
+                        gameState.foul = true;
+                        gameState.ballInHand = true;
+                    }
+                }
+            }
+
+            if (gameState.pocketedThisTurn.length > 0 && !gameState.foul) {
+                // Check if pocketed own ball (or 8-ball if all balls cleared)
                 const pocketedOwn = gameState.pocketedThisTurn.some(num => {
                     const ball = balls.find(b => b.number === num);
-                    return ball && ball.type === currentPlayerData.type;
+                    return ball && (ball.type === currentPlayerData.type || (allBallsCleared && ball.number === 8));
                 });
                 if (pocketedOwn) {
                     keepTurn = true;
@@ -894,10 +917,16 @@ function botTurn() {
     } else if (gameState.mode === '8-ball') {
         const playerType = gameState.player2.type;
         if (playerType) {
-            // Target own balls
-            targetBall = balls
-                .filter(b => !b.pocketed && b.type === playerType)
-                .sort(() => Math.random() - 0.5)[0];
+            // Check if all own balls are pocketed
+            if (gameState.player2.balls.length === 7) {
+                // Target the 8-ball!
+                targetBall = balls.find(b => !b.pocketed && b.number === 8);
+            } else {
+                // Target own balls
+                targetBall = balls
+                    .filter(b => !b.pocketed && b.type === playerType)
+                    .sort(() => Math.random() - 0.5)[0];
+            }
         } else {
             // First shot, target any ball
             targetBall = balls
