@@ -994,9 +994,10 @@ function drawAimingAids(ctx) {
         // Draw predicted target ball trajectory after impact
         if (cueBallTraj.firstBallHit) {
             // Calculate target ball velocity after impact
-            // Target ball moves in the direction FROM cue ball TO target ball
-            const dx = targetBall.x - cueBall.x;
-            const dy = targetBall.y - cueBall.y;
+            // The cue ball will be at the ghost ball position when impact occurs
+            // Target ball moves in the direction FROM ghost ball TO target ball center
+            const dx = targetBall.x - impact.x;
+            const dy = targetBall.y - impact.y;
             const dist = Math.sqrt(dx*dx + dy*dy);
 
             // Normalize direction and apply velocity magnitude
@@ -1880,15 +1881,13 @@ function subscribeToGameState() {
                 const newState = payload.new.game_state;
                 if (!newState) return;
 
-                // Only sync if it's now the OTHER player's turn (opponent finished their turn)
                 const isMyTurn = (gameState.isPlayer1 && gameState.currentPlayer === 1) ||
                                  (!gameState.isPlayer1 && gameState.currentPlayer === 2);
-                const willBeMyTurn = (gameState.isPlayer1 && newState.currentPlayer === 1) ||
-                                      (!gameState.isPlayer1 && newState.currentPlayer === 2);
 
-                // Only load state when opponent finishes their turn (turn switches TO me)
-                if (!isMyTurn && willBeMyTurn && !gameState.shooting && !ballsMoving()) {
-                    console.log('📥 Received game state update - opponent finished turn');
+                // Live sync: Load state whenever it's NOT my turn (opponent is shooting)
+                // This gives real-time updates as balls move and are pocketed
+                if (!isMyTurn && !gameState.shooting && !ballsMoving()) {
+                    console.log('📥 Live sync - received game state update');
                     loadGameState(newState);
                     updatePlayerIndicators();
                     updateGameStatus();
