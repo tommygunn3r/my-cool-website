@@ -995,22 +995,37 @@ function drawAimingAids(ctx) {
 
         // Draw predicted target ball trajectory after impact
         if (cueBallTraj.firstBallHit && cueBallTraj.impactVelocity) {
-            // Calculate target ball velocity after impact
-            // The cue ball will be at the ghost ball position when impact occurs
-            // Target ball moves in the direction FROM ghost ball TO target ball center
+            // Calculate target ball velocity using proper collision physics
+            // Same rotation-based approach as the actual game physics
+
             const dx = targetBall.x - impact.x;
             const dy = targetBall.y - impact.y;
-            const dist = Math.sqrt(dx*dx + dy*dy);
 
-            // Use the actual velocity at impact (after friction), not initial velocity
-            const actualSpeed = Math.sqrt(
-                cueBallTraj.impactVelocity.vx * cueBallTraj.impactVelocity.vx +
-                cueBallTraj.impactVelocity.vy * cueBallTraj.impactVelocity.vy
-            );
+            // Collision angle (center to center)
+            const angle = Math.atan2(dy, dx);
+            const sin = Math.sin(angle);
+            const cos = Math.cos(angle);
 
-            // Normalize direction and apply velocity magnitude (transfer ~80% of speed)
-            const impactVelX = (dx / dist) * actualSpeed * 0.8;
-            const impactVelY = (dy / dist) * actualSpeed * 0.8;
+            // Cue ball velocity at impact
+            const cueBallVx = cueBallTraj.impactVelocity.vx;
+            const cueBallVy = cueBallTraj.impactVelocity.vy;
+
+            // Target ball is stationary before impact
+            const targetVx = 0;
+            const targetVy = 0;
+
+            // Rotate velocities into collision coordinate system
+            const vx1 = cueBallVx * cos + cueBallVy * sin;
+            const vy1 = cueBallVy * cos - cueBallVx * sin;
+            const vx2 = targetVx * cos + targetVy * sin;
+            const vy2 = targetVy * cos - targetVx * sin;
+
+            // Exchange velocities along collision axis (elastic collision)
+            const newVx2 = vx1; // Target ball gets cue ball's velocity along collision line
+
+            // Rotate back to world coordinates for target ball
+            const impactVelX = newVx2 * cos - vy2 * sin;
+            const impactVelY = vy2 * cos + newVx2 * sin;
 
             const targetTraj = simulateTrajectory(
                 targetBall.x,
