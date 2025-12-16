@@ -1953,13 +1953,19 @@ async function initGame() {
     }
     window.currentUser = user;
 
-    const hasExistingState = await loadTableData();
+    const { hasState, savedState } = await loadTableData();
 
-    // Only setup new balls if no existing game state
-    if (!hasExistingState) {
-        setupBalls();
-        // Save initial ball positions for multiplayer sync
+    // Always setup balls to create the ball objects
+    setupBalls();
+
+    // If existing state exists, load positions after balls are created
+    if (hasState && savedState) {
+        loadGameState(savedState);
+        console.log('✅ Loaded existing game state');
+    } else {
+        // New game - save initial ball positions for multiplayer sync
         await saveGameState();
+        console.log('✅ Created new game state');
     }
 
     loadFeltImage();
@@ -2019,7 +2025,7 @@ async function loadTableData() {
     if (error || !table) {
         alert('Failed to load table data');
         window.location.href = '/pool-hall.html';
-        return false;
+        return { hasState: false, savedState: null };
     }
 
     gameState.mode = table.game_type;
@@ -2048,12 +2054,12 @@ async function loadTableData() {
 
     console.log(`🪙 Coin flip: Player ${coinFlip} breaks first!`);
 
+    // Return the saved state to be applied AFTER balls are created
     if (table.game_state && Object.keys(table.game_state).length > 0) {
-        loadGameState(table.game_state);
-        return true; // Existing state was loaded
+        return { hasState: true, savedState: table.game_state };
     }
 
-    return false; // No existing state
+    return { hasState: false, savedState: null };
 }
 
 function gameLoop() {
