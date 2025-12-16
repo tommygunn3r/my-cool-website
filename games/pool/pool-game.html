@@ -787,7 +787,7 @@ function handleBallPocketed(ball) {
 
 function simulateTrajectory(startX, startY, vx, vy, maxIterations) {
     // Simulates ball trajectory without affecting game state
-    // Returns: { points: [], bounces: [], firstBallHit: null }
+    // Returns: { points: [], bounces: [], firstBallHit: null, impactVelocity: {vx, vy} }
 
     const points = [];
     const bounces = [];
@@ -796,6 +796,7 @@ function simulateTrajectory(startX, startY, vx, vy, maxIterations) {
     let velX = vx;
     let velY = vy;
     let firstBallHit = null;
+    let impactVelocity = null;
 
     const minX = TABLE_PADDING + BALL_SIZE/2;
     const maxX = CANVAS_WIDTH - TABLE_PADDING - BALL_SIZE/2;
@@ -849,6 +850,7 @@ function simulateTrajectory(startX, startY, vx, vy, maxIterations) {
 
                 if (dist < BALL_SIZE) {
                     firstBallHit = ball;
+                    impactVelocity = { vx: velX, vy: velY }; // Store velocity at impact
                     break;
                 }
             }
@@ -860,7 +862,7 @@ function simulateTrajectory(startX, startY, vx, vy, maxIterations) {
         }
     }
 
-    return { points, bounces, firstBallHit };
+    return { points, bounces, firstBallHit, impactVelocity };
 }
 
 function findFirstBallImpact(velX, velY) {
@@ -992,7 +994,7 @@ function drawAimingAids(ctx) {
         ctx.shadowBlur = 0;
 
         // Draw predicted target ball trajectory after impact
-        if (cueBallTraj.firstBallHit) {
+        if (cueBallTraj.firstBallHit && cueBallTraj.impactVelocity) {
             // Calculate target ball velocity after impact
             // The cue ball will be at the ghost ball position when impact occurs
             // Target ball moves in the direction FROM ghost ball TO target ball center
@@ -1000,10 +1002,15 @@ function drawAimingAids(ctx) {
             const dy = targetBall.y - impact.y;
             const dist = Math.sqrt(dx*dx + dy*dy);
 
-            // Normalize direction and apply velocity magnitude
-            const speed = Math.sqrt(velX*velX + velY*velY) * 0.8; // Transfer ~80% of speed
-            const impactVelX = (dx / dist) * speed;
-            const impactVelY = (dy / dist) * speed;
+            // Use the actual velocity at impact (after friction), not initial velocity
+            const actualSpeed = Math.sqrt(
+                cueBallTraj.impactVelocity.vx * cueBallTraj.impactVelocity.vx +
+                cueBallTraj.impactVelocity.vy * cueBallTraj.impactVelocity.vy
+            );
+
+            // Normalize direction and apply velocity magnitude (transfer ~80% of speed)
+            const impactVelX = (dx / dist) * actualSpeed * 0.8;
+            const impactVelY = (dy / dist) * actualSpeed * 0.8;
 
             const targetTraj = simulateTrajectory(
                 targetBall.x,
