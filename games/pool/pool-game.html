@@ -1142,6 +1142,9 @@ function endTurn() {
     gameState.lowestBallHit = null;
 
     updateGameStatus();
+
+    // Save game state for multiplayer sync
+    saveGameState();
 }
 
 // ============================================
@@ -1853,10 +1856,10 @@ function canPlaceCueBall(x, y) {
 
 function subscribeToShots() {
     if (!window.supabaseClient || gameState.isBot) return;
-    
+
     shotSubscription = window.supabaseClient
         .channel('pool_shots')
-        .on('postgres_changes', 
+        .on('postgres_changes',
             { event: 'INSERT', schema: 'public', table: 'pool_shots', filter: `table_id=eq.${gameState.tableId}` },
             (payload) => {
                 const shotData = payload.new.shot_data;
@@ -1870,6 +1873,27 @@ function subscribeToShots() {
                     gameState.pocketedThisTurn = [];
                     gameState.lowestBallHit = null;
                     gameState.shotTaken = true;
+                }
+            }
+        )
+        .subscribe();
+}
+
+function subscribeToGameState() {
+    if (!window.supabaseClient || gameState.isBot) return;
+
+    // Subscribe to game_state changes on the pool_tables table
+    const gameStateChannel = window.supabaseClient
+        .channel('game_state_changes')
+        .on('postgres_changes',
+            { event: 'UPDATE', schema: 'public', table: 'pool_tables', filter: `id=eq.${gameState.tableId}` },
+            async (payload) => {
+                // Only load if we're not currently in the middle of a shot
+                if (!gameState.shooting && !ballsMoving() && payload.new.game_state) {
+                    console.log('📥 Received game state update from opponent');
+                    loadGameState(payload.new.game_state);
+                    updatePlayerIndicators();
+                    updateGameStatus();
                 }
             }
         )
@@ -1993,6 +2017,7 @@ async function initGame() {
     });
     
     subscribeToShots();
+    subscribeToGameState();
     updatePlayerIndicators();
     updateGameStatus();
 
