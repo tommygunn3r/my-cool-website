@@ -905,9 +905,10 @@ function findFirstBallImpact(angle) {
 
 function drawAimingAids(ctx) {
     // Calculate shot angle and velocity
-    // Match the shoot() function: ball goes FROM cue ball TO drag point
-    const dx = gameState.dragStart.x - cueBall.x;
-    const dy = gameState.dragStart.y - cueBall.y;
+    // Match shoot(): shoot(dragStart.x, dragStart.y, cueBall.x, cueBall.y)
+    // So angle is FROM dragStart TO cueBall
+    const dx = cueBall.x - gameState.dragStart.x;
+    const dy = cueBall.y - gameState.dragStart.y;
     const angle = Math.atan2(dy, dx);
 
     const normalizedPower = Math.min(Math.max(gameState.power, 0), MAX_POWER);
@@ -1889,10 +1890,19 @@ function subscribeToGameState() {
         .on('postgres_changes',
             { event: 'UPDATE', schema: 'public', table: 'pool_tables', filter: `id=eq.${gameState.tableId}` },
             async (payload) => {
-                // Only load if we're not currently in the middle of a shot
-                if (!gameState.shooting && !ballsMoving() && payload.new.game_state) {
-                    console.log('📥 Received game state update from opponent');
-                    loadGameState(payload.new.game_state);
+                const newState = payload.new.game_state;
+                if (!newState) return;
+
+                // Only sync if it's now the OTHER player's turn (opponent finished their turn)
+                const isMyTurn = (gameState.isPlayer1 && gameState.currentPlayer === 1) ||
+                                 (!gameState.isPlayer1 && gameState.currentPlayer === 2);
+                const willBeMyTurn = (gameState.isPlayer1 && newState.currentPlayer === 1) ||
+                                      (!gameState.isPlayer1 && newState.currentPlayer === 2);
+
+                // Only load state when opponent finishes their turn (turn switches TO me)
+                if (!isMyTurn && willBeMyTurn && !gameState.shooting && !ballsMoving()) {
+                    console.log('📥 Received game state update - opponent finished turn');
+                    loadGameState(newState);
                     updatePlayerIndicators();
                     updateGameStatus();
                 }
@@ -2017,7 +2027,7 @@ async function initGame() {
         }
     });
     
-    subscribeToShots();
+    // subscribeToShots(); // Disabled - using game state sync instead
     subscribeToGameState();
     updatePlayerIndicators();
     updateGameStatus();
