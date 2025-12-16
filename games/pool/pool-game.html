@@ -905,8 +905,9 @@ function findFirstBallImpact(angle) {
 
 function drawAimingAids(ctx) {
     // Calculate shot angle and velocity
-    const dx = gameState.dragStart.x - cueBall.x;
-    const dy = gameState.dragStart.y - cueBall.y;
+    // The ball goes in the OPPOSITE direction of the cue stick (from dragStart to cueBall is cue direction)
+    const dx = cueBall.x - gameState.dragStart.x;  // Reversed: ball direction, not cue direction
+    const dy = cueBall.y - gameState.dragStart.y;  // Reversed: ball direction, not cue direction
     const angle = Math.atan2(dy, dx);
 
     const normalizedPower = Math.min(Math.max(gameState.power, 0), MAX_POWER);
