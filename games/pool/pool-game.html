@@ -905,9 +905,9 @@ function findFirstBallImpact(angle) {
 
 function drawAimingAids(ctx) {
     // Calculate shot angle and velocity
-    // The ball goes in the OPPOSITE direction of the cue stick (from dragStart to cueBall is cue direction)
-    const dx = cueBall.x - gameState.dragStart.x;  // Reversed: ball direction, not cue direction
-    const dy = cueBall.y - gameState.dragStart.y;  // Reversed: ball direction, not cue direction
+    // Match the shoot() function: ball goes FROM cue ball TO drag point
+    const dx = gameState.dragStart.x - cueBall.x;
+    const dy = gameState.dragStart.y - cueBall.y;
     const angle = Math.atan2(dy, dx);
 
     const normalizedPower = Math.min(Math.max(gameState.power, 0), MAX_POWER);
@@ -1053,10 +1053,11 @@ function drawAimingAids(ctx) {
 function endTurn() {
     // Check for fouls
     let keepTurn = false;
-    
+
     if (gameState.foul) {
-        // Foul committed
+        // Foul committed - never keep turn
         gameState.ballInHand = true;
+        keepTurn = false; // Explicitly set to false on foul
         if (cueBall.pocketed) {
             cueBall.pocketed = false;
             cueBall.x = TABLE_PADDING + TABLE_WIDTH / 4;
