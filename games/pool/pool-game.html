@@ -1892,6 +1892,33 @@ function loadGameState(state) {
     if (state.player2) Object.assign(gameState.player2, state.player2);
 }
 
+async function saveGameState() {
+    // Save current game state to database for multiplayer sync
+    if (gameState.isBot) return; // Don't save bot games
+
+    const state = {
+        balls: balls.map(b => ({ x: b.x, y: b.y, pocketed: b.pocketed })),
+        currentPlayer: gameState.currentPlayer,
+        player1: {
+            type: gameState.player1.type,
+            balls: gameState.player1.balls
+        },
+        player2: {
+            type: gameState.player2.type,
+            balls: gameState.player2.balls
+        }
+    };
+
+    const { error } = await window.supabase
+        .from('pool_tables')
+        .update({ game_state: state })
+        .eq('id', gameState.tableId);
+
+    if (error) {
+        console.error('Failed to save game state:', error);
+    }
+}
+
 // ============================================
 // GAME LOOP
 // ============================================
@@ -1925,9 +1952,16 @@ async function initGame() {
         return;
     }
     window.currentUser = user;
-    
-    await loadTableData();
-    setupBalls();
+
+    const hasExistingState = await loadTableData();
+
+    // Only setup new balls if no existing game state
+    if (!hasExistingState) {
+        setupBalls();
+        // Save initial ball positions for multiplayer sync
+        await saveGameState();
+    }
+
     loadFeltImage();
     loadWoodImage();
     
@@ -1981,28 +2015,28 @@ async function loadTableData() {
         .select('*')
         .eq('id', gameState.tableId)
         .single();
-    
+
     if (error || !table) {
         alert('Failed to load table data');
         window.location.href = '/pool-hall.html';
-        return;
+        return false;
     }
-    
+
     gameState.mode = table.game_type;
-    document.getElementById('gameMode').textContent = 
+    document.getElementById('gameMode').textContent =
         table.game_type === '8-ball' ? '8-BALL' : '9-BALL';
-    
+
     gameState.player1.name = table.player1_name || 'Player 1';
     gameState.player2.name = table.player2_name || 'Player 2';
     document.getElementById('player1Name').textContent = gameState.player1.name;
     document.getElementById('player2Name').textContent = gameState.player2.name;
-    
+
     if (table.player2_name && table.player2_name.includes('(Bot)')) {
         gameState.isBot = true;
         const diffMatch = table.player2_name.match(/\((.*?)\)/);
         gameState.botDifficulty = diffMatch ? diffMatch[1].toLowerCase() : 'medium';
     }
-    
+
     gameState.wager = table.wager || 0;
 
     const isPlayer1 = table.player1_id === window.currentUser.id;
@@ -2016,7 +2050,10 @@ async function loadTableData() {
 
     if (table.game_state && Object.keys(table.game_state).length > 0) {
         loadGameState(table.game_state);
+        return true; // Existing state was loaded
     }
+
+    return false; // No existing state
 }
 
 function gameLoop() {
