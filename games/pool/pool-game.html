@@ -863,44 +863,24 @@ function simulateTrajectory(startX, startY, vx, vy, maxIterations) {
     return { points, bounces, firstBallHit };
 }
 
-function findFirstBallImpact(angle) {
-    // Find the first ball that would be hit along the aim direction
-    let nearestBall = null;
-    let minDist = Infinity;
+function findFirstBallImpact(velX, velY) {
+    // Use the trajectory simulation to find which ball will actually be hit
+    const tempTraj = simulateTrajectory(cueBall.x, cueBall.y, velX, velY, TRAJECTORY_SIMULATION_TIME);
 
-    for (const ball of balls) {
-        if (ball.pocketed || ball.number === 0) continue;
+    if (!tempTraj.firstBallHit) return null;
 
-        // Vector from cue ball to target ball
-        const dx = ball.x - cueBall.x;
-        const dy = ball.y - cueBall.y;
-        const dist = Math.sqrt(dx*dx + dy*dy);
-
-        // Angle to this ball
-        const ballAngle = Math.atan2(dy, dx);
-
-        // Check if ball is roughly in the aim direction (within 30 degrees)
-        const angleDiff = Math.abs(ballAngle - angle);
-        const normalizedDiff = Math.min(angleDiff, Math.PI * 2 - angleDiff);
-
-        if (normalizedDiff < Math.PI / 6 && dist < minDist) {
-            minDist = dist;
-            nearestBall = ball;
-        }
-    }
-
-    if (!nearestBall) return null;
+    const targetBall = tempTraj.firstBallHit;
 
     // Calculate exact impact point (ghost ball position)
-    const dx = nearestBall.x - cueBall.x;
-    const dy = nearestBall.y - cueBall.y;
+    const dx = targetBall.x - cueBall.x;
+    const dy = targetBall.y - cueBall.y;
     const dist = Math.sqrt(dx*dx + dy*dy);
 
     // Ghost ball is one ball-diameter away from target, on the line from cue to target
-    const impactX = nearestBall.x - (dx / dist) * BALL_SIZE;
-    const impactY = nearestBall.y - (dy / dist) * BALL_SIZE;
+    const impactX = targetBall.x - (dx / dist) * BALL_SIZE;
+    const impactY = targetBall.y - (dy / dist) * BALL_SIZE;
 
-    return { ball: nearestBall, x: impactX, y: impactY };
+    return { ball: targetBall, x: impactX, y: impactY };
 }
 
 function drawAimingAids(ctx) {
@@ -922,8 +902,8 @@ function drawAimingAids(ctx) {
     // Simulate cue ball trajectory
     const cueBallTraj = simulateTrajectory(cueBall.x, cueBall.y, velX, velY, TRAJECTORY_SIMULATION_TIME);
 
-    // Find ghost ball / impact point
-    const impact = findFirstBallImpact(angle);
+    // Find ghost ball / impact point (use velocity for accurate trajectory-based detection)
+    const impact = findFirstBallImpact(velX, velY);
 
     ctx.save();
 
@@ -1013,9 +993,16 @@ function drawAimingAids(ctx) {
 
         // Draw predicted target ball trajectory after impact
         if (cueBallTraj.firstBallHit) {
-            // Calculate target ball velocity after impact (simplified physics)
-            const impactVelX = velX * 0.8; // Transfer ~80% momentum
-            const impactVelY = velY * 0.8;
+            // Calculate target ball velocity after impact
+            // Target ball moves in the direction FROM cue ball TO target ball
+            const dx = targetBall.x - cueBall.x;
+            const dy = targetBall.y - cueBall.y;
+            const dist = Math.sqrt(dx*dx + dy*dy);
+
+            // Normalize direction and apply velocity magnitude
+            const speed = Math.sqrt(velX*velX + velY*velY) * 0.8; // Transfer ~80% of speed
+            const impactVelX = (dx / dist) * speed;
+            const impactVelY = (dy / dist) * speed;
 
             const targetTraj = simulateTrajectory(
                 targetBall.x,

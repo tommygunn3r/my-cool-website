@@ -1250,18 +1250,31 @@
             // Unsubscribe from any existing subscriptions
             tableSubscriptions.forEach(sub => sub.unsubscribe());
             tableSubscriptions = [];
-            
+
             // Subscribe to pool_tables changes
             const subscription = supabaseClient
                 .channel('pool_tables_changes')
-                .on('postgres_changes', 
+                .on('postgres_changes',
                     { event: '*', schema: 'public', table: 'pool_tables' },
-                    () => {
+                    (payload) => {
+                        // Check if a game just started and we're a player in it
+                        if (payload.eventType === 'UPDATE' && payload.new.status === 'playing') {
+                            const isPlayer = payload.new.player1_id === currentUser.id ||
+                                           payload.new.player2_id === currentUser.id;
+
+                            if (isPlayer) {
+                                console.log('🎮 Game started! Redirecting to table...');
+                                joinGame(payload.new.id);
+                                return; // Don't reload tables, we're leaving the page
+                            }
+                        }
+
+                        // Otherwise just reload the tables list
                         loadTables();
                     }
                 )
                 .subscribe();
-            
+
             tableSubscriptions.push(subscription);
         }
 
