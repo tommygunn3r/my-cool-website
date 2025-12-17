@@ -277,15 +277,19 @@
                 if (this.musicZone === zoneName) return;
                 this.musicZone = zoneName;
 
-                // Placeholder for music - you would load your audio files here
-                // Example of how to add your own music files:
-                // if (this.music[zoneName]) {
-                //     if (this.currentMusic) this.currentMusic.pause();
-                //     this.currentMusic = this.music[zoneName];
-                //     this.currentMusic.loop = true;
-                //     this.currentMusic.volume = this.musicVolume;
-                //     this.currentMusic.play();
-                // }
+                // Play the music for the zone
+                if (this.music[zoneName]) {
+                    if (this.currentMusic) {
+                        this.currentMusic.pause();
+                        this.currentMusic.currentTime = 0;
+                    }
+                    this.currentMusic = this.music[zoneName];
+                    this.currentMusic.loop = true;
+                    this.currentMusic.volume = this.musicVolume;
+                    this.currentMusic.play().catch(err => {
+                        console.log('Audio playback failed:', err);
+                    });
+                }
                 console.log(`Playing music for zone: ${zoneName}`);
             }
 
