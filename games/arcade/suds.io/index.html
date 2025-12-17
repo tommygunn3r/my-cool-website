@@ -470,7 +470,7 @@
         };
 
         const SCRAPE_THRESHOLD = 8.0;
-        const BASE_FORCE = 0.006; // Increased for better responsiveness
+        const BASE_FORCE = 0.003; // Reduced for slower, more controlled movement
         const COMPRESSION_POP_THRESHOLD = 0.5;
 
         // ===== GAME STATE =====
@@ -916,15 +916,7 @@
             const dy = inputState.mouse.y - playerCore.body.position.y;
             const distance = Math.sqrt(dx * dx + dy * dy);
 
-            if (distance < 30) {
-                // Very close to target - stop completely
-                Body.setVelocity(playerCore.body, {
-                    x: playerCore.body.velocity.x * 0.7,
-                    y: playerCore.body.velocity.y * 0.7
-                });
-                return;
-            }
-
+            // No dead zone - always move toward cursor
             const dirX = dx / distance;
             const dirY = dy / distance;
 
