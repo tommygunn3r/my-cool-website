@@ -615,6 +615,9 @@
 
         // ===== CONSTRAINT FUNCTIONS =====
         function attachBubbleToCore(armorBubble, contactPoint) {
+            // First, set the armor bubble to normal physics state
+            armorBubble.attachedToCore = true;
+
             // Calculate ideal distance from core
             const targetDistance = BUBBLE_CONFIG.CORE.radius + BUBBLE_CONFIG.ARMOR.radius;
 
@@ -630,7 +633,6 @@
 
             World.add(engine.world, coreConstraint);
 
-            armorBubble.attachedToCore = true;
             armorBubble.coreConstraint = coreConstraint;
             armorBubble.armorConstraints = [];
             armorBubble.idealAngle = Math.atan2(
@@ -640,10 +642,12 @@
             playerCore.armorBubbles.push(armorBubble);
             playerCore.constraints.push(coreConstraint);
 
-            // Make armor almost massless so it doesn't slow down the core
+            // AFTER everything is set up, make armor almost massless so it doesn't slow down the core
+            // Store the original inertia first
+            armorBubble.originalInertia = armorBubble.body.inertia;
             Body.setMass(armorBubble.body, 0.001);
-            // Increase inertia to make it respond to forces normally
-            Body.setInertia(armorBubble.body, Infinity);
+            // Set very high inertia so it still responds to formation forces
+            Body.setInertia(armorBubble.body, 1000);
         }
 
         function detachBubble(armorBubble) {
@@ -666,7 +670,9 @@
 
             // Restore normal mass and inertia when detached
             Body.setMass(armorBubble.body, BUBBLE_CONFIG.ARMOR.mass);
-            Body.setInertia(armorBubble.body, armorBubble.body.mass * armorBubble.originalRadius * armorBubble.originalRadius / 2);
+            // Restore original inertia or calculate from radius
+            const restoredInertia = armorBubble.originalInertia || (armorBubble.body.mass * armorBubble.originalRadius * armorBubble.originalRadius / 2);
+            Body.setInertia(armorBubble.body, restoredInertia);
 
             // Apply repulsion
             const angle = Math.atan2(
