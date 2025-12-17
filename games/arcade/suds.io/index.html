@@ -642,12 +642,8 @@
             playerCore.armorBubbles.push(armorBubble);
             playerCore.constraints.push(coreConstraint);
 
-            // AFTER everything is set up, make armor almost massless so it doesn't slow down the core
-            // Store the original inertia first
-            armorBubble.originalInertia = armorBubble.body.inertia;
-            Body.setMass(armorBubble.body, 0.001);
-            // Set very high inertia so it still responds to formation forces
-            Body.setInertia(armorBubble.body, 1000);
+            // Don't modify mass/inertia - keep armor bubbles at normal physics
+            // Formation forces will be scaled based on mass to not affect core speed
         }
 
         function detachBubble(armorBubble) {
@@ -667,12 +663,6 @@
 
             armorBubble.attachedToCore = false;
             armorBubble.coreConstraint = null;
-
-            // Restore normal mass and inertia when detached
-            Body.setMass(armorBubble.body, BUBBLE_CONFIG.ARMOR.mass);
-            // Restore original inertia or calculate from radius
-            const restoredInertia = armorBubble.originalInertia || (armorBubble.body.mass * armorBubble.originalRadius * armorBubble.originalRadius / 2);
-            Body.setInertia(armorBubble.body, restoredInertia);
 
             // Apply repulsion
             const angle = Math.atan2(
@@ -714,8 +704,8 @@
                     const isBehind = Math.abs(normalizedDiff) > Math.PI / 2;
 
                     if (isBehind) {
-                        // Push bubbles backward (teardrop tail)
-                        const pushForce = coreSpeed * 0.0003;
+                        // Push bubbles backward (teardrop tail) - MUCH weaker force
+                        const pushForce = coreSpeed * 0.00001; // Reduced from 0.0003
                         Body.applyForce(armor.body, armor.body.position, {
                             x: -Math.cos(movementAngle) * pushForce,
                             y: -Math.sin(movementAngle) * pushForce
@@ -729,13 +719,13 @@
                     const targetX = playerCore.body.position.x + Math.cos(targetAngle) * targetDistance;
                     const targetY = playerCore.body.position.y + Math.sin(targetAngle) * targetDistance;
 
-                    // Gentle force toward target position
+                    // Gentle force toward target position - MUCH weaker
                     const toTargetX = targetX - armor.body.position.x;
                     const toTargetY = targetY - armor.body.position.y;
 
                     Body.applyForce(armor.body, armor.body.position, {
-                        x: toTargetX * 0.0001,
-                        y: toTargetY * 0.0001
+                        x: toTargetX * 0.000001, // Reduced from 0.0001
+                        y: toTargetY * 0.000001
                     });
                 }
 
@@ -749,7 +739,7 @@
                     const minDist = BUBBLE_CONFIG.ARMOR.radius * 2;
 
                     if (dist < minDist && dist > 0) {
-                        const repulsion = (minDist - dist) * 0.00005;
+                        const repulsion = (minDist - dist) * 0.000001; // Reduced from 0.00005
                         const angle = Math.atan2(ody, odx);
 
                         Body.applyForce(armor.body, armor.body.position, {
