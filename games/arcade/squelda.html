@@ -998,10 +998,19 @@
                 map.fillRect(x, y - 2, 1, 5, TILES.WATER);
             }
 
-            // Bridges over river
-            map.fillRect(20, 38, 3, 8, TILES.BRIDGE);
-            map.fillRect(50, 38, 3, 8, TILES.BRIDGE);
-            map.fillRect(80, 38, 3, 8, TILES.BRIDGE);
+            // Bridges over river (must be placed AFTER river to override water tiles)
+            // Calculate bridge positions to match the river's Y position at those X coordinates
+            const bridgeX1 = 20;
+            const bridgeY1 = 40 + Math.floor(Math.sin(bridgeX1 * 0.2) * 8);
+            map.fillRect(bridgeX1, bridgeY1 - 2, 3, 5, TILES.BRIDGE);
+
+            const bridgeX2 = 50;
+            const bridgeY2 = 40 + Math.floor(Math.sin(bridgeX2 * 0.2) * 8);
+            map.fillRect(bridgeX2, bridgeY2 - 2, 3, 5, TILES.BRIDGE);
+
+            const bridgeX3 = 80;
+            const bridgeY3 = 40 + Math.floor(Math.sin(bridgeX3 * 0.2) * 8);
+            map.fillRect(bridgeX3, bridgeY3 - 2, 3, 5, TILES.BRIDGE);
 
             // Mountain range in north
             for (let x = 10; x < 90; x++) {
