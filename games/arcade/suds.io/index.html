@@ -431,39 +431,40 @@
                 radius: 15,
                 mass: 1.0,
                 density: 0.02,
-                restitution: 0.4,
-                friction: 0.05,
-                frictionAir: 0.01,
+                restitution: 0.7,
+                friction: 0.01,
+                frictionAir: 0.005,
                 color: '#FF00FF'
             },
             ARMOR: {
                 radius: 12,
-                mass: 0.5,
+                mass: 0.3,
                 density: 0.01,
-                restitution: 0.6,
-                friction: 0.02,
-                frictionAir: 0.008,
+                restitution: 0.8,
+                friction: 0.01,
+                frictionAir: 0.003,
                 color: 'rgba(255, 255, 255, 0.4)'
             },
             STRAY: {
                 radius: 12,
-                mass: 0.5,
+                mass: 0.3,
                 density: 0.01,
-                restitution: 0.6,
-                friction: 0.02,
-                frictionAir: 0.008,
+                restitution: 0.8,
+                friction: 0.01,
+                frictionAir: 0.003,
                 color: 'rgba(200, 230, 255, 0.5)'
             }
         };
 
         const CONSTRAINT_CONFIG = {
-            stiffness: 0.02,
-            damping: 0.3,
+            stiffness: 0.015,
+            damping: 0.4,
             length: 0
         };
 
-        const SCRAPE_THRESHOLD = 3.0;
-        const BASE_FORCE = 0.002;
+        const SCRAPE_THRESHOLD = 8.0; // Much higher - bubbles need to compress 50% before popping
+        const BASE_FORCE = 0.005; // Increased for better small-bubble movement
+        const COMPRESSION_POP_THRESHOLD = 0.5; // Pop when compressed to 50% thickness
 
         // ===== GAME STATE =====
         const gameState = {
@@ -505,6 +506,8 @@
                 this.originalRadius = config.radius;
                 this.color = config.color;
                 this.deformation = { x: 1, y: 1 };
+                this.collisionForce = 0;
+                this.collisionAngle = 0;
 
                 World.add(engine.world, this.body);
             }
@@ -513,8 +516,26 @@
                 const velocity = this.body.velocity;
                 const speed = Math.sqrt(velocity.x ** 2 + velocity.y ** 2);
 
-                if (speed > 0.5) {
-                    const stretchFactor = Math.min(speed / 15, 0.3);
+                // Decay collision force over time
+                this.collisionForce *= 0.85;
+
+                if (this.collisionForce > 0.1) {
+                    // Squish effect based on collision force
+                    // Compress perpendicular to collision angle, stretch parallel
+                    const compressionFactor = Math.min(this.collisionForce / 3, 0.8); // Up to 80% compression
+
+                    // Calculate deformation based on collision angle
+                    const cos = Math.cos(this.collisionAngle);
+                    const sin = Math.sin(this.collisionAngle);
+
+                    // Compress in direction of collision, stretch perpendicular
+                    this.deformation = {
+                        x: 1 - compressionFactor * Math.abs(cos) + compressionFactor * 0.3 * Math.abs(sin),
+                        y: 1 - compressionFactor * Math.abs(sin) + compressionFactor * 0.3 * Math.abs(cos)
+                    };
+                } else if (speed > 0.5) {
+                    // Stretch in direction of movement
+                    const stretchFactor = Math.min(speed / 10, 0.4);
                     const angle = Math.atan2(velocity.y, velocity.x);
 
                     this.deformation = {
@@ -523,9 +544,19 @@
                     };
                 } else {
                     // Gentle breathing animation
-                    const breathe = Math.sin(Date.now() / 500) * 0.03;
+                    const breathe = Math.sin(Date.now() / 500) * 0.04;
                     this.deformation = { x: 1 + breathe, y: 1 + breathe };
                 }
+            }
+
+            applyCollisionDeformation(force, angle) {
+                this.collisionForce = force;
+                this.collisionAngle = angle;
+            }
+
+            getCompressionRatio() {
+                // Return minimum dimension (how squished it is)
+                return Math.min(this.deformation.x, this.deformation.y);
             }
         }
 
@@ -564,26 +595,12 @@
         class StrayBubble extends Bubble {
             constructor(x, y) {
                 super(x, y, BUBBLE_CONFIG.STRAY, 'strayBubble');
-                this.floatTarget = { x, y };
-                this.floatSpeed = 0.0005;
-                this.nextFloatUpdate = Date.now() + Math.random() * 2000 + 2000;
+                // No floating behavior - just static collectibles
             }
 
             updateFloat() {
-                if (Date.now() > this.nextFloatUpdate) {
-                    this.floatTarget = {
-                        x: this.body.position.x + (Math.random() - 0.5) * 100,
-                        y: this.body.position.y + (Math.random() - 0.5) * 100
-                    };
-                    this.nextFloatUpdate = Date.now() + Math.random() * 2000 + 2000;
-                }
-
-                const dx = this.floatTarget.x - this.body.position.x;
-                const dy = this.floatTarget.y - this.body.position.y;
-                Body.applyForce(this.body, this.body.position, {
-                    x: dx * this.floatSpeed,
-                    y: dy * this.floatSpeed
-                });
+                // Removed floating force to prevent "wind" effect
+                // Bubbles now stay mostly still unless affected by physics
             }
         }
 
@@ -677,28 +694,56 @@
                     }
                 }
 
-                // Core + Obstacle = GAME OVER
+                // Core + Obstacle = Apply deformation and check if too compressed
                 if ((bodyA.label === 'playerCore' || bodyB.label === 'playerCore') &&
                     (bodyA.label === 'obstacle' || bodyB.label === 'obstacle')) {
 
-                    if (playerCore.alive) {
-                        playerCore.alive = false;
-                        endGame();
-                        playSound('death');
+                    const coreBody = (bodyA.label === 'playerCore') ? bodyA : bodyB;
+                    const obstacleBody = (bodyA.label === 'obstacle') ? bodyA : bodyB;
+
+                    // Calculate collision force and angle
+                    const relativeVelocity = {
+                        x: coreBody.velocity.x - (obstacleBody.velocity?.x || 0),
+                        y: coreBody.velocity.y - (obstacleBody.velocity?.y || 0)
+                    };
+                    const collisionSpeed = Math.sqrt(relativeVelocity.x ** 2 + relativeVelocity.y ** 2);
+                    const collisionAngle = Math.atan2(relativeVelocity.y, relativeVelocity.x);
+
+                    // Apply deformation to core
+                    if (playerCore) {
+                        playerCore.applyCollisionDeformation(collisionSpeed, collisionAngle);
+
+                        // Check if core is compressed beyond threshold
+                        if (playerCore.getCompressionRatio() < COMPRESSION_POP_THRESHOLD && playerCore.alive) {
+                            playerCore.alive = false;
+                            endGame();
+                            playSound('death');
+                        }
                     }
                 }
 
-                // Armor + Obstacle = Potential Scrape
+                // Armor + Obstacle = Apply deformation and check if too compressed
                 if ((bodyA.label === 'armorBubble' || bodyB.label === 'armorBubble') &&
                     (bodyA.label === 'obstacle' || bodyB.label === 'obstacle')) {
 
                     const armorBody = (bodyA.label === 'armorBubble') ? bodyA : bodyB;
+                    const obstacleBody = (bodyA.label === 'obstacle') ? bodyA : bodyB;
                     const armor = playerCore.armorBubbles.find(b => b.body === armorBody);
 
                     if (armor && armor.attachedToCore) {
-                        const speed = Math.sqrt(armorBody.velocity.x ** 2 + armorBody.velocity.y ** 2);
+                        // Calculate collision force and angle
+                        const relativeVelocity = {
+                            x: armorBody.velocity.x - (obstacleBody.velocity?.x || 0),
+                            y: armorBody.velocity.y - (obstacleBody.velocity?.y || 0)
+                        };
+                        const collisionSpeed = Math.sqrt(relativeVelocity.x ** 2 + relativeVelocity.y ** 2);
+                        const collisionAngle = Math.atan2(relativeVelocity.y, relativeVelocity.x);
 
-                        if (speed > SCRAPE_THRESHOLD) {
+                        // Apply deformation
+                        armor.applyCollisionDeformation(collisionSpeed, collisionAngle);
+
+                        // Pop only if compressed beyond threshold
+                        if (armor.getCompressionRatio() < COMPRESSION_POP_THRESHOLD) {
                             detachBubble(armor);
                         }
                     }
