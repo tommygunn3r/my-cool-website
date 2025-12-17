@@ -574,8 +574,47 @@
                 this.armorBubbles = [];
                 this.constraints = [];
                 this.alive = true;
-                this.health = 3; // Start with 3 HP
+                this.health = 1; // Start with 1 HP (smallest size)
                 this.maxHealth = 5; // Max 5 HP
+                this.baseRadius = BUBBLE_CONFIG.CORE.radius; // Store base radius
+                this.updateSize();
+            }
+
+            updateSize() {
+                // Each health level increases size by 20%
+                // Health 1 = 100%, Health 2 = 120%, Health 3 = 144%, etc.
+                const scaleFactor = Math.pow(1.2, this.health - 1);
+                const newRadius = this.baseRadius * scaleFactor;
+
+                // Update the body's circle radius
+                this.originalRadius = newRadius;
+
+                // Update mass based on area (radius squared)
+                const newMass = BUBBLE_CONFIG.CORE.mass * (scaleFactor * scaleFactor);
+                Body.setMass(this.body, newMass);
+
+                // Recreate the circle shape with new radius
+                const currentPos = this.body.position;
+                const currentVel = this.body.velocity;
+                const currentAngle = this.body.angle;
+
+                World.remove(engine.world, this.body);
+
+                this.body = Bodies.circle(currentPos.x, currentPos.y, newRadius, {
+                    mass: newMass,
+                    density: BUBBLE_CONFIG.CORE.density,
+                    restitution: BUBBLE_CONFIG.CORE.restitution,
+                    friction: BUBBLE_CONFIG.CORE.friction,
+                    frictionAir: BUBBLE_CONFIG.CORE.frictionAir,
+                    label: 'playerCore',
+                    render: {
+                        fillStyle: BUBBLE_CONFIG.CORE.color
+                    }
+                });
+
+                Body.setVelocity(this.body, currentVel);
+                Body.setAngle(this.body, currentAngle);
+                World.add(engine.world, this.body);
             }
 
             getTotalMass() {
@@ -621,8 +660,8 @@
             // First, set the armor bubble to normal physics state
             armorBubble.attachedToCore = true;
 
-            // Calculate ideal distance from core
-            const targetDistance = BUBBLE_CONFIG.CORE.radius + BUBBLE_CONFIG.ARMOR.radius;
+            // Calculate ideal distance from core (use current core size, not base config)
+            const targetDistance = playerCore.originalRadius + BUBBLE_CONFIG.ARMOR.radius;
 
             // Primary constraint: armor to core with dynamic length
             const coreConstraint = Constraint.create({
@@ -717,7 +756,7 @@
                 } else {
                     // STOPPED: Form circle - distribute evenly around core
                     const targetAngle = (index / playerCore.armorBubbles.length) * Math.PI * 2;
-                    const targetDistance = BUBBLE_CONFIG.CORE.radius + BUBBLE_CONFIG.ARMOR.radius;
+                    const targetDistance = playerCore.originalRadius + BUBBLE_CONFIG.ARMOR.radius;
 
                     const targetX = playerCore.body.position.x + Math.cos(targetAngle) * targetDistance;
                     const targetY = playerCore.body.position.y + Math.sin(targetAngle) * targetDistance;
@@ -777,8 +816,9 @@
 
                         // Check if core is damaged and needs healing
                         if (playerCore.health < playerCore.maxHealth) {
-                            // Consume bubble to restore 1 HP
+                            // Consume bubble to restore 1 HP and grow in size
                             playerCore.health++;
+                            playerCore.updateSize(); // Grow the core by 20%
                             World.remove(engine.world, stray.body);
                             strayBubbles.splice(strayIndex, 1);
                             gameState.score += 5; // Less points for healing
