@@ -290,6 +290,7 @@
 
     <!-- HUD -->
     <div id="hud">
+        <div class="hud-item">Health: <span id="healthDisplay">3/5</span></div>
         <div class="hud-item">Armor: <span id="bubbleCount">0</span></div>
         <div class="hud-item">Score: <span id="scoreDisplay">0</span></div>
         <div class="hud-item">Time: <span id="timeDisplay">0:00</span></div>
@@ -573,6 +574,8 @@
                 this.armorBubbles = [];
                 this.constraints = [];
                 this.alive = true;
+                this.health = 3; // Start with 3 HP
+                this.maxHealth = 5; // Max 5 HP
             }
 
             getTotalMass() {
@@ -771,44 +774,68 @@
 
                     if (strayIndex !== -1 && playerCore) {
                         const stray = strayBubbles[strayIndex];
-                        const armor = new ArmorBubble(stray.body.position.x, stray.body.position.y);
 
-                        const contactPoint = pair.activeContacts[0]?.vertex || stray.body.position;
-                        attachBubbleToCore(armor, contactPoint);
+                        // Check if core is damaged and needs healing
+                        if (playerCore.health < playerCore.maxHealth) {
+                            // Consume bubble to restore 1 HP
+                            playerCore.health++;
+                            World.remove(engine.world, stray.body);
+                            strayBubbles.splice(strayIndex, 1);
+                            gameState.score += 5; // Less points for healing
+                            playSound('collect');
+                        } else {
+                            // Attach as armor if at full health
+                            const armor = new ArmorBubble(stray.body.position.x, stray.body.position.y);
+                            const contactPoint = pair.activeContacts[0]?.vertex || stray.body.position;
+                            attachBubbleToCore(armor, contactPoint);
 
-                        World.remove(engine.world, stray.body);
-                        strayBubbles.splice(strayIndex, 1);
+                            World.remove(engine.world, stray.body);
+                            strayBubbles.splice(strayIndex, 1);
 
-                        gameState.bubblesCollected++;
-                        gameState.score += 10;
-                        playSound('collect');
+                            gameState.bubblesCollected++;
+                            gameState.score += 10;
+                            playSound('collect');
+                        }
                     }
                 }
 
-                // Core + Obstacle = Apply deformation and check for death
+                // Core + Obstacle = Apply deformation and handle damage
                 if ((bodyA.label === 'playerCore' || bodyB.label === 'playerCore') &&
                     (bodyA.label === 'obstacle' || bodyB.label === 'obstacle')) {
 
                     const coreBody = (bodyA.label === 'playerCore') ? bodyA : bodyB;
-                    const obstacleBody = (bodyA.label === 'obstacle') ? bodyA : bodyB;
+                    const obstacle = (bodyA.label === 'obstacle') ? bodyA : bodyB;
+
+                    // Armor-only obstacles don't affect the core
+                    if (obstacle.damageType === 'armor_only') return;
 
                     // Calculate collision force and angle
                     const relativeVelocity = {
-                        x: coreBody.velocity.x - (obstacleBody.velocity?.x || 0),
-                        y: coreBody.velocity.y - (obstacleBody.velocity?.y || 0)
+                        x: coreBody.velocity.x - (obstacle.velocity?.x || 0),
+                        y: coreBody.velocity.y - (obstacle.velocity?.y || 0)
                     };
                     const collisionSpeed = Math.sqrt(relativeVelocity.x ** 2 + relativeVelocity.y ** 2);
                     const collisionAngle = Math.atan2(relativeVelocity.y, relativeVelocity.x);
 
                     // Apply deformation to core for visual feedback
-                    if (playerCore) {
+                    if (playerCore && playerCore.alive) {
                         playerCore.applyCollisionDeformation(collisionSpeed, collisionAngle);
 
-                        // Core dies on ANY direct hit with obstacle (instant death)
-                        if (playerCore.alive) {
+                        if (obstacle.damageType === 'instant_death') {
+                            // Instant death
                             playerCore.alive = false;
                             endGame();
                             playSound('death');
+                        } else if (obstacle.damageType === 'damage') {
+                            // Take 1 HP damage
+                            playerCore.health--;
+                            playSound('scrape');
+
+                            if (playerCore.health <= 0) {
+                                playerCore.alive = false;
+                                endGame();
+                                playSound('death');
+                            }
                         }
                     }
                 }
@@ -843,52 +870,56 @@
         });
 
         // ===== MAP GENERATION =====
-        function createObstacle(x, y, width, height, color, scrapes = false) {
+        function createObstacle(x, y, width, height, color, type = 'instant_death') {
             const obstacle = Bodies.rectangle(x, y, width, height, {
                 isStatic: true,
-                friction: scrapes ? 1.2 : 0.5,
+                friction: 0.5,
                 label: 'obstacle',
                 render: {
                     fillStyle: color
                 }
             });
 
-            obstacle.scrapes = scrapes;
+            // Obstacle types:
+            // 'instant_death' - kills core immediately (default walls)
+            // 'damage' - takes 1 HP from core per hit
+            // 'armor_only' - only scrapes armor, harmless to core
+            obstacle.damageType = type;
             World.add(engine.world, obstacle);
             obstacles.push(obstacle);
             return obstacle;
         }
 
         function createMap() {
-            // Outer walls
-            createObstacle(WORLD_BOUNDS.width / 2, 10, WORLD_BOUNDS.width, 20, '#2c3e50');
-            createObstacle(WORLD_BOUNDS.width / 2, WORLD_BOUNDS.height - 10, WORLD_BOUNDS.width, 20, '#2c3e50');
-            createObstacle(10, WORLD_BOUNDS.height / 2, 20, WORLD_BOUNDS.height, '#2c3e50');
-            createObstacle(WORLD_BOUNDS.width - 10, WORLD_BOUNDS.height / 2, 20, WORLD_BOUNDS.height, '#2c3e50');
+            // Outer walls - instant death
+            createObstacle(WORLD_BOUNDS.width / 2, 10, WORLD_BOUNDS.width, 20, '#2c3e50', 'instant_death');
+            createObstacle(WORLD_BOUNDS.width / 2, WORLD_BOUNDS.height - 10, WORLD_BOUNDS.width, 20, '#2c3e50', 'instant_death');
+            createObstacle(10, WORLD_BOUNDS.height / 2, 20, WORLD_BOUNDS.height, '#2c3e50', 'instant_death');
+            createObstacle(WORLD_BOUNDS.width - 10, WORLD_BOUNDS.height / 2, 20, WORLD_BOUNDS.height, '#2c3e50', 'instant_death');
 
-            // Coral Reef (top-right quadrant)
+            // Coral Reef (top-right quadrant) - damages core
             for (let i = 0; i < 15; i++) {
                 const x = WORLD_BOUNDS.width * 0.6 + Math.random() * (WORLD_BOUNDS.width * 0.35);
                 const y = 100 + Math.random() * (WORLD_BOUNDS.height * 0.4);
                 const width = 30 + Math.random() * 50;
                 const height = 30 + Math.random() * 50;
-                createObstacle(x, y, width, height, '#f39c12', true);
+                createObstacle(x, y, width, height, '#f39c12', 'damage');
             }
 
-            // Cheese Grater Wall (bottom section)
-            const graterY = WORLD_BOUNDS.height * 0.75;
-            const graterGap = 25;
-            const graterBarWidth = 15;
+            // Armor Scraper Bars (bottom section) - only affects armor, core can pass through
+            const scraperY = WORLD_BOUNDS.height * 0.75;
+            const scraperGap = 25;
+            const scraperBarWidth = 15;
 
-            for (let x = 100; x < WORLD_BOUNDS.width - 100; x += graterBarWidth + graterGap) {
-                createObstacle(x, graterY, graterBarWidth, 200, '#e74c3c', true);
+            for (let x = 100; x < WORLD_BOUNDS.width - 100; x += scraperBarWidth + scraperGap) {
+                createObstacle(x, scraperY, scraperBarWidth, 200, '#3498db', 'armor_only');
             }
 
-            // Central pillars
-            createObstacle(600, 400, 80, 80, '#34495e');
-            createObstacle(1200, 600, 100, 100, '#34495e');
-            createObstacle(1800, 300, 90, 90, '#34495e');
-            createObstacle(2200, 800, 70, 120, '#34495e');
+            // Central pillars - damage type
+            createObstacle(600, 400, 80, 80, '#e74c3c', 'damage');
+            createObstacle(1200, 600, 100, 100, '#e74c3c', 'damage');
+            createObstacle(1800, 300, 90, 90, '#e74c3c', 'damage');
+            createObstacle(2200, 800, 70, 120, '#e74c3c', 'damage');
         }
 
         // ===== MOVEMENT =====
@@ -1049,9 +1080,16 @@
                 ctx.closePath();
                 ctx.fill();
 
-                if (obstacle.scrapes) {
-                    ctx.strokeStyle = 'rgba(255, 0, 0, 0.5)';
+                // Visual indicators for obstacle types
+                if (obstacle.damageType === 'armor_only') {
+                    // Blue glow for armor scrapers
+                    ctx.strokeStyle = 'rgba(52, 152, 219, 0.8)';
                     ctx.lineWidth = 3;
+                    ctx.stroke();
+                } else if (obstacle.damageType === 'damage') {
+                    // Red outline for damaging obstacles
+                    ctx.strokeStyle = 'rgba(255, 100, 100, 0.6)';
+                    ctx.lineWidth = 2;
                     ctx.stroke();
                 }
             });
@@ -1107,6 +1145,7 @@
 
         // ===== UI UPDATES =====
         function updateHUD() {
+            document.getElementById('healthDisplay').textContent = `${playerCore.health}/${playerCore.maxHealth}`;
             document.getElementById('bubbleCount').textContent = playerCore.armorBubbles.length;
             document.getElementById('scoreDisplay').textContent = gameState.score;
 
