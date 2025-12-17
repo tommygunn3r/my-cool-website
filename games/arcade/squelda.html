@@ -228,7 +228,11 @@
         class AudioManager {
             constructor() {
                 this.sounds = {};
-                this.music = {};
+                this.music = {
+                            overworld: new Audio('../music/overworld.mp3'),
+                            dungeon: new Audio('../music/dungeon.mp3'),
+                            boss: new Audio('../music/boss.mp3')
+                };
                 this.currentMusic = null;
                 this.musicVolume = 0.3;
                 this.sfxVolume = 0.5;
