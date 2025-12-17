@@ -640,8 +640,10 @@
             playerCore.armorBubbles.push(armorBubble);
             playerCore.constraints.push(coreConstraint);
 
-            // No armor-to-armor constraints - they'll naturally spread out
-            Body.setMass(armorBubble.body, BUBBLE_CONFIG.ARMOR.mass * 0.5);
+            // Make armor almost massless so it doesn't slow down the core
+            Body.setMass(armorBubble.body, 0.001);
+            // Increase inertia to make it respond to forces normally
+            Body.setInertia(armorBubble.body, Infinity);
         }
 
         function detachBubble(armorBubble) {
@@ -662,7 +664,9 @@
             armorBubble.attachedToCore = false;
             armorBubble.coreConstraint = null;
 
+            // Restore normal mass and inertia when detached
             Body.setMass(armorBubble.body, BUBBLE_CONFIG.ARMOR.mass);
+            Body.setInertia(armorBubble.body, armorBubble.body.mass * armorBubble.originalRadius * armorBubble.originalRadius / 2);
 
             // Apply repulsion
             const angle = Math.atan2(
