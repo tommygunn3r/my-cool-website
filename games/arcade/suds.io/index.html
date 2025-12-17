@@ -433,37 +433,44 @@
                 density: 0.02,
                 restitution: 0.7,
                 friction: 0.01,
-                frictionAir: 0.005,
+                frictionAir: 0.001,  // Much lower for better movement
                 color: '#FF00FF'
             },
             ARMOR: {
                 radius: 12,
-                mass: 0.3,
+                mass: 0.15,          // Much lighter
                 density: 0.01,
                 restitution: 0.8,
                 friction: 0.01,
-                frictionAir: 0.003,
+                frictionAir: 0.0005, // Very low
                 color: 'rgba(255, 255, 255, 0.4)'
             },
             STRAY: {
                 radius: 12,
-                mass: 0.3,
+                mass: 0.15,
                 density: 0.01,
                 restitution: 0.8,
                 friction: 0.01,
-                frictionAir: 0.003,
+                frictionAir: 0.0005,
                 color: 'rgba(200, 230, 255, 0.5)'
             }
         };
 
         const CONSTRAINT_CONFIG = {
-            stiffness: 0.015,
-            damping: 0.4,
-            length: 0
+            CORE: {
+                stiffness: 0.2,      // Very stiff connection to core - no oscillation
+                damping: 0.9,        // Heavy damping
+                length: 0
+            },
+            ARMOR: {
+                stiffness: 0.08,     // Softer connection between armor bubbles
+                damping: 0.7,        // Good damping
+                length: 0
+            }
         };
 
         const SCRAPE_THRESHOLD = 8.0; // Much higher - bubbles need to compress 50% before popping
-        const BASE_FORCE = 0.005; // Increased for better small-bubble movement
+        const BASE_FORCE = 0.01; // Much stronger force for responsive movement
         const COMPRESSION_POP_THRESHOLD = 0.5; // Pop when compressed to 50% thickness
 
         // ===== GAME STATE =====
@@ -606,7 +613,8 @@
 
         // ===== CONSTRAINT FUNCTIONS =====
         function attachBubbleToCore(armorBubble, contactPoint) {
-            const constraint = Constraint.create({
+            // Primary constraint: armor to core (very stiff)
+            const coreConstraint = Constraint.create({
                 bodyA: playerCore.body,
                 bodyB: armorBubble.body,
                 pointA: {
@@ -617,35 +625,73 @@
                     x: contactPoint.x - armorBubble.body.position.x,
                     y: contactPoint.y - armorBubble.body.position.y
                 },
-                stiffness: CONSTRAINT_CONFIG.stiffness,
-                damping: CONSTRAINT_CONFIG.damping,
-                length: CONSTRAINT_CONFIG.length,
+                stiffness: CONSTRAINT_CONFIG.CORE.stiffness,
+                damping: CONSTRAINT_CONFIG.CORE.damping,
+                length: 0,
                 render: { visible: false }
             });
 
-            World.add(engine.world, constraint);
+            World.add(engine.world, coreConstraint);
 
             armorBubble.attachedToCore = true;
-            armorBubble.constraint = constraint;
+            armorBubble.coreConstraint = coreConstraint;
+            armorBubble.armorConstraints = [];
             playerCore.armorBubbles.push(armorBubble);
-            playerCore.constraints.push(constraint);
+            playerCore.constraints.push(coreConstraint);
+
+            // Secondary constraints: connect to nearby armor bubbles
+            playerCore.armorBubbles.forEach(otherArmor => {
+                if (otherArmor === armorBubble) return;
+
+                const dx = armorBubble.body.position.x - otherArmor.body.position.x;
+                const dy = armorBubble.body.position.y - otherArmor.body.position.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+
+                // Connect if close enough (within 2.5 radii)
+                if (distance < (BUBBLE_CONFIG.ARMOR.radius * 2.5)) {
+                    const armorConstraint = Constraint.create({
+                        bodyA: armorBubble.body,
+                        bodyB: otherArmor.body,
+                        stiffness: CONSTRAINT_CONFIG.ARMOR.stiffness,
+                        damping: CONSTRAINT_CONFIG.ARMOR.damping,
+                        length: distance * 0.8, // Slight compression
+                        render: { visible: false }
+                    });
+
+                    World.add(engine.world, armorConstraint);
+                    armorBubble.armorConstraints.push(armorConstraint);
+                    otherArmor.armorConstraints.push(armorConstraint);
+                }
+            });
 
             Body.setMass(armorBubble.body, BUBBLE_CONFIG.ARMOR.mass * 0.5);
         }
 
         function detachBubble(armorBubble) {
-            if (!armorBubble.constraint) return;
+            if (!armorBubble.coreConstraint) return;
 
-            World.remove(engine.world, armorBubble.constraint);
+            // Remove core constraint
+            World.remove(engine.world, armorBubble.coreConstraint);
+
+            // Remove all armor-to-armor constraints
+            if (armorBubble.armorConstraints) {
+                armorBubble.armorConstraints.forEach(constraint => {
+                    World.remove(engine.world, constraint);
+                });
+            }
 
             const index = playerCore.armorBubbles.indexOf(armorBubble);
             if (index > -1) {
                 playerCore.armorBubbles.splice(index, 1);
-                playerCore.constraints.splice(index, 1);
+                const constraintIndex = playerCore.constraints.indexOf(armorBubble.coreConstraint);
+                if (constraintIndex > -1) {
+                    playerCore.constraints.splice(constraintIndex, 1);
+                }
             }
 
             armorBubble.attachedToCore = false;
-            armorBubble.constraint = null;
+            armorBubble.coreConstraint = null;
+            armorBubble.armorConstraints = [];
 
             Body.setMass(armorBubble.body, BUBBLE_CONFIG.ARMOR.mass);
 
@@ -671,14 +717,16 @@
             event.pairs.forEach((pair) => {
                 const { bodyA, bodyB } = pair;
 
-                // Core + Stray Bubble
+                // Core + Stray Bubble OR Armor + Stray Bubble
                 if ((bodyA.label === 'playerCore' && bodyB.label === 'strayBubble') ||
-                    (bodyB.label === 'playerCore' && bodyA.label === 'strayBubble')) {
+                    (bodyB.label === 'playerCore' && bodyA.label === 'strayBubble') ||
+                    (bodyA.label === 'armorBubble' && bodyB.label === 'strayBubble') ||
+                    (bodyB.label === 'armorBubble' && bodyA.label === 'strayBubble')) {
 
                     const strayBody = (bodyA.label === 'strayBubble') ? bodyA : bodyB;
                     const strayIndex = strayBubbles.findIndex(b => b.body === strayBody);
 
-                    if (strayIndex !== -1) {
+                    if (strayIndex !== -1 && playerCore) {
                         const stray = strayBubbles[strayIndex];
                         const armor = new ArmorBubble(stray.body.position.x, stray.body.position.y);
 
