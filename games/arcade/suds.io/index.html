@@ -1,0 +1,1099 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Suds.io - Bubble Survival</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+            background: #0a1520;
+        }
+
+        #gameCanvas {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+            cursor: none;
+        }
+
+        /* Start Screen */
+        #startScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #1a2a3a 0%, #0a1520 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            color: white;
+            text-align: center;
+        }
+
+        #startScreen h1 {
+            font-size: 4rem;
+            margin-bottom: 2rem;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes glow {
+            from { text-shadow: 0 0 20px rgba(255, 255, 255, 0.5); }
+            to { text-shadow: 0 0 30px rgba(255, 0, 255, 0.8); }
+        }
+
+        .instructions {
+            max-width: 600px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 2rem;
+            border-radius: 15px;
+            margin-bottom: 2rem;
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .instructions h2 {
+            margin-bottom: 1rem;
+            color: #00ffff;
+        }
+
+        .instructions p {
+            margin: 0.5rem 0;
+            line-height: 1.6;
+        }
+
+        .instructions strong {
+            color: #ff00ff;
+        }
+
+        #startButton {
+            font-size: 1.5rem;
+            padding: 1rem 3rem;
+            background: linear-gradient(135deg, #ff00ff 0%, #00ffff 100%);
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: bold;
+            text-transform: uppercase;
+            box-shadow: 0 5px 20px rgba(255, 0, 255, 0.4);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        #startButton:hover {
+            transform: scale(1.05);
+            box-shadow: 0 7px 30px rgba(255, 0, 255, 0.6);
+        }
+
+        #startButton:active {
+            transform: scale(0.95);
+        }
+
+        /* HUD */
+        #hud {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 50;
+            color: white;
+            font-size: 1.2rem;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+            display: none;
+        }
+
+        .hud-item {
+            background: rgba(0, 0, 0, 0.5);
+            padding: 0.5rem 1rem;
+            margin: 0.3rem 0;
+            border-radius: 8px;
+            border-left: 4px solid #00ffff;
+            backdrop-filter: blur(5px);
+        }
+
+        .hud-item span {
+            color: #ff00ff;
+            font-weight: bold;
+        }
+
+        /* Game Over Screen */
+        #gameOver {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            color: white;
+            text-align: center;
+        }
+
+        #gameOver h1 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: #ff00ff;
+        }
+
+        #gameOver .score-display {
+            font-size: 2rem;
+            margin: 1rem 0;
+            color: #00ffff;
+        }
+
+        #gameOver .message {
+            font-size: 1.2rem;
+            margin: 1rem 0;
+            opacity: 0.8;
+        }
+
+        .button-group {
+            margin-top: 2rem;
+            display: flex;
+            gap: 1rem;
+        }
+
+        .game-button {
+            font-size: 1.2rem;
+            padding: 0.8rem 2rem;
+            background: linear-gradient(135deg, #ff00ff 0%, #00ffff 100%);
+            color: white;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: bold;
+            text-transform: uppercase;
+            box-shadow: 0 3px 15px rgba(255, 0, 255, 0.4);
+            transition: transform 0.2s;
+        }
+
+        .game-button:hover {
+            transform: scale(1.05);
+        }
+
+        .game-button:active {
+            transform: scale(0.95);
+        }
+
+        /* Mobile Controls */
+        #mobileControls {
+            display: none;
+            position: absolute;
+            bottom: 20px;
+            width: 100%;
+            justify-content: center;
+            align-items: center;
+            z-index: 50;
+        }
+
+        #movementJoystick {
+            width: 150px;
+            height: 150px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            position: relative;
+            backdrop-filter: blur(5px);
+        }
+
+        #joystickKnob {
+            width: 60px;
+            height: 60px;
+            background: radial-gradient(circle, #ff00ff 0%, #8800ff 100%);
+            border-radius: 50%;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 3px 10px rgba(255, 0, 255, 0.5);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            #startScreen h1 {
+                font-size: 2.5rem;
+            }
+
+            .instructions {
+                padding: 1rem;
+                max-width: 90%;
+            }
+
+            #mobileControls {
+                display: flex;
+            }
+
+            #gameCanvas {
+                cursor: default;
+            }
+        }
+
+        /* Cursor effect */
+        #cursor {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 0, 255, 0.8);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 1000;
+            display: none;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 0 10px rgba(255, 0, 255, 0.5);
+        }
+
+        #cursor::after {
+            content: '';
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            background: #ff00ff;
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+
+    <!-- Custom Cursor -->
+    <div id="cursor"></div>
+
+    <!-- Start Screen -->
+    <div id="startScreen">
+        <h1>🫧 SUDS.IO 🫧</h1>
+        <div class="instructions">
+            <h2>How to Play</h2>
+            <p>Your <strong>Core</strong> is vulnerable! Collect floating bubbles for protective armor.</p>
+            <p><strong>Controls:</strong> Move your mouse (or touch on mobile) to navigate</p>
+            <p><strong>Strategy:</strong> More bubbles = more protection but slower movement</p>
+            <p><strong>Warning:</strong> Obstacles scrape off armor. If your Core touches an obstacle, GAME OVER!</p>
+        </div>
+        <button id="startButton">START GAME</button>
+    </div>
+
+    <!-- HUD -->
+    <div id="hud">
+        <div class="hud-item">Armor: <span id="bubbleCount">0</span></div>
+        <div class="hud-item">Score: <span id="scoreDisplay">0</span></div>
+        <div class="hud-item">Time: <span id="timeDisplay">0:00</span></div>
+        <div class="hud-item">Speed: <span id="speedDisplay">100%</span></div>
+    </div>
+
+    <!-- Game Over Screen -->
+    <div id="gameOver">
+        <h1>GAME OVER</h1>
+        <div class="score-display">Final Score: <span id="finalScore">0</span></div>
+        <div class="score-display">High Score: <span id="highScoreDisplay">0</span></div>
+        <div class="message">Redirecting to arcade in <span id="countdown">5</span> seconds...</div>
+        <div class="button-group">
+            <button class="game-button" onclick="restartGame()">Play Again</button>
+            <button class="game-button" onclick="window.location.href='/arcade.html'">Arcade</button>
+        </div>
+    </div>
+
+    <!-- Mobile Controls -->
+    <div id="mobileControls">
+        <div id="movementJoystick">
+            <div id="joystickKnob"></div>
+        </div>
+    </div>
+
+    <!-- Matter.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+
+    <!-- Game Logic -->
+    <script type="module">
+        // ===== SUPABASE INTEGRATION =====
+        import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+        const SUPABASE_URL = "https://pknhslxhpohrzgsfkisr.supabase.co";
+        const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBrbmhzbHhocG9ocnpnc2ZraXNyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzQ0OTQ0MDAsImV4cCI6MjA1MDA3MDQwMH0.2L-zZw-pi_3q1sdNGhITKuhQ_ECyDARzc3T9N3tLSAI";
+
+        const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        class GameScoreManager {
+            constructor(gameName) {
+                this.gameName = gameName;
+                this.sessionStartTime = null;
+                this.playerName = "PLAYER";
+                this.user = null;
+            }
+
+            startSession() {
+                this.sessionStartTime = Date.now();
+            }
+
+            getElapsedTime() {
+                if (!this.sessionStartTime) return 0;
+                return Math.floor((Date.now() - this.sessionStartTime) / 1000);
+            }
+
+            async submitGameResult(score = 0) {
+                if (!this.user) {
+                    console.log("No user logged in, skipping score submission");
+                    return;
+                }
+
+                try {
+                    const { error } = await supabase.from("game_highscores").insert({
+                        user_id: this.user.id,
+                        game_id: this.gameName,
+                        player_name: this.playerName,
+                        score: Math.floor(score)
+                    });
+
+                    if (error) {
+                        console.error("Supabase score submission failed:", error);
+                    } else {
+                        console.log(`✅ Score submitted: ${score} for ${this.gameName}`);
+                    }
+                } catch (err) {
+                    console.error("Error submitting score:", err);
+                }
+            }
+        }
+
+        const scoreManager = new GameScoreManager("sudsio");
+
+        async function initGameAuth() {
+            try {
+                const { data: { session } } = await supabase.auth.getSession();
+                if (!session?.user) {
+                    console.log("No Supabase user – scores will stay local only.");
+                    return;
+                }
+
+                scoreManager.user = session.user;
+
+                const { data: profile } = await supabase
+                    .from("profiles")
+                    .select("player_name")
+                    .eq("id", session.user.id)
+                    .single();
+
+                scoreManager.playerName = profile?.player_name || "Player";
+                console.log("✅ Suds.io auth initialized:", scoreManager.playerName);
+            } catch (err) {
+                console.error("Supabase auth init failed:", err);
+            }
+        }
+
+        initGameAuth();
+
+        // ===== MATTER.JS SETUP =====
+        const { Engine, Render, World, Bodies, Body, Constraint, Events } = Matter;
+
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const cursor = document.getElementById('cursor');
+
+        // Set canvas size
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        // Physics engine
+        const engine = Engine.create({
+            gravity: { x: 0, y: 0 },
+            enableSleeping: false
+        });
+
+        engine.positionIterations = 6;
+        engine.velocityIterations = 4;
+        engine.constraintIterations = 2;
+
+        // ===== CONSTANTS =====
+        const WORLD_BOUNDS = { width: 3000, height: 2000 };
+        const VIEWPORT = {
+            width: canvas.width,
+            height: canvas.height,
+            camera: { x: 0, y: 0 }
+        };
+
+        const BUBBLE_CONFIG = {
+            CORE: {
+                radius: 15,
+                mass: 1.0,
+                density: 0.02,
+                restitution: 0.4,
+                friction: 0.05,
+                frictionAir: 0.01,
+                color: '#FF00FF'
+            },
+            ARMOR: {
+                radius: 12,
+                mass: 0.5,
+                density: 0.01,
+                restitution: 0.6,
+                friction: 0.02,
+                frictionAir: 0.008,
+                color: 'rgba(255, 255, 255, 0.4)'
+            },
+            STRAY: {
+                radius: 12,
+                mass: 0.5,
+                density: 0.01,
+                restitution: 0.6,
+                friction: 0.02,
+                frictionAir: 0.008,
+                color: 'rgba(200, 230, 255, 0.5)'
+            }
+        };
+
+        const CONSTRAINT_CONFIG = {
+            stiffness: 0.02,
+            damping: 0.3,
+            length: 0
+        };
+
+        const SCRAPE_THRESHOLD = 3.0;
+        const BASE_FORCE = 0.002;
+
+        // ===== GAME STATE =====
+        const gameState = {
+            running: false,
+            paused: false,
+            score: 0,
+            bubblesCollected: 0,
+            time: 0,
+            startTime: 0,
+            highScore: parseInt(localStorage.getItem('sudsioHighScore') || '0'),
+            difficulty: 1
+        };
+
+        const inputState = {
+            mouse: { x: 0, y: 0 },
+            active: false
+        };
+
+        let lastTime = 0;
+        let playerCore = null;
+        let strayBubbles = [];
+        let obstacles = [];
+
+        // ===== BUBBLE CLASSES =====
+        class Bubble {
+            constructor(x, y, config, label) {
+                this.body = Bodies.circle(x, y, config.radius, {
+                    mass: config.mass,
+                    density: config.density,
+                    restitution: config.restitution,
+                    friction: config.friction,
+                    frictionAir: config.frictionAir,
+                    label: label,
+                    render: {
+                        fillStyle: config.color
+                    }
+                });
+
+                this.originalRadius = config.radius;
+                this.color = config.color;
+                this.deformation = { x: 1, y: 1 };
+
+                World.add(engine.world, this.body);
+            }
+
+            updateDeformation() {
+                const velocity = this.body.velocity;
+                const speed = Math.sqrt(velocity.x ** 2 + velocity.y ** 2);
+
+                if (speed > 0.5) {
+                    const stretchFactor = Math.min(speed / 15, 0.3);
+                    const angle = Math.atan2(velocity.y, velocity.x);
+
+                    this.deformation = {
+                        x: 1 + stretchFactor * Math.abs(Math.cos(angle)),
+                        y: 1 + stretchFactor * Math.abs(Math.sin(angle))
+                    };
+                } else {
+                    // Gentle breathing animation
+                    const breathe = Math.sin(Date.now() / 500) * 0.03;
+                    this.deformation = { x: 1 + breathe, y: 1 + breathe };
+                }
+            }
+        }
+
+        class PlayerCore extends Bubble {
+            constructor(x, y) {
+                super(x, y, BUBBLE_CONFIG.CORE, 'playerCore');
+                this.armorBubbles = [];
+                this.constraints = [];
+                this.alive = true;
+            }
+
+            getTotalMass() {
+                return this.body.mass + (this.armorBubbles.length * BUBBLE_CONFIG.ARMOR.mass * 0.5);
+            }
+
+            getSpeed() {
+                const totalMass = this.getTotalMass();
+                return BASE_FORCE / totalMass;
+            }
+
+            getSpeedPercent() {
+                const currentSpeed = this.getSpeed();
+                const baseSpeed = BASE_FORCE / this.body.mass;
+                return Math.round((currentSpeed / baseSpeed) * 100);
+            }
+        }
+
+        class ArmorBubble extends Bubble {
+            constructor(x, y) {
+                super(x, y, BUBBLE_CONFIG.ARMOR, 'armorBubble');
+                this.attachedToCore = false;
+                this.constraint = null;
+            }
+        }
+
+        class StrayBubble extends Bubble {
+            constructor(x, y) {
+                super(x, y, BUBBLE_CONFIG.STRAY, 'strayBubble');
+                this.floatTarget = { x, y };
+                this.floatSpeed = 0.0005;
+                this.nextFloatUpdate = Date.now() + Math.random() * 2000 + 2000;
+            }
+
+            updateFloat() {
+                if (Date.now() > this.nextFloatUpdate) {
+                    this.floatTarget = {
+                        x: this.body.position.x + (Math.random() - 0.5) * 100,
+                        y: this.body.position.y + (Math.random() - 0.5) * 100
+                    };
+                    this.nextFloatUpdate = Date.now() + Math.random() * 2000 + 2000;
+                }
+
+                const dx = this.floatTarget.x - this.body.position.x;
+                const dy = this.floatTarget.y - this.body.position.y;
+                Body.applyForce(this.body, this.body.position, {
+                    x: dx * this.floatSpeed,
+                    y: dy * this.floatSpeed
+                });
+            }
+        }
+
+        // ===== CONSTRAINT FUNCTIONS =====
+        function attachBubbleToCore(armorBubble, contactPoint) {
+            const constraint = Constraint.create({
+                bodyA: playerCore.body,
+                bodyB: armorBubble.body,
+                pointA: {
+                    x: contactPoint.x - playerCore.body.position.x,
+                    y: contactPoint.y - playerCore.body.position.y
+                },
+                pointB: {
+                    x: contactPoint.x - armorBubble.body.position.x,
+                    y: contactPoint.y - armorBubble.body.position.y
+                },
+                stiffness: CONSTRAINT_CONFIG.stiffness,
+                damping: CONSTRAINT_CONFIG.damping,
+                length: CONSTRAINT_CONFIG.length,
+                render: { visible: false }
+            });
+
+            World.add(engine.world, constraint);
+
+            armorBubble.attachedToCore = true;
+            armorBubble.constraint = constraint;
+            playerCore.armorBubbles.push(armorBubble);
+            playerCore.constraints.push(constraint);
+
+            Body.setMass(armorBubble.body, BUBBLE_CONFIG.ARMOR.mass * 0.5);
+        }
+
+        function detachBubble(armorBubble) {
+            if (!armorBubble.constraint) return;
+
+            World.remove(engine.world, armorBubble.constraint);
+
+            const index = playerCore.armorBubbles.indexOf(armorBubble);
+            if (index > -1) {
+                playerCore.armorBubbles.splice(index, 1);
+                playerCore.constraints.splice(index, 1);
+            }
+
+            armorBubble.attachedToCore = false;
+            armorBubble.constraint = null;
+
+            Body.setMass(armorBubble.body, BUBBLE_CONFIG.ARMOR.mass);
+
+            // Apply repulsion
+            const angle = Math.atan2(
+                armorBubble.body.position.y - playerCore.body.position.y,
+                armorBubble.body.position.x - playerCore.body.position.x
+            );
+            Body.applyForce(armorBubble.body, armorBubble.body.position, {
+                x: Math.cos(angle) * 0.002,
+                y: Math.sin(angle) * 0.002
+            });
+
+            // Convert back to stray bubble
+            armorBubble.body.label = 'strayBubble';
+            const stray = new StrayBubble(armorBubble.body.position.x, armorBubble.body.position.y);
+            World.remove(engine.world, armorBubble.body);
+            playSound('scrape');
+        }
+
+        // ===== COLLISION DETECTION =====
+        Events.on(engine, 'collisionStart', (event) => {
+            event.pairs.forEach((pair) => {
+                const { bodyA, bodyB } = pair;
+
+                // Core + Stray Bubble
+                if ((bodyA.label === 'playerCore' && bodyB.label === 'strayBubble') ||
+                    (bodyB.label === 'playerCore' && bodyA.label === 'strayBubble')) {
+
+                    const strayBody = (bodyA.label === 'strayBubble') ? bodyA : bodyB;
+                    const strayIndex = strayBubbles.findIndex(b => b.body === strayBody);
+
+                    if (strayIndex !== -1) {
+                        const stray = strayBubbles[strayIndex];
+                        const armor = new ArmorBubble(stray.body.position.x, stray.body.position.y);
+
+                        const contactPoint = pair.activeContacts[0]?.vertex || stray.body.position;
+                        attachBubbleToCore(armor, contactPoint);
+
+                        World.remove(engine.world, stray.body);
+                        strayBubbles.splice(strayIndex, 1);
+
+                        gameState.bubblesCollected++;
+                        gameState.score += 10;
+                        playSound('collect');
+                    }
+                }
+
+                // Core + Obstacle = GAME OVER
+                if ((bodyA.label === 'playerCore' || bodyB.label === 'playerCore') &&
+                    (bodyA.label === 'obstacle' || bodyB.label === 'obstacle')) {
+
+                    if (playerCore.alive) {
+                        playerCore.alive = false;
+                        endGame();
+                        playSound('death');
+                    }
+                }
+
+                // Armor + Obstacle = Potential Scrape
+                if ((bodyA.label === 'armorBubble' || bodyB.label === 'armorBubble') &&
+                    (bodyA.label === 'obstacle' || bodyB.label === 'obstacle')) {
+
+                    const armorBody = (bodyA.label === 'armorBubble') ? bodyA : bodyB;
+                    const armor = playerCore.armorBubbles.find(b => b.body === armorBody);
+
+                    if (armor && armor.attachedToCore) {
+                        const speed = Math.sqrt(armorBody.velocity.x ** 2 + armorBody.velocity.y ** 2);
+
+                        if (speed > SCRAPE_THRESHOLD) {
+                            detachBubble(armor);
+                        }
+                    }
+                }
+            });
+        });
+
+        // ===== MAP GENERATION =====
+        function createObstacle(x, y, width, height, color, scrapes = false) {
+            const obstacle = Bodies.rectangle(x, y, width, height, {
+                isStatic: true,
+                friction: scrapes ? 1.2 : 0.5,
+                label: 'obstacle',
+                render: {
+                    fillStyle: color
+                }
+            });
+
+            obstacle.scrapes = scrapes;
+            World.add(engine.world, obstacle);
+            obstacles.push(obstacle);
+            return obstacle;
+        }
+
+        function createMap() {
+            // Outer walls
+            createObstacle(WORLD_BOUNDS.width / 2, 10, WORLD_BOUNDS.width, 20, '#2c3e50');
+            createObstacle(WORLD_BOUNDS.width / 2, WORLD_BOUNDS.height - 10, WORLD_BOUNDS.width, 20, '#2c3e50');
+            createObstacle(10, WORLD_BOUNDS.height / 2, 20, WORLD_BOUNDS.height, '#2c3e50');
+            createObstacle(WORLD_BOUNDS.width - 10, WORLD_BOUNDS.height / 2, 20, WORLD_BOUNDS.height, '#2c3e50');
+
+            // Coral Reef (top-right quadrant)
+            for (let i = 0; i < 15; i++) {
+                const x = WORLD_BOUNDS.width * 0.6 + Math.random() * (WORLD_BOUNDS.width * 0.35);
+                const y = 100 + Math.random() * (WORLD_BOUNDS.height * 0.4);
+                const width = 30 + Math.random() * 50;
+                const height = 30 + Math.random() * 50;
+                createObstacle(x, y, width, height, '#f39c12', true);
+            }
+
+            // Cheese Grater Wall (bottom section)
+            const graterY = WORLD_BOUNDS.height * 0.75;
+            const graterGap = 25;
+            const graterBarWidth = 15;
+
+            for (let x = 100; x < WORLD_BOUNDS.width - 100; x += graterBarWidth + graterGap) {
+                createObstacle(x, graterY, graterBarWidth, 200, '#e74c3c', true);
+            }
+
+            // Central pillars
+            createObstacle(600, 400, 80, 80, '#34495e');
+            createObstacle(1200, 600, 100, 100, '#34495e');
+            createObstacle(1800, 300, 90, 90, '#34495e');
+            createObstacle(2200, 800, 70, 120, '#34495e');
+        }
+
+        // ===== MOVEMENT =====
+        function applyPlayerMovement() {
+            if (!inputState.active || !playerCore || !playerCore.alive) return;
+
+            const dx = inputState.mouse.x - playerCore.body.position.x;
+            const dy = inputState.mouse.y - playerCore.body.position.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance < 30) return;
+
+            const dirX = dx / distance;
+            const dirY = dy / distance;
+
+            const speed = playerCore.getSpeed();
+            const forceMagnitude = speed * playerCore.getTotalMass();
+
+            Body.applyForce(playerCore.body, playerCore.body.position, {
+                x: dirX * forceMagnitude,
+                y: dirY * forceMagnitude
+            });
+
+            const dampingFactor = 0.95;
+            Body.setVelocity(playerCore.body, {
+                x: playerCore.body.velocity.x * dampingFactor,
+                y: playerCore.body.velocity.y * dampingFactor
+            });
+        }
+
+        // ===== CAMERA =====
+        function updateCamera() {
+            if (!playerCore) return;
+
+            const targetX = playerCore.body.position.x - canvas.width / 2;
+            const targetY = playerCore.body.position.y - canvas.height / 2;
+
+            VIEWPORT.camera.x += (targetX - VIEWPORT.camera.x) * 0.1;
+            VIEWPORT.camera.y += (targetY - VIEWPORT.camera.y) * 0.1;
+
+            VIEWPORT.camera.x = Math.max(0, Math.min(VIEWPORT.camera.x, WORLD_BOUNDS.width - canvas.width));
+            VIEWPORT.camera.y = Math.max(0, Math.min(VIEWPORT.camera.y, WORLD_BOUNDS.height - canvas.height));
+        }
+
+        // ===== SPAWNING =====
+        function spawnStrayBubbles() {
+            const spawnRate = 0.015 * gameState.difficulty;
+
+            if (Math.random() < spawnRate && strayBubbles.length < 50) {
+                const margin = 200;
+                const x = VIEWPORT.camera.x + (Math.random() * (canvas.width + margin * 2)) - margin;
+                const y = VIEWPORT.camera.y + (Math.random() * (canvas.height + margin * 2)) - margin;
+
+                if (x > 50 && x < WORLD_BOUNDS.width - 50 && y > 50 && y < WORLD_BOUNDS.height - 50) {
+                    strayBubbles.push(new StrayBubble(x, y));
+                }
+            }
+        }
+
+        // ===== RENDERING =====
+        function renderBackground() {
+            const gradient = ctx.createRadialGradient(
+                canvas.width / 2, canvas.height / 2, 0,
+                canvas.width / 2, canvas.height / 2, canvas.width
+            );
+            gradient.addColorStop(0, '#1a2a3a');
+            gradient.addColorStop(1, '#0a1520');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Grid
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+            ctx.lineWidth = 1;
+            const gridSize = 50;
+
+            for (let x = -VIEWPORT.camera.x % gridSize; x < canvas.width; x += gridSize) {
+                ctx.beginPath();
+                ctx.moveTo(x, 0);
+                ctx.lineTo(x, canvas.height);
+                ctx.stroke();
+            }
+
+            for (let y = -VIEWPORT.camera.y % gridSize; y < canvas.height; y += gridSize) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(canvas.width, y);
+                ctx.stroke();
+            }
+        }
+
+        function renderBubble(bubble, isCore = false) {
+            const pos = bubble.body.position;
+            const radius = bubble.originalRadius;
+            const deform = bubble.deformation;
+            const color = bubble.color;
+
+            ctx.save();
+            ctx.translate(pos.x - VIEWPORT.camera.x, pos.y - VIEWPORT.camera.y);
+            ctx.rotate(bubble.body.angle);
+            ctx.scale(deform.x, deform.y);
+
+            // Main bubble gradient
+            const gradient = ctx.createRadialGradient(
+                -radius * 0.3, -radius * 0.3, 0,
+                0, 0, radius
+            );
+            gradient.addColorStop(0, 'rgba(255, 255, 255, 0.8)');
+            gradient.addColorStop(0.3, color);
+            gradient.addColorStop(1, 'rgba(0, 0, 0, 0.2)');
+
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.arc(0, 0, radius, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Rim lighting
+            ctx.strokeStyle = isCore ? 'rgba(255, 255, 255, 0.9)' : 'rgba(255, 255, 255, 0.6)';
+            ctx.lineWidth = isCore ? 3 : 2;
+            ctx.beginPath();
+            ctx.arc(0, 0, radius - 1, 0, Math.PI * 2);
+            ctx.stroke();
+
+            // Iridescence
+            const shimmerOffset = (Date.now() / 2000) % 1;
+            const shimmerGradient = ctx.createLinearGradient(-radius, -radius, radius, radius);
+            shimmerGradient.addColorStop(shimmerOffset, 'rgba(255, 0, 200, 0.15)');
+            shimmerGradient.addColorStop((shimmerOffset + 0.3) % 1, 'rgba(0, 255, 200, 0.15)');
+            shimmerGradient.addColorStop((shimmerOffset + 0.6) % 1, 'rgba(200, 0, 255, 0.15)');
+
+            ctx.fillStyle = shimmerGradient;
+            ctx.beginPath();
+            ctx.arc(0, 0, radius, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.restore();
+        }
+
+        function renderObstacles() {
+            obstacles.forEach(obstacle => {
+                const vertices = obstacle.vertices;
+
+                ctx.fillStyle = obstacle.render.fillStyle;
+                ctx.beginPath();
+                ctx.moveTo(vertices[0].x - VIEWPORT.camera.x, vertices[0].y - VIEWPORT.camera.y);
+                for (let i = 1; i < vertices.length; i++) {
+                    ctx.lineTo(vertices[i].x - VIEWPORT.camera.x, vertices[i].y - VIEWPORT.camera.y);
+                }
+                ctx.closePath();
+                ctx.fill();
+
+                if (obstacle.scrapes) {
+                    ctx.strokeStyle = 'rgba(255, 0, 0, 0.5)';
+                    ctx.lineWidth = 3;
+                    ctx.stroke();
+                }
+            });
+        }
+
+        function renderGame() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            renderBackground();
+            renderObstacles();
+
+            strayBubbles.forEach(bubble => {
+                bubble.updateDeformation();
+                renderBubble(bubble);
+            });
+
+            if (playerCore) {
+                playerCore.armorBubbles.forEach(bubble => {
+                    bubble.updateDeformation();
+                    renderBubble(bubble);
+                });
+
+                playerCore.updateDeformation();
+                renderBubble(playerCore, true);
+            }
+        }
+
+        // ===== GAME LOOP =====
+        function gameLoop(timestamp) {
+            if (!lastTime) lastTime = timestamp;
+            const delta = (timestamp - lastTime) / 1000;
+            lastTime = timestamp;
+
+            if (gameState.running && !gameState.paused) {
+                Engine.update(engine, delta * 1000);
+
+                strayBubbles.forEach(bubble => bubble.updateFloat());
+                applyPlayerMovement();
+                updateCamera();
+                spawnStrayBubbles();
+
+                gameState.time = Date.now() - gameState.startTime;
+                gameState.difficulty = 1 + Math.floor(gameState.time / 30000);
+                gameState.score = gameState.bubblesCollected * 10 + Math.floor(gameState.time / 1000);
+
+                updateHUD();
+            }
+
+            renderGame();
+            requestAnimationFrame(gameLoop);
+        }
+
+        // ===== UI UPDATES =====
+        function updateHUD() {
+            document.getElementById('bubbleCount').textContent = playerCore.armorBubbles.length;
+            document.getElementById('scoreDisplay').textContent = gameState.score;
+
+            const minutes = Math.floor(gameState.time / 60000);
+            const seconds = Math.floor((gameState.time % 60000) / 1000);
+            document.getElementById('timeDisplay').textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+
+            document.getElementById('speedDisplay').textContent = `${playerCore.getSpeedPercent()}%`;
+        }
+
+        // ===== AUDIO =====
+        const sounds = {
+            collect: new Audio('../sounds/coin.mp3'),
+            scrape: new Audio('../sounds/hit.mp3'),
+            death: new Audio('../sounds/death.mp3'),
+            ambient: new Audio('../music/theme.mp3')
+        };
+
+        sounds.ambient.loop = true;
+        sounds.ambient.volume = 0.3;
+
+        function playSound(name) {
+            if (sounds[name]) {
+                sounds[name].currentTime = 0;
+                sounds[name].play().catch(e => console.log('Audio error:', e));
+            }
+        }
+
+        // ===== GAME STATE FUNCTIONS =====
+        function startGame() {
+            document.getElementById('startScreen').style.display = 'none';
+            document.getElementById('hud').style.display = 'block';
+            cursor.style.display = 'block';
+
+            gameState.running = true;
+            gameState.score = 0;
+            gameState.bubblesCollected = 0;
+            gameState.startTime = Date.now();
+            gameState.difficulty = 1;
+
+            playerCore = new PlayerCore(WORLD_BOUNDS.width / 2, WORLD_BOUNDS.height / 2);
+
+            // Initial stray bubbles
+            for (let i = 0; i < 30; i++) {
+                const x = Math.random() * WORLD_BOUNDS.width;
+                const y = Math.random() * WORLD_BOUNDS.height;
+                strayBubbles.push(new StrayBubble(x, y));
+            }
+
+            createMap();
+            scoreManager.startSession();
+            sounds.ambient.play().catch(e => console.log('Music error:', e));
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        function endGame() {
+            gameState.running = false;
+
+            if (gameState.score > gameState.highScore) {
+                gameState.highScore = gameState.score;
+                localStorage.setItem('sudsioHighScore', gameState.highScore);
+            }
+
+            scoreManager.submitGameResult(gameState.score);
+
+            document.getElementById('finalScore').textContent = gameState.score;
+            document.getElementById('highScoreDisplay').textContent = gameState.highScore;
+            document.getElementById('gameOver').style.display = 'flex';
+
+            sounds.ambient.pause();
+            sounds.ambient.currentTime = 0;
+
+            // Countdown
+            let countdown = 5;
+            const countdownInterval = setInterval(() => {
+                countdown--;
+                document.getElementById('countdown').textContent = countdown;
+                if (countdown <= 0) {
+                    clearInterval(countdownInterval);
+                    window.location.href = '/arcade.html';
+                }
+            }, 1000);
+        }
+
+        window.restartGame = function() {
+            location.reload();
+        };
+
+        // ===== INPUT HANDLING =====
+        canvas.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            inputState.mouse.x = e.clientX - rect.left + VIEWPORT.camera.x;
+            inputState.mouse.y = e.clientY - rect.top + VIEWPORT.camera.y;
+            inputState.active = true;
+
+            cursor.style.left = e.clientX + 'px';
+            cursor.style.top = e.clientY + 'px';
+        });
+
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const rect = canvas.getBoundingClientRect();
+            inputState.mouse.x = touch.clientX - rect.left + VIEWPORT.camera.x;
+            inputState.mouse.y = touch.clientY - rect.top + VIEWPORT.camera.y;
+            inputState.active = true;
+        }, { passive: false });
+
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const rect = canvas.getBoundingClientRect();
+            inputState.mouse.x = touch.clientX - rect.left + VIEWPORT.camera.x;
+            inputState.mouse.y = touch.clientY - rect.top + VIEWPORT.camera.y;
+        }, { passive: false });
+
+        canvas.addEventListener('touchend', () => {
+            inputState.active = false;
+        });
+
+        // Window resize
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            VIEWPORT.width = canvas.width;
+            VIEWPORT.height = canvas.height;
+        });
+
+        // Start button
+        document.getElementById('startButton').addEventListener('click', startGame);
+
+        // Initial render
+        renderGame();
+    </script>
+</body>
+</html>
