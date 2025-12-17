@@ -429,49 +429,49 @@
         const BUBBLE_CONFIG = {
             CORE: {
                 radius: 15,
-                mass: 1.0,
+                mass: 1.5,           // Heavier for stability
                 density: 0.02,
-                restitution: 0.7,
-                friction: 0.01,
-                frictionAir: 0.001,  // Much lower for better movement
+                restitution: 0.3,    // Much less bouncy
+                friction: 0.1,       // More friction for control
+                frictionAir: 0.05,   // High air resistance to kill momentum
                 color: '#FF00FF'
             },
             ARMOR: {
                 radius: 12,
-                mass: 0.15,          // Much lighter
+                mass: 0.1,
                 density: 0.01,
-                restitution: 0.8,
-                friction: 0.01,
-                frictionAir: 0.0005, // Very low
+                restitution: 0.3,    // Less bouncy
+                friction: 0.1,
+                frictionAir: 0.03,   // More air resistance
                 color: 'rgba(255, 255, 255, 0.4)'
             },
             STRAY: {
                 radius: 12,
-                mass: 0.15,
+                mass: 0.1,
                 density: 0.01,
-                restitution: 0.8,
-                friction: 0.01,
-                frictionAir: 0.0005,
+                restitution: 0.3,
+                friction: 0.1,
+                frictionAir: 0.03,
                 color: 'rgba(200, 230, 255, 0.5)'
             }
         };
 
         const CONSTRAINT_CONFIG = {
             CORE: {
-                stiffness: 0.2,      // Very stiff connection to core - no oscillation
-                damping: 0.9,        // Heavy damping
+                stiffness: 0.5,      // Very stiff - locked in place
+                damping: 0.95,       // Almost completely damped
                 length: 0
             },
             ARMOR: {
-                stiffness: 0.08,     // Softer connection between armor bubbles
-                damping: 0.7,        // Good damping
+                stiffness: 0.3,      // Stiffer armor connections
+                damping: 0.9,        // Heavy damping
                 length: 0
             }
         };
 
-        const SCRAPE_THRESHOLD = 8.0; // Much higher - bubbles need to compress 50% before popping
-        const BASE_FORCE = 0.01; // Much stronger force for responsive movement
-        const COMPRESSION_POP_THRESHOLD = 0.5; // Pop when compressed to 50% thickness
+        const SCRAPE_THRESHOLD = 8.0;
+        const BASE_FORCE = 0.003; // Much slower, more controlled movement
+        const COMPRESSION_POP_THRESHOLD = 0.5;
 
         // ===== GAME STATE =====
         const gameState = {
@@ -850,13 +850,37 @@
 
         // ===== MOVEMENT =====
         function applyPlayerMovement() {
-            if (!inputState.active || !playerCore || !playerCore.alive) return;
+            if (!playerCore || !playerCore.alive) return;
+
+            if (!inputState.active) {
+                // When not moving, aggressively stop all velocity
+                Body.setVelocity(playerCore.body, {
+                    x: playerCore.body.velocity.x * 0.8,
+                    y: playerCore.body.velocity.y * 0.8
+                });
+
+                // Also dampen armor bubbles
+                playerCore.armorBubbles.forEach(armor => {
+                    Body.setVelocity(armor.body, {
+                        x: armor.body.velocity.x * 0.8,
+                        y: armor.body.velocity.y * 0.8
+                    });
+                });
+                return;
+            }
 
             const dx = inputState.mouse.x - playerCore.body.position.x;
             const dy = inputState.mouse.y - playerCore.body.position.y;
             const distance = Math.sqrt(dx * dx + dy * dy);
 
-            if (distance < 30) return;
+            if (distance < 30) {
+                // Very close to target - stop completely
+                Body.setVelocity(playerCore.body, {
+                    x: playerCore.body.velocity.x * 0.7,
+                    y: playerCore.body.velocity.y * 0.7
+                });
+                return;
+            }
 
             const dirX = dx / distance;
             const dirY = dy / distance;
@@ -867,12 +891,6 @@
             Body.applyForce(playerCore.body, playerCore.body.position, {
                 x: dirX * forceMagnitude,
                 y: dirY * forceMagnitude
-            });
-
-            const dampingFactor = 0.95;
-            Body.setVelocity(playerCore.body, {
-                x: playerCore.body.velocity.x * dampingFactor,
-                y: playerCore.body.velocity.y * dampingFactor
             });
         }
 
