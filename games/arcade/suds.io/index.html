@@ -470,7 +470,7 @@
         };
 
         const SCRAPE_THRESHOLD = 8.0;
-        const BASE_FORCE = 0.003; // Much slower, more controlled movement
+        const BASE_FORCE = 0.006; // Increased for better responsiveness
         const COMPRESSION_POP_THRESHOLD = 0.5;
 
         // ===== GAME STATE =====
@@ -576,12 +576,14 @@
             }
 
             getTotalMass() {
-                return this.body.mass + (this.armorBubbles.length * BUBBLE_CONFIG.ARMOR.mass * 0.5);
+                // Armor adds very little mass - only 10% of its actual mass
+                return this.body.mass + (this.armorBubbles.length * BUBBLE_CONFIG.ARMOR.mass * 0.1);
             }
 
             getSpeed() {
                 const totalMass = this.getTotalMass();
-                return BASE_FORCE / totalMass;
+                // Use square root scaling so speed decreases slower as you grow
+                return BASE_FORCE / Math.sqrt(totalMass);
             }
 
             getSpeedPercent() {
