@@ -1,0 +1,1345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Squelda - Epic Adventure</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #1a1a1a;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Courier New', monospace;
+            color: white;
+        }
+
+        #gameContainer {
+            position: relative;
+            background: #000;
+            box-shadow: 0 0 30px rgba(0, 255, 0, 0.3);
+        }
+
+        canvas {
+            display: block;
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+        }
+
+        #ui {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 10px;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent);
+            pointer-events: none;
+        }
+
+        #hearts {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 10px;
+        }
+
+        .heart {
+            width: 20px;
+            height: 20px;
+            color: #ff0000;
+            font-size: 20px;
+        }
+
+        #inventory {
+            display: flex;
+            gap: 10px;
+            font-size: 14px;
+        }
+
+        .item {
+            background: rgba(50, 50, 50, 0.8);
+            padding: 5px 10px;
+            border-radius: 3px;
+            border: 1px solid #666;
+        }
+
+        #locationText {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 32px;
+            color: white;
+            text-shadow: 3px 3px 0 black;
+            opacity: 0;
+            transition: opacity 0.5s;
+            pointer-events: none;
+        }
+
+        #locationText.show {
+            opacity: 1;
+        }
+
+        #gameOver {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+        }
+
+        #gameOver.show {
+            display: flex;
+        }
+
+        #gameOver h1 {
+            font-size: 48px;
+            color: #ff0000;
+        }
+
+        #gameOver button {
+            font-size: 24px;
+            padding: 10px 30px;
+            background: #444;
+            color: white;
+            border: 2px solid #888;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+        }
+
+        #gameOver button:hover {
+            background: #666;
+        }
+
+        #instructions {
+            position: absolute;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 12px;
+            color: #888;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+        <div id="ui">
+            <div id="hearts"></div>
+            <div id="inventory">
+                <div class="item">Keys: <span id="keyCount">0</span></div>
+                <div class="item">Rupees: <span id="rupeeCount">0</span></div>
+            </div>
+        </div>
+        <div id="locationText"></div>
+        <div id="gameOver">
+            <h1>GAME OVER</h1>
+            <button onclick="location.reload()">Try Again</button>
+        </div>
+        <div id="instructions">
+            Arrow Keys: Move | Space: Attack | P: Pause<br>
+            Explore dungeons, defeat bosses, collect treasures!
+        </div>
+    </div>
+
+    <script>
+        // ====== GAME CONFIGURATION ======
+        const TILE_SIZE = 16;
+        const CANVAS_WIDTH = 800;
+        const CANVAS_HEIGHT = 600;
+        const WORLD_WIDTH = 100;
+        const WORLD_HEIGHT = 100;
+
+        // ====== TILE TYPES ======
+        const TILES = {
+            GRASS: 0,
+            WATER: 1,
+            MOUNTAIN: 2,
+            SWAMP: 3,
+            SAND: 4,
+            STONE_FLOOR: 5,
+            WALL: 6,
+            DOOR: 7,
+            LOCKED_DOOR: 8,
+            STAIRS_DOWN: 9,
+            STAIRS_UP: 10,
+            TREE: 11,
+            BRIDGE: 12,
+            CASTLE_FLOOR: 13,
+            LAVA: 14
+        };
+
+        // ====== TILE RENDERING ======
+        const TILE_COLORS = {
+            [TILES.GRASS]: '#2d5016',
+            [TILES.WATER]: '#1e90ff',
+            [TILES.MOUNTAIN]: '#696969',
+            [TILES.SWAMP]: '#3d4e2b',
+            [TILES.SAND]: '#daa520',
+            [TILES.STONE_FLOOR]: '#4a4a4a',
+            [TILES.WALL]: '#2c2c2c',
+            [TILES.DOOR]: '#8b4513',
+            [TILES.LOCKED_DOOR]: '#cd7f32',
+            [TILES.STAIRS_DOWN]: '#666666',
+            [TILES.STAIRS_UP]: '#888888',
+            [TILES.TREE]: '#1a3300',
+            [TILES.BRIDGE]: '#8b7355',
+            [TILES.CASTLE_FLOOR]: '#5a5a5a',
+            [TILES.LAVA]: '#ff4500'
+        };
+
+        // ====== GAME STATE ======
+        const game = {
+            canvas: document.getElementById('gameCanvas'),
+            ctx: null,
+            running: true,
+            paused: false,
+            camera: { x: 0, y: 0 },
+            currentMap: 'overworld',
+            prevMap: null,
+            player: null,
+            enemies: [],
+            items: [],
+            particles: [],
+            keys: {},
+            maps: {},
+            audio: {
+                currentMusic: null,
+                musicZone: 'overworld'
+            }
+        };
+
+        game.ctx = game.canvas.getContext('2d');
+
+        // ====== AUDIO SYSTEM ======
+        class AudioManager {
+            constructor() {
+                this.sounds = {};
+                this.music = {};
+                this.currentMusic = null;
+                this.musicVolume = 0.3;
+                this.sfxVolume = 0.5;
+                this.enabled = true;
+            }
+
+            // Placeholder for sound effects - you can add your own audio files here
+            playSound(soundName) {
+                if (!this.enabled) return;
+
+                // Simple beep generation for now
+                const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+
+                oscillator.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+
+                const sounds = {
+                    'sword': { freq: 300, duration: 0.1 },
+                    'hit': { freq: 150, duration: 0.15 },
+                    'pickup': { freq: 600, duration: 0.1 },
+                    'step_grass': { freq: 100, duration: 0.05 },
+                    'step_stone': { freq: 200, duration: 0.05 },
+                    'step_water': { freq: 120, duration: 0.08 },
+                    'door': { freq: 250, duration: 0.2 },
+                    'enemyHit': { freq: 180, duration: 0.12 },
+                    'die': { freq: 100, duration: 0.5 }
+                };
+
+                const sound = sounds[soundName] || { freq: 440, duration: 0.1 };
+
+                oscillator.frequency.value = sound.freq;
+                oscillator.type = 'square';
+                gainNode.gain.value = this.sfxVolume * 0.3;
+
+                oscillator.start();
+                oscillator.stop(audioCtx.currentTime + sound.duration);
+            }
+
+            playMusic(zoneName) {
+                if (this.musicZone === zoneName) return;
+                this.musicZone = zoneName;
+
+                // Placeholder for music - you would load your audio files here
+                // Example of how to add your own music files:
+                // if (this.music[zoneName]) {
+                //     if (this.currentMusic) this.currentMusic.pause();
+                //     this.currentMusic = this.music[zoneName];
+                //     this.currentMusic.loop = true;
+                //     this.currentMusic.volume = this.musicVolume;
+                //     this.currentMusic.play();
+                // }
+                console.log(`Playing music for zone: ${zoneName}`);
+            }
+
+            checkBossMusic() {
+                // Check if there's a boss nearby
+                const player = game.player;
+                const boss = game.enemies.find(e => e.type === 'boss');
+
+                if (boss && !boss.defeated) {
+                    const dist = Math.hypot(player.x - boss.x, player.y - boss.y);
+
+                    // If boss is within range, play boss music
+                    if (dist < 300) {
+                        this.playMusic('boss');
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+
+            playFootstep(tileType) {
+                const footstepSounds = {
+                    [TILES.GRASS]: 'step_grass',
+                    [TILES.SAND]: 'step_grass',
+                    [TILES.STONE_FLOOR]: 'step_stone',
+                    [TILES.CASTLE_FLOOR]: 'step_stone',
+                    [TILES.BRIDGE]: 'step_stone',
+                    [TILES.WATER]: 'step_water'
+                };
+
+                const sound = footstepSounds[tileType] || 'step_grass';
+                if (Math.random() < 0.3) { // Only play 30% of the time to avoid spam
+                    this.playSound(sound);
+                }
+            }
+        }
+
+        const audio = new AudioManager();
+
+        // ====== ENTITY BASE CLASS ======
+        class Entity {
+            constructor(x, y, width, height) {
+                this.x = x;
+                this.y = y;
+                this.width = width;
+                this.height = height;
+                this.vx = 0;
+                this.vy = 0;
+                this.health = 1;
+                this.maxHealth = 1;
+                this.direction = 'down';
+                this.invulnerable = false;
+                this.invulnerableTimer = 0;
+            }
+
+            update(dt) {
+                if (this.invulnerable) {
+                    this.invulnerableTimer -= dt;
+                    if (this.invulnerableTimer <= 0) {
+                        this.invulnerable = false;
+                    }
+                }
+            }
+
+            getBounds() {
+                return {
+                    x: this.x,
+                    y: this.y,
+                    width: this.width,
+                    height: this.height
+                };
+            }
+
+            takeDamage(amount) {
+                if (this.invulnerable) return false;
+
+                this.health -= amount;
+                this.invulnerable = true;
+                this.invulnerableTimer = 0.5;
+
+                return true;
+            }
+        }
+
+        // ====== PLAYER CLASS ======
+        class Player extends Entity {
+            constructor(x, y) {
+                super(x, y, 14, 14);
+                this.health = 6;
+                this.maxHealth = 6;
+                this.speed = 100;
+                this.attackCooldown = 0;
+                this.attackRange = 20;
+                this.attacking = false;
+                this.attackTimer = 0;
+                this.inventory = {
+                    keys: 0,
+                    rupees: 0,
+                    sword: true
+                };
+                this.stepTimer = 0;
+            }
+
+            update(dt) {
+                super.update(dt);
+
+                // Movement
+                let dx = 0;
+                let dy = 0;
+
+                if (game.keys['ArrowUp'] || game.keys['w']) {
+                    dy = -1;
+                    this.direction = 'up';
+                }
+                if (game.keys['ArrowDown'] || game.keys['s']) {
+                    dy = 1;
+                    this.direction = 'down';
+                }
+                if (game.keys['ArrowLeft'] || game.keys['a']) {
+                    dx = -1;
+                    this.direction = 'left';
+                }
+                if (game.keys['ArrowRight'] || game.keys['d']) {
+                    dx = 1;
+                    this.direction = 'right';
+                }
+
+                // Normalize diagonal movement
+                if (dx !== 0 && dy !== 0) {
+                    dx *= 0.707;
+                    dy *= 0.707;
+                }
+
+                // Move and check collision
+                const newX = this.x + dx * this.speed * dt;
+                const newY = this.y + dy * this.speed * dt;
+
+                if (!this.checkCollision(newX, this.y)) {
+                    this.x = newX;
+                    if (dx !== 0 || dy !== 0) {
+                        this.stepTimer += dt;
+                        if (this.stepTimer > 0.3) {
+                            const tile = game.maps[game.currentMap].getTile(
+                                Math.floor(this.x / TILE_SIZE),
+                                Math.floor(this.y / TILE_SIZE)
+                            );
+                            audio.playFootstep(tile);
+                            this.stepTimer = 0;
+                        }
+                    }
+                }
+                if (!this.checkCollision(this.x, newY)) {
+                    this.y = newY;
+                }
+
+                // Check for special tiles
+                this.checkSpecialTiles();
+
+                // Attack
+                if (this.attackCooldown > 0) {
+                    this.attackCooldown -= dt;
+                }
+
+                if (this.attacking) {
+                    this.attackTimer -= dt;
+                    if (this.attackTimer <= 0) {
+                        this.attacking = false;
+                    }
+                }
+
+                if (game.keys[' '] && this.attackCooldown <= 0 && !this.attacking) {
+                    this.attack();
+                }
+
+                // Keep player in bounds
+                const map = game.maps[game.currentMap];
+                this.x = Math.max(0, Math.min(this.x, map.width * TILE_SIZE - this.width));
+                this.y = Math.max(0, Math.min(this.y, map.height * TILE_SIZE - this.height));
+            }
+
+            checkCollision(x, y) {
+                const map = game.maps[game.currentMap];
+                const bounds = {
+                    left: Math.floor(x / TILE_SIZE),
+                    right: Math.floor((x + this.width) / TILE_SIZE),
+                    top: Math.floor(y / TILE_SIZE),
+                    bottom: Math.floor((y + this.height) / TILE_SIZE)
+                };
+
+                for (let ty = bounds.top; ty <= bounds.bottom; ty++) {
+                    for (let tx = bounds.left; tx <= bounds.right; tx++) {
+                        const tile = map.getTile(tx, ty);
+                        if (this.isSolidTile(tile)) {
+                            return true;
+                        }
+                    }
+                }
+
+                return false;
+            }
+
+            isSolidTile(tile) {
+                return tile === TILES.WALL ||
+                       tile === TILES.MOUNTAIN ||
+                       tile === TILES.TREE ||
+                       tile === TILES.WATER ||
+                       tile === TILES.LAVA;
+            }
+
+            checkSpecialTiles() {
+                const map = game.maps[game.currentMap];
+                const centerX = Math.floor((this.x + this.width / 2) / TILE_SIZE);
+                const centerY = Math.floor((this.y + this.height / 2) / TILE_SIZE);
+                const tile = map.getTile(centerX, centerY);
+
+                // Stairs down
+                if (tile === TILES.STAIRS_DOWN) {
+                    const entrance = map.dungeonEntrances.find(e =>
+                        Math.floor(e.x) === centerX && Math.floor(e.y) === centerY
+                    );
+                    if (entrance) {
+                        this.enterDungeon(entrance.target, entrance.spawnX, entrance.spawnY);
+                    }
+                }
+
+                // Stairs up
+                if (tile === TILES.STAIRS_UP) {
+                    const exit = map.exits.find(e =>
+                        Math.floor(e.x) === centerX && Math.floor(e.y) === centerY
+                    );
+                    if (exit) {
+                        this.exitDungeon(exit.target, exit.spawnX, exit.spawnY);
+                    }
+                }
+
+                // Locked door
+                if (tile === TILES.LOCKED_DOOR && this.inventory.keys > 0) {
+                    map.setTile(centerX, centerY, TILES.DOOR);
+                    this.inventory.keys--;
+                    audio.playSound('door');
+                    updateUI();
+                }
+            }
+
+            enterDungeon(dungeonName, spawnX, spawnY) {
+                game.prevMap = game.currentMap;
+                game.currentMap = dungeonName;
+                this.x = spawnX * TILE_SIZE;
+                this.y = spawnY * TILE_SIZE;
+                audio.playMusic('dungeon');
+                showLocationText(dungeonName.toUpperCase());
+
+                // Spawn dungeon enemies if not already spawned
+                if (game.enemies.length === 0) {
+                    spawnDungeonEnemies(dungeonName);
+                }
+            }
+
+            exitDungeon(targetMap, spawnX, spawnY) {
+                game.currentMap = targetMap;
+                this.x = spawnX * TILE_SIZE;
+                this.y = spawnY * TILE_SIZE;
+                audio.playMusic('overworld');
+
+                // Clear dungeon enemies
+                game.enemies = game.enemies.filter(e => !e.isDungeonEnemy);
+            }
+
+            attack() {
+                this.attacking = true;
+                this.attackTimer = 0.2;
+                this.attackCooldown = 0.4;
+                audio.playSound('sword');
+
+                // Check for enemy hits
+                const attackX = this.x + (this.direction === 'right' ? this.width : this.direction === 'left' ? -this.attackRange : 0);
+                const attackY = this.y + (this.direction === 'down' ? this.height : this.direction === 'up' ? -this.attackRange : 0);
+                const attackWidth = (this.direction === 'left' || this.direction === 'right') ? this.attackRange : this.width;
+                const attackHeight = (this.direction === 'up' || this.direction === 'down') ? this.attackRange : this.height;
+
+                game.enemies.forEach(enemy => {
+                    if (this.checkHit(attackX, attackY, attackWidth, attackHeight, enemy)) {
+                        enemy.takeDamage(1);
+                        audio.playSound('enemyHit');
+
+                        // Knockback
+                        const angle = Math.atan2(enemy.y - this.y, enemy.x - this.x);
+                        enemy.knockback = {
+                            vx: Math.cos(angle) * 200,
+                            vy: Math.sin(angle) * 200,
+                            duration: 0.2
+                        };
+                    }
+                });
+            }
+
+            checkHit(x, y, w, h, target) {
+                return x < target.x + target.width &&
+                       x + w > target.x &&
+                       y < target.y + target.height &&
+                       y + h > target.y;
+            }
+
+            draw(ctx) {
+                // Draw shadow
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+                ctx.fillRect(this.x + 2, this.y + this.height - 2, this.width - 4, 4);
+
+                // Flicker when invulnerable
+                if (this.invulnerable && Math.floor(this.invulnerableTimer * 10) % 2 === 0) {
+                    ctx.globalAlpha = 0.5;
+                }
+
+                // Draw player
+                ctx.fillStyle = '#00ff00';
+                ctx.fillRect(this.x, this.y, this.width, this.height);
+
+                // Draw face direction
+                ctx.fillStyle = '#004400';
+                const faceSize = 4;
+                switch(this.direction) {
+                    case 'up':
+                        ctx.fillRect(this.x + this.width/2 - faceSize/2, this.y + 2, faceSize, faceSize);
+                        break;
+                    case 'down':
+                        ctx.fillRect(this.x + this.width/2 - faceSize/2, this.y + this.height - 6, faceSize, faceSize);
+                        break;
+                    case 'left':
+                        ctx.fillRect(this.x + 2, this.y + this.height/2 - faceSize/2, faceSize, faceSize);
+                        break;
+                    case 'right':
+                        ctx.fillRect(this.x + this.width - 6, this.y + this.height/2 - faceSize/2, faceSize, faceSize);
+                        break;
+                }
+
+                // Draw sword when attacking
+                if (this.attacking) {
+                    ctx.fillStyle = '#c0c0c0';
+                    const swordLength = 12;
+                    switch(this.direction) {
+                        case 'up':
+                            ctx.fillRect(this.x + this.width/2 - 2, this.y - swordLength, 4, swordLength);
+                            break;
+                        case 'down':
+                            ctx.fillRect(this.x + this.width/2 - 2, this.y + this.height, 4, swordLength);
+                            break;
+                        case 'left':
+                            ctx.fillRect(this.x - swordLength, this.y + this.height/2 - 2, swordLength, 4);
+                            break;
+                        case 'right':
+                            ctx.fillRect(this.x + this.width, this.y + this.height/2 - 2, swordLength, 4);
+                            break;
+                    }
+                }
+
+                ctx.globalAlpha = 1;
+            }
+        }
+
+        // ====== ENEMY CLASSES ======
+        class Enemy extends Entity {
+            constructor(x, y, type) {
+                super(x, y, 14, 14);
+                this.type = type;
+                this.speed = 40;
+                this.damage = 1;
+                this.aiTimer = 0;
+                this.aiState = 'idle';
+                this.knockback = null;
+                this.isDungeonEnemy = false;
+                this.dropChance = 0.3;
+
+                if (type === 'slime') {
+                    this.health = 2;
+                    this.speed = 30;
+                    this.color = '#00ff00';
+                } else if (type === 'bat') {
+                    this.health = 1;
+                    this.speed = 80;
+                    this.color = '#800080';
+                } else if (type === 'skeleton') {
+                    this.health = 3;
+                    this.speed = 50;
+                    this.color = '#ffffff';
+                } else if (type === 'boss') {
+                    this.health = 20;
+                    this.maxHealth = 20;
+                    this.speed = 60;
+                    this.damage = 2;
+                    this.color = '#ff0000';
+                    this.width = 32;
+                    this.height = 32;
+                }
+            }
+
+            update(dt) {
+                super.update(dt);
+
+                if (this.health <= 0) {
+                    this.die();
+                    return;
+                }
+
+                // Handle knockback
+                if (this.knockback) {
+                    this.x += this.knockback.vx * dt;
+                    this.y += this.knockback.vy * dt;
+                    this.knockback.duration -= dt;
+                    if (this.knockback.duration <= 0) {
+                        this.knockback = null;
+                    }
+                    return;
+                }
+
+                // AI
+                this.aiTimer += dt;
+
+                const player = game.player;
+                const dist = Math.hypot(player.x - this.x, player.y - this.y);
+
+                // Chase player if close enough
+                if (dist < 150) {
+                    const angle = Math.atan2(player.y - this.y, player.x - this.x);
+                    this.vx = Math.cos(angle) * this.speed;
+                    this.vy = Math.sin(angle) * this.speed;
+                } else if (this.aiTimer > 2) {
+                    // Random movement
+                    this.vx = (Math.random() - 0.5) * this.speed;
+                    this.vy = (Math.random() - 0.5) * this.speed;
+                    this.aiTimer = 0;
+                }
+
+                // Move
+                const newX = this.x + this.vx * dt;
+                const newY = this.y + this.vy * dt;
+
+                if (!this.checkCollision(newX, this.y)) {
+                    this.x = newX;
+                } else {
+                    this.vx = 0;
+                }
+
+                if (!this.checkCollision(this.x, newY)) {
+                    this.y = newY;
+                } else {
+                    this.vy = 0;
+                }
+
+                // Attack player
+                if (this.checkCollisionWithPlayer()) {
+                    if (player.takeDamage(this.damage)) {
+                        audio.playSound('hit');
+                        updateUI();
+
+                        if (player.health <= 0) {
+                            gameOver();
+                        }
+                    }
+                }
+            }
+
+            checkCollision(x, y) {
+                const map = game.maps[game.currentMap];
+                const bounds = {
+                    left: Math.floor(x / TILE_SIZE),
+                    right: Math.floor((x + this.width) / TILE_SIZE),
+                    top: Math.floor(y / TILE_SIZE),
+                    bottom: Math.floor((y + this.height) / TILE_SIZE)
+                };
+
+                for (let ty = bounds.top; ty <= bounds.bottom; ty++) {
+                    for (let tx = bounds.left; tx <= bounds.right; tx++) {
+                        const tile = map.getTile(tx, ty);
+                        if (tile === TILES.WALL || tile === TILES.MOUNTAIN || tile === TILES.TREE || tile === TILES.WATER) {
+                            return true;
+                        }
+                    }
+                }
+
+                return false;
+            }
+
+            checkCollisionWithPlayer() {
+                const player = game.player;
+                return this.x < player.x + player.width &&
+                       this.x + this.width > player.x &&
+                       this.y < player.y + player.height &&
+                       this.y + this.height > player.y;
+            }
+
+            die() {
+                const index = game.enemies.indexOf(this);
+                if (index > -1) {
+                    game.enemies.splice(index, 1);
+                }
+
+                // Drop items
+                if (Math.random() < this.dropChance) {
+                    const dropType = Math.random() < 0.7 ? 'rupee' : Math.random() < 0.9 ? 'heart' : 'key';
+                    game.items.push(new Item(this.x, this.y, dropType));
+                }
+
+                // Boss death
+                if (this.type === 'boss') {
+                    this.defeated = true;
+                    showLocationText('BOSS DEFEATED!');
+                    // Return to dungeon music after boss is defeated
+                    audio.playMusic('dungeon');
+                    // Drop a special item
+                    game.items.push(new Item(this.x, this.y, 'key'));
+                    game.items.push(new Item(this.x + 20, this.y, 'key'));
+                }
+            }
+
+            draw(ctx) {
+                // Shadow
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+                ctx.fillRect(this.x + 2, this.y + this.height - 2, this.width - 4, 4);
+
+                // Flicker when invulnerable
+                if (this.invulnerable && Math.floor(this.invulnerableTimer * 10) % 2 === 0) {
+                    ctx.globalAlpha = 0.5;
+                }
+
+                // Body
+                ctx.fillStyle = this.color;
+                ctx.fillRect(this.x, this.y, this.width, this.height);
+
+                // Eyes
+                ctx.fillStyle = '#ff0000';
+                const eyeSize = this.type === 'boss' ? 4 : 2;
+                ctx.fillRect(this.x + this.width * 0.3, this.y + this.height * 0.3, eyeSize, eyeSize);
+                ctx.fillRect(this.x + this.width * 0.6, this.y + this.height * 0.3, eyeSize, eyeSize);
+
+                // Boss health bar
+                if (this.type === 'boss') {
+                    const barWidth = 40;
+                    const barHeight = 4;
+                    ctx.fillStyle = '#000000';
+                    ctx.fillRect(this.x + this.width/2 - barWidth/2, this.y - 10, barWidth, barHeight);
+                    ctx.fillStyle = '#ff0000';
+                    ctx.fillRect(this.x + this.width/2 - barWidth/2, this.y - 10, barWidth * (this.health / this.maxHealth), barHeight);
+                }
+
+                ctx.globalAlpha = 1;
+            }
+        }
+
+        // ====== ITEM CLASS ======
+        class Item {
+            constructor(x, y, type) {
+                this.x = x;
+                this.y = y;
+                this.type = type;
+                this.width = 8;
+                this.height = 8;
+                this.bobTimer = 0;
+
+                this.colors = {
+                    'heart': '#ff0000',
+                    'rupee': '#00ff00',
+                    'key': '#ffd700'
+                };
+            }
+
+            update(dt) {
+                this.bobTimer += dt * 3;
+
+                // Check if player picks up
+                const player = game.player;
+                const dist = Math.hypot(player.x - this.x, player.y - this.y);
+
+                if (dist < 20) {
+                    this.pickup();
+                }
+            }
+
+            pickup() {
+                const player = game.player;
+
+                switch(this.type) {
+                    case 'heart':
+                        player.health = Math.min(player.maxHealth, player.health + 2);
+                        break;
+                    case 'rupee':
+                        player.inventory.rupees += 1;
+                        break;
+                    case 'key':
+                        player.inventory.keys += 1;
+                        break;
+                }
+
+                audio.playSound('pickup');
+                updateUI();
+
+                const index = game.items.indexOf(this);
+                if (index > -1) {
+                    game.items.splice(index, 1);
+                }
+            }
+
+            draw(ctx) {
+                const bob = Math.sin(this.bobTimer) * 2;
+
+                ctx.fillStyle = this.colors[this.type] || '#ffffff';
+
+                if (this.type === 'heart') {
+                    // Draw heart shape
+                    ctx.fillRect(this.x, this.y + bob, 8, 6);
+                    ctx.fillRect(this.x + 2, this.y - 2 + bob, 4, 4);
+                } else if (this.type === 'key') {
+                    // Draw key
+                    ctx.fillRect(this.x, this.y + bob, 4, 8);
+                    ctx.fillRect(this.x, this.y + bob, 8, 4);
+                } else {
+                    // Draw rupee/gem
+                    ctx.fillRect(this.x + 2, this.y + bob, 4, 8);
+                    ctx.fillRect(this.x, this.y + 2 + bob, 8, 4);
+                }
+            }
+        }
+
+        // ====== MAP CLASS ======
+        class GameMap {
+            constructor(width, height, name) {
+                this.width = width;
+                this.height = height;
+                this.name = name;
+                this.tiles = new Array(width * height).fill(TILES.GRASS);
+                this.dungeonEntrances = [];
+                this.exits = [];
+            }
+
+            getTile(x, y) {
+                if (x < 0 || x >= this.width || y < 0 || y >= this.height) {
+                    return TILES.WALL;
+                }
+                return this.tiles[y * this.width + x];
+            }
+
+            setTile(x, y, tile) {
+                if (x < 0 || x >= this.width || y < 0 || y >= this.height) {
+                    return;
+                }
+                this.tiles[y * this.width + x] = tile;
+            }
+
+            fillRect(x, y, w, h, tile) {
+                for (let ty = y; ty < y + h; ty++) {
+                    for (let tx = x; tx < x + w; tx++) {
+                        this.setTile(tx, ty, tile);
+                    }
+                }
+            }
+
+            drawTile(ctx, tile, x, y) {
+                ctx.fillStyle = TILE_COLORS[tile] || '#000000';
+                ctx.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+
+                // Add detail to some tiles
+                if (tile === TILES.GRASS && (x + y) % 5 === 0) {
+                    ctx.fillStyle = '#234010';
+                    ctx.fillRect(x * TILE_SIZE + 2, y * TILE_SIZE + 2, 2, 2);
+                } else if (tile === TILES.WATER) {
+                    ctx.fillStyle = '#1c7acc';
+                    ctx.fillRect(x * TILE_SIZE + 4, y * TILE_SIZE + 4, 4, 4);
+                } else if (tile === TILES.MOUNTAIN) {
+                    ctx.fillStyle = '#505050';
+                    ctx.fillRect(x * TILE_SIZE + 4, y * TILE_SIZE + 2, 6, 6);
+                } else if (tile === TILES.SWAMP) {
+                    ctx.fillStyle = '#2a3520';
+                    ctx.fillRect(x * TILE_SIZE + 3, y * TILE_SIZE + 3, 3, 3);
+                } else if (tile === TILES.TREE) {
+                    ctx.fillStyle = '#0d1f00';
+                    ctx.fillRect(x * TILE_SIZE + 4, y * TILE_SIZE, 6, 12);
+                } else if (tile === TILES.STAIRS_DOWN) {
+                    ctx.fillStyle = '#333333';
+                    for (let i = 0; i < 4; i++) {
+                        ctx.fillRect(x * TILE_SIZE + 2, y * TILE_SIZE + i * 3, 12, 2);
+                    }
+                } else if (tile === TILES.STAIRS_UP) {
+                    ctx.fillStyle = '#999999';
+                    for (let i = 0; i < 4; i++) {
+                        ctx.fillRect(x * TILE_SIZE + 2, y * TILE_SIZE + i * 3, 12, 2);
+                    }
+                } else if (tile === TILES.LOCKED_DOOR) {
+                    ctx.fillStyle = '#ffff00';
+                    ctx.fillRect(x * TILE_SIZE + 6, y * TILE_SIZE + 6, 4, 4);
+                }
+            }
+        }
+
+        // ====== MAP GENERATION ======
+        function generateOverworld() {
+            const map = new GameMap(WORLD_WIDTH, WORLD_HEIGHT, 'Overworld');
+
+            // Fill with grass
+            map.fillRect(0, 0, WORLD_WIDTH, WORLD_HEIGHT, TILES.GRASS);
+
+            // Create varied terrain zones
+
+            // River running through the middle
+            for (let x = 0; x < WORLD_WIDTH; x++) {
+                const y = 40 + Math.floor(Math.sin(x * 0.2) * 8);
+                map.fillRect(x, y - 2, 1, 5, TILES.WATER);
+            }
+
+            // Bridges over river
+            map.fillRect(20, 38, 3, 8, TILES.BRIDGE);
+            map.fillRect(50, 38, 3, 8, TILES.BRIDGE);
+            map.fillRect(80, 38, 3, 8, TILES.BRIDGE);
+
+            // Mountain range in north
+            for (let x = 10; x < 90; x++) {
+                for (let y = 5; y < 15; y++) {
+                    if (Math.random() < 0.7) {
+                        map.setTile(x, y, TILES.MOUNTAIN);
+                    }
+                }
+            }
+
+            // Forest area (northwest)
+            for (let x = 5; x < 30; x++) {
+                for (let y = 20; y < 35; y++) {
+                    if (Math.random() < 0.4) {
+                        map.setTile(x, y, TILES.TREE);
+                    }
+                }
+            }
+
+            // Swamp area (southeast)
+            for (let x = 60; x < 85; x++) {
+                for (let y = 55; y < 75; y++) {
+                    if (Math.random() < 0.6) {
+                        map.setTile(x, y, TILES.SWAMP);
+                    }
+                }
+            }
+
+            // Desert area (southwest)
+            for (let x = 10; x < 40; x++) {
+                for (let y = 60; y < 85; y++) {
+                    map.setTile(x, y, TILES.SAND);
+                }
+            }
+
+            // Add dungeon entrances
+
+            // Small dungeon 1 (in forest)
+            map.setTile(15, 25, TILES.STAIRS_DOWN);
+            map.dungeonEntrances.push({ x: 15, y: 25, target: 'dungeon1', spawnX: 5, spawnY: 18 });
+
+            // Medium dungeon 2 (in mountains)
+            map.setTile(45, 10, TILES.STAIRS_DOWN);
+            map.dungeonEntrances.push({ x: 45, y: 10, target: 'dungeon2', spawnX: 25, spawnY: 28 });
+
+            // Large castle (in center-east)
+            map.fillRect(70, 25, 8, 8, TILES.CASTLE_FLOOR);
+            map.setTile(73, 29, TILES.STAIRS_DOWN);
+            map.dungeonEntrances.push({ x: 73, y: 29, target: 'castle', spawnX: 15, spawnY: 38 });
+
+            // Border walls
+            for (let x = 0; x < WORLD_WIDTH; x++) {
+                map.setTile(x, 0, TILES.MOUNTAIN);
+                map.setTile(x, WORLD_HEIGHT - 1, TILES.MOUNTAIN);
+            }
+            for (let y = 0; y < WORLD_HEIGHT; y++) {
+                map.setTile(0, y, TILES.MOUNTAIN);
+                map.setTile(WORLD_WIDTH - 1, y, TILES.MOUNTAIN);
+            }
+
+            return map;
+        }
+
+        function generateDungeon(width, height, name, exitX, exitY) {
+            const map = new GameMap(width, height, name);
+
+            // Fill with walls
+            map.fillRect(0, 0, width, height, TILES.WALL);
+
+            // Create rooms
+            const rooms = [];
+            const numRooms = Math.floor(width * height / 80);
+
+            for (let i = 0; i < numRooms; i++) {
+                const roomW = 5 + Math.floor(Math.random() * 8);
+                const roomH = 5 + Math.floor(Math.random() * 8);
+                const roomX = 2 + Math.floor(Math.random() * (width - roomW - 4));
+                const roomY = 2 + Math.floor(Math.random() * (height - roomH - 4));
+
+                rooms.push({ x: roomX, y: roomY, w: roomW, h: roomH });
+                map.fillRect(roomX, roomY, roomW, roomH, TILES.STONE_FLOOR);
+            }
+
+            // Connect rooms with corridors
+            for (let i = 0; i < rooms.length - 1; i++) {
+                const room1 = rooms[i];
+                const room2 = rooms[i + 1];
+
+                const x1 = room1.x + Math.floor(room1.w / 2);
+                const y1 = room1.y + Math.floor(room1.h / 2);
+                const x2 = room2.x + Math.floor(room2.w / 2);
+                const y2 = room2.y + Math.floor(room2.h / 2);
+
+                // Horizontal corridor
+                for (let x = Math.min(x1, x2); x <= Math.max(x1, x2); x++) {
+                    map.setTile(x, y1, TILES.STONE_FLOOR);
+                }
+
+                // Vertical corridor
+                for (let y = Math.min(y1, y2); y <= Math.max(y1, y2); y++) {
+                    map.setTile(x2, y, TILES.STONE_FLOOR);
+                }
+            }
+
+            // Add some locked doors
+            for (let i = 0; i < 3; i++) {
+                const room = rooms[Math.floor(Math.random() * rooms.length)];
+                const doorX = room.x + Math.floor(Math.random() * room.w);
+                const doorY = room.y + (Math.random() < 0.5 ? 0 : room.h - 1);
+                if (map.getTile(doorX, doorY) === TILES.STONE_FLOOR) {
+                    map.setTile(doorX, doorY, TILES.LOCKED_DOOR);
+                }
+            }
+
+            // Exit stairs in first room
+            const firstRoom = rooms[0];
+            const exitTileX = firstRoom.x + Math.floor(firstRoom.w / 2);
+            const exitTileY = firstRoom.y + Math.floor(firstRoom.h / 2);
+            map.setTile(exitTileX, exitTileY, TILES.STAIRS_UP);
+            map.exits.push({ x: exitTileX, y: exitTileY, target: 'overworld', spawnX: exitX, spawnY: exitY });
+
+            return map;
+        }
+
+        // ====== INITIALIZE MAPS ======
+        function initMaps() {
+            game.maps['overworld'] = generateOverworld();
+            game.maps['dungeon1'] = generateDungeon(30, 30, 'Shadow Cave', 15, 25);
+            game.maps['dungeon2'] = generateDungeon(40, 40, 'Mountain Temple', 45, 10);
+            game.maps['castle'] = generateDungeon(50, 50, 'Dark Castle', 73, 29);
+        }
+
+        // ====== SPAWN ENEMIES ======
+        function spawnOverworldEnemies() {
+            // Spawn random enemies around the map
+            for (let i = 0; i < 15; i++) {
+                const x = (20 + Math.random() * 60) * TILE_SIZE;
+                const y = (20 + Math.random() * 60) * TILE_SIZE;
+                const type = Math.random() < 0.6 ? 'slime' : 'bat';
+                game.enemies.push(new Enemy(x, y, type));
+            }
+        }
+
+        function spawnDungeonEnemies(dungeonName) {
+            const map = game.maps[dungeonName];
+            const numEnemies = dungeonName === 'castle' ? 20 : dungeonName === 'dungeon2' ? 15 : 10;
+
+            for (let i = 0; i < numEnemies; i++) {
+                let x, y;
+                let attempts = 0;
+                do {
+                    x = Math.floor(Math.random() * map.width) * TILE_SIZE;
+                    y = Math.floor(Math.random() * map.height) * TILE_SIZE;
+                    attempts++;
+                } while (map.getTile(Math.floor(x / TILE_SIZE), Math.floor(y / TILE_SIZE)) !== TILES.STONE_FLOOR && attempts < 100);
+
+                if (attempts < 100) {
+                    const type = Math.random() < 0.5 ? 'skeleton' : 'bat';
+                    const enemy = new Enemy(x, y, type);
+                    enemy.isDungeonEnemy = true;
+                    game.enemies.push(enemy);
+                }
+            }
+
+            // Add boss in large dungeons
+            if (dungeonName === 'dungeon2' || dungeonName === 'castle') {
+                // Find a good spot for boss
+                let bossX = map.width / 2 * TILE_SIZE;
+                let bossY = map.height / 2 * TILE_SIZE;
+
+                const boss = new Enemy(bossX, bossY, 'boss');
+                boss.isDungeonEnemy = true;
+                game.enemies.push(boss);
+            }
+        }
+
+        // ====== CAMERA ======
+        function updateCamera() {
+            const player = game.player;
+            const map = game.maps[game.currentMap];
+
+            // Center camera on player
+            game.camera.x = player.x - CANVAS_WIDTH / 2;
+            game.camera.y = player.y - CANVAS_HEIGHT / 2;
+
+            // Keep camera in bounds
+            game.camera.x = Math.max(0, Math.min(game.camera.x, map.width * TILE_SIZE - CANVAS_WIDTH));
+            game.camera.y = Math.max(0, Math.min(game.camera.y, map.height * TILE_SIZE - CANVAS_HEIGHT));
+        }
+
+        // ====== RENDERING ======
+        function render() {
+            const ctx = game.ctx;
+            const map = game.maps[game.currentMap];
+
+            ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+
+            // Calculate visible tiles
+            const startX = Math.floor(game.camera.x / TILE_SIZE);
+            const startY = Math.floor(game.camera.y / TILE_SIZE);
+            const endX = Math.min(startX + Math.ceil(CANVAS_WIDTH / TILE_SIZE) + 1, map.width);
+            const endY = Math.min(startY + Math.ceil(CANVAS_HEIGHT / TILE_SIZE) + 1, map.height);
+
+            ctx.save();
+            ctx.translate(-game.camera.x, -game.camera.y);
+
+            // Draw tiles
+            for (let y = startY; y < endY; y++) {
+                for (let x = startX; x < endX; x++) {
+                    const tile = map.getTile(x, y);
+                    map.drawTile(ctx, tile, x, y);
+                }
+            }
+
+            // Draw items
+            game.items.forEach(item => item.draw(ctx));
+
+            // Draw enemies
+            game.enemies.forEach(enemy => enemy.draw(ctx));
+
+            // Draw player
+            game.player.draw(ctx);
+
+            ctx.restore();
+        }
+
+        // ====== UI ======
+        function updateUI() {
+            const heartsContainer = document.getElementById('hearts');
+            heartsContainer.innerHTML = '';
+
+            const fullHearts = Math.floor(game.player.health / 2);
+            const halfHeart = game.player.health % 2;
+            const emptyHearts = Math.floor(game.player.maxHealth / 2) - fullHearts - halfHeart;
+
+            for (let i = 0; i < fullHearts; i++) {
+                const heart = document.createElement('div');
+                heart.className = 'heart';
+                heart.textContent = '♥';
+                heartsContainer.appendChild(heart);
+            }
+
+            if (halfHeart) {
+                const heart = document.createElement('div');
+                heart.className = 'heart';
+                heart.textContent = '♥';
+                heart.style.opacity = '0.5';
+                heartsContainer.appendChild(heart);
+            }
+
+            for (let i = 0; i < emptyHearts; i++) {
+                const heart = document.createElement('div');
+                heart.className = 'heart';
+                heart.textContent = '♡';
+                heart.style.opacity = '0.3';
+                heartsContainer.appendChild(heart);
+            }
+
+            document.getElementById('keyCount').textContent = game.player.inventory.keys;
+            document.getElementById('rupeeCount').textContent = game.player.inventory.rupees;
+        }
+
+        function showLocationText(text) {
+            const locationText = document.getElementById('locationText');
+            locationText.textContent = text;
+            locationText.classList.add('show');
+
+            setTimeout(() => {
+                locationText.classList.remove('show');
+            }, 2000);
+        }
+
+        function gameOver() {
+            game.running = false;
+            audio.playSound('die');
+            document.getElementById('gameOver').classList.add('show');
+        }
+
+        // ====== GAME LOOP ======
+        let lastTime = 0;
+        function gameLoop(currentTime) {
+            const dt = Math.min((currentTime - lastTime) / 1000, 0.1);
+            lastTime = currentTime;
+
+            if (game.running && !game.paused) {
+                // Update
+                game.player.update(dt);
+                game.enemies.forEach(enemy => enemy.update(dt));
+                game.items.forEach(item => item.update(dt));
+
+                // Check for boss music when in dungeon
+                if (game.currentMap !== 'overworld') {
+                    if (!audio.checkBossMusic()) {
+                        // If no boss nearby and not already playing dungeon music
+                        if (audio.musicZone !== 'dungeon') {
+                            audio.playMusic('dungeon');
+                        }
+                    }
+                }
+
+                updateCamera();
+                render();
+            }
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        // ====== INPUT ======
+        document.addEventListener('keydown', (e) => {
+            game.keys[e.key] = true;
+
+            if (e.key === 'p' || e.key === 'P') {
+                game.paused = !game.paused;
+            }
+
+            // Prevent arrow key scrolling
+            if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(e.key)) {
+                e.preventDefault();
+            }
+        });
+
+        document.addEventListener('keyup', (e) => {
+            game.keys[e.key] = false;
+        });
+
+        // ====== INITIALIZATION ======
+        function init() {
+            initMaps();
+
+            // Create player at spawn point
+            game.player = new Player(50 * TILE_SIZE, 50 * TILE_SIZE);
+
+            // Spawn overworld enemies
+            spawnOverworldEnemies();
+
+            // Start music
+            audio.playMusic('overworld');
+
+            updateUI();
+            showLocationText('SQUELDA - EPIC ADVENTURE');
+
+            gameLoop(0);
+        }
+
+        // Start the game!
+        init();
+    </script>
+</body>
+</html>
