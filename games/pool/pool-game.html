@@ -787,7 +787,7 @@ function handleBallPocketed(ball) {
 
 function simulateTrajectory(startX, startY, vx, vy, maxIterations) {
     // Simulates ball trajectory without affecting game state
-    // Returns: { points: [], bounces: [], firstBallHit: null, impactVelocity: {vx, vy} }
+    // Returns: { points: [], bounces: [], firstBallHit: null, impactVelocity: {vx, vy}, impactPoint: {x, y} }
 
     const points = [];
     const bounces = [];
@@ -797,6 +797,7 @@ function simulateTrajectory(startX, startY, vx, vy, maxIterations) {
     let velY = vy;
     let firstBallHit = null;
     let impactVelocity = null;
+    let impactPoint = null;
 
     const minX = TABLE_PADDING + BALL_SIZE/2;
     const maxX = CANVAS_WIDTH - TABLE_PADDING - BALL_SIZE/2;
@@ -851,6 +852,7 @@ function simulateTrajectory(startX, startY, vx, vy, maxIterations) {
                 if (dist < BALL_SIZE) {
                     firstBallHit = ball;
                     impactVelocity = { vx: velX, vy: velY }; // Store velocity at impact
+                    impactPoint = { x, y }; // Store cue ball position at impact
                     break;
                 }
             }
@@ -862,23 +864,25 @@ function simulateTrajectory(startX, startY, vx, vy, maxIterations) {
         }
     }
 
-    return { points, bounces, firstBallHit, impactVelocity };
+    return { points, bounces, firstBallHit, impactVelocity, impactPoint };
 }
 
 function findFirstBallImpact(velX, velY) {
     // Use the trajectory simulation to find which ball will actually be hit
     const tempTraj = simulateTrajectory(cueBall.x, cueBall.y, velX, velY, TRAJECTORY_SIMULATION_TIME);
 
-    if (!tempTraj.firstBallHit) return null;
+    if (!tempTraj.firstBallHit || !tempTraj.impactPoint) return null;
 
     const targetBall = tempTraj.firstBallHit;
+    const cueBallImpactPos = tempTraj.impactPoint;
 
     // Calculate exact impact point (ghost ball position)
-    const dx = targetBall.x - cueBall.x;
-    const dy = targetBall.y - cueBall.y;
+    // Use the cue ball's position AT IMPACT, not its starting position
+    const dx = targetBall.x - cueBallImpactPos.x;
+    const dy = targetBall.y - cueBallImpactPos.y;
     const dist = Math.sqrt(dx*dx + dy*dy);
 
-    // Ghost ball is one ball-diameter away from target, on the line from cue to target
+    // Ghost ball is one ball-diameter away from target, on the line from impact point to target
     const impactX = targetBall.x - (dx / dist) * BALL_SIZE;
     const impactY = targetBall.y - (dy / dist) * BALL_SIZE;
 
@@ -966,6 +970,7 @@ function drawAimingAids(ctx) {
         // Draw ghost ball matching target ball color
         const targetBall = impact.ball;
         const isStripe = targetBall.number > 8;
+        const radius = BALL_SIZE / 2;
 
         if (isNeon) {
             ctx.shadowBlur = 20;
@@ -973,23 +978,42 @@ function drawAimingAids(ctx) {
         }
 
         if (isStripe) {
-            // Stripe ghost ball
+            // Stripe ghost ball - white circle with colored stripe
             ctx.fillStyle = '#FFF';
-            ctx.fillRect(impact.x - BALL_SIZE/2, impact.y - BALL_SIZE/2, BALL_SIZE, BALL_SIZE);
+            ctx.beginPath();
+            ctx.arc(impact.x, impact.y, radius, 0, Math.PI * 2);
+            ctx.fill();
 
+            // Draw the stripe (horizontal band through middle)
             ctx.fillStyle = BALL_COLORS[targetBall.number];
-            ctx.fillRect(impact.x - BALL_SIZE/2, impact.y - BALL_SIZE/4, BALL_SIZE, BALL_SIZE/2);
+            ctx.beginPath();
+            ctx.arc(impact.x, impact.y, radius, 0, Math.PI * 2);
+            ctx.fill();
+            // Clip to just the middle stripe area
+            ctx.save();
+            ctx.beginPath();
+            ctx.rect(impact.x - radius, impact.y - radius/2, BALL_SIZE, radius);
+            ctx.clip();
+            ctx.fillStyle = BALL_COLORS[targetBall.number];
+            ctx.beginPath();
+            ctx.arc(impact.x, impact.y, radius, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
         } else {
-            // Solid ghost ball
+            // Solid ghost ball - solid colored circle
             ctx.fillStyle = BALL_COLORS[targetBall.number];
-            ctx.fillRect(impact.x - BALL_SIZE/2, impact.y - BALL_SIZE/2, BALL_SIZE, BALL_SIZE);
+            ctx.beginPath();
+            ctx.arc(impact.x, impact.y, radius, 0, Math.PI * 2);
+            ctx.fill();
         }
 
         // Ghost ball outline
         ctx.globalAlpha = GHOST_BALL_OPACITY * 1.5;
         ctx.strokeStyle = isNeon ? '#0FF' : '#FFF';
         ctx.lineWidth = 2;
-        ctx.strokeRect(impact.x - BALL_SIZE/2, impact.y - BALL_SIZE/2, BALL_SIZE, BALL_SIZE);
+        ctx.beginPath();
+        ctx.arc(impact.x, impact.y, radius, 0, Math.PI * 2);
+        ctx.stroke();
 
         ctx.shadowBlur = 0;
 
