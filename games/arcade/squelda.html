@@ -213,6 +213,7 @@
             player: null,
             enemies: [],
             items: [],
+            chests: [],
             particles: [],
             keys: {},
             maps: {},
@@ -231,6 +232,7 @@
                 this.music = {
                             overworld: new Audio('../arcade/music/overworld.mp3'),
                             dungeon: new Audio('../arcade/music/dungeon.mp3'),
+                            boss: new Audio('../arcade/music/boss.mp3')
                 };
                 this.currentMusic = null;
                 this.musicVolume = 0.3;
@@ -546,16 +548,27 @@
                 if (game.enemies.length === 0) {
                     spawnDungeonEnemies(dungeonName);
                 }
+
+                // Spawn chests if not already spawned
+                const map = game.maps[dungeonName];
+                if (map.chestLocations && game.chests.length === 0) {
+                    map.chestLocations.forEach(loc => {
+                        const chest = new Chest(loc.x * TILE_SIZE, loc.y * TILE_SIZE);
+                        game.chests.push(chest);
+                    });
+                }
             }
 
             exitDungeon(targetMap, spawnX, spawnY) {
                 game.currentMap = targetMap;
+                // Spawn player slightly offset from the entrance to avoid re-entering
                 this.x = spawnX * TILE_SIZE;
-                this.y = spawnY * TILE_SIZE;
+                this.y = (spawnY + 2) * TILE_SIZE; // Offset 2 tiles down from entrance
                 audio.playMusic('overworld');
 
-                // Clear dungeon enemies
+                // Clear dungeon enemies and chests
                 game.enemies = game.enemies.filter(e => !e.isDungeonEnemy);
+                game.chests = [];
             }
 
             attack() {
@@ -788,7 +801,28 @@
 
                 // Drop items
                 if (Math.random() < this.dropChance) {
-                    const dropType = Math.random() < 0.7 ? 'rupee' : Math.random() < 0.9 ? 'heart' : 'key';
+                    // Increased key drop rate, especially for dungeon enemies
+                    let dropType;
+                    const rand = Math.random();
+                    if (this.isDungeonEnemy) {
+                        // Dungeon enemies drop keys more often
+                        if (rand < 0.4) {
+                            dropType = 'key';
+                        } else if (rand < 0.7) {
+                            dropType = 'rupee';
+                        } else {
+                            dropType = 'heart';
+                        }
+                    } else {
+                        // Overworld enemies
+                        if (rand < 0.15) {
+                            dropType = 'key';
+                        } else if (rand < 0.65) {
+                            dropType = 'rupee';
+                        } else {
+                            dropType = 'heart';
+                        }
+                    }
                     game.items.push(new Item(this.x, this.y, dropType));
                 }
 
@@ -798,9 +832,14 @@
                     showLocationText('BOSS DEFEATED!');
                     // Return to dungeon music after boss is defeated
                     audio.playMusic('dungeon');
-                    // Drop a special item
+                    // Drop multiple keys and rupees as rewards
                     game.items.push(new Item(this.x, this.y, 'key'));
                     game.items.push(new Item(this.x + 20, this.y, 'key'));
+                    game.items.push(new Item(this.x + 10, this.y - 10, 'key'));
+                    // Add some rupees too
+                    for (let i = 0; i < 5; i++) {
+                        game.items.push(new Item(this.x + Math.random() * 40 - 20, this.y + Math.random() * 40 - 20, 'rupee'));
+                    }
                 }
             }
 
@@ -835,6 +874,77 @@
                 }
 
                 ctx.globalAlpha = 1;
+            }
+        }
+
+        // ====== CHEST CLASS ======
+        class Chest {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.width = 16;
+                this.height = 16;
+                this.opened = false;
+                this.contents = Math.random() < 0.7 ? 'key' : 'rupee'; // 70% chance for key
+                this.sparkleTimer = 0;
+            }
+
+            update(dt) {
+                if (this.opened) return;
+
+                this.sparkleTimer += dt;
+
+                // Check if player is near and presses space
+                const player = game.player;
+                const dist = Math.hypot(player.x - this.x, player.y - this.y);
+
+                if (dist < 30 && game.keys[' '] && !player.attacking) {
+                    this.open();
+                }
+            }
+
+            open() {
+                if (this.opened) return;
+
+                this.opened = true;
+                audio.playSound('pickup');
+
+                // Drop contents
+                if (this.contents === 'key') {
+                    game.items.push(new Item(this.x, this.y, 'key'));
+                } else if (this.contents === 'rupee') {
+                    // Drop multiple rupees
+                    for (let i = 0; i < 3; i++) {
+                        game.items.push(new Item(this.x + Math.random() * 20 - 10, this.y + Math.random() * 20 - 10, 'rupee'));
+                    }
+                }
+            }
+
+            draw(ctx) {
+                // Draw chest
+                if (this.opened) {
+                    ctx.fillStyle = '#8b7355';
+                } else {
+                    ctx.fillStyle = '#cd853f';
+                }
+                ctx.fillRect(this.x, this.y, this.width, this.height);
+
+                // Draw lock or opened state
+                if (!this.opened) {
+                    ctx.fillStyle = '#ffd700';
+                    ctx.fillRect(this.x + 6, this.y + 6, 4, 6);
+
+                    // Sparkle effect
+                    if (Math.floor(this.sparkleTimer * 4) % 2 === 0) {
+                        ctx.fillStyle = '#ffffff';
+                        ctx.fillRect(this.x + 2, this.y + 2, 2, 2);
+                        ctx.fillRect(this.x + 12, this.y + 2, 2, 2);
+                    }
+                } else {
+                    // Open chest
+                    ctx.fillStyle = '#654321';
+                    ctx.fillRect(this.x, this.y - 4, this.width, 6);
+                }
             }
         }
 
@@ -1136,6 +1246,16 @@
             map.spawnX = firstRoom.x + Math.floor(firstRoom.w / 2) + 1;
             map.spawnY = firstRoom.y + Math.floor(firstRoom.h / 2);
 
+            // Add chests in random rooms
+            map.chestLocations = [];
+            const numChests = Math.min(rooms.length - 1, 5); // Up to 5 chests
+            for (let i = 1; i <= numChests && i < rooms.length; i++) {
+                const room = rooms[i];
+                const chestX = room.x + Math.floor(Math.random() * (room.w - 2)) + 1;
+                const chestY = room.y + Math.floor(Math.random() * (room.h - 2)) + 1;
+                map.chestLocations.push({ x: chestX, y: chestY });
+            }
+
             return map;
         }
 
@@ -1162,32 +1282,55 @@
             const map = game.maps[dungeonName];
             const numEnemies = dungeonName === 'castle' ? 20 : dungeonName === 'dungeon2' ? 15 : 10;
 
-            for (let i = 0; i < numEnemies; i++) {
-                let x, y;
-                let attempts = 0;
-                do {
-                    x = Math.floor(Math.random() * map.width) * TILE_SIZE;
-                    y = Math.floor(Math.random() * map.height) * TILE_SIZE;
-                    attempts++;
-                } while (map.getTile(Math.floor(x / TILE_SIZE), Math.floor(y / TILE_SIZE)) !== TILES.STONE_FLOOR && attempts < 100);
-
-                if (attempts < 100) {
-                    const type = Math.random() < 0.5 ? 'skeleton' : 'bat';
-                    const enemy = new Enemy(x, y, type);
-                    enemy.isDungeonEnemy = true;
-                    game.enemies.push(enemy);
+            // First, collect all valid floor tiles
+            const validTiles = [];
+            for (let y = 0; y < map.height; y++) {
+                for (let x = 0; x < map.width; x++) {
+                    if (map.getTile(x, y) === TILES.STONE_FLOOR) {
+                        validTiles.push({ x, y });
+                    }
                 }
+            }
+
+            // Spawn enemies on random valid floor tiles
+            for (let i = 0; i < numEnemies && validTiles.length > 0; i++) {
+                const randomIndex = Math.floor(Math.random() * validTiles.length);
+                const tile = validTiles[randomIndex];
+
+                // Remove this tile from the list to avoid spawning multiple enemies on same spot
+                validTiles.splice(randomIndex, 1);
+
+                const x = tile.x * TILE_SIZE + TILE_SIZE / 2 - 7; // Center in tile
+                const y = tile.y * TILE_SIZE + TILE_SIZE / 2 - 7;
+                const type = Math.random() < 0.5 ? 'skeleton' : 'bat';
+                const enemy = new Enemy(x, y, type);
+                enemy.isDungeonEnemy = true;
+                game.enemies.push(enemy);
             }
 
             // Add boss in large dungeons
             if (dungeonName === 'dungeon2' || dungeonName === 'castle') {
-                // Find a good spot for boss
-                let bossX = map.width / 2 * TILE_SIZE;
-                let bossY = map.height / 2 * TILE_SIZE;
+                // Find a good spot for boss - use a random valid floor tile far from spawn
+                if (validTiles.length > 0) {
+                    // Try to find a tile far from the entrance
+                    const spawnX = map.spawnX || map.width / 2;
+                    const spawnY = map.spawnY || map.height / 2;
 
-                const boss = new Enemy(bossX, bossY, 'boss');
-                boss.isDungeonEnemy = true;
-                game.enemies.push(boss);
+                    // Sort tiles by distance from spawn
+                    validTiles.sort((a, b) => {
+                        const distA = Math.hypot(a.x - spawnX, a.y - spawnY);
+                        const distB = Math.hypot(b.x - spawnX, b.y - spawnY);
+                        return distB - distA; // Furthest first
+                    });
+
+                    const bossTile = validTiles[0];
+                    const bossX = bossTile.x * TILE_SIZE + TILE_SIZE / 2 - 16; // Center boss (32x32)
+                    const bossY = bossTile.y * TILE_SIZE + TILE_SIZE / 2 - 16;
+
+                    const boss = new Enemy(bossX, bossY, 'boss');
+                    boss.isDungeonEnemy = true;
+                    game.enemies.push(boss);
+                }
             }
         }
 
@@ -1228,6 +1371,9 @@
                     map.drawTile(ctx, tile, x, y);
                 }
             }
+
+            // Draw chests
+            game.chests.forEach(chest => chest.draw(ctx));
 
             // Draw items
             game.items.forEach(item => item.draw(ctx));
@@ -1304,6 +1450,7 @@
                 game.player.update(dt);
                 game.enemies.forEach(enemy => enemy.update(dt));
                 game.items.forEach(item => item.update(dt));
+                game.chests.forEach(chest => chest.update(dt));
 
                 // Check for boss music when in dungeon
                 if (game.currentMap !== 'overworld') {
