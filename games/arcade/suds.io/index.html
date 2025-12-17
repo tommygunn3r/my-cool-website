@@ -860,8 +860,8 @@
                         // Apply deformation for visual effect
                         armor.applyCollisionDeformation(collisionSpeed, collisionAngle);
 
-                        // Only pop if VERY high speed collision (ramming into wall at full speed)
-                        if (collisionSpeed > 10) {
+                        // Scrape off armor at moderate speed
+                        if (collisionSpeed > 2) {
                             detachBubble(armor);
                         }
                     }
@@ -908,7 +908,7 @@
 
             // Armor Scraper Bars (bottom section) - only affects armor, core can pass through
             const scraperY = WORLD_BOUNDS.height * 0.75;
-            const scraperGap = 25;
+            const scraperGap = 35; // Wide enough for core (30px diameter) to pass through
             const scraperBarWidth = 15;
 
             for (let x = 100; x < WORLD_BOUNDS.width - 100; x += scraperBarWidth + scraperGap) {
