@@ -231,7 +231,6 @@
                 this.music = {
                             overworld: new Audio('../arcade/music/overworld.mp3'),
                             dungeon: new Audio('../arcade/music/dungeon.mp3'),
-                            boss: new Audio('../arcade/music/boss.mp3')
                 };
                 this.currentMusic = null;
                 this.musicVolume = 0.3;
@@ -512,7 +511,7 @@
                         Math.floor(e.x) === centerX && Math.floor(e.y) === centerY
                     );
                     if (entrance) {
-                        this.enterDungeon(entrance.target);
+                        this.enterDungeon(entrance.target, entrance.spawnX, entrance.spawnY);
                     }
                 }
 
@@ -535,15 +534,11 @@
                 }
             }
 
-            enterDungeon(dungeonName) {
+            enterDungeon(dungeonName, spawnX, spawnY) {
                 game.prevMap = game.currentMap;
                 game.currentMap = dungeonName;
-
-                // Use the dungeon map's spawn coordinates
-                const dungeonMap = game.maps[dungeonName];
-                this.x = dungeonMap.spawnX * TILE_SIZE;
-                this.y = dungeonMap.spawnY * TILE_SIZE;
-
+                this.x = spawnX * TILE_SIZE;
+                this.y = spawnY * TILE_SIZE;
                 audio.playMusic('dungeon');
                 showLocationText(dungeonName.toUpperCase());
 
@@ -1051,20 +1046,19 @@
             }
 
             // Add dungeon entrances
-            // Note: spawnX and spawnY will be set dynamically when entering the dungeon
 
             // Small dungeon 1 (in forest)
             map.setTile(15, 25, TILES.STAIRS_DOWN);
-            map.dungeonEntrances.push({ x: 15, y: 25, target: 'dungeon1' });
+            map.dungeonEntrances.push({ x: 15, y: 25, target: 'dungeon1', spawnX: 5, spawnY: 18 });
 
             // Medium dungeon 2 (in mountains)
             map.setTile(45, 10, TILES.STAIRS_DOWN);
-            map.dungeonEntrances.push({ x: 45, y: 10, target: 'dungeon2' });
+            map.dungeonEntrances.push({ x: 45, y: 10, target: 'dungeon2', spawnX: 25, spawnY: 28 });
 
             // Large castle (in center-east)
             map.fillRect(70, 25, 8, 8, TILES.CASTLE_FLOOR);
             map.setTile(73, 29, TILES.STAIRS_DOWN);
-            map.dungeonEntrances.push({ x: 73, y: 29, target: 'castle' });
+            map.dungeonEntrances.push({ x: 73, y: 29, target: 'castle', spawnX: 15, spawnY: 38 });
 
             // Border walls
             for (let x = 0; x < WORLD_WIDTH; x++) {
@@ -1130,17 +1124,17 @@
                 }
             }
 
-            // Exit stairs in first room (top-left area)
+            // Exit stairs in first room
             const firstRoom = rooms[0];
-            const exitTileX = firstRoom.x + 1;
-            const exitTileY = firstRoom.y + 1;
+            const exitTileX = firstRoom.x + Math.floor(firstRoom.w / 2);
+            const exitTileY = firstRoom.y + Math.floor(firstRoom.h / 2);
             map.setTile(exitTileX, exitTileY, TILES.STAIRS_UP);
             map.exits.push({ x: exitTileX, y: exitTileY, target: 'overworld', spawnX: exitX, spawnY: exitY });
 
             // Store the spawn point for this dungeon (where player enters from overworld)
-            // Place it away from the exit stairs (bottom-right of first room)
-            map.spawnX = firstRoom.x + firstRoom.w - 3;
-            map.spawnY = firstRoom.y + firstRoom.h - 3;
+            // Place it near the exit stairs but not on them
+            map.spawnX = firstRoom.x + Math.floor(firstRoom.w / 2) + 1;
+            map.spawnY = firstRoom.y + Math.floor(firstRoom.h / 2);
 
             return map;
         }
