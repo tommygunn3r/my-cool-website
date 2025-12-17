@@ -613,21 +613,16 @@
 
         // ===== CONSTRAINT FUNCTIONS =====
         function attachBubbleToCore(armorBubble, contactPoint) {
-            // Primary constraint: armor to core (very stiff)
+            // Calculate ideal distance from core
+            const targetDistance = BUBBLE_CONFIG.CORE.radius + BUBBLE_CONFIG.ARMOR.radius;
+
+            // Primary constraint: armor to core with dynamic length
             const coreConstraint = Constraint.create({
                 bodyA: playerCore.body,
                 bodyB: armorBubble.body,
-                pointA: {
-                    x: contactPoint.x - playerCore.body.position.x,
-                    y: contactPoint.y - playerCore.body.position.y
-                },
-                pointB: {
-                    x: contactPoint.x - armorBubble.body.position.x,
-                    y: contactPoint.y - armorBubble.body.position.y
-                },
-                stiffness: CONSTRAINT_CONFIG.CORE.stiffness,
-                damping: CONSTRAINT_CONFIG.CORE.damping,
-                length: 0,
+                stiffness: 0.05,        // Much softer for teardrop effect
+                damping: 0.6,           // Medium damping
+                length: targetDistance, // Keep at ideal distance
                 render: { visible: false }
             });
 
@@ -636,34 +631,14 @@
             armorBubble.attachedToCore = true;
             armorBubble.coreConstraint = coreConstraint;
             armorBubble.armorConstraints = [];
+            armorBubble.idealAngle = Math.atan2(
+                contactPoint.y - playerCore.body.position.y,
+                contactPoint.x - playerCore.body.position.x
+            );
             playerCore.armorBubbles.push(armorBubble);
             playerCore.constraints.push(coreConstraint);
 
-            // Secondary constraints: connect to nearby armor bubbles
-            playerCore.armorBubbles.forEach(otherArmor => {
-                if (otherArmor === armorBubble) return;
-
-                const dx = armorBubble.body.position.x - otherArmor.body.position.x;
-                const dy = armorBubble.body.position.y - otherArmor.body.position.y;
-                const distance = Math.sqrt(dx * dx + dy * dy);
-
-                // Connect if close enough (within 2.5 radii)
-                if (distance < (BUBBLE_CONFIG.ARMOR.radius * 2.5)) {
-                    const armorConstraint = Constraint.create({
-                        bodyA: armorBubble.body,
-                        bodyB: otherArmor.body,
-                        stiffness: CONSTRAINT_CONFIG.ARMOR.stiffness,
-                        damping: CONSTRAINT_CONFIG.ARMOR.damping,
-                        length: distance * 0.8, // Slight compression
-                        render: { visible: false }
-                    });
-
-                    World.add(engine.world, armorConstraint);
-                    armorBubble.armorConstraints.push(armorConstraint);
-                    otherArmor.armorConstraints.push(armorConstraint);
-                }
-            });
-
+            // No armor-to-armor constraints - they'll naturally spread out
             Body.setMass(armorBubble.body, BUBBLE_CONFIG.ARMOR.mass * 0.5);
         }
 
@@ -672,13 +647,6 @@
 
             // Remove core constraint
             World.remove(engine.world, armorBubble.coreConstraint);
-
-            // Remove all armor-to-armor constraints
-            if (armorBubble.armorConstraints) {
-                armorBubble.armorConstraints.forEach(constraint => {
-                    World.remove(engine.world, constraint);
-                });
-            }
 
             const index = playerCore.armorBubbles.indexOf(armorBubble);
             if (index > -1) {
@@ -691,7 +659,6 @@
 
             armorBubble.attachedToCore = false;
             armorBubble.coreConstraint = null;
-            armorBubble.armorConstraints = [];
 
             Body.setMass(armorBubble.body, BUBBLE_CONFIG.ARMOR.mass);
 
@@ -710,6 +677,80 @@
             const stray = new StrayBubble(armorBubble.body.position.x, armorBubble.body.position.y);
             World.remove(engine.world, armorBubble.body);
             playSound('scrape');
+        }
+
+        // Apply formation forces to create teardrop when moving, circle when stopped
+        function updateBubbleFormation() {
+            if (!playerCore || !playerCore.alive) return;
+
+            const coreVelocity = playerCore.body.velocity;
+            const coreSpeed = Math.sqrt(coreVelocity.x ** 2 + coreVelocity.y ** 2);
+            const movementAngle = Math.atan2(coreVelocity.y, coreVelocity.x);
+
+            playerCore.armorBubbles.forEach((armor, index) => {
+                const dx = armor.body.position.x - playerCore.body.position.x;
+                const dy = armor.body.position.y - playerCore.body.position.y;
+                const currentAngle = Math.atan2(dy, dx);
+                const distance = Math.sqrt(dx * dx + dy * dy);
+
+                if (coreSpeed > 0.5) {
+                    // MOVING: Create teardrop shape - push bubbles backward
+                    const angleDiff = currentAngle - movementAngle;
+                    const normalizedDiff = Math.atan2(Math.sin(angleDiff), Math.cos(angleDiff));
+
+                    // Bubbles behind get pushed further back
+                    const isBehind = Math.abs(normalizedDiff) > Math.PI / 2;
+
+                    if (isBehind) {
+                        // Push bubbles backward (teardrop tail)
+                        const pushForce = coreSpeed * 0.0003;
+                        Body.applyForce(armor.body, armor.body.position, {
+                            x: -Math.cos(movementAngle) * pushForce,
+                            y: -Math.sin(movementAngle) * pushForce
+                        });
+                    }
+                } else {
+                    // STOPPED: Form circle - distribute evenly around core
+                    const targetAngle = (index / playerCore.armorBubbles.length) * Math.PI * 2;
+                    const targetDistance = BUBBLE_CONFIG.CORE.radius + BUBBLE_CONFIG.ARMOR.radius;
+
+                    const targetX = playerCore.body.position.x + Math.cos(targetAngle) * targetDistance;
+                    const targetY = playerCore.body.position.y + Math.sin(targetAngle) * targetDistance;
+
+                    // Gentle force toward target position
+                    const toTargetX = targetX - armor.body.position.x;
+                    const toTargetY = targetY - armor.body.position.y;
+
+                    Body.applyForce(armor.body, armor.body.position, {
+                        x: toTargetX * 0.0001,
+                        y: toTargetY * 0.0001
+                    });
+                }
+
+                // Repulsion between armor bubbles to prevent overlap
+                playerCore.armorBubbles.forEach((otherArmor, otherIndex) => {
+                    if (index >= otherIndex) return;
+
+                    const odx = otherArmor.body.position.x - armor.body.position.x;
+                    const ody = otherArmor.body.position.y - armor.body.position.y;
+                    const dist = Math.sqrt(odx * odx + ody * ody);
+                    const minDist = BUBBLE_CONFIG.ARMOR.radius * 2;
+
+                    if (dist < minDist && dist > 0) {
+                        const repulsion = (minDist - dist) * 0.00005;
+                        const angle = Math.atan2(ody, odx);
+
+                        Body.applyForce(armor.body, armor.body.position, {
+                            x: -Math.cos(angle) * repulsion,
+                            y: -Math.sin(angle) * repulsion
+                        });
+                        Body.applyForce(otherArmor.body, otherArmor.body.position, {
+                            x: Math.cos(angle) * repulsion,
+                            y: Math.sin(angle) * repulsion
+                        });
+                    }
+                });
+            });
         }
 
         // ===== COLLISION DETECTION =====
@@ -742,7 +783,7 @@
                     }
                 }
 
-                // Core + Obstacle = Apply deformation and check if too compressed
+                // Core + Obstacle = Apply deformation and check for death
                 if ((bodyA.label === 'playerCore' || bodyB.label === 'playerCore') &&
                     (bodyA.label === 'obstacle' || bodyB.label === 'obstacle')) {
 
@@ -757,12 +798,12 @@
                     const collisionSpeed = Math.sqrt(relativeVelocity.x ** 2 + relativeVelocity.y ** 2);
                     const collisionAngle = Math.atan2(relativeVelocity.y, relativeVelocity.x);
 
-                    // Apply deformation to core
+                    // Apply deformation to core for visual feedback
                     if (playerCore) {
                         playerCore.applyCollisionDeformation(collisionSpeed, collisionAngle);
 
-                        // Check if core is compressed beyond threshold
-                        if (playerCore.getCompressionRatio() < COMPRESSION_POP_THRESHOLD && playerCore.alive) {
+                        // Core dies on ANY direct hit with obstacle (instant death)
+                        if (playerCore.alive) {
                             playerCore.alive = false;
                             endGame();
                             playSound('death');
@@ -770,7 +811,7 @@
                     }
                 }
 
-                // Armor + Obstacle = Apply deformation and check if too compressed
+                // Armor + Obstacle = Apply deformation (no instant popping)
                 if ((bodyA.label === 'armorBubble' || bodyB.label === 'armorBubble') &&
                     (bodyA.label === 'obstacle' || bodyB.label === 'obstacle')) {
 
@@ -787,11 +828,11 @@
                         const collisionSpeed = Math.sqrt(relativeVelocity.x ** 2 + relativeVelocity.y ** 2);
                         const collisionAngle = Math.atan2(relativeVelocity.y, relativeVelocity.x);
 
-                        // Apply deformation
+                        // Apply deformation for visual effect
                         armor.applyCollisionDeformation(collisionSpeed, collisionAngle);
 
-                        // Pop only if compressed beyond threshold
-                        if (armor.getCompressionRatio() < COMPRESSION_POP_THRESHOLD) {
+                        // Only pop if VERY high speed collision (ramming into wall at full speed)
+                        if (collisionSpeed > 10) {
                             detachBubble(armor);
                         }
                     }
@@ -1055,6 +1096,7 @@
 
                 strayBubbles.forEach(bubble => bubble.updateFloat());
                 applyPlayerMovement();
+                updateBubbleFormation(); // Create teardrop/circle formations
                 updateCamera();
                 spawnStrayBubbles();
 
