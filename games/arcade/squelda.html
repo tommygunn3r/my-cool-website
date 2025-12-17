@@ -1130,17 +1130,17 @@
                 }
             }
 
-            // Exit stairs in first room
+            // Exit stairs in first room (top-left area)
             const firstRoom = rooms[0];
-            const exitTileX = firstRoom.x + Math.floor(firstRoom.w / 2);
-            const exitTileY = firstRoom.y + Math.floor(firstRoom.h / 2);
+            const exitTileX = firstRoom.x + 1;
+            const exitTileY = firstRoom.y + 1;
             map.setTile(exitTileX, exitTileY, TILES.STAIRS_UP);
             map.exits.push({ x: exitTileX, y: exitTileY, target: 'overworld', spawnX: exitX, spawnY: exitY });
 
             // Store the spawn point for this dungeon (where player enters from overworld)
-            // Place it near the exit stairs but not on them
-            map.spawnX = firstRoom.x + Math.floor(firstRoom.w / 2) + 1;
-            map.spawnY = firstRoom.y + Math.floor(firstRoom.h / 2);
+            // Place it away from the exit stairs (bottom-right of first room)
+            map.spawnX = firstRoom.x + firstRoom.w - 3;
+            map.spawnY = firstRoom.y + firstRoom.h - 3;
 
             return map;
         }
