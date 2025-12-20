@@ -427,6 +427,49 @@
             <button class="back-btn" onclick="backToArcade()">← Back to Arcade</button>
         </div>
 
+        <!-- Multiplayer Room Screen -->
+        <div id="multiplayerScreen" style="display: none;">
+            <h2 style="color: #ffd700; font-size: 2rem; margin-bottom: 20px;">MULTIPLAYER</h2>
+            <div class="mode-buttons">
+                <button class="mode-btn" onclick="createMultiplayerRoom()">
+                    <span class="mode-icon">➕</span>
+                    <span>Create Room</span>
+                </button>
+                <button class="mode-btn" onclick="showJoinRoom()">
+                    <span class="mode-icon">🔗</span>
+                    <span>Join Room</span>
+                </button>
+            </div>
+            <button class="back-btn" onclick="backToModeSelection()">← Back</button>
+        </div>
+
+        <!-- Join Room Screen -->
+        <div id="joinRoomScreen" style="display: none; text-align: center; background: rgba(10, 10, 10, 0.8); border: 2px solid #ffd700; border-radius: 15px; padding: 50px; box-shadow: 0 10px 40px rgba(255, 215, 0, 0.3);">
+            <h2 style="color: #ffd700; font-size: 2rem; margin-bottom: 20px;">JOIN ROOM</h2>
+            <input type="text" id="roomCodeInput" placeholder="Enter Room Code" style="padding: 15px; font-size: 1.2rem; width: 300px; max-width: 100%; border: 2px solid #ffd700; border-radius: 8px; background: rgba(0,0,0,0.5); color: #fff; text-align: center; margin-bottom: 20px;">
+            <br>
+            <button class="mode-btn" onclick="joinMultiplayerRoom()" style="margin: 10px;">
+                <span>Join Game</span>
+            </button>
+            <br>
+            <button class="back-btn" onclick="backToMultiplayerScreen()">← Back</button>
+        </div>
+
+        <!-- Waiting Room Screen -->
+        <div id="waitingRoomScreen" style="display: none; text-align: center; background: rgba(10, 10, 10, 0.8); border: 2px solid #ffd700; border-radius: 15px; padding: 50px; box-shadow: 0 10px 40px rgba(255, 215, 0, 0.3);">
+            <h2 style="color: #ffd700; font-size: 2rem; margin-bottom: 20px;">WAITING FOR OPPONENT</h2>
+            <div style="font-size: 1.2rem; margin: 30px 0;">
+                <div style="margin-bottom: 20px;">Room Code:</div>
+                <div id="displayRoomCode" style="font-size: 2rem; color: #ffd700; font-weight: bold; letter-spacing: 5px; margin-bottom: 10px;"></div>
+                <button onclick="copyRoomCode()" style="padding: 8px 20px; background: rgba(255,215,0,0.2); border: 2px solid #ffd700; border-radius: 5px; color: #ffd700; cursor: pointer; font-size: 0.9rem;">Copy Code</button>
+            </div>
+            <div style="font-size: 1rem; color: #888; margin: 20px 0;">Share this code with your opponent</div>
+            <div style="margin: 30px 0;">
+                <div style="font-size: 3rem; animation: pulse 2s infinite;">⏳</div>
+            </div>
+            <button class="back-btn" onclick="leaveRoom()">← Leave Room</button>
+        </div>
+
         <!-- Difficulty Selection Screen -->
         <div id="difficultyScreen">
             <h2 style="color: #ffd700; font-size: 2rem; margin-bottom: 20px;">SELECT DIFFICULTY</h2>
@@ -565,16 +608,181 @@
             return board;
         }
 
+        // Multiplayer state
+        let multiplayerChannel = null;
+        let currentRoomCode = null;
+
         // Mode selection
         function selectMode(mode) {
             gameState.mode = mode;
             if (mode === 'ai') {
                 document.getElementById('modeScreen').style.display = 'none';
                 document.getElementById('difficultyScreen').style.display = 'block';
-            } else {
-                alert('Multiplayer mode coming soon!');
-                // TODO: Implement multiplayer
+            } else if (mode === 'multiplayer') {
+                document.getElementById('modeScreen').style.display = 'none';
+                document.getElementById('multiplayerScreen').style.display = 'block';
             }
+        }
+
+        // Multiplayer functions
+        function generateRoomCode() {
+            return Math.random().toString(36).substring(2, 8).toUpperCase();
+        }
+
+        async function createMultiplayerRoom() {
+            const user = await supabaseClient.auth.getUser();
+            if (!user.data.user) {
+                alert('Please log in to play multiplayer');
+                return;
+            }
+
+            currentRoomCode = generateRoomCode();
+            gameState.roomId = currentRoomCode;
+            gameState.playerColor = 'white'; // Creator plays white
+            gameState.isHost = true;
+
+            // Show waiting room
+            document.getElementById('multiplayerScreen').style.display = 'none';
+            document.getElementById('waitingRoomScreen').style.display = 'block';
+            document.getElementById('displayRoomCode').textContent = currentRoomCode;
+
+            // Create channel
+            multiplayerChannel = supabaseClient.channel(`chess_${currentRoomCode}`, {
+                config: { presence: { key: user.data.user.id } }
+            });
+
+            // Listen for opponent join
+            multiplayerChannel
+                .on('presence', { event: 'join' }, (payload) => {
+                    const presenceState = multiplayerChannel.presenceState();
+                    if (Object.keys(presenceState).length >= 2) {
+                        startMultiplayerGame();
+                    }
+                })
+                .on('broadcast', { event: 'move' }, (payload) => {
+                    if (payload.payload.from && payload.payload.to) {
+                        receiveOpponentMove(payload.payload);
+                    }
+                })
+                .on('broadcast', { event: 'player_left' }, () => {
+                    alert('Opponent left the game');
+                    leaveRoom();
+                })
+                .subscribe(async (status) => {
+                    if (status === 'SUBSCRIBED') {
+                        await multiplayerChannel.track({ color: 'white', userId: user.data.user.id });
+                    }
+                });
+        }
+
+        async function showJoinRoom() {
+            document.getElementById('multiplayerScreen').style.display = 'none';
+            document.getElementById('joinRoomScreen').style.display = 'block';
+        }
+
+        async function joinMultiplayerRoom() {
+            const roomCode = document.getElementById('roomCodeInput').value.trim().toUpperCase();
+            if (!roomCode) {
+                alert('Please enter a room code');
+                return;
+            }
+
+            const user = await supabaseClient.auth.getUser();
+            if (!user.data.user) {
+                alert('Please log in to play multiplayer');
+                return;
+            }
+
+            currentRoomCode = roomCode;
+            gameState.roomId = roomCode;
+            gameState.playerColor = 'black'; // Joiner plays black
+            gameState.isHost = false;
+
+            // Create channel
+            multiplayerChannel = supabaseClient.channel(`chess_${roomCode}`, {
+                config: { presence: { key: user.data.user.id } }
+            });
+
+            multiplayerChannel
+                .on('presence', { event: 'sync' }, () => {
+                    const presenceState = multiplayerChannel.presenceState();
+                    if (Object.keys(presenceState).length === 0) {
+                        alert('Room not found');
+                        leaveRoom();
+                        return;
+                    }
+                    if (Object.keys(presenceState).length >= 2) {
+                        startMultiplayerGame();
+                    }
+                })
+                .on('broadcast', { event: 'move' }, (payload) => {
+                    if (payload.payload.from && payload.payload.to) {
+                        receiveOpponentMove(payload.payload);
+                    }
+                })
+                .on('broadcast', { event: 'player_left' }, () => {
+                    alert('Opponent left the game');
+                    leaveRoom();
+                })
+                .subscribe(async (status) => {
+                    if (status === 'SUBSCRIBED') {
+                        await multiplayerChannel.track({ color: 'black', userId: user.data.user.id });
+                    }
+                });
+        }
+
+        function startMultiplayerGame() {
+            document.getElementById('joinRoomScreen').style.display = 'none';
+            document.getElementById('waitingRoomScreen').style.display = 'none';
+            document.getElementById('gameScreen').style.display = 'block';
+            initGame();
+        }
+
+        function backToMultiplayerScreen() {
+            document.getElementById('joinRoomScreen').style.display = 'none';
+            document.getElementById('multiplayerScreen').style.display = 'block';
+        }
+
+        async function leaveRoom() {
+            if (multiplayerChannel) {
+                await multiplayerChannel.send({
+                    type: 'broadcast',
+                    event: 'player_left'
+                });
+                await multiplayerChannel.unsubscribe();
+                multiplayerChannel = null;
+            }
+            currentRoomCode = null;
+            gameState.roomId = null;
+            gameState.playerColor = null;
+            gameState.isHost = false;
+            document.getElementById('waitingRoomScreen').style.display = 'none';
+            document.getElementById('gameScreen').style.display = 'none';
+            document.getElementById('multiplayerScreen').style.display = 'block';
+        }
+
+        function copyRoomCode() {
+            const code = document.getElementById('displayRoomCode').textContent;
+            navigator.clipboard.writeText(code).then(() => {
+                alert('Room code copied to clipboard!');
+            });
+        }
+
+        async function sendMove(from, to) {
+            if (multiplayerChannel && gameState.mode === 'multiplayer') {
+                await multiplayerChannel.send({
+                    type: 'broadcast',
+                    event: 'move',
+                    payload: { from, to }
+                });
+            }
+        }
+
+        function receiveOpponentMove(moveData) {
+            const { from, to } = moveData;
+            gameState.selectedSquare = from;
+            gameState.legalMoves = getLegalMoves(from.row, from.col);
+            makeMove(from, to);
         }
 
         function backToModeSelection() {
@@ -635,6 +843,12 @@
         window.backToArcade = backToArcade;
         window.startAIGame = startAIGame;
         window.newGame = newGame;
+        window.createMultiplayerRoom = createMultiplayerRoom;
+        window.showJoinRoom = showJoinRoom;
+        window.joinMultiplayerRoom = joinMultiplayerRoom;
+        window.backToMultiplayerScreen = backToMultiplayerScreen;
+        window.leaveRoom = leaveRoom;
+        window.copyRoomCode = copyRoomCode;
 
         // Render board
         function renderBoard() {
@@ -957,6 +1171,11 @@
             gameState.selectedSquare = null;
             gameState.legalMoves = [];
             gameState.lastMove = { from, to };
+
+            // Send move to opponent in multiplayer
+            if (gameState.mode === 'multiplayer') {
+                sendMove(from, to);
+            }
 
             // Switch player
             gameState.currentPlayer = gameState.currentPlayer === 'white' ? 'black' : 'white';
