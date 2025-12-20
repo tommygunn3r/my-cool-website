@@ -295,6 +295,7 @@
 
         let supabase;
         let supabaseInitialized = false;
+        let currentUser = null;
 
         try {
             supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -302,6 +303,26 @@
             console.log('Supabase initialized successfully');
         } catch (error) {
             console.warn('Supabase not available, game will work without leaderboard:', error.message);
+        }
+
+        async function initGameAuth() {
+            try {
+                const { data: { user } } = await supabase.auth.getUser();
+                if (user) {
+                    currentUser = user;
+                    const playerName = user.user_metadata?.display_name ||
+                                user.email?.split('@')[0] ||
+                                "Anonymous";
+                    scoreManager.playerName = playerName;
+                    console.log("Player identified:", playerName);
+                }
+            } catch (error) {
+                console.warn("Auth check failed:", error);
+            }
+        }
+
+        if (supabaseInitialized) {
+            initGameAuth();
         }
 
         class GameScoreManager {
@@ -338,25 +359,25 @@
             }
 
             async submitGameResult(score = 0) {
-                if (!supabaseInitialized || !supabase) {
-                    console.log('Leaderboard unavailable - playing offline');
+                if (!currentUser) {
+                    console.log('No user logged in, score not saved');
                     return;
                 }
 
                 const timePlayed = this.getElapsedTime();
 
                 try {
-                    const { data, error } = await supabase
+                    const { error } = await supabase
                         .from('game_highscores')
-                        .insert([{
+                        .insert({
                             game_id: this.gameName,
                             player_name: this.playerName,
                             score: this.hasScore ? score : 0,
-                            created_at: new Date().toISOString()
-                        }]);
+                            user_id: currentUser.id
+                        });
 
                     if (error) throw error;
-                    console.log('Score submitted to leaderboard');
+                    console.log('Score submitted successfully');
                 } catch (error) {
                     console.warn('Failed to submit score:', error.message);
                 }
