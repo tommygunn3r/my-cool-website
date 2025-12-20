@@ -319,6 +319,12 @@
                 const timePlayed = this.getElapsedTime();
 
                 try {
+                    console.log('Submitting score:', {
+                        game_id: this.gameName,
+                        player_name: this.playerName,
+                        score: this.hasScore ? score : 0
+                    });
+
                     const { data, error } = await supabase
                         .from('game_highscores')
                         .insert([{
@@ -328,10 +334,13 @@
                             created_at: new Date().toISOString()
                         }]);
 
-                    if (error) throw error;
-                    console.log('Score submitted to leaderboard');
+                    if (error) {
+                        console.error('Supabase error details:', error);
+                        throw error;
+                    }
+                    console.log('Score submitted successfully to leaderboard', data);
                 } catch (error) {
-                    console.warn('Failed to submit score:', error.message);
+                    console.error('Failed to submit score:', error);
                 }
             }
         }
@@ -549,6 +558,9 @@
             }
         }
 
+        // Fixed tree heights to prevent glitching
+        const treeHeights = [75, 95, 68, 88, 82];
+
         // Draw background
         function drawBackground() {
             // Sky
@@ -569,7 +581,7 @@
             // Trees (simple squares)
             for (let i = 0; i < 5; i++) {
                 const x = 150 + i * 150;
-                const treeHeight = 60 + Math.random() * 40;
+                const treeHeight = treeHeights[i];
 
                 // Tree trunk
                 ctx.fillStyle = '#654321';
