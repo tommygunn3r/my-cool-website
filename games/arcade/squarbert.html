@@ -267,9 +267,7 @@
         </div>
 
         <div id="gameOverScreen">
-            <h1>GAME OVER</h1>
-            <div id="finalScore" style="font-size: 32px; margin: 20px 0;"></div>
-            <button class="button" onclick="restartGame()">Play Again</button>
+            <div id="creditsContent"></div>
         </div>
 
         <div id="mobile-controls">
@@ -289,39 +287,22 @@
     </div>
 
     <script type="module">
-        // ===== EMBEDDED FIREBASE CONFIGURATION AND SCORE MANAGER =====
-        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-        import { getAuth, signInAnonymously } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
-        import { getFirestore, collection, addDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+        // ===== SUPABASE CONFIGURATION =====
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/+esm';
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyDjdo3U9qg_h4TKvplsFoZgxVNepAbCpFA",
-            authDomain: "gunners-games.firebaseapp.com",
-            projectId: "gunners-games",
-            storageBucket: "gunners-games.firebasestorage.app",
-            messagingSenderId: "644077315462",
-            appId: "1:644077315462:web:431dd985426f3dbe02f807",
-            measurementId: "G-RWNL900X43"
-        };
+        const SUPABASE_URL = 'https://pknhslxhpohrzgsfkisr.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_-zZw-pi_3q1sdNGhITKuhQ_ECyDARzc';
 
-        let db = null;
-        let auth = null;
-        let firebaseInitialized = false;
+        let supabase;
+        let supabaseInitialized = false;
 
-        async function initFirebase() {
-            try {
-                const app = initializeApp(firebaseConfig);
-                db = getFirestore(app);
-                auth = getAuth(app);
-                await signInAnonymously(auth);
-                firebaseInitialized = true;
-                console.log('Firebase initialized successfully');
-            } catch (error) {
-                console.warn('Firebase not available, game will work without leaderboard:', error.message);
-            }
+        try {
+            supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            supabaseInitialized = true;
+            console.log('Supabase initialized successfully');
+        } catch (error) {
+            console.warn('Supabase not available, game will work without leaderboard:', error.message);
         }
-
-        initFirebase();
 
         class GameScoreManager {
             constructor(gameName, hasScore = true) {
@@ -357,7 +338,7 @@
             }
 
             async submitGameResult(score = 0) {
-                if (!firebaseInitialized || !db) {
+                if (!supabaseInitialized || !supabase) {
                     console.log('Leaderboard unavailable - playing offline');
                     return;
                 }
@@ -365,13 +346,16 @@
                 const timePlayed = this.getElapsedTime();
 
                 try {
-                    await addDoc(collection(db, 'scores'), {
-                        gameName: this.gameName,
-                        playerName: this.playerName,
-                        score: this.hasScore ? score : 0,
-                        timePlayed: timePlayed,
-                        timestamp: serverTimestamp()
-                    });
+                    const { data, error } = await supabase
+                        .from('game_highscores')
+                        .insert([{
+                            game_id: this.gameName,
+                            player_name: this.playerName,
+                            score: this.hasScore ? score : 0,
+                            created_at: new Date().toISOString()
+                        }]);
+
+                    if (error) throw error;
                     console.log('Score submitted to leaderboard');
                 } catch (error) {
                     console.warn('Failed to submit score:', error.message);
@@ -1112,12 +1096,41 @@
             gameState.currentState = GameState.GAME_OVER;
             scoreManager.submitGameResult(gameState.score);
 
-            let finalScoreText = `Final Score: ${gameState.score}`;
             const playTime = scoreManager.getElapsedTimeFormatted();
-            finalScoreText += ` | Time: ${playTime}`;
+            const gameOverScreen = document.getElementById('gameOverScreen');
 
-            document.getElementById('finalScore').textContent = finalScoreText;
-            document.getElementById('gameOverScreen').style.display = 'flex';
+            const creditsHTML = `
+                <h1 style="font-size: 64px; margin-bottom: 30px; text-shadow: 4px 4px 0 #FFD700; color: #FFF; letter-spacing: 4px;">GAME OVER</h1>
+                <div style="font-size: 32px; margin: 20px 0; color: #FFD700;">
+                    Final Score: ${gameState.score}
+                </div>
+                <div style="font-size: 24px; margin: 10px 0; color: #4ECDC4;">
+                    Level Reached: ${gameState.level}
+                </div>
+                <div style="font-size: 20px; margin: 10px 0; color: #FF6B6B;">
+                    Time Played: ${playTime}
+                </div>
+                <div style="margin-top: 40px; font-size: 18px; line-height: 2; text-align: center;">
+                    <p style="color: #FFD700; font-size: 24px; margin-bottom: 20px;">~ CREDITS ~</p>
+                    <p>Game Design & Development</p>
+                    <p style="color: #4ECDC4;">Gunner's Games</p>
+                    <br>
+                    <p>Special Thanks</p>
+                    <p style="color: #4ECDC4;">To all pyramid jumpers!</p>
+                </div>
+                <button class="button" onclick="closeGame()" style="margin-top: 30px;">Back to Arcade</button>
+            `;
+
+            document.getElementById('creditsContent').innerHTML = creditsHTML;
+            gameOverScreen.style.display = 'flex';
+        }
+
+        function closeGame() {
+            if (window.parent !== window) {
+                window.parent.postMessage({ action: 'closeGame' }, '*');
+            } else {
+                window.location.href = '../../arcade.html';
+            }
         }
 
         function updateUI() {
@@ -1242,10 +1255,6 @@
             animationId = requestAnimationFrame(gameLoop);
         };
 
-        window.restartGame = function() {
-            document.getElementById('gameOverScreen').style.display = 'none';
-            window.startGame();
-        };
     </script>
 </body>
 </html>
