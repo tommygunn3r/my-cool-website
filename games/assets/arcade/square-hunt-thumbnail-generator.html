@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Square Hunt Thumbnail Generator</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: #222;
+            margin: 0;
+        }
+        canvas {
+            border: 2px solid white;
+            image-rendering: pixelated;
+        }
+        .instructions {
+            position: absolute;
+            top: 20px;
+            color: white;
+            text-align: center;
+            font-family: Arial;
+        }
+    </style>
+</head>
+<body>
+    <div class="instructions">
+        <h2>Square Hunt Thumbnail</h2>
+        <p>Right-click and save this canvas as "square-hunt.png" (280x250)</p>
+    </div>
+    <canvas id="thumbnail" width="280" height="250"></canvas>
+
+    <script>
+        const canvas = document.getElementById('thumbnail');
+        const ctx = canvas.getContext('2d');
+
+        // Sky background
+        const gradient = ctx.createLinearGradient(0, 0, 0, 150);
+        gradient.addColorStop(0, '#5C94FC');
+        gradient.addColorStop(1, '#87CEEB');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, 280, 150);
+
+        // Grass
+        ctx.fillStyle = '#228B22';
+        ctx.fillRect(0, 150, 280, 100);
+
+        // Grass stripe
+        ctx.fillStyle = '#2E8B57';
+        ctx.fillRect(0, 150, 280, 15);
+
+        // Draw some trees
+        for (let i = 0; i < 3; i++) {
+            const x = 40 + i * 100;
+
+            // Tree trunk
+            ctx.fillStyle = '#654321';
+            ctx.fillRect(x, 120, 12, 30);
+
+            // Tree foliage
+            ctx.fillStyle = '#228B22';
+            ctx.fillRect(x - 15, 100, 42, 25);
+            ctx.fillRect(x - 8, 85, 28, 18);
+        }
+
+        // Draw flying ducks
+        function drawDuck(x, y, scale = 1) {
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.scale(scale, scale);
+
+            // Duck body (square)
+            ctx.fillStyle = '#8B6914';
+            ctx.fillRect(-15, -10, 30, 22);
+
+            // Duck head (smaller square)
+            ctx.fillStyle = '#228B22';
+            ctx.fillRect(10, -15, 12, 12);
+
+            // Duck beak
+            ctx.fillStyle = '#FFA500';
+            ctx.fillRect(20, -10, 6, 4);
+
+            // Duck eye
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(14, -12, 2, 2);
+
+            // Wings
+            ctx.fillStyle = '#654321';
+            ctx.fillRect(-18, -8, 4, 12);
+            ctx.fillRect(14, -8, 4, 12);
+
+            ctx.restore();
+        }
+
+        // Draw multiple ducks
+        drawDuck(80, 50, 1.2);
+        drawDuck(180, 70, 1.0);
+        drawDuck(220, 40, 0.9);
+
+        // Draw dog
+        ctx.save();
+        ctx.translate(40, 190);
+
+        // Dog body (square)
+        ctx.fillStyle = '#8B4513';
+        ctx.fillRect(0, 0, 35, 28);
+
+        // Dog head (square)
+        ctx.fillStyle = '#A0522D';
+        ctx.fillRect(25, -18, 22, 22);
+
+        // Dog nose
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(42, -8, 6, 6);
+
+        // Dog eyes
+        ctx.fillRect(30, -13, 4, 4);
+
+        // Dog ears
+        ctx.fillStyle = '#654321';
+        ctx.fillRect(24, -20, 8, 6);
+        ctx.fillRect(39, -20, 8, 6);
+
+        // Dog legs
+        ctx.fillRect(4, 28, 6, 12);
+        ctx.fillRect(25, 28, 6, 12);
+
+        // Dog tail
+        ctx.fillRect(-8, 8, 10, 6);
+
+        ctx.restore();
+
+        // Draw crosshair
+        ctx.strokeStyle = '#FF0000';
+        ctx.lineWidth = 2;
+
+        // Crosshair position
+        const chX = 170;
+        const chY = 60;
+
+        // Horizontal line
+        ctx.beginPath();
+        ctx.moveTo(chX - 15, chY);
+        ctx.lineTo(chX + 15, chY);
+        ctx.stroke();
+
+        // Vertical line
+        ctx.beginPath();
+        ctx.moveTo(chX, chY - 15);
+        ctx.lineTo(chX, chY + 15);
+        ctx.stroke();
+
+        // Center circle
+        ctx.beginPath();
+        ctx.arc(chX, chY, 5, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // Title at bottom
+        ctx.fillStyle = '#FFFFFF';
+        ctx.font = 'bold 24px Arial';
+        ctx.textAlign = 'center';
+        ctx.shadowColor = '#000000';
+        ctx.shadowBlur = 4;
+        ctx.shadowOffsetX = 2;
+        ctx.shadowOffsetY = 2;
+        ctx.fillText('SQUARE HUNT', 140, 235);
+    </script>
+</body>
+</html>

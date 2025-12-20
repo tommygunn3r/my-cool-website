@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Square Hunt - Gunner's Games</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: #000000;
+            font-family: 'Courier New', monospace;
+            overflow: hidden;
+            cursor: none;
+        }
+
+        #gameContainer {
+            position: relative;
+            width: 800px;
+            height: 600px;
+            background: #5C94FC;
+            border: 4px solid #FF6B00;
+            box-shadow: 0 0 20px rgba(255, 107, 0, 0.5);
+        }
+
+        #gameCanvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            image-rendering: pixelated;
+        }
+
+        /* Crosshair Cursor */
+        #crosshair {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            pointer-events: none;
+            z-index: 100;
+            transform: translate(-50%, -50%);
+        }
+
+        .crosshair-line {
+            position: absolute;
+            background: #FF0000;
+            box-shadow: 0 0 5px #FF0000;
+        }
+
+        .crosshair-h {
+            width: 40px;
+            height: 2px;
+            top: 50%;
+            left: 0;
+            transform: translateY(-50%);
+        }
+
+        .crosshair-v {
+            width: 2px;
+            height: 40px;
+            left: 50%;
+            top: 0;
+            transform: translateX(-50%);
+        }
+
+        .crosshair-center {
+            width: 8px;
+            height: 8px;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            background: transparent;
+            border: 2px solid #FF0000;
+            border-radius: 50%;
+            box-shadow: 0 0 5px #FF0000;
+        }
+
+        /* UI Elements */
+        #ui {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: #FFFFFF;
+            font-size: 18px;
+            text-shadow: 2px 2px 4px #000000;
+            z-index: 5;
+            font-weight: bold;
+        }
+
+        #ui div {
+            margin-bottom: 8px;
+        }
+
+        #bullets-display {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 8px;
+            z-index: 5;
+        }
+
+        .bullet-icon {
+            width: 12px;
+            height: 30px;
+            background: #FF0000;
+            border-radius: 3px;
+            box-shadow: 0 0 5px rgba(255, 0, 0, 0.8);
+        }
+
+        .bullet-icon.used {
+            background: #333333;
+            box-shadow: none;
+        }
+
+        /* Start Screen */
+        #startScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: #FF6B00;
+            z-index: 10;
+        }
+
+        #startScreen h1 {
+            font-size: 64px;
+            margin-bottom: 30px;
+            text-shadow: 0 0 20px #FF6B00, 0 0 40px #FF6B00;
+            letter-spacing: 4px;
+        }
+
+        .instructions {
+            text-align: center;
+            margin: 20px;
+            font-size: 18px;
+            line-height: 1.8;
+            color: #FFFFFF;
+        }
+
+        .start-button {
+            margin-top: 30px;
+            padding: 20px 50px;
+            font-size: 24px;
+            background: #FF6B00;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            box-shadow: 0 0 20px rgba(255, 107, 0, 0.5);
+            transition: all 0.3s;
+        }
+
+        .start-button:hover {
+            background: #FF8C00;
+            box-shadow: 0 0 30px rgba(255, 107, 0, 0.8);
+            transform: scale(1.05);
+        }
+
+        /* Game Over Screen */
+        #gameOverScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: #FF6B00;
+            z-index: 10;
+        }
+
+        #gameOverScreen h2 {
+            font-size: 48px;
+            margin-bottom: 20px;
+            text-shadow: 0 0 20px #FF6B00;
+        }
+
+        #gameOverScreen .score-display {
+            font-size: 32px;
+            margin: 10px;
+            color: #FFFFFF;
+        }
+
+        #gameOverScreen .high-score {
+            font-size: 24px;
+            margin: 10px;
+            color: #FFD700;
+            text-shadow: 0 0 10px #FFD700;
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <canvas id="gameCanvas"></canvas>
+
+        <!-- Crosshair -->
+        <div id="crosshair">
+            <div class="crosshair-line crosshair-h"></div>
+            <div class="crosshair-line crosshair-v"></div>
+            <div class="crosshair-center"></div>
+        </div>
+
+        <!-- UI -->
+        <div id="ui">
+            <div>SCORE: <span id="score">0</span></div>
+            <div>ROUND: <span id="round">1</span></div>
+            <div>DUCKS HIT: <span id="ducksHit">0</span>/<span id="ducksTotal">0</span></div>
+        </div>
+
+        <!-- Bullets Display -->
+        <div id="bullets-display">
+            <div class="bullet-icon"></div>
+            <div class="bullet-icon"></div>
+            <div class="bullet-icon"></div>
+        </div>
+
+        <!-- Start Screen -->
+        <div id="startScreen">
+            <h1>SQUARE HUNT</h1>
+            <div class="instructions">
+                <p>🦆 Shoot the square ducks with your mouse! 🦆</p>
+                <p>• Click to shoot (3 bullets per round)</p>
+                <p>• Hit ducks before they fly away</p>
+                <p>• Each duck is worth 500 points</p>
+                <p>• Miss too many and it's game over!</p>
+            </div>
+            <button class="start-button" onclick="startGame()">START HUNT</button>
+            <div class="high-score" style="margin-top: 30px;">
+                HIGH SCORE: <span id="highScoreDisplay">0</span>
+            </div>
+        </div>
+
+        <!-- Game Over Screen -->
+        <div id="gameOverScreen">
+            <h2>GAME OVER!</h2>
+            <div class="score-display">FINAL SCORE: <span id="finalScore">0</span></div>
+            <div class="high-score">HIGH SCORE: <span id="finalHighScore">0</span></div>
+            <button class="start-button" onclick="restartGame()">PLAY AGAIN</button>
+        </div>
+    </div>
+
+    <script type="module">
+        // ===== SUPABASE CONFIGURATION =====
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/+esm';
+
+        const SUPABASE_URL = 'https://pknhslxhpohrzgsfkisr.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_-zZw-pi_3q1sdNGhITKuhQ_ECyDARzc';
+
+        let supabase;
+        let supabaseInitialized = false;
+
+        try {
+            supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            supabaseInitialized = true;
+            console.log('Supabase initialized successfully');
+        } catch (error) {
+            console.warn('Supabase not available, game will work without leaderboard:', error.message);
+        }
+
+        // Embedded GameScoreManager class
+        class GameScoreManager {
+            constructor(gameName, hasScore = true) {
+                this.gameName = gameName;
+                this.hasScore = hasScore;
+                this.sessionStartTime = null;
+                this.playerName = localStorage.getItem('playerName') || this.generatePlayerName();
+            }
+
+            generatePlayerName() {
+                const adjectives = ['Swift', 'Mighty', 'Epic', 'Legendary', 'Brave', 'Noble', 'Quick', 'Bold'];
+                const nouns = ['Gamer', 'Player', 'Hero', 'Champion', 'Master', 'Legend', 'Pro', 'Ace'];
+                const name = `${adjectives[Math.floor(Math.random() * adjectives.length)]}${nouns[Math.floor(Math.random() * nouns.length)]}${Math.floor(Math.random() * 999)}`;
+                localStorage.setItem('playerName', name);
+                return name;
+            }
+
+            startSession() {
+                this.sessionStartTime = Date.now();
+            }
+
+            getElapsedTime() {
+                if (!this.sessionStartTime) return 0;
+                return Math.floor((Date.now() - this.sessionStartTime) / 1000);
+            }
+
+            getElapsedTimeFormatted() {
+                const seconds = this.getElapsedTime();
+                if (seconds < 60) return `${seconds}s`;
+                const mins = Math.floor(seconds / 60);
+                const secs = seconds % 60;
+                return `${mins}m ${secs}s`;
+            }
+
+            async submitGameResult(score = 0) {
+                if (!supabaseInitialized || !supabase) {
+                    console.log('Leaderboard unavailable - playing offline');
+                    return;
+                }
+
+                const timePlayed = this.getElapsedTime();
+
+                try {
+                    const { data, error } = await supabase
+                        .from('game_highscores')
+                        .insert([{
+                            game_id: this.gameName,
+                            player_name: this.playerName,
+                            score: this.hasScore ? score : 0,
+                            created_at: new Date().toISOString()
+                        }]);
+
+                    if (error) throw error;
+                    console.log('Score submitted to leaderboard');
+                } catch (error) {
+                    console.warn('Failed to submit score:', error.message);
+                }
+            }
+        }
+        // ===== END EMBEDDED CODE =====
+
+        // Initialize score manager
+        const scoreManager = new GameScoreManager('square-hunt', true);
+
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = 800;
+        canvas.height = 600;
+
+        // Game state
+        let gameState = 'start';
+        let score = 0;
+        let round = 1;
+        let bullets = 3;
+        let ducks = [];
+        let dog = null;
+        let ducksHitThisRound = 0;
+        let ducksTotalThisRound = 0;
+        let totalDucksMissed = 0;
+        let highScore = localStorage.getItem('squareHuntHighScore') || 0;
+
+        // Mouse position
+        let mouseX = 400;
+        let mouseY = 300;
+
+        // Display high score on start screen
+        document.getElementById('highScoreDisplay').textContent = highScore;
+
+        // Crosshair element
+        const crosshair = document.getElementById('crosshair');
+
+        // Track mouse position
+        document.addEventListener('mousemove', (e) => {
+            const rect = canvas.getBoundingClientRect();
+            mouseX = ((e.clientX - rect.left) * canvas.width) / rect.width;
+            mouseY = ((e.clientY - rect.top) * canvas.height) / rect.height;
+
+            // Update crosshair position
+            crosshair.style.left = e.clientX - rect.left + 'px';
+            crosshair.style.top = e.clientY - rect.top + 'px';
+        });
+
+        // Shoot on click
+        canvas.addEventListener('click', () => {
+            if (gameState === 'playing' && bullets > 0) {
+                shoot();
+            }
+        });
+
+        // Square Duck class
+        class Duck {
+            constructor(x, y, direction) {
+                this.x = x;
+                this.y = y;
+                this.width = 40;
+                this.height = 30;
+                this.speed = 2 + Math.random() * 2;
+                this.direction = direction; // 1 = right, -1 = left
+                this.angle = 0;
+                this.flapping = 0;
+                this.state = 'flying'; // flying, hit, falling
+                this.fallSpeed = 0;
+                this.hit = false;
+            }
+
+            update() {
+                if (this.state === 'flying') {
+                    this.x += this.speed * this.direction;
+                    this.y += Math.sin(this.x * 0.02) * 1.5;
+                    this.flapping += 0.2;
+
+                    // Remove if off screen
+                    if (this.x < -50 || this.x > canvas.width + 50 || this.y < -50) {
+                        return false;
+                    }
+                } else if (this.state === 'falling') {
+                    this.fallSpeed += 0.5;
+                    this.y += this.fallSpeed;
+                    this.angle += 0.2;
+
+                    // Remove if off screen
+                    if (this.y > canvas.height + 50) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+
+                if (this.direction === -1) {
+                    ctx.scale(-1, 1);
+                }
+
+                if (this.state === 'falling') {
+                    ctx.rotate(this.angle);
+                }
+
+                // Duck body (square)
+                ctx.fillStyle = this.hit ? '#8B4513' : '#8B6914';
+                ctx.fillRect(-this.width/2, -this.height/2, this.width, this.height);
+
+                // Duck head (smaller square)
+                ctx.fillStyle = this.hit ? '#654321' : '#228B22';
+                ctx.fillRect(this.width/2 - 15, -this.height/2 - 10, 15, 15);
+
+                // Duck beak
+                ctx.fillStyle = '#FFA500';
+                ctx.fillRect(this.width/2, -this.height/2 - 5, 8, 5);
+
+                // Duck eye
+                ctx.fillStyle = '#000000';
+                ctx.fillRect(this.width/2 - 8, -this.height/2 - 8, 3, 3);
+
+                // Wings (flapping)
+                if (this.state === 'flying') {
+                    const wingOffset = Math.sin(this.flapping) * 5;
+                    ctx.fillStyle = '#654321';
+                    // Left wing
+                    ctx.fillRect(-this.width/2 - 5, -this.height/2 + wingOffset, 5, 15);
+                    // Right wing
+                    ctx.fillRect(this.width/2, -this.height/2 + wingOffset, 5, 15);
+                }
+
+                ctx.restore();
+            }
+
+            checkHit(x, y) {
+                if (this.state !== 'flying') return false;
+
+                const dx = x - this.x;
+                const dy = y - this.y;
+                const distance = Math.sqrt(dx * dx + dy * dy);
+
+                if (distance < 30) {
+                    this.state = 'falling';
+                    this.hit = true;
+                    return true;
+                }
+                return false;
+            }
+        }
+
+        // Square Dog class
+        class Dog {
+            constructor() {
+                this.x = 100;
+                this.y = canvas.height - 150;
+                this.width = 50;
+                this.height = 40;
+                this.state = 'waiting'; // waiting, jumping, laughing
+                this.jumpProgress = 0;
+            }
+
+            update() {
+                if (this.state === 'jumping') {
+                    this.jumpProgress += 0.05;
+                    if (this.jumpProgress >= 1) {
+                        this.state = 'waiting';
+                        this.jumpProgress = 0;
+                    }
+                }
+            }
+
+            draw() {
+                ctx.save();
+
+                let yOffset = 0;
+                if (this.state === 'jumping') {
+                    yOffset = -Math.sin(this.jumpProgress * Math.PI) * 50;
+                }
+
+                ctx.translate(this.x, this.y + yOffset);
+
+                // Dog body (square)
+                ctx.fillStyle = '#8B4513';
+                ctx.fillRect(0, 0, this.width, this.height);
+
+                // Dog head (square)
+                ctx.fillStyle = '#A0522D';
+                ctx.fillRect(this.width - 20, -25, 30, 30);
+
+                // Dog nose
+                ctx.fillStyle = '#000000';
+                ctx.fillRect(this.width + 5, -10, 8, 8);
+
+                // Dog eyes
+                ctx.fillRect(this.width - 5, -18, 5, 5);
+
+                // Dog ears
+                ctx.fillStyle = '#654321';
+                ctx.fillRect(this.width - 18, -28, 10, 8);
+                ctx.fillRect(this.width + 8, -28, 10, 8);
+
+                // Dog legs
+                ctx.fillStyle = '#654321';
+                ctx.fillRect(5, this.height, 8, 15);
+                ctx.fillRect(this.width - 13, this.height, 8, 15);
+
+                // Dog tail
+                ctx.fillRect(-10, 10, 12, 8);
+
+                ctx.restore();
+            }
+
+            jump() {
+                this.state = 'jumping';
+                this.jumpProgress = 0;
+            }
+        }
+
+        // Draw background
+        function drawBackground() {
+            // Sky
+            const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height * 0.6);
+            gradient.addColorStop(0, '#5C94FC');
+            gradient.addColorStop(1, '#87CEEB');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, canvas.width, canvas.height * 0.6);
+
+            // Grass (darker green)
+            ctx.fillStyle = '#228B22';
+            ctx.fillRect(0, canvas.height * 0.6, canvas.width, canvas.height * 0.4);
+
+            // Grass (lighter green stripe)
+            ctx.fillStyle = '#2E8B57';
+            ctx.fillRect(0, canvas.height * 0.6, canvas.width, 20);
+
+            // Trees (simple squares)
+            for (let i = 0; i < 5; i++) {
+                const x = 150 + i * 150;
+                const treeHeight = 60 + Math.random() * 40;
+
+                // Tree trunk
+                ctx.fillStyle = '#654321';
+                ctx.fillRect(x, canvas.height * 0.6 - treeHeight, 15, treeHeight);
+
+                // Tree top (foliage)
+                ctx.fillStyle = '#228B22';
+                ctx.fillRect(x - 20, canvas.height * 0.6 - treeHeight - 30, 55, 35);
+                ctx.fillRect(x - 10, canvas.height * 0.6 - treeHeight - 50, 35, 25);
+            }
+        }
+
+        // Shoot function
+        function shoot() {
+            bullets--;
+            updateBulletsDisplay();
+
+            // Check if any duck was hit
+            let hitDuck = false;
+            for (let duck of ducks) {
+                if (duck.checkHit(mouseX, mouseY)) {
+                    hitDuck = true;
+                    score += 500;
+                    ducksHitThisRound++;
+                    updateUI();
+                    break;
+                }
+            }
+
+            // If all bullets used, check round end
+            if (bullets === 0) {
+                setTimeout(checkRoundEnd, 1000);
+            }
+        }
+
+        // Update bullets display
+        function updateBulletsDisplay() {
+            const bulletIcons = document.querySelectorAll('.bullet-icon');
+            bulletIcons.forEach((icon, index) => {
+                if (index >= bullets) {
+                    icon.classList.add('used');
+                } else {
+                    icon.classList.remove('used');
+                }
+            });
+        }
+
+        // Update UI
+        function updateUI() {
+            document.getElementById('score').textContent = score;
+            document.getElementById('round').textContent = round;
+            document.getElementById('ducksHit').textContent = ducksHitThisRound;
+            document.getElementById('ducksTotal').textContent = ducksTotalThisRound;
+        }
+
+        // Check round end
+        function checkRoundEnd() {
+            // Count remaining flying ducks
+            const flyingDucks = ducks.filter(d => d.state === 'flying').length;
+
+            if (flyingDucks === 0 || bullets === 0) {
+                // Calculate missed ducks
+                const missedThisRound = ducksTotalThisRound - ducksHitThisRound;
+                totalDucksMissed += missedThisRound;
+
+                // Game over if missed too many
+                if (totalDucksMissed >= 4) {
+                    gameOver();
+                    return;
+                }
+
+                // Start next round
+                setTimeout(() => {
+                    round++;
+                    startRound();
+                }, 2000);
+            }
+        }
+
+        // Start round
+        function startRound() {
+            bullets = 3;
+            ducks = [];
+            ducksHitThisRound = 0;
+            ducksTotalThisRound = Math.min(1 + Math.floor(round / 2), 2); // 1-2 ducks
+
+            updateUI();
+            updateBulletsDisplay();
+
+            // Dog jumps
+            if (dog) {
+                dog.jump();
+            }
+
+            // Spawn ducks after dog jump
+            setTimeout(() => {
+                for (let i = 0; i < ducksTotalThisRound; i++) {
+                    const direction = Math.random() > 0.5 ? 1 : -1;
+                    const x = direction === 1 ? -50 : canvas.width + 50;
+                    const y = 150 + Math.random() * 150;
+                    ducks.push(new Duck(x, y, direction));
+                }
+            }, 500);
+        }
+
+        // Start game
+        function startGame() {
+            document.getElementById('startScreen').style.display = 'none';
+            gameState = 'playing';
+            score = 0;
+            round = 1;
+            totalDucksMissed = 0;
+
+            dog = new Dog();
+
+            // Start score tracking session
+            scoreManager.startSession();
+
+            startRound();
+            gameLoop();
+        }
+
+        // Make startGame available globally
+        window.startGame = startGame;
+
+        // Game over
+        async function gameOver() {
+            gameState = 'gameOver';
+
+            // Update high score
+            if (score > highScore) {
+                highScore = score;
+                localStorage.setItem('squareHuntHighScore', highScore);
+            }
+
+            // Submit score to leaderboard
+            await scoreManager.submitGameResult(score);
+
+            document.getElementById('finalScore').textContent = score;
+            document.getElementById('finalHighScore').textContent = highScore;
+            document.getElementById('gameOverScreen').style.display = 'flex';
+        }
+
+        // Restart game
+        function restartGame() {
+            document.getElementById('gameOverScreen').style.display = 'none';
+            startGame();
+        }
+
+        // Make restartGame available globally
+        window.restartGame = restartGame;
+
+        // Main game loop
+        function gameLoop() {
+            if (gameState !== 'playing') return;
+
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw background
+            drawBackground();
+
+            // Update and draw dog
+            if (dog) {
+                dog.update();
+                dog.draw();
+            }
+
+            // Update and draw ducks
+            for (let i = ducks.length - 1; i >= 0; i--) {
+                if (!ducks[i].update()) {
+                    ducks.splice(i, 1);
+                } else {
+                    ducks[i].draw();
+                }
+            }
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Initialize
+        updateUI();
+        updateBulletsDisplay();
+    </script>
+</body>
+</html>
