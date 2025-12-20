@@ -354,6 +354,84 @@
         canvas.width = 800;
         canvas.height = 600;
 
+        // Audio context for sound effects
+        let audioCtx = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            // Resume audio context if suspended (browser autoplay policy)
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function playSound(frequency, duration, type = 'sine') {
+            if (!audioCtx) return;
+
+            try {
+                const oscillator = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+
+                oscillator.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+
+                oscillator.frequency.value = frequency;
+                oscillator.type = type;
+
+                gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+
+                oscillator.start(audioCtx.currentTime);
+                oscillator.stop(audioCtx.currentTime + duration);
+            } catch (e) {
+                console.log('Audio error:', e);
+            }
+        }
+
+        function playShootSound() {
+            playSound(800, 0.1, 'square');
+            setTimeout(() => playSound(400, 0.05, 'square'), 30);
+        }
+
+        function playHitSound() {
+            playSound(600, 0.2, 'sawtooth');
+        }
+
+        function playMissSound() {
+            playSound(200, 0.15, 'triangle');
+        }
+
+        function playDogBarkSound() {
+            playSound(300, 0.15, 'square');
+            setTimeout(() => playSound(250, 0.1, 'square'), 80);
+        }
+
+        function playDuckFallSound() {
+            // Descending whistle
+            if (!audioCtx) return;
+            try {
+                const oscillator = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+
+                oscillator.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+
+                oscillator.frequency.setValueAtTime(800, audioCtx.currentTime);
+                oscillator.frequency.exponentialRampToValueAtTime(200, audioCtx.currentTime + 0.5);
+                oscillator.type = 'sine';
+
+                gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+
+                oscillator.start(audioCtx.currentTime);
+                oscillator.stop(audioCtx.currentTime + 0.5);
+            } catch (e) {
+                console.log('Audio error:', e);
+            }
+        }
+
         // Game state
         let gameState = 'start';
         let score = 0;
@@ -598,6 +676,7 @@
         function shoot() {
             bullets--;
             updateBulletsDisplay();
+            playShootSound();
 
             // Check if any duck was hit
             let hitDuck = false;
@@ -607,8 +686,15 @@
                     score += 500;
                     ducksHitThisRound++;
                     updateUI();
+                    playHitSound();
+                    playDuckFallSound();
                     break;
                 }
+            }
+
+            // Play miss sound if no duck was hit
+            if (!hitDuck) {
+                playMissSound();
             }
 
             // If all bullets used, check round end
@@ -674,6 +760,7 @@
             // Dog jumps
             if (dog) {
                 dog.jump();
+                playDogBarkSound();
             }
 
             // Spawn ducks after dog jump
@@ -696,6 +783,9 @@
             totalDucksMissed = 0;
 
             dog = new Dog();
+
+            // Initialize audio on user interaction
+            initAudio();
 
             // Start score tracking session
             scoreManager.startSession();
