@@ -372,18 +372,28 @@
 
         @media (max-width: 768px) {
             .title {
-                font-size: 2rem;
+                font-size: 2.2rem;
             }
 
             .carousel-container {
-                height: 400px;
+                height: 480px;
             }
 
             .game-card {
-                width: 260px;
-                height: 360px;
-                margin-left: -130px;
-                margin-top: -180px;
+                width: 300px;
+                height: 420px;
+                margin-left: -150px;
+                margin-top: -210px;
+            }
+
+            .game-thumbnail {
+                height: 260px;
+            }
+
+            .game-description {
+                font-size: 0.95rem;
+                line-height: 1.4;
+                padding: 12px;
             }
 
             .game-card.left-2, .game-card.right-2 {
@@ -391,9 +401,9 @@
             }
 
             .carousel-button {
-                width: 50px;
-                height: 50px;
-                font-size: 1.5rem;
+                width: 55px;
+                height: 55px;
+                font-size: 1.6rem;
             }
 
             .fixed-nav {
@@ -403,8 +413,8 @@
             }
 
             .nav-button {
-                padding: 10px 18px;
-                font-size: 0.9rem;
+                padding: 12px 20px;
+                font-size: 0.95rem;
             }
 
             /* Game navigation overlay mobile */
@@ -416,7 +426,44 @@
             }
 
             .game-nav-btn {
-                padding: 10px 18px;
+                padding: 12px 20px;
+                font-size: 0.9rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .title {
+                font-size: 1.8rem;
+            }
+
+            .carousel-container {
+                height: 420px;
+            }
+
+            .game-card {
+                width: 270px;
+                height: 380px;
+                margin-left: -135px;
+                margin-top: -190px;
+            }
+
+            .game-thumbnail {
+                height: 220px;
+            }
+
+            .game-description {
+                font-size: 0.85rem;
+                padding: 10px;
+            }
+
+            .carousel-button {
+                width: 50px;
+                height: 50px;
+                font-size: 1.4rem;
+            }
+
+            .nav-button, .game-nav-btn {
+                padding: 10px 16px;
                 font-size: 0.85rem;
             }
         }
