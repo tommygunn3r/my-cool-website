@@ -307,15 +307,29 @@
 
         async function initGameAuth() {
             try {
-                const { data: { user } } = await supabase.auth.getUser();
-                if (user) {
-                    currentUser = user;
-                    const playerName = user.user_metadata?.display_name ||
-                                user.email?.split('@')[0] ||
-                                "Anonymous";
-                    scoreManager.playerName = playerName;
-                    console.log("Player identified:", playerName);
+                const { data: { session } } = await supabase.auth.getSession();
+                if (!session?.user) {
+                    console.log("No Supabase user – scores will stay local only.");
+                    return;
                 }
+
+                currentUser = session.user;
+
+                // Try to get player name from profiles table
+                const { data: profile } = await supabase
+                    .from("profiles")
+                    .select("player_name")
+                    .eq("user_id", currentUser.id)
+                    .single();
+
+                if (profile?.player_name) {
+                    scoreManager.playerName = profile.player_name;
+                } else {
+                    scoreManager.playerName = currentUser.user_metadata?.display_name ||
+                                        currentUser.email?.split('@')[0] ||
+                                        "Anonymous";
+                }
+                console.log("Player identified:", scoreManager.playerName);
             } catch (error) {
                 console.warn("Auth check failed:", error);
             }
@@ -1139,19 +1153,20 @@
                     <p>Special Thanks</p>
                     <p style="color: #4ECDC4;">To all pyramid jumpers!</p>
                 </div>
-                <button class="button" onclick="closeGame()" style="margin-top: 30px;">Back to Arcade</button>
+                <p style="font-size: 0.65rem; margin-top: 1.5rem; color: #999;">Returning to Arcade in 5 seconds...</p>
             `;
 
             document.getElementById('creditsContent').innerHTML = creditsHTML;
             gameOverScreen.style.display = 'flex';
-        }
 
-        function closeGame() {
-            if (window.parent !== window) {
-                window.parent.postMessage({ action: 'closeGame' }, '*');
-            } else {
-                window.location.href = '../../arcade.html';
-            }
+            // Return to arcade after showing credits
+            setTimeout(() => {
+                if (window.parent !== window) {
+                    window.parent.postMessage({ action: 'closeGame' }, '*');
+                } else {
+                    window.location.href = '../../arcade.html';
+                }
+            }, 5000);
         }
 
         function updateUI() {
