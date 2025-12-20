@@ -249,6 +249,11 @@
                     <span class="control-key">↓</span>
                     <span class="control-key">←</span>
                     <span class="control-key">→</span>
+                    or
+                    <span class="control-key">W</span>
+                    <span class="control-key">S</span>
+                    <span class="control-key">A</span>
+                    <span class="control-key">D</span>
                     to Jump
                 </p>
                 <p style="margin-top: 10px;">
@@ -1130,16 +1135,16 @@
 
             if (gameState.currentState !== GameState.PLAYING) return;
 
-            if (e.code === 'ArrowUp') {
+            if (e.code === 'ArrowUp' || e.code === 'KeyW') {
                 e.preventDefault();
                 squarbert.jump('up-left');
-            } else if (e.code === 'ArrowRight') {
+            } else if (e.code === 'ArrowRight' || e.code === 'KeyD') {
                 e.preventDefault();
                 squarbert.jump('up-right');
-            } else if (e.code === 'ArrowDown') {
+            } else if (e.code === 'ArrowDown' || e.code === 'KeyS') {
                 e.preventDefault();
                 squarbert.jump('down-right');
-            } else if (e.code === 'ArrowLeft') {
+            } else if (e.code === 'ArrowLeft' || e.code === 'KeyA') {
                 e.preventDefault();
                 squarbert.jump('down-left');
             } else if (e.code === 'Space') {
