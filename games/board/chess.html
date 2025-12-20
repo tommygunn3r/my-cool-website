@@ -1059,7 +1059,7 @@
                     if (piece && piece.color !== color) {
                         const tempState = gameState;
                         gameState = state;
-                        const moves = getPseudoLegalMoves(row, col);
+                        const moves = getPseudoLegalMovesSimple(row, col);
                         gameState = tempState;
 
                         if (moves.some(m => m.row === kingPos.row && m.col === kingPos.col)) {
@@ -1070,6 +1070,45 @@
             }
 
             return false;
+        }
+
+        // Simple version without castling checks (to prevent infinite recursion)
+        function getPseudoLegalMovesSimple(row, col) {
+            const piece = gameState.board[row][col];
+            if (!piece) return [];
+
+            switch (piece.type) {
+                case 'pawn': return getPawnMoves(row, col, piece);
+                case 'knight': return getKnightMoves(row, col, piece);
+                case 'bishop': return getBishopMoves(row, col, piece);
+                case 'rook': return getRookMoves(row, col, piece);
+                case 'queen': return getQueenMoves(row, col, piece);
+                case 'king': return getKingMovesSimple(row, col, piece);
+                default: return [];
+            }
+        }
+
+        function getKingMovesSimple(row, col, piece) {
+            const moves = [];
+            const offsets = [
+                [-1, -1], [-1, 0], [-1, 1],
+                [0, -1], [0, 1],
+                [1, -1], [1, 0], [1, 1]
+            ];
+
+            for (const [rowOff, colOff] of offsets) {
+                const newRow = row + rowOff;
+                const newCol = col + colOff;
+
+                if (newRow >= 0 && newRow < 8 && newCol >= 0 && newCol < 8) {
+                    const target = gameState.board[newRow][newCol];
+                    if (!target || target.color !== piece.color) {
+                        moves.push({ row: newRow, col: newCol });
+                    }
+                }
+            }
+
+            return moves;
         }
 
         function updateGameStatus() {
