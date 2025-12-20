@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Board Games - Gunner's Games</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            background: #0a0a0a;
+            color: #e0e0e0;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Parallax Background */
+        .parallax-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .parallax-layer {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+        }
+
+        .layer-1 {
+            background:
+                linear-gradient(0deg, transparent 24%, rgba(139, 69, 19, 0.05) 25%, rgba(139, 69, 19, 0.05) 26%, transparent 27%, transparent 74%, rgba(139, 69, 19, 0.05) 75%, rgba(139, 69, 19, 0.05) 76%, transparent 77%, transparent),
+                linear-gradient(90deg, transparent 24%, rgba(139, 69, 19, 0.05) 25%, rgba(139, 69, 19, 0.05) 26%, transparent 27%, transparent 74%, rgba(139, 69, 19, 0.05) 75%, rgba(139, 69, 19, 0.05) 76%, transparent 77%, transparent);
+            background-size: 50px 50px;
+            animation: gridMove 20s linear infinite;
+        }
+
+        @keyframes gridMove {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(50px); }
+        }
+
+        .layer-2 {
+            background-image:
+                radial-gradient(circle at 20% 30%, rgba(139, 69, 19, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(218, 165, 32, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 50% 50%, rgba(139, 69, 19, 0.08) 0%, transparent 50%);
+            animation: floatParticles 15s ease-in-out infinite;
+        }
+
+        @keyframes floatParticles {
+            0%, 100% { transform: translate(0, 0); }
+            50% { transform: translate(30px, -20px); }
+        }
+
+        /* Main Content */
+        .content {
+            position: relative;
+            z-index: 1;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+        }
+
+        .title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 3.5rem;
+            font-weight: 900;
+            text-align: center;
+            margin-bottom: 20px;
+            color: #fff;
+            text-shadow:
+                0 0 10px rgba(218, 165, 32, 0.8),
+                0 0 20px rgba(218, 165, 32, 0.6),
+                0 0 30px rgba(218, 165, 32, 0.4);
+            letter-spacing: 4px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #DAA520;
+            margin-bottom: 50px;
+            font-size: 1.3rem;
+            font-weight: 300;
+        }
+
+        /* Game Grid */
+        .games-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 40px;
+            max-width: 1200px;
+            width: 100%;
+            margin-bottom: 40px;
+        }
+
+        .game-card {
+            background: rgba(20, 20, 20, 0.9);
+            border: 2px solid #8B4513;
+            border-radius: 15px;
+            padding: 30px;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 10px 40px rgba(139, 69, 19, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .game-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(218, 165, 32, 0.05) 0%, transparent 100%);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            pointer-events: none;
+        }
+
+        .game-card:hover {
+            border-color: #DAA520;
+            transform: translateY(-10px);
+            box-shadow:
+                0 20px 60px rgba(218, 165, 32, 0.6),
+                0 0 30px rgba(218, 165, 32, 0.3);
+        }
+
+        .game-card:hover::before {
+            opacity: 1;
+        }
+
+        .game-icon {
+            font-size: 6rem;
+            text-align: center;
+            margin-bottom: 20px;
+            filter: drop-shadow(0 0 10px rgba(218, 165, 32, 0.5));
+        }
+
+        .game-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2rem;
+            text-align: center;
+            margin-bottom: 15px;
+            color: #DAA520;
+            text-shadow: 0 0 10px rgba(218, 165, 32, 0.5);
+        }
+
+        .game-description {
+            text-align: center;
+            color: #bbb;
+            font-size: 1.1rem;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+
+        .game-features {
+            list-style: none;
+            margin: 20px 0;
+            padding: 0;
+        }
+
+        .game-features li {
+            padding: 8px 0;
+            color: #999;
+            font-size: 0.95rem;
+        }
+
+        .game-features li::before {
+            content: '✓ ';
+            color: #4CAF50;
+            font-weight: bold;
+            margin-right: 8px;
+        }
+
+        .play-button {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #8B4513 0%, #DAA520 100%);
+            border: 2px solid #DAA520;
+            border-radius: 10px;
+            color: #fff;
+            font-size: 1.2rem;
+            font-weight: bold;
+            font-family: 'Orbitron', sans-serif;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .play-button:hover {
+            background: linear-gradient(135deg, #DAA520 0%, #FFD700 100%);
+            box-shadow: 0 0 20px rgba(218, 165, 32, 0.8);
+            transform: scale(1.05);
+        }
+
+        /* Fixed Navigation */
+        .fixed-nav {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            display: flex;
+            gap: 15px;
+            z-index: 1000;
+        }
+
+        .nav-button {
+            padding: 15px 30px;
+            background: rgba(10, 10, 10, 0.95);
+            border: 2px solid #DAA520;
+            border-radius: 10px;
+            color: #fff;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(218, 165, 32, 0.3);
+        }
+
+        .nav-button:hover {
+            background: rgba(218, 165, 32, 0.2);
+            box-shadow: 0 0 25px rgba(218, 165, 32, 0.6);
+            transform: translateY(-2px);
+        }
+
+        /* Game Overlay */
+        .game-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 2000;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        .game-overlay.active {
+            display: block;
+            opacity: 1;
+        }
+
+        .game-frame {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .game-nav-overlay {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            display: none;
+            gap: 15px;
+            z-index: 2001;
+        }
+
+        .game-overlay.active ~ .game-nav-overlay {
+            display: flex;
+        }
+
+        /* Coming Soon Badge */
+        .coming-soon {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 68, 68, 0.9);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 15px rgba(255, 68, 68, 0.5);
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .title {
+                font-size: 2.5rem;
+            }
+
+            .games-grid {
+                grid-template-columns: 1fr;
+                gap: 30px;
+                padding: 0 10px;
+            }
+
+            .game-card {
+                padding: 25px;
+            }
+
+            .fixed-nav {
+                bottom: 15px;
+                right: 15px;
+                flex-direction: column;
+            }
+
+            .nav-button {
+                padding: 12px 20px;
+                font-size: 0.9rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Playerbar Container -->
+    <div id="playerbar"></div>
+
+    <!-- Parallax Background -->
+    <div class="parallax-container">
+        <div class="parallax-layer layer-1"></div>
+        <div class="parallax-layer layer-2"></div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="content">
+        <h1 class="title">♟️ BOARD GAMES ♟️</h1>
+        <p class="subtitle">Classic strategy games with AI and multiplayer</p>
+
+        <div class="games-grid">
+            <!-- Chess -->
+            <div class="game-card" onclick="launchGame('chess')">
+                <div class="game-icon">♔</div>
+                <h2 class="game-title">CHESS</h2>
+                <p class="game-description">The timeless game of strategy and tactics</p>
+                <ul class="game-features">
+                    <li>Play vs AI (Easy, Medium, Hard)</li>
+                    <li>Multiplayer mode (Coming Soon)</li>
+                    <li>All special moves supported</li>
+                    <li>Beautiful Unicode pieces</li>
+                </ul>
+                <button class="play-button">Play Chess</button>
+            </div>
+
+            <!-- Checkers -->
+            <div class="game-card">
+                <div class="coming-soon">Coming Soon</div>
+                <div class="game-icon">🔴</div>
+                <h2 class="game-title">CHECKERS</h2>
+                <p class="game-description">Classic jumping and capturing strategy</p>
+                <ul class="game-features">
+                    <li>Play vs AI (Easy, Medium, Hard)</li>
+                    <li>Multiplayer mode</li>
+                    <li>Forced jumps and king promotion</li>
+                    <li>Multi-jump sequences</li>
+                </ul>
+                <button class="play-button" disabled style="opacity: 0.5; cursor: not-allowed;">Coming Soon</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fixed Navigation -->
+    <div class="fixed-nav">
+        <a href="index.html" class="nav-button">
+            <span>🏠</span>
+            <span>Home</span>
+        </a>
+    </div>
+
+    <!-- Game Launcher Overlay -->
+    <div class="game-overlay" id="gameOverlay">
+        <iframe class="game-frame" id="gameFrame" src=""></iframe>
+    </div>
+
+    <!-- Navigation buttons that appear over games -->
+    <div class="game-nav-overlay">
+        <button class="nav-button" onclick="closeGame()">
+            <span>←</span>
+            <span>Back to Board Games</span>
+        </button>
+        <a href="index.html" class="nav-button">
+            <span>🏠</span>
+            <span>Home</span>
+        </a>
+    </div>
+
+    <script>
+        const gameOverlay = document.getElementById('gameOverlay');
+        const gameFrame = document.getElementById('gameFrame');
+
+        function launchGame(gameName) {
+            gameFrame.src = `games/board/${gameName}.html`;
+            gameOverlay.classList.add('active');
+        }
+
+        function closeGame() {
+            gameOverlay.classList.remove('active');
+            setTimeout(() => {
+                gameFrame.src = '';
+            }, 500);
+        }
+
+        // Listen for messages from game iframes
+        window.addEventListener('message', (e) => {
+            if (e.data === 'closeGame' || (e.data && e.data.action === 'closeGame')) {
+                closeGame();
+            }
+        });
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (gameOverlay.classList.contains('active') && e.key === 'Escape') {
+                closeGame();
+            }
+        });
+    </script>
+
+    <!-- Supabase & Playerbar Initialization -->
+    <script type="module">
+        import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+        const SUPABASE_URL = "https://pknhslxhpohrzgsfkisr.supabase.co";
+        const SUPABASE_ANON_KEY = "sb_publishable_-zZw-pi_3q1sdNGhITKuhQ_ECyDARzc";
+        window.supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // Load playerbar
+        async function loadPlayerBar() {
+            try {
+                const response = await fetch('/playerbar.html');
+                const html = await response.text();
+                const container = document.getElementById('playerbar');
+
+                const temp = document.createElement('div');
+                temp.innerHTML = html;
+
+                Array.from(temp.childNodes).forEach(node => {
+                    if (node.tagName === 'SCRIPT') {
+                        const script = document.createElement('script');
+                        if (node.src) {
+                            script.src = node.src;
+                        } else {
+                            script.textContent = node.textContent;
+                        }
+                        document.body.appendChild(script);
+                    } else {
+                        container.appendChild(node);
+                    }
+                });
+
+                setTimeout(() => {
+                    if (typeof pbLoadPlayerData === 'function') {
+                        pbLoadPlayerData();
+                    }
+                }, 500);
+
+            } catch (error) {
+                console.error('Error loading playerbar:', error);
+            }
+        }
+
+        loadPlayerBar();
+    </script>
+</body>
+</html>
