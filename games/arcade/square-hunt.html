@@ -24,15 +24,55 @@
 
         #gameContainer {
             position: relative;
-            width: 800px;
-            height: 600px;
+            width: 100%;
+            max-width: 800px;
+            height: 0;
+            padding-bottom: 75%; /* 4:3 aspect ratio (600/800 = 0.75) */
             background: #5C94FC;
             border: 4px solid #FF6B00;
             box-shadow: 0 0 20px rgba(255, 107, 0, 0.5);
             cursor: none;
         }
 
+        /* Mobile responsive adjustments */
+        @media (max-width: 768px) {
+            body {
+                padding: 0;
+                align-items: flex-start;
+                cursor: auto; /* Show cursor on mobile for UI */
+            }
+
+            #gameContainer {
+                max-width: 100vw;
+                padding-bottom: 75vh;
+                margin: 0;
+                border: 2px solid #FF6B00;
+                cursor: auto; /* Allow touch interaction */
+            }
+
+            #gameCanvas {
+                cursor: auto;
+            }
+
+            #crosshair {
+                display: block; /* Keep crosshair visible on touch */
+            }
+        }
+
+        /* Landscape orientation for mobile */
+        @media (max-width: 768px) and (orientation: landscape) {
+            #gameContainer {
+                max-width: 100vw;
+                max-height: 100vh;
+                padding-bottom: 0;
+                height: 100vh;
+            }
+        }
+
         #gameCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
             display: block;
             width: 100%;
             height: 100%;
@@ -491,16 +531,38 @@
         // Crosshair element
         const crosshair = document.getElementById('crosshair');
 
-        // Track mouse position
-        document.addEventListener('mousemove', (e) => {
+        // Helper function to get pointer position (works for mouse and touch)
+        function getPointerPosition(e) {
             const rect = canvas.getBoundingClientRect();
-            mouseX = ((e.clientX - rect.left) * canvas.width) / rect.width;
-            mouseY = ((e.clientY - rect.top) * canvas.height) / rect.height;
+            const clientX = e.clientX || (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
+            const clientY = e.clientY || (e.touches && e.touches[0] ? e.touches[0].clientY : 0);
 
-            // Update crosshair position
-            crosshair.style.left = e.clientX - rect.left + 'px';
-            crosshair.style.top = e.clientY - rect.top + 'px';
-        });
+            // Calculate position relative to canvas
+            const x = ((clientX - rect.left) * canvas.width) / rect.width;
+            const y = ((clientY - rect.top) * canvas.height) / rect.height;
+
+            return { x, y, clientX, clientY, rect };
+        }
+
+        // Update crosshair position
+        function updateCrosshair(e) {
+            const pos = getPointerPosition(e);
+            mouseX = pos.x;
+            mouseY = pos.y;
+
+            // Update crosshair visual position
+            crosshair.style.left = pos.clientX - pos.rect.left + 'px';
+            crosshair.style.top = pos.clientY - pos.rect.top + 'px';
+        }
+
+        // Track mouse position
+        document.addEventListener('mousemove', updateCrosshair);
+
+        // Track touch position
+        canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            updateCrosshair(e);
+        }, { passive: false });
 
         // Shoot on click
         canvas.addEventListener('click', () => {
@@ -508,6 +570,15 @@
                 shoot();
             }
         });
+
+        // Shoot on touch
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            updateCrosshair(e); // Update position on touch
+            if (gameState === 'playing' && bullets > 0) {
+                shoot();
+            }
+        }, { passive: false });
 
         // Square Duck class
         class Duck {
