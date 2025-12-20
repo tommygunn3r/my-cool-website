@@ -1,0 +1,1393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Square Dug - Gunner's Games</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: #000000;
+            font-family: 'Courier New', monospace;
+            overflow: hidden;
+        }
+
+        #gameContainer {
+            position: relative;
+            width: 768px;
+            height: 512px;
+            background: #000;
+            border: 4px solid #00FFFF;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+        }
+
+        #gameCanvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            image-rendering: pixelated;
+        }
+
+        /* UI Elements */
+        #ui {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: #00FFFF;
+            font-size: 16px;
+            text-shadow: 0 0 10px #00FFFF;
+            z-index: 5;
+        }
+
+        #ui div {
+            margin-bottom: 5px;
+        }
+
+        #lives-display {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            display: flex;
+            gap: 5px;
+            z-index: 5;
+        }
+
+        .life-icon {
+            width: 20px;
+            height: 20px;
+            background: #00FFFF;
+            box-shadow: 0 0 8px #00FFFF;
+        }
+
+        /* Start Screen */
+        #startScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: #00FFFF;
+            z-index: 10;
+        }
+
+        #startScreen h1 {
+            font-size: 64px;
+            margin-bottom: 30px;
+            text-shadow: 0 0 20px #00FFFF, 0 0 40px #00FFFF;
+            letter-spacing: 4px;
+        }
+
+        .instructions {
+            text-align: center;
+            margin: 20px;
+            font-size: 16px;
+            line-height: 1.8;
+        }
+
+        .control-key {
+            display: inline-block;
+            padding: 5px 10px;
+            background: #1a1a1a;
+            border: 2px solid #00FFFF;
+            border-radius: 4px;
+            margin: 0 5px;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+        }
+
+        .button {
+            padding: 15px 40px;
+            font-size: 24px;
+            background: #00FFFF;
+            border: none;
+            color: #000;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            margin-top: 20px;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+        }
+
+        .button:hover {
+            background: #00AAAA;
+            transform: scale(1.05);
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.8);
+        }
+
+        /* Game Over Screen */
+        #gameOverScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: #00FFFF;
+            z-index: 10;
+        }
+
+        #gameOverScreen h1 {
+            font-size: 48px;
+            margin-bottom: 20px;
+            text-shadow: 0 0 20px #00FFFF;
+        }
+
+        #creditsScroll {
+            position: absolute;
+            width: 100%;
+            text-align: center;
+            font-size: 18px;
+            line-height: 2.5;
+        }
+
+        @keyframes scrollUp {
+            0% { top: 100%; }
+            100% { top: -100%; }
+        }
+
+        #creditsScroll.active {
+            animation: scrollUp 8s linear 1;
+        }
+
+        /* Mobile Controls */
+        #mobileControls {
+            position: absolute;
+            bottom: 20px;
+            left: 0;
+            right: 0;
+            display: none;
+            justify-content: space-between;
+            align-items: flex-end;
+            padding: 0 20px;
+            z-index: 100;
+        }
+
+        #dpad {
+            display: grid;
+            grid-template-columns: repeat(3, 60px);
+            grid-template-rows: repeat(3, 60px);
+            gap: 5px;
+        }
+
+        .dpad-btn {
+            background: rgba(0, 255, 255, 0.3);
+            border: 2px solid #00FFFF;
+            color: #00FFFF;
+            font-size: 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+        }
+
+        .dpad-btn:active {
+            background: rgba(0, 255, 255, 0.6);
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.6);
+        }
+
+        #pumpBtn {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: rgba(255, 0, 0, 0.3);
+            border: 3px solid #FF0000;
+            color: #FF0000;
+            font-size: 28px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 15px rgba(255, 0, 0, 0.3);
+        }
+
+        #pumpBtn:active {
+            background: rgba(255, 0, 0, 0.6);
+            box-shadow: 0 0 25px rgba(255, 0, 0, 0.6);
+        }
+
+        @media (max-width: 768px) {
+            #mobileControls {
+                display: flex;
+            }
+
+            #gameContainer {
+                width: 100vw;
+                height: 100vh;
+                border: none;
+            }
+
+            #startScreen h1 {
+                font-size: 48px;
+            }
+
+            .instructions {
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <canvas id="gameCanvas" width="768" height="512"></canvas>
+
+        <!-- UI -->
+        <div id="ui">
+            <div>SCORE: <span id="score">0</span></div>
+            <div>LEVEL: <span id="level">1</span></div>
+            <div>HIGH: <span id="highScore">0</span></div>
+        </div>
+
+        <div id="lives-display"></div>
+
+        <!-- Start Screen -->
+        <div id="startScreen">
+            <h1>SQUARE DUG</h1>
+            <div class="instructions">
+                <p>Dig tunnels and pump enemies to clear each level!</p>
+                <p style="margin-top: 15px;">
+                    <span class="control-key">↑</span>
+                    <span class="control-key">↓</span>
+                    <span class="control-key">←</span>
+                    <span class="control-key">→</span>
+                    or
+                    <span class="control-key">W</span>
+                    <span class="control-key">S</span>
+                    <span class="control-key">A</span>
+                    <span class="control-key">D</span>
+                    to Move
+                </p>
+                <p style="margin-top: 10px;">
+                    <span class="control-key">SPACE</span> to Pump
+                </p>
+                <p style="margin-top: 15px; font-size: 14px; color: #888;">
+                    Watch out for rocks! Drop them on enemies for bonus points.
+                </p>
+            </div>
+            <button class="button" onclick="startGame()">Start Game</button>
+        </div>
+
+        <!-- Game Over Screen -->
+        <div id="gameOverScreen">
+            <div id="creditsScroll"></div>
+        </div>
+
+        <!-- Mobile Controls -->
+        <div id="mobileControls">
+            <div id="dpad">
+                <div></div>
+                <button class="dpad-btn" id="upBtn">⬆️</button>
+                <div></div>
+                <button class="dpad-btn" id="leftBtn">⬅️</button>
+                <div></div>
+                <button class="dpad-btn" id="rightBtn">➡️</button>
+                <div></div>
+                <button class="dpad-btn" id="downBtn">⬇️</button>
+                <div></div>
+            </div>
+            <button id="pumpBtn">💨</button>
+        </div>
+    </div>
+
+    <script type="module">
+        // ===== SUPABASE CONFIGURATION =====
+        import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+
+        const SUPABASE_URL = 'https://pknhslxhpohrzgsfkisr.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_-zZw-pi_3q1sdNGhITKuhQ_ECyDARzc';
+
+        let supabase;
+        let currentUser = null;
+
+        try {
+            supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        } catch (error) {
+            console.warn('Supabase not available:', error);
+        }
+
+        // ===== SCORE MANAGER =====
+        class ScoreManager {
+            constructor(gameName) {
+                this.gameName = gameName;
+                this.sessionStartTime = null;
+                this.playerName = 'Player';
+            }
+
+            async checkAuth() {
+                if (!supabase) return;
+
+                try {
+                    const { data: { session } } = await supabase.auth.getSession();
+                    if (!session?.user) {
+                        console.log('No user logged in');
+                        return;
+                    }
+
+                    currentUser = session.user;
+
+                    const { data: profile } = await supabase
+                        .from('profiles')
+                        .select('player_name')
+                        .eq('user_id', currentUser.id)
+                        .single();
+
+                    if (profile?.player_name) {
+                        this.playerName = profile.player_name;
+                    } else {
+                        this.playerName = currentUser.user_metadata?.display_name ||
+                                    currentUser.email?.split('@')[0] ||
+                                    'Player';
+                    }
+
+                    console.log('Player identified:', this.playerName);
+                } catch (error) {
+                    console.warn('Auth check failed:', error);
+                }
+            }
+
+            startSession() {
+                this.sessionStartTime = Date.now();
+            }
+
+            async submitGameResult(score) {
+                if (!currentUser || !supabase) {
+                    console.log('No user logged in, score not saved');
+                    return;
+                }
+
+                try {
+                    const { error } = await supabase
+                        .from('game_highscores')
+                        .insert({
+                            game_id: this.gameName,
+                            player_name: this.playerName,
+                            score: score,
+                            user_id: currentUser.id
+                        });
+
+                    if (error) throw error;
+                    console.log('Score submitted successfully');
+                } catch (error) {
+                    console.warn('Failed to submit score:', error);
+                }
+            }
+        }
+
+        const scoreManager = new ScoreManager('squaredug');
+        scoreManager.checkAuth();
+
+        // ===== GAME CONSTANTS =====
+        const GRID = {
+            cols: 24,
+            rows: 16,
+            cellSize: 32,
+            types: {
+                EMPTY: 0,
+                DIRT: 1,
+                ROCK: 2,
+                BORDER: 3
+            }
+        };
+
+        // ===== GAME STATE =====
+        const gameState = {
+            score: 0,
+            lives: 3,
+            level: 1,
+            highScore: parseInt(localStorage.getItem('squareDugHighScore')) || 0,
+            gameRunning: false,
+            isPaused: false
+        };
+
+        // ===== CANVAS SETUP =====
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // ===== AUDIO CONTEXT =====
+        let audioCtx = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function playSound(type) {
+            if (!audioCtx) return;
+
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            switch(type) {
+                case 'dig':
+                    osc.frequency.value = 200;
+                    osc.type = 'square';
+                    gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.1);
+                    break;
+
+                case 'pump':
+                    osc.frequency.value = 400;
+                    osc.type = 'sine';
+                    gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.2);
+                    break;
+
+                case 'explode':
+                    osc.frequency.value = 100;
+                    osc.type = 'sawtooth';
+                    gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.4);
+                    break;
+
+                case 'rock':
+                    osc.frequency.value = 80;
+                    osc.type = 'triangle';
+                    gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.3);
+                    break;
+
+                case 'death':
+                    osc.frequency.value = 220;
+                    osc.type = 'sawtooth';
+                    gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.8);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.8);
+                    break;
+
+                case 'bonus':
+                    osc.frequency.value = 600;
+                    osc.type = 'sine';
+                    gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.3);
+                    break;
+            }
+        }
+
+        // ===== GAME INITIALIZATION =====
+        let grid = [];
+        let player = null;
+        let enemies = [];
+        let rocks = [];
+        let vegetables = [];
+        let particles = [];
+        let pumpSystem = null;
+
+        function initializeGrid() {
+            grid = [];
+            for (let row = 0; row < GRID.rows; row++) {
+                grid[row] = [];
+                for (let col = 0; col < GRID.cols; col++) {
+                    // Border walls
+                    if (row === 0 || row === GRID.rows - 1 || col === 0 || col === GRID.cols - 1) {
+                        grid[row][col] = GRID.types.BORDER;
+                    } else {
+                        grid[row][col] = GRID.types.DIRT;
+                    }
+                }
+            }
+
+            // Clear player spawn area (bottom center)
+            for (let row = GRID.rows - 4; row < GRID.rows - 1; row++) {
+                for (let col = GRID.cols / 2 - 2; col < GRID.cols / 2 + 2; col++) {
+                    grid[row][col] = GRID.types.EMPTY;
+                }
+            }
+        }
+
+        function digTunnel(row, col) {
+            if (grid[row][col] === GRID.types.DIRT) {
+                grid[row][col] = GRID.types.EMPTY;
+                gameState.score += 5;
+                playSound('dig');
+
+                // Check rocks above
+                checkRockSupport(row - 1, col);
+            }
+        }
+
+        function checkRockSupport(row, col) {
+            if (row < 0 || row >= GRID.rows) return;
+
+            const rock = rocks.find(r => r.gridY === row && r.gridX === col);
+            if (rock) {
+                rock.checkSupport();
+            }
+        }
+
+        function drawGrid() {
+            for (let row = 0; row < GRID.rows; row++) {
+                for (let col = 0; col < GRID.cols; col++) {
+                    const x = col * GRID.cellSize;
+                    const y = row * GRID.cellSize;
+
+                    switch(grid[row][col]) {
+                        case GRID.types.DIRT:
+                            ctx.fillStyle = '#8B4513';
+                            ctx.fillRect(x, y, GRID.cellSize, GRID.cellSize);
+                            // Texture
+                            ctx.fillStyle = '#654321';
+                            for (let i = 0; i < 3; i++) {
+                                const dx = Math.random() * GRID.cellSize;
+                                const dy = Math.random() * GRID.cellSize;
+                                ctx.fillRect(x + dx, y + dy, 2, 2);
+                            }
+                            break;
+                        case GRID.types.EMPTY:
+                            ctx.fillStyle = '#000000';
+                            ctx.fillRect(x, y, GRID.cellSize, GRID.cellSize);
+                            break;
+                        case GRID.types.BORDER:
+                            ctx.fillStyle = '#2C1810';
+                            ctx.fillRect(x, y, GRID.cellSize, GRID.cellSize);
+                            break;
+                    }
+                }
+            }
+        }
+
+        // ===== PARTICLE SYSTEM =====
+        class Particle {
+            constructor(x, y, vx, vy, color) {
+                this.x = x;
+                this.y = y;
+                this.vx = vx;
+                this.vy = vy;
+                this.color = color;
+                this.life = 0.5;
+            }
+
+            update(dt) {
+                this.x += this.vx * dt;
+                this.y += this.vy * dt;
+                this.life -= dt;
+            }
+
+            draw() {
+                ctx.globalAlpha = this.life * 2;
+                ctx.fillStyle = this.color;
+                ctx.fillRect(this.x - 4, this.y - 4, 8, 8);
+                ctx.globalAlpha = 1;
+            }
+        }
+
+        function createExplosion(x, y, color) {
+            for (let i = 0; i < 20; i++) {
+                const angle = (Math.PI * 2 * i) / 20;
+                particles.push(new Particle(
+                    x, y,
+                    Math.cos(angle) * 200,
+                    Math.sin(angle) * 200,
+                    color
+                ));
+            }
+        }
+
+        // ===== PLAYER CLASS =====
+        class Player {
+            constructor() {
+                this.gridX = Math.floor(GRID.cols / 2);
+                this.gridY = GRID.rows - 3;
+                this.pixelX = this.gridX * GRID.cellSize + GRID.cellSize / 2;
+                this.pixelY = this.gridY * GRID.cellSize + GRID.cellSize / 2;
+                this.targetX = this.pixelX;
+                this.targetY = this.pixelY;
+                this.direction = 'right';
+                this.speed = 120; // pixels per second
+                this.size = 24;
+                this.color = '#00FFFF';
+                this.isPumping = false;
+            }
+
+            update(dt) {
+                if (this.isPumping) return;
+
+                // Smooth movement toward target
+                const dx = this.targetX - this.pixelX;
+                const dy = this.targetY - this.pixelY;
+                const dist = Math.sqrt(dx * dx + dy * dy);
+
+                if (dist < 2) {
+                    this.pixelX = this.targetX;
+                    this.pixelY = this.targetY;
+                    this.processNextMove();
+                } else {
+                    const moveAmount = Math.min(this.speed * dt, dist);
+                    this.pixelX += (dx / dist) * moveAmount;
+                    this.pixelY += (dy / dist) * moveAmount;
+                }
+
+                // Dig current cell
+                const currentGridX = Math.floor(this.pixelX / GRID.cellSize);
+                const currentGridY = Math.floor(this.pixelY / GRID.cellSize);
+                if (grid[currentGridY] && grid[currentGridY][currentGridX] === GRID.types.DIRT) {
+                    digTunnel(currentGridY, currentGridX);
+                }
+            }
+
+            processNextMove() {
+                let newGridX = this.gridX;
+                let newGridY = this.gridY;
+
+                if (keys['ArrowLeft'] || keys['KeyA']) {
+                    newGridX--;
+                    this.direction = 'left';
+                } else if (keys['ArrowRight'] || keys['KeyD']) {
+                    newGridX++;
+                    this.direction = 'right';
+                } else if (keys['ArrowUp'] || keys['KeyW']) {
+                    newGridY--;
+                    this.direction = 'up';
+                } else if (keys['ArrowDown'] || keys['KeyS']) {
+                    newGridY++;
+                    this.direction = 'down';
+                } else {
+                    return; // No input
+                }
+
+                // Check if can move
+                if (this.canMoveTo(newGridX, newGridY)) {
+                    this.gridX = newGridX;
+                    this.gridY = newGridY;
+                    this.targetX = this.gridX * GRID.cellSize + GRID.cellSize / 2;
+                    this.targetY = this.gridY * GRID.cellSize + GRID.cellSize / 2;
+                }
+            }
+
+            canMoveTo(gridX, gridY) {
+                if (gridX < 0 || gridX >= GRID.cols || gridY < 0 || gridY >= GRID.rows) return false;
+                const cell = grid[gridY][gridX];
+                return cell !== GRID.types.BORDER;
+            }
+
+            draw() {
+                // Glow effect
+                ctx.shadowColor = this.color;
+                ctx.shadowBlur = 15;
+
+                ctx.fillStyle = this.color;
+                ctx.fillRect(
+                    this.pixelX - this.size / 2,
+                    this.pixelY - this.size / 2,
+                    this.size,
+                    this.size
+                );
+
+                // Eyes
+                ctx.shadowBlur = 0;
+                ctx.fillStyle = '#000';
+                const eyeSize = 4;
+                if (this.direction === 'right') {
+                    ctx.fillRect(this.pixelX + 4, this.pixelY - 6, eyeSize, eyeSize);
+                    ctx.fillRect(this.pixelX + 4, this.pixelY + 2, eyeSize, eyeSize);
+                } else if (this.direction === 'left') {
+                    ctx.fillRect(this.pixelX - 8, this.pixelY - 6, eyeSize, eyeSize);
+                    ctx.fillRect(this.pixelX - 8, this.pixelY + 2, eyeSize, eyeSize);
+                } else if (this.direction === 'up') {
+                    ctx.fillRect(this.pixelX - 6, this.pixelY - 8, eyeSize, eyeSize);
+                    ctx.fillRect(this.pixelX + 2, this.pixelY - 8, eyeSize, eyeSize);
+                } else {
+                    ctx.fillRect(this.pixelX - 6, this.pixelY + 4, eyeSize, eyeSize);
+                    ctx.fillRect(this.pixelX + 2, this.pixelY + 4, eyeSize, eyeSize);
+                }
+            }
+        }
+
+        // ===== ENEMY CLASS =====
+        class Enemy {
+            constructor(gridX, gridY, type) {
+                this.gridX = gridX;
+                this.gridY = gridY;
+                this.pixelX = gridX * GRID.cellSize + GRID.cellSize / 2;
+                this.pixelY = gridY * GRID.cellSize + GRID.cellSize / 2;
+                this.type = type; // 'pooka' or 'fygar'
+                this.speed = 40;
+                this.direction = 'right';
+                this.isGhost = false;
+                this.ghostTimer = 0;
+                this.size = 24;
+                this.inflationLevel = 0;
+                this.inflationTimer = 0;
+                this.moveTimer = 0;
+                this.moveDelay = 0.5;
+            }
+
+            update(dt) {
+                // Inflation deflation
+                if (this.inflationLevel > 0) {
+                    this.inflationTimer += dt;
+                    if (this.inflationTimer > 1.0) {
+                        this.inflationLevel = Math.max(0, this.inflationLevel - 1);
+                        this.inflationTimer = 0;
+                    }
+                }
+
+                this.ghostTimer += dt;
+                this.moveTimer += dt;
+
+                // Ghost mode toggle
+                if (!this.isGhost && this.ghostTimer > 3 && Math.random() < 0.02) {
+                    this.isGhost = true;
+                    this.ghostTimer = 0;
+                } else if (this.isGhost && this.ghostTimer > 2) {
+                    const cell = grid[this.gridY][this.gridX];
+                    if (cell === GRID.types.EMPTY) {
+                        this.isGhost = false;
+                        this.ghostTimer = 0;
+                    }
+                }
+
+                if (this.moveTimer >= this.moveDelay) {
+                    this.moveTimer = 0;
+                    this.moveTowardPlayer(dt);
+                }
+            }
+
+            moveTowardPlayer(dt) {
+                const dx = player.gridX - this.gridX;
+                const dy = player.gridY - this.gridY;
+
+                let newGridX = this.gridX;
+                let newGridY = this.gridY;
+
+                if (Math.abs(dx) > Math.abs(dy)) {
+                    newGridX += Math.sign(dx);
+                    this.direction = dx > 0 ? 'right' : 'left';
+                } else if (Math.abs(dy) > 0) {
+                    newGridY += Math.sign(dy);
+                    this.direction = dy > 0 ? 'down' : 'up';
+                }
+
+                if (this.isGhost || this.canMoveTo(newGridX, newGridY)) {
+                    this.gridX = newGridX;
+                    this.gridY = newGridY;
+                    this.pixelX = this.gridX * GRID.cellSize + GRID.cellSize / 2;
+                    this.pixelY = this.gridY * GRID.cellSize + GRID.cellSize / 2;
+                }
+            }
+
+            canMoveTo(gridX, gridY) {
+                if (gridX < 1 || gridX >= GRID.cols - 1 || gridY < 1 || gridY >= GRID.rows - 1) return false;
+                const cell = grid[gridY][gridX];
+                return cell === GRID.types.EMPTY;
+            }
+
+            inflate() {
+                this.inflationLevel++;
+                this.inflationTimer = 0;
+                playSound('pump');
+
+                if (this.inflationLevel >= 4) {
+                    this.explode();
+                    return true;
+                }
+                return false;
+            }
+
+            explode() {
+                const points = 100 * this.inflationLevel;
+                gameState.score += points;
+                playSound('explode');
+                createExplosion(this.pixelX, this.pixelY, this.type === 'pooka' ? '#FF0000' : '#00FF00');
+
+                const index = enemies.indexOf(this);
+                if (index > -1) {
+                    enemies.splice(index, 1);
+                }
+            }
+
+            draw() {
+                const inflationSize = this.size + (this.inflationLevel * 6);
+                const alpha = this.isGhost ? 0.5 : 1;
+
+                ctx.globalAlpha = alpha;
+
+                if (this.type === 'pooka') {
+                    // Red square with goggles
+                    ctx.shadowColor = '#FF0000';
+                    ctx.shadowBlur = 10;
+                    ctx.fillStyle = '#FF0000';
+                    ctx.fillRect(
+                        this.pixelX - inflationSize / 2,
+                        this.pixelY - inflationSize / 2,
+                        inflationSize,
+                        inflationSize
+                    );
+
+                    ctx.shadowBlur = 0;
+                    ctx.fillStyle = '#FFFFFF';
+                    ctx.fillRect(this.pixelX - 8, this.pixelY - 4, 6, 6);
+                    ctx.fillRect(this.pixelX + 2, this.pixelY - 4, 6, 6);
+                } else {
+                    // Green square (Fygar)
+                    ctx.shadowColor = '#00FF00';
+                    ctx.shadowBlur = 10;
+                    ctx.fillStyle = '#00FF00';
+                    ctx.fillRect(
+                        this.pixelX - inflationSize / 2,
+                        this.pixelY - inflationSize / 2,
+                        inflationSize,
+                        inflationSize
+                    );
+
+                    ctx.shadowBlur = 0;
+                }
+
+                ctx.globalAlpha = 1;
+            }
+        }
+
+        // ===== ROCK CLASS =====
+        class Rock {
+            constructor(gridX, gridY) {
+                this.gridX = gridX;
+                this.gridY = gridY;
+                this.pixelX = gridX * GRID.cellSize + GRID.cellSize / 2;
+                this.pixelY = gridY * GRID.cellSize + GRID.cellSize / 2;
+                this.falling = false;
+                this.wobbling = false;
+                this.wobbleTimer = 0;
+                this.fallSpeed = 0;
+                this.gravity = 800;
+            }
+
+            checkSupport() {
+                if (this.falling) return;
+
+                const below = grid[this.gridY + 1]?.[this.gridX];
+                if (below === GRID.types.EMPTY) {
+                    if (!this.wobbling) {
+                        this.wobbling = true;
+                        this.wobbleTimer = 0;
+                    }
+                } else {
+                    this.wobbling = false;
+                }
+            }
+
+            update(dt) {
+                if (this.wobbling) {
+                    this.wobbleTimer += dt;
+                    if (this.wobbleTimer > 0.5) {
+                        this.falling = true;
+                        this.wobbling = false;
+                        grid[this.gridY][this.gridX] = GRID.types.EMPTY;
+                    }
+                    return;
+                }
+
+                if (this.falling) {
+                    this.fallSpeed += this.gravity * dt;
+                    this.pixelY += this.fallSpeed * dt;
+
+                    const newGridY = Math.floor((this.pixelY - GRID.cellSize / 2) / GRID.cellSize);
+
+                    if (newGridY !== this.gridY) {
+                        this.gridY = newGridY;
+
+                        const below = grid[this.gridY + 1]?.[this.gridX];
+                        if (below !== GRID.types.EMPTY) {
+                            this.pixelY = this.gridY * GRID.cellSize + GRID.cellSize / 2;
+                            this.falling = false;
+                            this.fallSpeed = 0;
+                            grid[this.gridY][this.gridX] = GRID.types.ROCK;
+                            playSound('rock');
+                            this.checkCrush();
+                        }
+                    }
+                }
+            }
+
+            checkCrush() {
+                // Check enemies
+                for (let i = enemies.length - 1; i >= 0; i--) {
+                    const enemy = enemies[i];
+                    if (Math.abs(enemy.gridX - this.gridX) < 1 && Math.abs(enemy.gridY - this.gridY) < 1) {
+                        gameState.score += 500;
+                        playSound('explode');
+                        createExplosion(enemy.pixelX, enemy.pixelY, enemy.type === 'pooka' ? '#FF0000' : '#00FF00');
+                        enemies.splice(i, 1);
+                    }
+                }
+
+                // Check player
+                if (Math.abs(player.gridX - this.gridX) < 1 && Math.abs(player.gridY - this.gridY) < 1) {
+                    playerDeath();
+                }
+            }
+
+            draw() {
+                let offsetX = 0;
+                if (this.wobbling) {
+                    offsetX = Math.sin(this.wobbleTimer * 20) * 4;
+                }
+
+                ctx.fillStyle = '#808080';
+                ctx.fillRect(
+                    this.pixelX + offsetX - GRID.cellSize / 2,
+                    this.pixelY - GRID.cellSize / 2,
+                    GRID.cellSize,
+                    GRID.cellSize
+                );
+
+                ctx.strokeStyle = '#404040';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(
+                    this.pixelX + offsetX - GRID.cellSize / 2,
+                    this.pixelY - GRID.cellSize / 2,
+                    GRID.cellSize,
+                    GRID.cellSize
+                );
+            }
+        }
+
+        // ===== PUMP SYSTEM =====
+        class PumpSystem {
+            constructor() {
+                this.hose = null;
+                this.target = null;
+                this.extending = false;
+                this.maxRange = 3 * GRID.cellSize;
+            }
+
+            startPump() {
+                if (player.isPumping && this.target && this.target.inflationLevel < 4) {
+                    this.target.inflate();
+                    return;
+                }
+
+                if (!player.isPumping) {
+                    this.extending = true;
+                    this.hose = {
+                        x: player.pixelX,
+                        y: player.pixelY,
+                        length: 0,
+                        direction: player.direction
+                    };
+                    player.isPumping = true;
+                }
+            }
+
+            update(dt) {
+                if (!this.extending) return;
+
+                this.hose.length += 300 * dt;
+
+                const hoseEnd = this.getHoseEnd();
+
+                // Check enemy hit
+                for (const enemy of enemies) {
+                    const dx = Math.abs(hoseEnd.x - enemy.pixelX);
+                    const dy = Math.abs(hoseEnd.y - enemy.pixelY);
+                    if (dx < 16 && dy < 16) {
+                        this.target = enemy;
+                        this.extending = false;
+                        return;
+                    }
+                }
+
+                // Stop if max range
+                if (this.hose.length >= this.maxRange) {
+                    this.stop();
+                }
+            }
+
+            stop() {
+                player.isPumping = false;
+                this.extending = false;
+                this.hose = null;
+                this.target = null;
+            }
+
+            getHoseEnd() {
+                if (!this.hose) return { x: 0, y: 0 };
+
+                let x = this.hose.x;
+                let y = this.hose.y;
+
+                switch(this.hose.direction) {
+                    case 'right': x += this.hose.length; break;
+                    case 'left': x -= this.hose.length; break;
+                    case 'up': y -= this.hose.length; break;
+                    case 'down': y += this.hose.length; break;
+                }
+
+                return { x, y };
+            }
+
+            draw() {
+                if (!this.hose) return;
+
+                const end = this.getHoseEnd();
+
+                ctx.strokeStyle = '#FFFFFF';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.moveTo(this.hose.x, this.hose.y);
+                ctx.lineTo(end.x, end.y);
+                ctx.stroke();
+
+                ctx.fillStyle = '#FFD700';
+                ctx.fillRect(end.x - 4, end.y - 4, 8, 8);
+            }
+        }
+
+        // ===== GAME FUNCTIONS =====
+        function spawnEnemies(level) {
+            enemies = [];
+
+            const pookaCount = Math.min(2 + level, 6);
+            const fygarCount = Math.min(1 + Math.floor(level / 2), 4);
+
+            for (let i = 0; i < pookaCount; i++) {
+                const x = Math.floor(Math.random() * (GRID.cols - 4)) + 2;
+                const y = Math.floor(Math.random() * (GRID.rows / 2)) + 2;
+                grid[y][x] = GRID.types.EMPTY;
+                enemies.push(new Enemy(x, y, 'pooka'));
+            }
+
+            for (let i = 0; i < fygarCount; i++) {
+                const x = Math.floor(Math.random() * (GRID.cols - 4)) + 2;
+                const y = Math.floor(Math.random() * (GRID.rows / 2)) + 2;
+                grid[y][x] = GRID.types.EMPTY;
+                enemies.push(new Enemy(x, y, 'fygar'));
+            }
+        }
+
+        function initializeRocks(level) {
+            rocks = [];
+            const rockCount = Math.min(4 + level, 10);
+
+            for (let i = 0; i < rockCount; i++) {
+                const x = Math.floor(Math.random() * (GRID.cols - 4)) + 2;
+                const y = Math.floor(Math.random() * (GRID.rows / 3)) + 1;
+
+                grid[y][x] = GRID.types.ROCK;
+                rocks.push(new Rock(x, y));
+            }
+        }
+
+        function spawnVegetable() {
+            if (vegetables.length > 0) return;
+
+            const x = Math.floor(Math.random() * (GRID.cols - 4)) + 2;
+            const y = Math.floor(Math.random() * (GRID.rows - 4)) + 2;
+
+            vegetables.push({
+                gridX: x,
+                gridY: y,
+                pixelX: x * GRID.cellSize + GRID.cellSize / 2,
+                pixelY: y * GRID.cellSize + GRID.cellSize / 2,
+                points: gameState.level * 100,
+                timer: 0,
+                duration: 10
+            });
+        }
+
+        function checkEnemyPlayerCollision() {
+            for (const enemy of enemies) {
+                const dx = Math.abs(enemy.gridX - player.gridX);
+                const dy = Math.abs(enemy.gridY - player.gridY);
+                if (dx < 1 && dy < 1) {
+                    playerDeath();
+                    return;
+                }
+            }
+        }
+
+        function playerDeath() {
+            gameState.lives--;
+            playSound('death');
+
+            if (gameState.lives <= 0) {
+                gameOver();
+            } else {
+                // Reset player position
+                player = new Player();
+                pumpSystem = new PumpSystem();
+            }
+        }
+
+        function checkLevelComplete() {
+            if (enemies.length === 0) {
+                gameState.score += 1000 * gameState.level;
+                gameState.level++;
+                setTimeout(() => {
+                    initializeLevel(gameState.level);
+                }, 2000);
+            }
+        }
+
+        function gameOver() {
+            gameState.gameRunning = false;
+
+            if (gameState.score > gameState.highScore) {
+                gameState.highScore = gameState.score;
+                localStorage.setItem('squareDugHighScore', gameState.highScore);
+            }
+
+            scoreManager.submitGameResult(gameState.score);
+
+            const creditsHTML = `
+                <h1 style="font-size: 48px; margin-bottom: 20px; text-shadow: 0 0 20px #00FFFF;">GAME OVER</h1>
+                <div style="font-size: 32px; margin: 10px 0; color: #00FFFF;">
+                    Final Score: ${gameState.score}
+                </div>
+                <div style="font-size: 24px; margin: 10px 0; color: #FFD700;">
+                    Level Reached: ${gameState.level}
+                </div>
+                <div style="margin-top: 40px; font-size: 18px; line-height: 2.5;">
+                    <p style="font-size: 24px; color: #00FFFF; margin-bottom: 20px;">━━━━━━━━━━━━━━━━</p>
+
+                    <p style="font-size: 20px; color: #00FFFF; margin-top: 30px;">GAME DESIGN</p>
+                    <p>GunnersGames Studio</p>
+
+                    <p style="font-size: 20px; color: #00FFFF; margin-top: 30px;">INSPIRED BY</p>
+                    <p>Dig Dug (1982)</p>
+
+                    <p style="font-size: 20px; color: #00FFFF; margin-top: 30px;">SPECIAL THANKS</p>
+                    <p>All Tunnel Diggers!</p>
+
+                    <p style="font-size: 24px; color: #00FFFF; margin-top: 40px;">━━━━━━━━━━━━━━━━</p>
+
+                    <p style="margin-top: 40px; color: #888; font-size: 14px;">
+                        Returning to arcade in 5 seconds...
+                    </p>
+                </div>
+            `;
+
+            document.getElementById('creditsScroll').innerHTML = creditsHTML;
+            document.getElementById('gameOverScreen').style.display = 'flex';
+            document.getElementById('creditsScroll').classList.add('active');
+
+            setTimeout(() => {
+                if (window.parent !== window) {
+                    window.parent.postMessage({ action: 'closeGame' }, '*');
+                } else {
+                    window.location.href = '../../arcade.html';
+                }
+            }, 5000);
+        }
+
+        window.startGame = function() {
+            initAudio();
+            document.getElementById('startScreen').style.display = 'none';
+            gameState.gameRunning = true;
+            gameState.score = 0;
+            gameState.lives = 3;
+            gameState.level = 1;
+
+            initializeLevel(1);
+            scoreManager.startSession();
+
+            if (!animationId) {
+                animationId = requestAnimationFrame(gameLoop);
+            }
+        };
+
+        function initializeLevel(level) {
+            initializeGrid();
+            player = new Player();
+            pumpSystem = new PumpSystem();
+            spawnEnemies(level);
+            initializeRocks(level);
+            spawnVegetable();
+        }
+
+        // ===== INPUT CONTROLS =====
+        const keys = {};
+
+        document.addEventListener('keydown', (e) => {
+            keys[e.code] = true;
+
+            if (gameState.gameRunning && e.code === 'Space') {
+                e.preventDefault();
+                pumpSystem.startPump();
+            }
+        });
+
+        document.addEventListener('keyup', (e) => {
+            keys[e.code] = false;
+
+            if (e.code === 'Space' && pumpSystem) {
+                pumpSystem.stop();
+            }
+        });
+
+        // Mobile controls
+        const touchControls = [
+            { id: 'upBtn', key: 'KeyW' },
+            { id: 'leftBtn', key: 'KeyA' },
+            { id: 'rightBtn', key: 'KeyD' },
+            { id: 'downBtn', key: 'KeyS' }
+        ];
+
+        touchControls.forEach(ctrl => {
+            const el = document.getElementById(ctrl.id);
+            if (el) {
+                el.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    keys[ctrl.key] = true;
+                }, { passive: false });
+
+                el.addEventListener('touchend', (e) => {
+                    e.preventDefault();
+                    keys[ctrl.key] = false;
+                }, { passive: false });
+            }
+        });
+
+        const pumpBtn = document.getElementById('pumpBtn');
+        if (pumpBtn) {
+            pumpBtn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                if (gameState.gameRunning && pumpSystem) {
+                    pumpSystem.startPump();
+                }
+            }, { passive: false });
+
+            pumpBtn.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                if (pumpSystem) {
+                    pumpSystem.stop();
+                }
+            }, { passive: false });
+        }
+
+        // ===== GAME LOOP =====
+        let lastTime = 0;
+        let animationId = null;
+
+        function gameLoop(timestamp) {
+            if (!lastTime) lastTime = timestamp;
+            const dt = Math.min((timestamp - lastTime) / 1000, 0.1);
+            lastTime = timestamp;
+
+            // Clear canvas
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            if (gameState.gameRunning) {
+                // Update
+                if (player) player.update(dt);
+                if (pumpSystem) pumpSystem.update(dt);
+
+                enemies.forEach(enemy => enemy.update(dt));
+                rocks.forEach(rock => {
+                    rock.checkSupport();
+                    rock.update(dt);
+                });
+
+                // Update vegetables
+                for (let i = vegetables.length - 1; i >= 0; i--) {
+                    const veg = vegetables[i];
+                    veg.timer += dt;
+
+                    const dx = Math.abs(player.gridX - veg.gridX);
+                    const dy = Math.abs(player.gridY - veg.gridY);
+                    if (dx < 1 && dy < 1) {
+                        gameState.score += veg.points;
+                        vegetables.splice(i, 1);
+                        playSound('bonus');
+                    } else if (veg.timer > veg.duration) {
+                        vegetables.splice(i, 1);
+                    }
+                }
+
+                // Update particles
+                for (let i = particles.length - 1; i >= 0; i--) {
+                    particles[i].update(dt);
+                    if (particles[i].life <= 0) {
+                        particles.splice(i, 1);
+                    }
+                }
+
+                // Check collisions
+                checkEnemyPlayerCollision();
+                checkLevelComplete();
+
+                // Draw
+                drawGrid();
+
+                rocks.forEach(rock => rock.draw());
+                enemies.forEach(enemy => enemy.draw());
+
+                // Draw vegetables
+                vegetables.forEach(veg => {
+                    ctx.shadowColor = '#FFD700';
+                    ctx.shadowBlur = 10;
+                    ctx.fillStyle = '#FFD700';
+                    ctx.beginPath();
+                    ctx.arc(veg.pixelX, veg.pixelY, 8, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+                });
+
+                if (player) player.draw();
+                if (pumpSystem) pumpSystem.draw();
+
+                particles.forEach(p => p.draw());
+
+                updateUI();
+            }
+
+            animationId = requestAnimationFrame(gameLoop);
+        }
+
+        function updateUI() {
+            document.getElementById('score').textContent = gameState.score;
+            document.getElementById('level').textContent = gameState.level;
+            document.getElementById('highScore').textContent = gameState.highScore;
+
+            // Lives display
+            const livesDiv = document.getElementById('lives-display');
+            livesDiv.innerHTML = '';
+            for (let i = 0; i < gameState.lives; i++) {
+                const life = document.createElement('div');
+                life.className = 'life-icon';
+                livesDiv.appendChild(life);
+            }
+        }
+
+        // Initialize
+        updateUI();
+        animationId = requestAnimationFrame(gameLoop);
+    </script>
+</body>
+</html>
