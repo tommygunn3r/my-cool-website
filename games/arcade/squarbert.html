@@ -1,0 +1,1246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Squarbert</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            font-family: 'Courier New', monospace;
+            overflow: hidden;
+            padding: 10px;
+        }
+
+        #gameContainer {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            height: 600px;
+            background: #0f0f23;
+            border: 4px solid #333;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            overflow: hidden;
+        }
+
+        #gameCanvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            image-rendering: pixelated;
+        }
+
+        .ui-element {
+            position: absolute;
+            color: white;
+            font-size: 20px;
+            text-shadow: 2px 2px 0 #333;
+            font-weight: bold;
+            z-index: 5;
+        }
+
+        #score {
+            top: 20px;
+            left: 20px;
+        }
+
+        #level {
+            top: 50px;
+            left: 20px;
+            color: #FFD700;
+        }
+
+        #lives {
+            top: 80px;
+            left: 20px;
+            color: #FF6B6B;
+        }
+
+        #cubesProgress {
+            top: 110px;
+            left: 20px;
+            font-size: 16px;
+            color: #4ECDC4;
+        }
+
+        #startScreen, #gameOverScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.85);
+            color: white;
+            z-index: 10;
+        }
+
+        h1 {
+            font-size: 64px;
+            margin-bottom: 30px;
+            text-shadow: 4px 4px 0 #FFD700;
+            color: #FFF;
+            letter-spacing: 4px;
+        }
+
+        .button {
+            padding: 15px 40px;
+            font-size: 24px;
+            background: #FFD700;
+            border: 4px solid #333;
+            color: #333;
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            margin-top: 20px;
+            transition: all 0.2s;
+            text-transform: uppercase;
+        }
+
+        .button:hover {
+            background: #FFA500;
+            transform: scale(1.05);
+        }
+
+        .button:active {
+            transform: scale(0.95);
+        }
+
+        #gameOverScreen {
+            display: none;
+        }
+
+        .instructions {
+            margin: 20px;
+            font-size: 18px;
+            text-align: center;
+            line-height: 1.8;
+        }
+
+        .control-key {
+            display: inline-block;
+            padding: 5px 10px;
+            background: #333;
+            border: 2px solid #FFD700;
+            border-radius: 4px;
+            margin: 0 5px;
+        }
+
+        #mobile-controls {
+            position: absolute;
+            bottom: 20px;
+            left: 0;
+            right: 0;
+            display: none;
+            justify-content: space-around;
+            align-items: center;
+            z-index: 100;
+            padding: 0 20px;
+        }
+
+        .dpad {
+            display: grid;
+            grid-template-columns: repeat(3, 60px);
+            grid-template-rows: repeat(3, 60px);
+            gap: 5px;
+        }
+
+        .dpad button {
+            background: rgba(255, 215, 0, 0.8);
+            border: 3px solid #333;
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+            color: #333;
+            border-radius: 8px;
+        }
+
+        .dpad button:active {
+            background: rgba(255, 165, 0, 0.9);
+            transform: scale(0.95);
+        }
+
+        #shoot-btn {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: rgba(255, 107, 107, 0.8);
+            border: 4px solid #333;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            color: #fff;
+            text-shadow: 1px 1px 0 #000;
+        }
+
+        #shoot-btn:active {
+            background: rgba(255, 50, 50, 0.9);
+            transform: scale(0.95);
+        }
+
+        @media (max-width: 768px) {
+            #mobile-controls {
+                display: flex;
+            }
+
+            h1 {
+                font-size: 42px;
+            }
+
+            .instructions {
+                font-size: 14px;
+            }
+
+            .button {
+                font-size: 18px;
+                padding: 12px 30px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 32px;
+            }
+
+            .dpad {
+                grid-template-columns: repeat(3, 50px);
+                grid-template-rows: repeat(3, 50px);
+            }
+
+            .dpad button {
+                font-size: 18px;
+            }
+
+            #shoot-btn {
+                width: 70px;
+                height: 70px;
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+        <div id="score" class="ui-element">Score: 0</div>
+        <div id="level" class="ui-element">Level: 1</div>
+        <div id="lives" class="ui-element">Lives: 3</div>
+        <div id="cubesProgress" class="ui-element">Cubes: 0/28</div>
+
+        <div id="startScreen">
+            <h1>SQUARBERT</h1>
+            <div class="instructions">
+                <p>Change all pyramid tiles to the target color!</p>
+                <p style="margin-top: 15px;">
+                    <span class="control-key">↑</span>
+                    <span class="control-key">↓</span>
+                    <span class="control-key">←</span>
+                    <span class="control-key">→</span>
+                    to Jump
+                </p>
+                <p style="margin-top: 10px;">
+                    <span class="control-key">SPACE</span> to Shoot
+                </p>
+                <p style="margin-top: 15px; font-size: 14px; color: #FFD700;">
+                    Avoid enemies and shoot them to survive!
+                </p>
+            </div>
+            <button class="button" onclick="startGame()">Start Game</button>
+        </div>
+
+        <div id="gameOverScreen">
+            <h1>GAME OVER</h1>
+            <div id="finalScore" style="font-size: 32px; margin: 20px 0;"></div>
+            <button class="button" onclick="restartGame()">Play Again</button>
+        </div>
+
+        <div id="mobile-controls">
+            <div class="dpad">
+                <button data-dir="up-left" style="grid-column: 1; grid-row: 1;">↖</button>
+                <div style="grid-column: 2; grid-row: 1;"></div>
+                <button data-dir="up-right" style="grid-column: 3; grid-row: 1;">↗</button>
+                <div style="grid-column: 1; grid-row: 2;"></div>
+                <div style="grid-column: 2; grid-row: 2;"></div>
+                <div style="grid-column: 3; grid-row: 2;"></div>
+                <button data-dir="down-left" style="grid-column: 1; grid-row: 3;">↙</button>
+                <div style="grid-column: 2; grid-row: 3;"></div>
+                <button data-dir="down-right" style="grid-column: 3; grid-row: 3;">↘</button>
+            </div>
+            <button id="shoot-btn">SHOOT</button>
+        </div>
+    </div>
+
+    <script type="module">
+        // ===== EMBEDDED FIREBASE CONFIGURATION AND SCORE MANAGER =====
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth, signInAnonymously } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { getFirestore, collection, addDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDjdo3U9qg_h4TKvplsFoZgxVNepAbCpFA",
+            authDomain: "gunners-games.firebaseapp.com",
+            projectId: "gunners-games",
+            storageBucket: "gunners-games.firebasestorage.app",
+            messagingSenderId: "644077315462",
+            appId: "1:644077315462:web:431dd985426f3dbe02f807",
+            measurementId: "G-RWNL900X43"
+        };
+
+        let db = null;
+        let auth = null;
+        let firebaseInitialized = false;
+
+        async function initFirebase() {
+            try {
+                const app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+                await signInAnonymously(auth);
+                firebaseInitialized = true;
+                console.log('Firebase initialized successfully');
+            } catch (error) {
+                console.warn('Firebase not available, game will work without leaderboard:', error.message);
+            }
+        }
+
+        initFirebase();
+
+        class GameScoreManager {
+            constructor(gameName, hasScore = true) {
+                this.gameName = gameName;
+                this.hasScore = hasScore;
+                this.sessionStartTime = null;
+                this.playerName = localStorage.getItem('playerName') || this.generatePlayerName();
+            }
+
+            generatePlayerName() {
+                const adjectives = ['Swift', 'Mighty', 'Epic', 'Legendary', 'Brave', 'Noble', 'Quick', 'Bold'];
+                const nouns = ['Gamer', 'Player', 'Hero', 'Champion', 'Master', 'Legend', 'Pro', 'Ace'];
+                const name = `${adjectives[Math.floor(Math.random() * adjectives.length)]}${nouns[Math.floor(Math.random() * nouns.length)]}${Math.floor(Math.random() * 999)}`;
+                localStorage.setItem('playerName', name);
+                return name;
+            }
+
+            startSession() {
+                this.sessionStartTime = Date.now();
+            }
+
+            getElapsedTime() {
+                if (!this.sessionStartTime) return 0;
+                return Math.floor((Date.now() - this.sessionStartTime) / 1000);
+            }
+
+            getElapsedTimeFormatted() {
+                const seconds = this.getElapsedTime();
+                if (seconds < 60) return `${seconds}s`;
+                const mins = Math.floor(seconds / 60);
+                const secs = seconds % 60;
+                return `${mins}m ${secs}s`;
+            }
+
+            async submitGameResult(score = 0) {
+                if (!firebaseInitialized || !db) {
+                    console.log('Leaderboard unavailable - playing offline');
+                    return;
+                }
+
+                const timePlayed = this.getElapsedTime();
+
+                try {
+                    await addDoc(collection(db, 'scores'), {
+                        gameName: this.gameName,
+                        playerName: this.playerName,
+                        score: this.hasScore ? score : 0,
+                        timePlayed: timePlayed,
+                        timestamp: serverTimestamp()
+                    });
+                    console.log('Score submitted to leaderboard');
+                } catch (error) {
+                    console.warn('Failed to submit score:', error.message);
+                }
+            }
+        }
+
+        const scoreManager = new GameScoreManager('squarbert', true);
+
+        // ===== GAME SETUP =====
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Audio context
+        let audioCtx = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function playTone(frequency, duration, type = 'sine', volume = 0.3) {
+            if (!audioCtx) return;
+
+            try {
+                const oscillator = audioCtx.createOscillator();
+                const gainNode = audioCtx.createGain();
+
+                oscillator.connect(gainNode);
+                gainNode.connect(audioCtx.destination);
+
+                oscillator.frequency.value = frequency;
+                oscillator.type = type;
+
+                gainNode.gain.setValueAtTime(volume, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
+
+                oscillator.start(audioCtx.currentTime);
+                oscillator.stop(audioCtx.currentTime + duration);
+            } catch (e) {
+                console.log('Audio error:', e);
+            }
+        }
+
+        function playJumpSound() {
+            playTone(500, 0.15, 'square');
+        }
+
+        function playShootSound() {
+            playTone(800, 0.1, 'sawtooth');
+        }
+
+        function playCubeChangeSound() {
+            playTone(600, 0.2, 'sine');
+            setTimeout(() => playTone(800, 0.15, 'sine'), 50);
+        }
+
+        function playCubeRevertSound() {
+            playTone(400, 0.2, 'triangle');
+            setTimeout(() => playTone(300, 0.15, 'triangle'), 50);
+        }
+
+        function playEnemyHitSound() {
+            playTone(200, 0.3, 'sawtooth');
+        }
+
+        function playDeathSound() {
+            playTone(300, 0.1, 'sawtooth');
+            setTimeout(() => playTone(250, 0.1, 'sawtooth'), 100);
+            setTimeout(() => playTone(200, 0.3, 'sawtooth'), 200);
+        }
+
+        function playLevelCompleteSound() {
+            const notes = [523, 659, 784, 1047];
+            notes.forEach((freq, i) => {
+                setTimeout(() => playTone(freq, 0.2, 'sine'), i * 150);
+            });
+        }
+
+        // ===== COLOR SCHEMES =====
+        const COLOR_SCHEMES = [
+            { original: '#4169E1', target: '#FFD700' },
+            { original: '#228B22', target: '#FF4500' },
+            { original: '#8B008B', target: '#00CED1' },
+            { original: '#DC143C', target: '#ADFF2F' },
+            { original: '#FF8C00', target: '#4B0082' },
+        ];
+
+        let currentColorScheme = COLOR_SCHEMES[0];
+
+        // ===== PYRAMID CONSTANTS =====
+        const PYRAMID_ROWS = 7;
+        const ISO_CONFIG = {
+            cubeSize: 40,
+            offsetX: 400,
+            offsetY: 150,
+            scale: 1.2
+        };
+
+        // ===== GAME STATE =====
+        const GameState = {
+            MENU: 'menu',
+            PLAYING: 'playing',
+            LEVEL_COMPLETE: 'level_complete',
+            GAME_OVER: 'game_over'
+        };
+
+        let gameState = {
+            currentState: GameState.MENU,
+            level: 1,
+            score: 0,
+            lives: 3,
+            cubesChanged: 0,
+            totalCubes: 28,
+            enemySpeed: 1.5,
+            ballCount: 2,
+            colorChangerCount: 1,
+            invincible: false,
+            invincibleUntil: 0
+        };
+
+        // ===== PYRAMID DATA STRUCTURE =====
+        class PyramidCube {
+            constructor(row, col) {
+                this.row = row;
+                this.col = col;
+                this.currentColor = 0;
+                this.targetColor = 1;
+                this.x = 0;
+                this.y = 0;
+                this.z = 0;
+            }
+        }
+
+        let pyramid = [];
+
+        function pyramidToIso(row, col) {
+            const gridX = col - row / 2;
+            const gridY = row;
+
+            const screenX = (gridX - gridY) * ISO_CONFIG.cubeSize * 0.866 * ISO_CONFIG.scale + ISO_CONFIG.offsetX;
+            const screenY = (gridX + gridY) * ISO_CONFIG.cubeSize * 0.5 * ISO_CONFIG.scale + ISO_CONFIG.offsetY;
+            const depth = row * 100 + col;
+
+            return { x: screenX, y: screenY, z: depth };
+        }
+
+        function getAdjacentCubes(row, col) {
+            const adjacent = [];
+
+            if (row > 0 && col > 0) adjacent.push({row: row - 1, col: col - 1, dir: 'up-left'});
+            if (row > 0 && col <= row - 1) adjacent.push({row: row - 1, col: col, dir: 'up-right'});
+            if (row < PYRAMID_ROWS - 1) adjacent.push({row: row + 1, col: col, dir: 'down-left'});
+            if (row < PYRAMID_ROWS - 1) adjacent.push({row: row + 1, col: col + 1, dir: 'down-right'});
+
+            return adjacent;
+        }
+
+        function initPyramid() {
+            pyramid = [];
+            let totalCubes = 0;
+
+            for (let row = 0; row < PYRAMID_ROWS; row++) {
+                pyramid[row] = [];
+                for (let col = 0; col <= row; col++) {
+                    const cube = new PyramidCube(row, col);
+                    const pos = pyramidToIso(row, col);
+                    cube.x = pos.x;
+                    cube.y = pos.y;
+                    cube.z = pos.z;
+                    pyramid[row][col] = cube;
+                    totalCubes++;
+                }
+            }
+
+            gameState.totalCubes = totalCubes;
+            gameState.cubesChanged = 0;
+        }
+
+        function adjustBrightness(hexColor, factor) {
+            const num = parseInt(hexColor.replace('#', ''), 16);
+            const r = Math.floor((num >> 16) * factor);
+            const g = Math.floor(((num >> 8) & 0x00FF) * factor);
+            const b = Math.floor((num & 0x0000FF) * factor);
+            return `rgb(${r}, ${g}, ${b})`;
+        }
+
+        function drawCube(cube, color) {
+            const size = ISO_CONFIG.cubeSize * ISO_CONFIG.scale;
+            const x = cube.x;
+            const y = cube.y;
+
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+            ctx.lineTo(x + size * 0.866, y + size * 0.5);
+            ctx.lineTo(x, y + size);
+            ctx.lineTo(x - size * 0.866, y + size * 0.5);
+            ctx.closePath();
+            ctx.fill();
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            ctx.fillStyle = adjustBrightness(color, 0.7);
+            ctx.beginPath();
+            ctx.moveTo(x - size * 0.866, y + size * 0.5);
+            ctx.lineTo(x, y + size);
+            ctx.lineTo(x, y + size * 2);
+            ctx.lineTo(x - size * 0.866, y + size * 1.5);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.fillStyle = adjustBrightness(color, 0.85);
+            ctx.beginPath();
+            ctx.moveTo(x + size * 0.866, y + size * 0.5);
+            ctx.lineTo(x, y + size);
+            ctx.lineTo(x, y + size * 2);
+            ctx.lineTo(x + size * 0.866, y + size * 1.5);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+        }
+
+        function drawPyramid() {
+            const allCubes = [];
+            for (let row = 0; row < pyramid.length; row++) {
+                for (let col = 0; col < pyramid[row].length; col++) {
+                    allCubes.push(pyramid[row][col]);
+                }
+            }
+
+            allCubes.sort((a, b) => a.z - b.z);
+
+            allCubes.forEach(cube => {
+                const color = cube.currentColor === cube.targetColor ?
+                    currentColorScheme.target : currentColorScheme.original;
+                drawCube(cube, color);
+            });
+        }
+
+        // ===== SQUARBERT =====
+        class Squarbert {
+            constructor() {
+                this.row = 6;
+                this.col = 3;
+                this.x = 0;
+                this.y = 0;
+                this.z = 0;
+                this.targetRow = 6;
+                this.targetCol = 3;
+                this.isJumping = false;
+                this.jumpProgress = 0;
+                this.direction = 'down-right';
+                this.size = 30;
+                this.color = '#FFD700';
+
+                const pos = pyramidToIso(this.row, this.col);
+                this.x = pos.x;
+                this.y = pos.y;
+                this.z = pos.z + 0.2;
+            }
+
+            jump(direction) {
+                if (this.isJumping) return;
+
+                const adjacent = getAdjacentCubes(this.row, this.col);
+                const target = adjacent.find(a => a.dir === direction);
+
+                if (target) {
+                    this.targetRow = target.row;
+                    this.targetCol = target.col;
+                    this.isJumping = true;
+                    this.jumpProgress = 0;
+                    this.direction = direction;
+                    playJumpSound();
+                }
+            }
+
+            update(dt) {
+                if (this.isJumping) {
+                    this.jumpProgress += dt * 4;
+
+                    if (this.jumpProgress >= 1) {
+                        this.jumpProgress = 0;
+                        this.isJumping = false;
+                        this.row = this.targetRow;
+                        this.col = this.targetCol;
+
+                        const cube = pyramid[this.row][this.col];
+                        if (cube.currentColor !== cube.targetColor) {
+                            cube.currentColor = cube.targetColor;
+                            gameState.cubesChanged++;
+                            gameState.score += 100;
+                            playCubeChangeSound();
+                            updateUI();
+                            checkLevelComplete();
+                        }
+
+                        const pos = pyramidToIso(this.row, this.col);
+                        this.x = pos.x;
+                        this.y = pos.y;
+                        this.z = pos.z + 0.2;
+                    } else {
+                        const t = this.jumpProgress;
+                        const startPos = pyramidToIso(this.row, this.col);
+                        const endPos = pyramidToIso(this.targetRow, this.targetCol);
+
+                        this.x = startPos.x + (endPos.x - startPos.x) * t;
+                        this.y = startPos.y + (endPos.y - startPos.y) * t;
+                        this.y -= Math.sin(t * Math.PI) * 50;
+                        this.z = startPos.z + (endPos.z - startPos.z) * t + 0.2;
+                    }
+                } else {
+                    const pos = pyramidToIso(this.row, this.col);
+                    this.x = pos.x;
+                    this.y = pos.y;
+                    this.z = pos.z + 0.2;
+                }
+            }
+
+            shoot() {
+                if (!this.isJumping) {
+                    projectiles.push(new Projectile(this.row, this.col, this.direction));
+                    playShootSound();
+                }
+            }
+
+            draw() {
+                const flashInterval = 200;
+                const shouldFlash = gameState.invincible &&
+                    (Date.now() % flashInterval) < (flashInterval / 2);
+
+                if (shouldFlash) return;
+
+                ctx.fillStyle = this.color;
+                ctx.fillRect(this.x - this.size/2, this.y - this.size/2, this.size, this.size);
+
+                ctx.strokeStyle = '#333';
+                ctx.lineWidth = 3;
+                ctx.strokeRect(this.x - this.size/2, this.y - this.size/2, this.size, this.size);
+
+                ctx.fillStyle = '#000';
+                const eyeSize = 5;
+                ctx.fillRect(this.x - 10, this.y - 8, eyeSize, eyeSize);
+                ctx.fillRect(this.x + 5, this.y - 8, eyeSize, eyeSize);
+            }
+        }
+
+        let squarbert = null;
+
+        // ===== ENEMIES =====
+        class BouncingBall {
+            constructor() {
+                this.row = Math.floor(Math.random() * 3);
+                this.col = Math.floor(Math.random() * (this.row + 1));
+                this.x = 0;
+                this.y = 0;
+                this.z = 0;
+                this.targetRow = this.row;
+                this.targetCol = this.col;
+                this.isMoving = false;
+                this.moveProgress = 0;
+                this.speed = gameState.enemySpeed;
+                this.size = 25;
+                this.color = '#FF0000';
+                this.type = 'ball';
+                this.waitTime = 0.5;
+                this.waitTimer = this.waitTime;
+
+                const pos = pyramidToIso(this.row, this.col);
+                this.x = pos.x;
+                this.y = pos.y;
+                this.z = pos.z + 0.1;
+            }
+
+            update(dt, target) {
+                if (this.isMoving) {
+                    this.moveProgress += dt * this.speed;
+
+                    if (this.moveProgress >= 1) {
+                        this.row = this.targetRow;
+                        this.col = this.targetCol;
+                        this.moveProgress = 0;
+                        this.isMoving = false;
+                        this.waitTimer = this.waitTime;
+
+                        const pos = pyramidToIso(this.row, this.col);
+                        this.x = pos.x;
+                        this.y = pos.y;
+                        this.z = pos.z + 0.1;
+                    } else {
+                        const t = this.moveProgress;
+                        const startPos = pyramidToIso(this.row, this.col);
+                        const endPos = pyramidToIso(this.targetRow, this.targetCol);
+
+                        this.x = startPos.x + (endPos.x - startPos.x) * t;
+                        this.y = startPos.y + (endPos.y - startPos.y) * t;
+                        this.y -= Math.sin(t * Math.PI) * 30;
+                        this.z = startPos.z + (endPos.z - startPos.z) * t + 0.1;
+                    }
+                } else {
+                    this.waitTimer -= dt;
+
+                    if (this.waitTimer <= 0) {
+                        this.pickNextTarget(target);
+                    }
+                }
+            }
+
+            pickNextTarget(target) {
+                const adjacent = getAdjacentCubes(this.row, this.col);
+
+                if (adjacent.length === 0) return;
+
+                let closest = adjacent[0];
+                let minDist = Infinity;
+
+                adjacent.forEach(cube => {
+                    const dist = Math.abs(cube.row - target.row) + Math.abs(cube.col - target.col);
+                    if (dist < minDist) {
+                        minDist = dist;
+                        closest = cube;
+                    }
+                });
+
+                this.targetRow = closest.row;
+                this.targetCol = closest.col;
+                this.isMoving = true;
+                this.moveProgress = 0;
+            }
+
+            draw() {
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size/2, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.strokeStyle = '#333';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                ctx.fillStyle = '#FFF';
+                ctx.beginPath();
+                ctx.arc(this.x - 5, this.y - 5, 3, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        class ColorChanger {
+            constructor() {
+                const edge = Math.floor(Math.random() * 4);
+                if (edge === 0) {
+                    this.row = 0;
+                    this.col = 0;
+                } else if (edge === 1) {
+                    this.row = PYRAMID_ROWS - 1;
+                    this.col = 0;
+                } else if (edge === 2) {
+                    this.row = PYRAMID_ROWS - 1;
+                    this.col = PYRAMID_ROWS - 1;
+                } else {
+                    this.row = Math.floor(Math.random() * PYRAMID_ROWS);
+                    this.col = this.row;
+                }
+
+                this.x = 0;
+                this.y = 0;
+                this.z = 0;
+                this.targetRow = this.row;
+                this.targetCol = this.col;
+                this.isMoving = false;
+                this.moveProgress = 0;
+                this.speed = gameState.enemySpeed * 0.7;
+                this.size = 28;
+                this.color = '#8B008B';
+                this.type = 'colorchanger';
+                this.waitTime = 1.0;
+                this.waitTimer = this.waitTime;
+
+                const pos = pyramidToIso(this.row, this.col);
+                this.x = pos.x;
+                this.y = pos.y;
+                this.z = pos.z + 0.1;
+            }
+
+            update(dt, target) {
+                if (this.isMoving) {
+                    this.moveProgress += dt * this.speed;
+
+                    if (this.moveProgress >= 1) {
+                        this.row = this.targetRow;
+                        this.col = this.targetCol;
+                        this.moveProgress = 0;
+                        this.isMoving = false;
+                        this.waitTimer = this.waitTime;
+
+                        const cube = pyramid[this.row][this.col];
+                        if (cube.currentColor === cube.targetColor) {
+                            cube.currentColor = 0;
+                            gameState.cubesChanged = Math.max(0, gameState.cubesChanged - 1);
+                            gameState.score = Math.max(0, gameState.score - 50);
+                            playCubeRevertSound();
+                            updateUI();
+                        }
+
+                        const pos = pyramidToIso(this.row, this.col);
+                        this.x = pos.x;
+                        this.y = pos.y;
+                        this.z = pos.z + 0.1;
+                    } else {
+                        const t = this.moveProgress;
+                        const startPos = pyramidToIso(this.row, this.col);
+                        const endPos = pyramidToIso(this.targetRow, this.targetCol);
+
+                        this.x = startPos.x + (endPos.x - startPos.x) * t;
+                        this.y = startPos.y + (endPos.y - startPos.y) * t;
+                        this.z = startPos.z + (endPos.z - startPos.z) * t + 0.1;
+                    }
+                } else {
+                    this.waitTimer -= dt;
+
+                    if (this.waitTimer <= 0) {
+                        this.pickRandomAdjacent();
+                    }
+                }
+            }
+
+            pickRandomAdjacent() {
+                const adjacent = getAdjacentCubes(this.row, this.col);
+
+                if (adjacent.length > 0) {
+                    const random = adjacent[Math.floor(Math.random() * adjacent.length)];
+                    this.targetRow = random.row;
+                    this.targetCol = random.col;
+                    this.isMoving = true;
+                    this.moveProgress = 0;
+                }
+            }
+
+            draw() {
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.moveTo(this.x, this.y - this.size/2);
+                ctx.lineTo(this.x + this.size/2, this.y);
+                ctx.lineTo(this.x, this.y + this.size/2);
+                ctx.lineTo(this.x - this.size/2, this.y);
+                ctx.closePath();
+                ctx.fill();
+                ctx.strokeStyle = '#333';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                ctx.fillStyle = '#FFF';
+                ctx.fillRect(this.x - 8, this.y - 2, 16, 4);
+            }
+        }
+
+        let enemies = [];
+
+        function initEnemies() {
+            enemies = [];
+
+            for (let i = 0; i < gameState.ballCount; i++) {
+                enemies.push(new BouncingBall());
+            }
+
+            for (let i = 0; i < gameState.colorChangerCount; i++) {
+                enemies.push(new ColorChanger());
+            }
+        }
+
+        // ===== PROJECTILES =====
+        class Projectile {
+            constructor(row, col, direction) {
+                this.row = row;
+                this.col = col;
+                this.targetRow = row;
+                this.targetCol = col;
+                this.direction = direction;
+                this.isActive = true;
+                this.moveProgress = 0;
+                this.speed = 3;
+                this.size = 15;
+                this.color = '#00FF00';
+                this.x = 0;
+                this.y = 0;
+                this.z = 0;
+
+                const pos = pyramidToIso(row, col);
+                this.x = pos.x;
+                this.y = pos.y;
+                this.z = pos.z + 0.3;
+
+                this.pickNextTarget();
+            }
+
+            pickNextTarget() {
+                const adjacent = getAdjacentCubes(this.row, this.col);
+                const target = adjacent.find(a => a.dir === this.direction);
+
+                if (target) {
+                    this.targetRow = target.row;
+                    this.targetCol = target.col;
+                } else {
+                    this.isActive = false;
+                }
+            }
+
+            update(dt) {
+                if (!this.isActive) return;
+
+                this.moveProgress += dt * this.speed;
+
+                if (this.moveProgress >= 1) {
+                    this.row = this.targetRow;
+                    this.col = this.targetCol;
+                    this.moveProgress = 0;
+
+                    this.checkEnemyCollision();
+                    this.pickNextTarget();
+                } else {
+                    const t = this.moveProgress;
+                    const startPos = pyramidToIso(this.row, this.col);
+                    const endPos = pyramidToIso(this.targetRow, this.targetCol);
+
+                    this.x = startPos.x + (endPos.x - startPos.x) * t;
+                    this.y = startPos.y + (endPos.y - startPos.y) * t;
+                    this.z = startPos.z + (endPos.z - startPos.z) * t + 0.3;
+                }
+            }
+
+            checkEnemyCollision() {
+                for (let i = enemies.length - 1; i >= 0; i--) {
+                    const enemy = enemies[i];
+
+                    if (Math.abs(enemy.row - this.row) <= 0 && Math.abs(enemy.col - this.col) <= 0) {
+                        enemies.splice(i, 1);
+                        this.isActive = false;
+                        gameState.score += 300;
+                        playEnemyHitSound();
+                        updateUI();
+
+                        setTimeout(() => {
+                            if (gameState.currentState === GameState.PLAYING) {
+                                const newEnemy = enemy.type === 'ball' ? new BouncingBall() : new ColorChanger();
+                                enemies.push(newEnemy);
+                            }
+                        }, 3000);
+
+                        break;
+                    }
+                }
+            }
+
+            draw() {
+                if (!this.isActive) return;
+
+                ctx.fillStyle = this.color;
+                ctx.fillRect(this.x - this.size/2, this.y - this.size/2, this.size, this.size);
+
+                ctx.strokeStyle = '#FFFFFF';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(this.x - this.size/2, this.y - this.size/2, this.size, this.size);
+            }
+        }
+
+        let projectiles = [];
+
+        // ===== COLLISION DETECTION =====
+        function checkCollision(entity1, entity2) {
+            const dx = entity1.x - entity2.x;
+            const dy = entity1.y - entity2.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            return distance < (entity1.size + entity2.size) / 2;
+        }
+
+        // ===== GAME LOGIC =====
+        function startLevel(level) {
+            gameState.level = level;
+            gameState.currentState = GameState.PLAYING;
+            gameState.cubesChanged = 0;
+
+            gameState.enemySpeed = 1.5 + (level * 0.2);
+            gameState.ballCount = 2 + Math.floor(level / 2);
+            gameState.colorChangerCount = 1 + Math.floor(level / 3);
+
+            currentColorScheme = COLOR_SCHEMES[(level - 1) % COLOR_SCHEMES.length];
+
+            initPyramid();
+            squarbert = new Squarbert();
+            initEnemies();
+            projectiles = [];
+
+            updateUI();
+            scoreManager.startSession();
+        }
+
+        function checkLevelComplete() {
+            if (gameState.cubesChanged >= gameState.totalCubes) {
+                gameState.currentState = GameState.LEVEL_COMPLETE;
+                gameState.score += 1000 * gameState.level;
+                playLevelCompleteSound();
+                updateUI();
+
+                setTimeout(() => {
+                    startLevel(gameState.level + 1);
+                }, 2000);
+            }
+        }
+
+        function loseLife() {
+            if (gameState.invincible) return;
+
+            gameState.lives--;
+            updateUI();
+            playDeathSound();
+
+            if (gameState.lives <= 0) {
+                gameOver();
+            } else {
+                squarbert = new Squarbert();
+
+                gameState.invincible = true;
+                gameState.invincibleUntil = Date.now() + 2000;
+                setTimeout(() => {
+                    gameState.invincible = false;
+                }, 2000);
+            }
+        }
+
+        function gameOver() {
+            gameState.currentState = GameState.GAME_OVER;
+            scoreManager.submitGameResult(gameState.score);
+
+            let finalScoreText = `Final Score: ${gameState.score}`;
+            const playTime = scoreManager.getElapsedTimeFormatted();
+            finalScoreText += ` | Time: ${playTime}`;
+
+            document.getElementById('finalScore').textContent = finalScoreText;
+            document.getElementById('gameOverScreen').style.display = 'flex';
+        }
+
+        function updateUI() {
+            document.getElementById('score').textContent = `Score: ${gameState.score}`;
+            document.getElementById('level').textContent = `Level: ${gameState.level}`;
+            document.getElementById('lives').textContent = `Lives: ${gameState.lives}`;
+            document.getElementById('cubesProgress').textContent = `Cubes: ${gameState.cubesChanged}/${gameState.totalCubes}`;
+        }
+
+        // ===== INPUT HANDLING =====
+        const keys = {};
+
+        document.addEventListener('keydown', (e) => {
+            keys[e.code] = true;
+
+            if (gameState.currentState !== GameState.PLAYING) return;
+
+            if (e.code === 'ArrowUp') {
+                e.preventDefault();
+                squarbert.jump('up-left');
+            } else if (e.code === 'ArrowRight') {
+                e.preventDefault();
+                squarbert.jump('up-right');
+            } else if (e.code === 'ArrowDown') {
+                e.preventDefault();
+                squarbert.jump('down-right');
+            } else if (e.code === 'ArrowLeft') {
+                e.preventDefault();
+                squarbert.jump('down-left');
+            } else if (e.code === 'Space') {
+                e.preventDefault();
+                squarbert.shoot();
+            }
+        });
+
+        document.addEventListener('keyup', (e) => {
+            keys[e.code] = false;
+        });
+
+        // Mobile touch controls
+        document.querySelectorAll('[data-dir]').forEach(btn => {
+            btn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                if (gameState.currentState === GameState.PLAYING) {
+                    const dir = btn.getAttribute('data-dir');
+                    squarbert.jump(dir);
+                }
+            });
+        });
+
+        document.getElementById('shoot-btn').addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            if (gameState.currentState === GameState.PLAYING) {
+                squarbert.shoot();
+            }
+        });
+
+        // ===== GAME LOOP =====
+        let lastTimestamp = 0;
+        let animationId = null;
+
+        function gameLoop(timestamp) {
+            const dt = timestamp - lastTimestamp > 0 ? (timestamp - lastTimestamp) / 1000 : 0.016;
+            lastTimestamp = timestamp;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            ctx.fillStyle = '#0f0f23';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            if (gameState.currentState === GameState.PLAYING) {
+                squarbert.update(dt);
+
+                enemies.forEach(enemy => {
+                    enemy.update(dt, squarbert);
+
+                    if (!squarbert.isJumping && checkCollision(squarbert, enemy)) {
+                        loseLife();
+                    }
+                });
+
+                for (let i = projectiles.length - 1; i >= 0; i--) {
+                    projectiles[i].update(dt);
+
+                    if (!projectiles[i].isActive) {
+                        projectiles.splice(i, 1);
+                    }
+                }
+
+                const allEntities = [
+                    ...pyramid.flat(),
+                    ...enemies,
+                    squarbert,
+                    ...projectiles
+                ];
+
+                allEntities.sort((a, b) => a.z - b.z);
+
+                pyramid.forEach(row => row.forEach(cube => {
+                    const color = cube.currentColor === cube.targetColor ?
+                        currentColorScheme.target : currentColorScheme.original;
+                    drawCube(cube, color);
+                }));
+
+                enemies.forEach(enemy => enemy.draw());
+                projectiles.forEach(proj => proj.draw());
+                squarbert.draw();
+            }
+
+            animationId = requestAnimationFrame(gameLoop);
+        }
+
+        // ===== START/RESTART FUNCTIONS =====
+        window.startGame = function() {
+            initAudio();
+            document.getElementById('startScreen').style.display = 'none';
+            gameState.score = 0;
+            gameState.lives = 3;
+            startLevel(1);
+
+            if (animationId) cancelAnimationFrame(animationId);
+            animationId = requestAnimationFrame(gameLoop);
+        };
+
+        window.restartGame = function() {
+            document.getElementById('gameOverScreen').style.display = 'none';
+            window.startGame();
+        };
+    </script>
+</body>
+</html>
