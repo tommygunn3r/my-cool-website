@@ -1208,12 +1208,11 @@ function botTurn() {
     }
 
     if (gameState.ballInHand) {
-        console.log('📍 Bot placing cue ball at break position');
-        // Place cue ball
-        const safeX = TABLE_PADDING + TABLE_WIDTH / 4;
-        const safeY = CANVAS_HEIGHT / 2;
-        cueBall.x = safeX;
-        cueBall.y = safeY;
+        console.log('📍 Bot placing cue ball for optimal position');
+        // Smart ball placement
+        const placement = findBestCueBallPlacement();
+        cueBall.x = placement.x;
+        cueBall.y = placement.y;
         cueBall.pocketed = false;
         gameState.ballInHand = false;
         console.log('✅ Bot placed ball, scheduling next turn in 500ms');
@@ -1222,72 +1221,23 @@ function botTurn() {
         return;
     }
 
-    // Find target ball
-    let targetBall = null;
-    
-    if (gameState.mode === '9-ball') {
-        // Target lowest numbered ball
-        targetBall = balls
-            .filter(b => !b.pocketed && b.number > 0)
-            .reduce((lowest, b) => (!lowest || b.number < lowest.number) ? b : lowest, null);
-    } else if (gameState.mode === '8-ball') {
-        const playerType = gameState.player2.type;
-        if (playerType) {
-            // Check if all own balls are pocketed
-            if (gameState.player2.balls.length === 7) {
-                // Target the 8-ball!
-                targetBall = balls.find(b => !b.pocketed && b.number === 8);
-            } else {
-                // Target own balls
-                targetBall = balls
-                    .filter(b => !b.pocketed && b.type === playerType)
-                    .sort(() => Math.random() - 0.5)[0];
-            }
-        } else {
-            // First shot, target any ball
-            targetBall = balls
-                .filter(b => !b.pocketed && b.number > 0 && b.number !== 8)
-                .sort(() => Math.random() - 0.5)[0];
-        }
-    }
-    
-    if (!targetBall) return;
-    
-    // Calculate shot
-    const dx = targetBall.x - cueBall.x;
-    const dy = targetBall.y - cueBall.y;
-    let angle = Math.atan2(dy, dx);
-    
-    // Add randomness based on difficulty
-    let angleError = 0;
-    let powerMult = 1;
-    
-    if (gameState.botDifficulty === 'easy') {
-        angleError = (Math.random() - 0.5) * 0.5; // ±30 degrees
-        powerMult = 0.6 + Math.random() * 0.4; // 60-100%
-    } else if (gameState.botDifficulty === 'medium') {
-        angleError = (Math.random() - 0.5) * 0.2; // ±12 degrees  
-        powerMult = 0.7 + Math.random() * 0.3; // 70-100%
-    } else {
-        angleError = (Math.random() - 0.5) * 0.1; // ±6 degrees
-        powerMult = 0.8 + Math.random() * 0.2; // 80-100%
-    }
-    
-    angle += angleError;
+    // Find best shot using advanced AI
+    const bestShot = findBestShot();
 
-    const distance = Math.sqrt(dx*dx + dy*dy);
-    // Bot calculates power based on distance (closer = less power)
-    const basePower = Math.min((distance / TABLE_WIDTH) * 100, 80); // Max 80% power for bot
-    const power = basePower * powerMult;
+    if (!bestShot) {
+        console.log('⚠️ No valid shot found');
+        return;
+    }
 
-    // Execute shot using same system as player
-    const normalizedPower = Math.min(Math.max(power, 0), MAX_POWER);
+    console.log(`🎱 Bot shooting at ball ${bestShot.targetBall.number} toward pocket at (${bestShot.pocket.x}, ${bestShot.pocket.y})`);
+    console.log(`   Score: ${bestShot.score.toFixed(2)}, Power: ${bestShot.power.toFixed(1)}`);
+
+    // Execute shot
+    const normalizedPower = Math.min(Math.max(bestShot.power, 0), MAX_POWER);
     const velocity = (normalizedPower / MAX_POWER) * (MAX_POWER * POWER_MULTIPLIER);
 
-    console.log(`🎱 Bot shooting! Power: ${normalizedPower.toFixed(1)}, Velocity: ${velocity.toFixed(1)}`);
-
-    cueBall.vx = Math.cos(angle) * velocity;
-    cueBall.vy = Math.sin(angle) * velocity;
+    cueBall.vx = Math.cos(bestShot.angle) * velocity;
+    cueBall.vy = Math.sin(bestShot.angle) * velocity;
 
     // Play cue hit sound
     playCueHitSound(velocity);
@@ -1295,6 +1245,345 @@ function botTurn() {
     gameState.pocketedThisTurn = [];
     gameState.lowestBallHit = null;
     gameState.shotTaken = true;
+}
+
+function findBestCueBallPlacement() {
+    // Find best position to place cue ball when we have ball-in-hand
+    const validTargets = getBotTargets();
+    if (validTargets.length === 0) {
+        return { x: TABLE_PADDING + TABLE_WIDTH / 4, y: CANVAS_HEIGHT / 2 };
+    }
+
+    let bestPlacement = null;
+    let bestScore = -Infinity;
+
+    // Try several positions in the allowed area
+    const positions = [];
+    const minX = TABLE_PADDING + BALL_SIZE;
+    const maxX = TABLE_PADDING + (TABLE_WIDTH / 4);
+    const minY = TABLE_PADDING + BALL_SIZE;
+    const maxY = CANVAS_HEIGHT - TABLE_PADDING - BALL_SIZE;
+
+    // Create grid of candidate positions
+    for (let x = minX; x <= maxX; x += 50) {
+        for (let y = minY; y <= maxY; y += 50) {
+            if (canPlaceCueBall(x, y)) {
+                positions.push({ x, y });
+            }
+        }
+    }
+
+    // Evaluate each position
+    for (const pos of positions) {
+        // Temporarily move cue ball to test position
+        const originalX = cueBall.x;
+        const originalY = cueBall.y;
+        cueBall.x = pos.x;
+        cueBall.y = pos.y;
+
+        // Find best shot from this position
+        const shot = findBestShot();
+        if (shot && shot.score > bestScore) {
+            bestScore = shot.score;
+            bestPlacement = pos;
+        }
+
+        // Restore cue ball position
+        cueBall.x = originalX;
+        cueBall.y = originalY;
+    }
+
+    return bestPlacement || { x: TABLE_PADDING + TABLE_WIDTH / 4, y: CANVAS_HEIGHT / 2 };
+}
+
+function getBotTargets() {
+    // Get list of valid target balls for the bot
+    if (gameState.mode === '9-ball') {
+        const lowestBall = balls
+            .filter(b => !b.pocketed && b.number > 0)
+            .reduce((lowest, b) => (!lowest || b.number < lowest.number) ? b : lowest, null);
+        return lowestBall ? [lowestBall] : [];
+    } else if (gameState.mode === '8-ball') {
+        const playerType = gameState.player2.type;
+        if (playerType) {
+            if (gameState.player2.balls.length === 7) {
+                // Target the 8-ball
+                const eightBall = balls.find(b => !b.pocketed && b.number === 8);
+                return eightBall ? [eightBall] : [];
+            } else {
+                // Target own balls
+                return balls.filter(b => !b.pocketed && b.type === playerType);
+            }
+        } else {
+            // First shot, target any ball except 8
+            return balls.filter(b => !b.pocketed && b.number > 0 && b.number !== 8);
+        }
+    }
+    return [];
+}
+
+function findBestShot() {
+    // Advanced shot selection - evaluates all possible shots and picks the best one
+    const validTargets = getBotTargets();
+    if (validTargets.length === 0) return null;
+
+    let bestShot = null;
+    let bestScore = -Infinity;
+
+    // Difficulty parameters
+    let skillLevel = 1.0;
+    let angleError = 0;
+    let considerPosition = true;
+    let considerSafety = true;
+
+    if (gameState.botDifficulty === 'easy') {
+        skillLevel = 0.5;
+        angleError = 0.15; // ±8.6 degrees
+        considerPosition = false;
+        considerSafety = false;
+    } else if (gameState.botDifficulty === 'medium') {
+        skillLevel = 0.75;
+        angleError = 0.08; // ±4.6 degrees
+        considerPosition = true;
+        considerSafety = false;
+    } else { // hard
+        skillLevel = 0.95;
+        angleError = 0.03; // ±1.7 degrees
+        considerPosition = true;
+        considerSafety = true;
+    }
+
+    // Evaluate each target ball with each pocket
+    for (const targetBall of validTargets) {
+        for (const pocket of POCKETS) {
+            const shot = evaluateShot(targetBall, pocket, skillLevel, considerPosition, considerSafety);
+            if (shot && shot.score > bestScore) {
+                bestScore = shot.score;
+                bestShot = shot;
+            }
+        }
+    }
+
+    // Apply difficulty-based error to the best shot
+    if (bestShot && angleError > 0) {
+        bestShot.angle += (Math.random() - 0.5) * angleError * 2;
+    }
+
+    return bestShot;
+}
+
+function evaluateShot(targetBall, pocket, skillLevel, considerPosition, considerSafety) {
+    // Calculate the angle needed to pot the target ball into the specified pocket
+    // Using the "ghost ball" method - where should the cue ball be to pot the ball?
+
+    const dx = pocket.x - targetBall.x;
+    const dy = pocket.y - targetBall.y;
+    const distToPocket = Math.sqrt(dx * dx + dy * dy);
+
+    if (distToPocket < BALL_SIZE) return null; // Ball is already at pocket
+
+    // Ghost ball position (where cue ball needs to hit from)
+    const ghostX = targetBall.x - (dx / distToPocket) * BALL_SIZE;
+    const ghostY = targetBall.y - (dy / distToPocket) * BALL_SIZE;
+
+    // Angle from cue ball to ghost ball position
+    const cueDx = ghostX - cueBall.x;
+    const cueDy = ghostY - cueBall.y;
+    const angle = Math.atan2(cueDy, cueDx);
+    const distToGhost = Math.sqrt(cueDx * cueDx + cueDy * cueDy);
+
+    // Check if shot is blocked by other balls
+    const blockedPath = isShotBlocked(cueBall.x, cueBall.y, ghostX, ghostY);
+    if (blockedPath) {
+        return null; // Can't make this shot
+    }
+
+    // Calculate shot difficulty factors
+    let score = 100; // Start with base score
+
+    // Distance factor (closer shots are better)
+    const distancePenalty = Math.min(distToGhost / 400, 1) * 30;
+    score -= distancePenalty;
+
+    // Pocket distance factor (balls closer to pocket are better)
+    const pocketDistPenalty = Math.min(distToPocket / 600, 1) * 20;
+    score -= pocketDistPenalty;
+
+    // Cut angle factor (straight shots are easier)
+    const cutAngle = calculateCutAngle(cueBall, targetBall, pocket);
+    const cutAnglePenalty = Math.abs(cutAngle) / Math.PI * 40; // 0-40 penalty
+    score -= cutAnglePenalty;
+
+    // Check if near pocket opening (tighter shots are harder)
+    const pocketAngleTolerance = calculatePocketAngleTolerance(targetBall, pocket);
+    if (pocketAngleTolerance < 0.3) {
+        score -= 25; // Very difficult cut
+    }
+
+    // Position play bonus (where will cue ball end up?)
+    if (considerPosition) {
+        const positionScore = evaluatePositionPlay(cueBall.x, cueBall.y, angle, distToGhost, targetBall);
+        score += positionScore * 15;
+    }
+
+    // Safety play consideration
+    if (considerSafety && score < 40) {
+        // If offensive shot is poor, consider safety
+        const safetyScore = evaluateSafetyShot(cueBall, targetBall);
+        if (safetyScore > score) {
+            // Play safe instead
+            return createSafetyShot(cueBall, targetBall, safetyScore);
+        }
+    }
+
+    // Calculate power (softer for closer shots, harder for far shots)
+    const basePower = Math.min(30 + (distToGhost / 800) * 50, 75);
+    const power = basePower * skillLevel;
+
+    return {
+        targetBall,
+        pocket,
+        angle,
+        power,
+        score,
+        ghostX,
+        ghostY
+    };
+}
+
+function calculateCutAngle(cueBall, targetBall, pocket) {
+    // Calculate the angle between the cue ball's path and the path to the pocket
+    const cueDx = targetBall.x - cueBall.x;
+    const cueDy = targetBall.y - cueBall.y;
+    const cueAngle = Math.atan2(cueDy, cueDx);
+
+    const pocketDx = pocket.x - targetBall.x;
+    const pocketDy = pocket.y - targetBall.y;
+    const pocketAngle = Math.atan2(pocketDy, pocketDx);
+
+    let cutAngle = pocketAngle - cueAngle;
+    // Normalize to -PI to PI
+    while (cutAngle > Math.PI) cutAngle -= 2 * Math.PI;
+    while (cutAngle < -Math.PI) cutAngle += 2 * Math.PI;
+
+    return cutAngle;
+}
+
+function calculatePocketAngleTolerance(ball, pocket) {
+    // How much margin of error do we have to make the pocket?
+    const dx = pocket.x - ball.x;
+    const dy = pocket.y - ball.y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+
+    // Effective pocket opening (accounting for ball size)
+    const effectivePocketSize = POCKET_RADIUS - BALL_SIZE / 2;
+
+    // Angular tolerance (in radians)
+    if (dist < BALL_SIZE * 2) return 1; // Very close, easy
+
+    const tolerance = Math.atan(effectivePocketSize / dist);
+    return tolerance;
+}
+
+function isShotBlocked(fromX, fromY, toX, toY) {
+    // Check if path from one point to another is blocked by any balls
+    const dx = toX - fromX;
+    const dy = toY - fromY;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+
+    if (dist < 1) return false;
+
+    const dirX = dx / dist;
+    const dirY = dy / dist;
+
+    for (const ball of balls) {
+        if (ball.pocketed || ball.number === 0) continue;
+
+        // Check if ball is close to the line
+        const ballDx = ball.x - fromX;
+        const ballDy = ball.y - fromY;
+
+        // Project ball onto the shot line
+        const projection = ballDx * dirX + ballDy * dirY;
+
+        // Skip if ball is behind us or past target
+        if (projection < 0 || projection > dist) continue;
+
+        // Calculate perpendicular distance to line
+        const perpX = ballDx - projection * dirX;
+        const perpY = ballDy - projection * dirY;
+        const perpDist = Math.sqrt(perpX * perpX + perpY * perpY);
+
+        // If ball is within the path, it's blocked
+        if (perpDist < BALL_SIZE) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+function evaluatePositionPlay(cueX, cueY, shotAngle, shotDist, targetBall) {
+    // Estimate where cue ball will end up and rate the position
+    // Simplified physics prediction
+
+    const velocity = 15; // Moderate shot velocity
+    const targetVelX = Math.cos(shotAngle) * velocity;
+    const targetVelY = Math.sin(shotAngle) * velocity;
+
+    // After hitting target ball, cue ball will deflect
+    // Simplified: assume 90-degree deflection on average cut shot
+    const deflectionAngle = shotAngle + Math.PI / 4;
+    const cueVelX = Math.cos(deflectionAngle) * velocity * 0.3;
+    const cueVelY = Math.sin(deflectionAngle) * velocity * 0.3;
+
+    // Estimate final position after friction
+    let finalX = cueX + cueVelX * 40;
+    let finalY = cueY + cueVelY * 40;
+
+    // Clamp to table
+    finalX = Math.max(TABLE_PADDING + BALL_SIZE, Math.min(CANVAS_WIDTH - TABLE_PADDING - BALL_SIZE, finalX));
+    finalY = Math.max(TABLE_PADDING + BALL_SIZE, Math.min(CANVAS_HEIGHT - TABLE_PADDING - BALL_SIZE, finalY));
+
+    // Score based on:
+    // 1. Distance from center (center is generally good)
+    const centerX = CANVAS_WIDTH / 2;
+    const centerY = CANVAS_HEIGHT / 2;
+    const distFromCenter = Math.sqrt((finalX - centerX) ** 2 + (finalY - centerY) ** 2);
+    const centerScore = 1 - Math.min(distFromCenter / 400, 1);
+
+    // 2. Not near pockets (don't want to scratch)
+    let minPocketDist = Infinity;
+    for (const pocket of POCKETS) {
+        const dist = Math.sqrt((finalX - pocket.x) ** 2 + (finalY - pocket.y) ** 2);
+        minPocketDist = Math.min(minPocketDist, dist);
+    }
+    const pocketScore = Math.min(minPocketDist / 100, 1);
+
+    return (centerScore * 0.5 + pocketScore * 0.5);
+}
+
+function evaluateSafetyShot(cueBall, targetBall) {
+    // Rate how good a safety play would be
+    // For now, just return a low score - safety play is advanced
+    return 20;
+}
+
+function createSafetyShot(cueBall, targetBall, score) {
+    // Create a safety shot (hit the ball but leave opponent in bad position)
+    // Simplified: just hit the ball softly at an angle
+    const dx = targetBall.x - cueBall.x;
+    const dy = targetBall.y - cueBall.y;
+    const angle = Math.atan2(dy, dx) + (Math.random() - 0.5) * 0.5;
+
+    return {
+        targetBall,
+        pocket: POCKETS[0], // Dummy
+        angle,
+        power: 25, // Soft shot
+        score,
+        isSafety: true
+    };
 }
 
 // ============================================
