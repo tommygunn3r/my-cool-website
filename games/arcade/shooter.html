@@ -165,11 +165,6 @@
 
     <canvas id="gameCanvas" width="800" height="600"></canvas>
 
-    <div id="controls">
-        <div class="control-btn" data-key="KeyW" data-virtual-key="ArrowUp">THRUST</div>
-        <div class="control-btn fire" data-key="Space">FIRE</div>
-    </div>
-
     <button id="motionPermissionButton" onclick="requestMotionPermission()">Enable Tilt Control</button>
 
     <div id="startModal" class="modal">
@@ -231,6 +226,9 @@
             </div>
         </div>
     </div>
+
+    <!-- Arcade Touch Controls -->
+    <script src="../../arcade-touch-controls.js"></script>
 
     <!-- ======================= SUPABASE + GAME CODE ======================= -->
     <script type="module">
@@ -495,30 +493,41 @@
         document.addEventListener("keyup", (e) => (keyMap[e.code] = false));
 
         // -------------------------------------------------------
-        // TOUCH CONTROLS
+        // ARCADE TOUCH CONTROLS (Mobile only)
         // -------------------------------------------------------
-        document.querySelectorAll(".control-btn").forEach((btn) => {
-            const key = btn.dataset.key;
+        let touchControls = null;
+        if (window.innerWidth <= 820) {
+            touchControls = new ArcadeTouchControls({
+                showDPad: true,
+                showButtons: true,
+                buttons: ['FIRE', 'THRUST'],
+                onDPadChange: (direction) => {
+                    // Clear all directional keys first
+                    keyMap['ArrowLeft'] = false;
+                    keyMap['ArrowRight'] = false;
+                    keyMap['KeyA'] = false;
+                    keyMap['KeyD'] = false;
 
-            const press = () => {
-                keyMap[key] = true;
-                const vkey = btn.dataset.virtualKey;
-                if (vkey) keyMap[vkey] = true;
-            };
-            const release = () => {
-                keyMap[key] = false;
-                const vkey = btn.dataset.virtualKey;
-                if (vkey) keyMap[vkey] = false;
-            };
-
-            btn.addEventListener("touchstart", (e) => {
-                e.preventDefault();
-                press();
+                    // Set active direction
+                    if (direction.left) {
+                        keyMap['ArrowLeft'] = true;
+                        keyMap['KeyA'] = true;
+                    }
+                    if (direction.right) {
+                        keyMap['ArrowRight'] = true;
+                        keyMap['KeyD'] = true;
+                    }
+                },
+                onButtonPress: (button, isPressed) => {
+                    if (button === 'FIRE') {
+                        keyMap['Space'] = isPressed;
+                    } else if (button === 'THRUST') {
+                        keyMap['ArrowUp'] = isPressed;
+                        keyMap['KeyW'] = isPressed;
+                    }
+                }
             });
-            btn.addEventListener("touchend", release);
-            btn.addEventListener("mousedown", press);
-            btn.addEventListener("mouseup", release);
-        });
+        }
 
         // -------------------------------------------------------
         // UPDATE LOOP
