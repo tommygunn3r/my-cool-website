@@ -423,26 +423,29 @@
 
         @media (max-width: 768px) {
             html, body {
-                overflow-x: hidden;
+                height: 100vh;
+                overflow: hidden; /* Prevent vertical scroll */
                 width: 100%;
                 position: relative;
             }
 
             .title {
                 font-size: 2rem;
-                margin-bottom: 30px;
+                margin-bottom: 10px;
                 padding: 0 10px;
             }
 
             .content {
-                padding: 20px 10px;
+                padding: 110px 10px 10px; /* Top padding for playerbar clearance */
+                height: 100vh;
+                overflow: hidden;
             }
 
             .carousel-container {
-                height: 420px;
+                height: 350px; /* Reduced to fit in viewport without scroll */
                 width: 100%;
                 max-width: 100vw;
-                overflow: hidden;
+                overflow: visible;
             }
 
             .carousel {
@@ -451,12 +454,12 @@
 
             .game-card {
                 width: 260px;
-                height: 340px;
+                height: 310px; /* Reduced to eliminate blank space */
             }
 
             .game-card.center {
                 width: 300px;
-                height: 380px;
+                height: 350px; /* Reduced to eliminate blank space */
             }
 
             /* Hide far cards and adjust close cards on mobile */
@@ -484,11 +487,13 @@
 
             .game-title {
                 font-size: 1.1rem;
+                margin: 8px 0 4px; /* Tighter spacing */
             }
 
             .game-description {
                 font-size: 0.85rem;
-                line-height: 1.4;
+                line-height: 1.3; /* Tighter line height */
+                padding: 0 8px 8px; /* Reduce padding */
             }
 
             .fixed-nav {
@@ -534,21 +539,21 @@
         @media (max-width: 480px) {
             .title {
                 font-size: 1.8rem;
-                margin-bottom: 25px;
+                margin-bottom: 8px;
             }
 
             .carousel-container {
-                height: 380px;
+                height: 320px; /* Reduced to fit smaller screens */
             }
 
             .game-card {
                 width: 240px;
-                height: 300px;
+                height: 280px; /* Reduced to eliminate blank space */
             }
 
             .game-card.center {
                 width: 270px;
-                height: 340px;
+                height: 310px; /* Reduced to eliminate blank space */
             }
 
             .game-card.left-1,
@@ -567,10 +572,13 @@
 
             .game-title {
                 font-size: 1rem;
+                margin: 6px 0 3px; /* Tighter spacing */
             }
 
             .game-description {
                 font-size: 0.75rem;
+                line-height: 1.3;
+                padding: 0 6px 6px; /* Reduce padding */
             }
 
             .nav-button, .game-nav-btn {
