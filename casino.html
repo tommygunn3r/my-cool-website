@@ -16,10 +16,12 @@
             font-family: 'Rajdhani', sans-serif;
             background: #000;
             color: #fff;
-            /* Lock the screen height to viewport */
-            height: 100vh;
-            width: 100vw;
-            overflow: hidden; 
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+            margin: 0;
+            padding: 0;
+            width: 100%;
         }
 
         /* Parallax Background */
@@ -371,8 +373,21 @@
         }
 
         @media (max-width: 768px) {
+            html, body {
+                height: 100vh;
+                overflow: hidden;
+                width: 100%;
+                position: relative;
+            }
+
+            .content {
+                padding: 80px 10px 10px;
+                height: 100vh;
+            }
+
             .title {
                 font-size: 2.2rem;
+                margin-top: 0;
             }
 
             .carousel-container {
