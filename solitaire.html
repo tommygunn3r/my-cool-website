@@ -255,22 +255,25 @@
             position: absolute;
             top: 50%;
             transform: translateY(-50%);
-            font-size: 4rem;
-            color: #4CAF50;
+            width: 60px;
+            height: 60px;
+            background: rgba(76, 175, 80, 0.2);
+            border: 2px solid #4caf50;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             cursor: pointer;
-            user-select: none;
-            z-index: 20;
-            text-shadow: 
-                0 0 10px rgba(76, 175, 80, 0.8),
-                0 0 20px rgba(76, 175, 80, 0.6);
+            z-index: 100;
             transition: all 0.3s ease;
+            color: #4caf50;
+            font-size: 2rem;
+            user-select: none;
         }
 
         .nav-arrow:hover {
-            transform: translateY(-50%) scale(1.2);
-            text-shadow: 
-                0 0 20px rgba(76, 175, 80, 1),
-                0 0 30px rgba(76, 175, 80, 0.8);
+            background: rgba(76, 175, 80, 0.4);
+            box-shadow: 0 0 20px rgba(76, 175, 80, 0.6);
         }
 
         .nav-arrow.left {
@@ -460,9 +463,9 @@
             }
 
             .nav-arrow {
-                font-size: 2.5rem;
                 width: 50px;
                 height: 50px;
+                font-size: 1.5rem;
             }
 
             .nav-arrow.left {
@@ -510,9 +513,9 @@
             }
 
             .nav-arrow {
-                font-size: 2rem;
                 width: 48px;
                 height: 48px;
+                font-size: 1.2rem;
             }
 
             .fixed-nav {
