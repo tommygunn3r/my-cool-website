@@ -717,30 +717,40 @@
         }, { passive: false });
 
         // --- Touch Swipe Support for Mobile ---
+        let touchStartX = 0;
+        let touchEndX = 0;
         let touchStartY = 0;
         let touchEndY = 0;
 
         document.addEventListener('touchstart', e => {
+            touchStartX = e.changedTouches[0].screenX;
             touchStartY = e.changedTouches[0].screenY;
-        }, { passive: false });
+        }, { passive: true });
 
         document.addEventListener('touchend', e => {
+            touchEndX = e.changedTouches[0].screenX;
             touchEndY = e.changedTouches[0].screenY;
             handleSwipe();
-        }, { passive: false });
+        }, { passive: true });
 
         function handleSwipe() {
             if (isThrottled) return;
 
+            const diffX = touchStartX - touchEndX;
+            const diffY = touchStartY - touchEndY;
             const swipeThreshold = 50;
-            if (touchStartY - touchEndY > swipeThreshold) {
-                // Swiped Up -> Next
-                rotateCarousel(1);
-                throttle();
-            } else if (touchEndY - touchStartY > swipeThreshold) {
-                // Swiped Down -> Prev
-                rotateCarousel(-1);
-                throttle();
+
+            // Only trigger if horizontal swipe is more significant than vertical
+            if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > swipeThreshold) {
+                if (diffX > 0) {
+                    // Swiped left -> Next
+                    rotateCarousel(1);
+                    throttle();
+                } else {
+                    // Swiped right -> Prev
+                    rotateCarousel(-1);
+                    throttle();
+                }
             }
         }
         
