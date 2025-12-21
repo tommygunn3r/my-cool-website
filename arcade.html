@@ -419,6 +419,11 @@
                 height: 50px;
                 font-size: 1.5rem;
             }
+
+            /* Hide indicators on desktop */
+            .carousel-indicators {
+                display: none !important;
+            }
         }
 
         @media (max-width: 768px) {
@@ -454,12 +459,12 @@
 
             .game-card {
                 width: 260px;
-                height: 310px; /* Reduced to eliminate blank space */
+                height: 260px; /* Square cards to match image */
             }
 
             .game-card.center {
                 width: 300px;
-                height: 350px; /* Reduced to eliminate blank space */
+                height: 300px; /* Square cards to match image */
             }
 
             /* Hide far cards and adjust close cards on mobile */
@@ -482,18 +487,17 @@
             }
 
             .game-thumbnail {
-                height: 200px;
+                height: 100%; /* Fill entire card */
+                object-fit: cover;
             }
 
+            /* Hide text on mobile */
             .game-title {
-                font-size: 1.1rem;
-                margin: 8px 0 4px; /* Tighter spacing */
+                display: none;
             }
 
             .game-description {
-                font-size: 0.85rem;
-                line-height: 1.3; /* Tighter line height */
-                padding: 0 8px 8px; /* Reduce padding */
+                display: none;
             }
 
             .fixed-nav {
@@ -522,6 +526,33 @@
                 right: 10px;
             }
 
+            /* Carousel Indicator Dots */
+            .carousel-indicators {
+                position: absolute;
+                bottom: -40px;
+                left: 50%;
+                transform: translateX(-50%);
+                display: flex !important; /* Override desktop hide */
+                gap: 8px;
+                z-index: 20;
+            }
+
+            .carousel-dot {
+                width: 10px;
+                height: 10px;
+                border-radius: 50%;
+                background: #333;
+                border: 2px solid #555;
+                cursor: pointer;
+                transition: all 0.3s ease;
+            }
+
+            .carousel-dot.active {
+                background: #e94560;
+                border-color: #e94560;
+                transform: scale(1.3);
+            }
+
             /* Game navigation overlay mobile */
             .game-nav-overlay {
                 bottom: 15px;
@@ -543,17 +574,17 @@
             }
 
             .carousel-container {
-                height: 320px; /* Reduced to fit smaller screens */
+                height: 280px; /* Reduced to fit smaller screens */
             }
 
             .game-card {
                 width: 240px;
-                height: 280px; /* Reduced to eliminate blank space */
+                height: 240px; /* Square cards */
             }
 
             .game-card.center {
                 width: 270px;
-                height: 310px; /* Reduced to eliminate blank space */
+                height: 270px; /* Square cards */
             }
 
             .game-card.left-1,
@@ -567,19 +598,21 @@
             }
 
             .game-thumbnail {
-                height: 180px;
+                height: 100%; /* Fill entire card */
             }
 
-            .game-title {
-                font-size: 1rem;
-                margin: 6px 0 3px; /* Tighter spacing */
+            /* Text already hidden in main mobile breakpoint */
+
+            .carousel-indicators {
+                bottom: -30px;
+                gap: 6px;
             }
 
-            .game-description {
-                font-size: 0.75rem;
-                line-height: 1.3;
-                padding: 0 6px 6px; /* Reduce padding */
+            .carousel-dot {
+                width: 8px;
+                height: 8px;
             }
+        }
 
             .nav-button, .game-nav-btn {
                 padding: 10px 16px;
@@ -623,6 +656,9 @@
             <div class="carousel" id="carousel">
                 <!-- Game cards will be inserted here by JavaScript -->
             </div>
+
+            <!-- Carousel Indicators -->
+            <div class="carousel-indicators" id="carouselIndicators"></div>
         </div>
     </div>
 
@@ -684,6 +720,8 @@
         const gameOverlay = document.getElementById('gameOverlay');
         const gameFrame = document.getElementById('gameFrame');
         const gameNavOverlay = document.querySelector('.game-nav-overlay');
+        const indicatorsContainer = document.getElementById('carouselIndicators');
+        let isMobile = window.innerWidth <= 768;
 
         function createGameCards() {
             carousel.innerHTML = '';
@@ -697,6 +735,24 @@
                 card.onclick = () => launchGame(index);
                 carousel.appendChild(card);
             });
+            createIndicators();
+            updateCarousel();
+        }
+
+        function createIndicators() {
+            if (!isMobile || !indicatorsContainer) return;
+            indicatorsContainer.innerHTML = '';
+            games.forEach((_, index) => {
+                const dot = document.createElement('div');
+                dot.className = 'carousel-dot';
+                dot.addEventListener('click', () => goToSlide(index));
+                indicatorsContainer.appendChild(dot);
+            });
+            updateIndicators();
+        }
+
+        function goToSlide(index) {
+            currentIndex = index;
             updateCarousel();
         }
 
@@ -706,9 +762,9 @@
 
             cards.forEach((card, index) => {
                 card.className = 'game-card';
-                
+
                 const position = (index - currentIndex + totalGames) % totalGames;
-                
+
                 if (position === 0) {
                     card.classList.add('center');
                 } else if (position === 1 || position === totalGames - 1) {
@@ -718,6 +774,15 @@
                 } else {
                     card.classList.add('hidden');
                 }
+            });
+            updateIndicators();
+        }
+
+        function updateIndicators() {
+            if (!isMobile || !indicatorsContainer) return;
+            const dots = indicatorsContainer.querySelectorAll('.carousel-dot');
+            dots.forEach((dot, index) => {
+                dot.classList.toggle('active', index === currentIndex);
             });
         }
 
