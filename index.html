@@ -20,19 +20,19 @@ html, body {
 /* HEADER */
 header {
     background: transparent;
-    padding: 20px 20px;
+    padding: 15px 20px;
     text-align: center;
     border-bottom:3px solid #e94560;
 }
 
 .banner {
-    max-width: 60%;
+    max-width: 45%;
     margin: 0 auto;
 }
 
 .banner img {
     width:100%;
-    max-width: 600px;
+    max-width: 450px;
     height:auto;
     object-fit: contain;
 }
@@ -40,9 +40,9 @@ header {
 /* MAIN CONTAINER */
 main {
     width:100%;
-    max-width:1200px;
+    max-width:1000px;
     margin:auto;
-    padding: 40px 20px;
+    padding: 30px 20px;
     min-height: calc(100vh - 200px);
     display: flex;
     align-items: center;
@@ -52,9 +52,10 @@ main {
 /* DESKTOP GRID LAYOUT */
 .game-categories {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 20px;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 25px;
     width: 100%;
+    max-width: 900px;
 }
 
 .game-card {
