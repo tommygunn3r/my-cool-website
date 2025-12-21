@@ -120,16 +120,18 @@
             border-bottom: 3px solid #e94560;
         }
 
-        .banner {
-            max-width: 60%;
-            margin: 0 auto;
-        }
-
-        .banner img {
-            width: 100%;
-            max-width: 600px;
-            height: auto;
-            object-fit: contain;
+        header .title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 3.5rem;
+            font-weight: 900;
+            text-align: center;
+            margin: 0;
+            color: #fff;
+            text-shadow:
+                0 0 10px rgba(233, 69, 96, 0.8),
+                0 0 20px rgba(233, 69, 96, 0.6),
+                0 0 30px rgba(233, 69, 96, 0.4);
+            letter-spacing: 4px;
         }
 
         /* Main Content */
@@ -142,21 +144,6 @@
             align-items: center;
             justify-content: center;
             padding: 40px 20px;
-        }
-
-        .title {
-            font-family: 'Orbitron', sans-serif;
-            font-size: 3.5rem;
-            font-weight: 900;
-            text-align: center;
-            margin-bottom: 40px;
-            margin-top: -60px;
-            color: #fff;
-            text-shadow: 
-                0 0 10px rgba(233, 69, 96, 0.8),
-                0 0 20px rgba(233, 69, 96, 0.6),
-                0 0 30px rgba(233, 69, 96, 0.4);
-            letter-spacing: 4px;
         }
 
         /* Carousel Container */
@@ -461,19 +448,10 @@
                 border-bottom: 2px solid #e94560;
             }
 
-            .banner {
-                max-width: 70%;
-            }
-
-            .banner img {
-                max-width: 400px;
-            }
-
-            .title {
+            header .title {
                 font-size: 2rem;
-                margin-bottom: 10px;
                 padding: 0 10px;
-                margin-top: 0;
+                margin: 0;
             }
 
             .content {
@@ -619,11 +597,7 @@
                 padding: 75px 5px 12px;
             }
 
-            .banner {
-                max-width: 75%;
-            }
-
-            .title {
+            header .title {
                 font-size: 1.8rem;
             }
 
