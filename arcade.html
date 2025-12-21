@@ -499,44 +499,38 @@
             }
 
             .game-card {
-                position: absolute;
-                left: 50%;
-                top: 50%;
-                width: 260px;
-                height: 260px;
-                margin-left: -130px;
-                margin-top: -130px;
-                transition: all 0.5s cubic-bezier(0.4, 0.0, 0.2, 1);
-                transform-style: preserve-3d;
-                opacity: 0;
-                pointer-events: none;
-                border-width: 2px;
+                width: 260px !important;
+                height: 260px !important;
+                margin-left: -130px !important;
+                margin-top: -130px !important;
+                padding: 0 !important;
+                border-width: 2px !important;
             }
 
             .game-card.center {
-                opacity: 1;
-                pointer-events: auto;
-                z-index: 10;
-                transform: translateX(0) scale(1) rotateY(0deg);
-                box-shadow: 0 10px 40px rgba(233, 69, 96, 0.3);
+                opacity: 1 !important;
+                pointer-events: auto !important;
+                z-index: 10 !important;
+                transform: translateX(0) scale(1) rotateY(0deg) !important;
+                box-shadow: 0 10px 40px rgba(233, 69, 96, 0.3) !important;
             }
 
             .game-card.left-1 {
-                opacity: 0.5;
-                transform: translateX(-180px) scale(0.8) rotateY(25deg);
-                z-index: 5;
+                opacity: 0.5 !important;
+                transform: translateX(-180px) scale(0.8) rotateY(25deg) !important;
+                z-index: 5 !important;
             }
 
             .game-card.right-1 {
-                opacity: 0.5;
-                transform: translateX(180px) scale(0.8) rotateY(-25deg);
-                z-index: 5;
+                opacity: 0.5 !important;
+                transform: translateX(180px) scale(0.8) rotateY(-25deg) !important;
+                z-index: 5 !important;
             }
 
             .game-card.left-2,
             .game-card.right-2,
             .game-card.hidden {
-                display: none;
+                display: none !important;
             }
 
             .game-thumbnail {
@@ -638,18 +632,18 @@
             }
 
             .game-card {
-                width: 240px;
-                height: 240px;
-                margin-left: -120px;
-                margin-top: -120px;
+                width: 240px !important;
+                height: 240px !important;
+                margin-left: -120px !important;
+                margin-top: -120px !important;
             }
 
             .game-card.left-1 {
-                transform: translateX(-150px) scale(0.75) rotateY(25deg);
+                transform: translateX(-150px) scale(0.75) rotateY(25deg) !important;
             }
 
             .game-card.right-1 {
-                transform: translateX(150px) scale(0.75) rotateY(-25deg);
+                transform: translateX(150px) scale(0.75) rotateY(-25deg) !important;
             }
 
             .carousel-indicators {
