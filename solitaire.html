@@ -407,11 +407,13 @@
 
             .carousel-container {
                 height: 450px;
+                margin-top: -120px;
             }
 
             .game-card {
                 width: 300px;
                 height: 350px;
+                margin-top: -205px;
             }
 
             .game-thumbnail {
@@ -439,8 +441,9 @@
             }
 
             .fixed-nav {
-                bottom: 20px;
+                bottom: 50px;
                 right: 20px;
+                flex-direction: row;
             }
 
             .nav-button, .game-nav-btn {
@@ -489,6 +492,51 @@
                 padding: 10px 16px;
                 font-size: 0.8rem;
                 gap: 5px;
+            }
+
+            footer a {
+                font-size: 10px;
+                margin: 2px 4px;
+            }
+        }
+
+        /* FOOTER */
+        footer {
+            padding: 20px;
+            border-top: 3px solid #4caf50;
+            text-align: center;
+            background: #000;
+        }
+
+        footer a {
+            color: #aaa;
+            text-decoration: none;
+            margin: 0 10px;
+            font-size: 14px;
+            transition: color 0.3s ease;
+        }
+
+        footer a:hover {
+            color: #4caf50;
+        }
+
+        @media (max-width: 767px) {
+            footer {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                margin-top: 0;
+                padding: 10px;
+                background: rgba(0, 0, 0, 0.95);
+                backdrop-filter: blur(10px);
+                border-top: 2px solid #4caf50;
+            }
+
+            footer a {
+                display: inline-block;
+                margin: 3px 6px;
+                font-size: 11px;
             }
         }
     </style>
@@ -548,6 +596,14 @@
             <span>Home</span>
         </a>
     </div>
+
+    <!-- FOOTER -->
+    <footer>
+        <a href="about.html">About</a>
+        <a href="contact.html">Contact</a>
+        <a href="privacy.html">Privacy</a>
+        <a href="terms.html">Terms</a>
+    </footer>
 
     <script>
         const games = [
