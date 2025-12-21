@@ -82,26 +82,22 @@
             66% { transform: translate(-50px, 50px); }
         }
 
-        /* Content Container - Flexbox for centering */
-        .content {
+        /* HEADER */
+        header {
             position: relative;
             z-index: 1;
-            height: 100vh;
-            width: 100%;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
+            background: transparent;
+            padding: 20px 20px;
+            text-align: center;
+            border-bottom: 3px solid #FFD700;
         }
 
-        .title {
+        header .title {
             font-family: 'Orbitron', sans-serif;
             font-size: 3.5rem;
             font-weight: 900;
             text-align: center;
-            margin-bottom: 40px; /* Reduced margin */
-            margin-top: -60px; /* Pull up slightly */
+            margin: 0;
             background: linear-gradient(135deg, #FFD700, #FFA500, #FFD700);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
@@ -109,6 +105,19 @@
             text-shadow: 0 0 30px rgba(255, 215, 0, 0.5);
             letter-spacing: 4px;
             animation: glow 2s ease-in-out infinite alternate;
+        }
+
+        /* Content Container - Flexbox for centering */
+        .content {
+            position: relative;
+            z-index: 1;
+            min-height: calc(100vh - 200px);
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 40px 20px;
         }
 
         @keyframes glow {
@@ -380,14 +389,25 @@
                 position: relative;
             }
 
-            .content {
+            header {
                 padding: 80px 10px 10px;
-                height: 100vh;
+                border-bottom: 2px solid #FFD700;
             }
 
-            .title {
-                font-size: 2.2rem;
-                margin-top: 0;
+            header .title {
+                font-size: 1.6rem;
+                padding: 0 10px;
+                margin: 0;
+            }
+
+            .content {
+                padding: 0;
+                min-height: auto;
+                height: calc(100vh - 150px);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                overflow: hidden;
             }
 
             .carousel-container {
@@ -492,7 +512,7 @@
         /* FOOTER */
         footer {
             padding: 20px;
-            border-top: 3px solid #e94560;
+            border-top: 3px solid #FFD700;
             text-align: center;
             background: #000;
         }
@@ -506,7 +526,7 @@
         }
 
         footer a:hover {
-            color: #e94560;
+            color: #FFD700;
         }
 
         @media (max-width: 767px) {
@@ -519,7 +539,7 @@
                 padding: 10px;
                 background: rgba(0, 0, 0, 0.95);
                 backdrop-filter: blur(10px);
-                border-top: 2px solid #e94560;
+                border-top: 2px solid #FFD700;
             }
 
             footer a {
@@ -544,10 +564,13 @@
         </div>
     </div>
 
+    <!-- HEADER -->
+    <header>
+        <h1 class="title">CASINO GAMES</h1>
+    </header>
+
     <!-- Main Content -->
     <div class="content">
-        <h1 class="title">CASINO GAMES</h1>
-        
         <div class="carousel-container">
             <div class="carousel" id="carousel">
                 <!-- 1. Blackjack -->
