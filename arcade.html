@@ -460,7 +460,7 @@
                 height: calc(100vh - 180px);
                 display: flex;
                 align-items: flex-start;
-                padding-top: 20px;
+                padding-top: 10px; /* Reduced from 20px to move cards up */
                 overflow: hidden;
             }
 
@@ -470,6 +470,7 @@
                 max-width: 100vw;
                 overflow: visible;
                 perspective: 1000px;
+                margin-top: -10px; /* Move carousel up slightly */
             }
 
             .carousel {
