@@ -518,12 +518,20 @@
                         keyMap['KeyD'] = true;
                     }
                 },
-                onButtonPress: (button, isPressed) => {
+                onButtonPress: (button) => {
                     if (button === 'FIRE') {
-                        keyMap['Space'] = isPressed;
+                        keyMap['Space'] = true;
                     } else if (button === 'THRUST') {
-                        keyMap['ArrowUp'] = isPressed;
-                        keyMap['KeyW'] = isPressed;
+                        keyMap['ArrowUp'] = true;
+                        keyMap['KeyW'] = true;
+                    }
+                },
+                onButtonRelease: (button) => {
+                    if (button === 'FIRE') {
+                        keyMap['Space'] = false;
+                    } else if (button === 'THRUST') {
+                        keyMap['ArrowUp'] = false;
+                        keyMap['KeyW'] = false;
                     }
                 }
             });
