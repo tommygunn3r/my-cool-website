@@ -102,7 +102,7 @@ class ArcadeTouchControls {
         dpadContainer.style.cssText = `
             position: absolute;
             bottom: 40px;
-            left: 40px;
+            left: 20px;
             width: 160px;
             height: 160px;
             pointer-events: auto;
@@ -192,24 +192,33 @@ class ArcadeTouchControls {
         const buttonContainer = document.createElement('div');
         buttonContainer.style.cssText = `
             position: absolute;
-            bottom: 60px;
-            right: 40px;
-            display: flex;
-            gap: 20px;
-            pointer-events: auto;
+            bottom: 40px;
+            right: 30px;
+            width: 200px;
+            height: 180px;
+            pointer-events: none;
         `;
+
+        // Position buttons at an angle (arcade style)
+        const buttonPositions = [
+            { bottom: '90px', right: '20px', size: '85px' },  // First button (lower right)
+            { bottom: '30px', right: '90px', size: '75px' }   // Second button (upper left)
+        ];
 
         this.config.buttons.forEach((btnName, index) => {
             const button = document.createElement('div');
             button.className = 'arcade-action-button';
             button.dataset.button = btnName;
 
-            const size = index === 0 ? '80px' : '70px'; // First button slightly bigger
+            const pos = buttonPositions[index] || buttonPositions[0];
             const label = this.config.buttonLabels[btnName] || btnName;
 
             button.style.cssText = `
-                width: ${size};
-                height: ${size};
+                position: absolute;
+                bottom: ${pos.bottom};
+                right: ${pos.right};
+                width: ${pos.size};
+                height: ${pos.size};
                 border-radius: 50%;
                 background: linear-gradient(145deg, #3a3a3a, #1a1a1a);
                 border: 4px solid #FF6B00;
@@ -221,14 +230,14 @@ class ArcadeTouchControls {
                 align-items: center;
                 justify-content: center;
                 font-family: 'Orbitron', 'Courier New', monospace;
-                font-size: 24px;
+                font-size: ${index === 0 ? '20px' : '18px'};
                 font-weight: bold;
                 color: #FF6B00;
                 text-shadow: 0 0 10px rgba(255,107,0,0.5);
                 cursor: pointer;
                 user-select: none;
                 transition: all 0.1s;
-                position: relative;
+                pointer-events: auto;
             `;
 
             // Button label
