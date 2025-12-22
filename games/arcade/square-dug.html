@@ -227,14 +227,25 @@
         }
 
         @media (max-width: 768px) {
+            body {
+                padding-bottom: 240px; /* Space for touch controls */
+            }
+
             #mobileControls {
                 display: flex;
             }
 
             #gameContainer {
                 width: 100vw;
-                height: 100vh;
+                height: calc(100vh - 240px); /* Leave space for controls */
+                max-height: 66.67vw; /* Maintain 3:2 aspect ratio (768/512) */
                 border: none;
+            }
+
+            #gameCanvas {
+                width: 100%;
+                height: 100%;
+                object-fit: contain;
             }
 
             #startScreen h1 {
