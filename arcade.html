@@ -579,17 +579,13 @@
                 transform: scale(1.3);
             }
 
-            /* Game navigation overlay mobile */
+            /* Hide game navigation overlay on mobile */
             .game-nav-overlay {
-                bottom: 15px;
-                right: 15px;
-                flex-direction: column;
-                gap: 10px;
+                display: none !important;
             }
 
-            .game-nav-btn {
-                padding: 12px 20px;
-                font-size: 0.9rem;
+            .game-overlay.active ~ .game-nav-overlay {
+                display: none !important;
             }
         }
 
