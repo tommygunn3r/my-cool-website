@@ -155,7 +155,7 @@
             border: 2px solid #333;
             display: flex;
             flex-direction: column;
-            justify-content: center;
+            justify-content: space-between;
             align-items: center;
             overflow: hidden;
         }
@@ -171,30 +171,45 @@
 
         .player:nth-child(3) {
             background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            transform: rotate(90deg);
         }
 
         .player:nth-child(4) {
             background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
-            transform: rotate(180deg);
+            transform: rotate(270deg);
         }
 
         .player:nth-child(5) {
             background: linear-gradient(135deg, #30cfd0 0%, #330867 100%);
+            transform: rotate(90deg);
         }
 
         .player:nth-child(6) {
             background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
-            transform: rotate(180deg);
+            transform: rotate(270deg);
         }
 
         .player-content {
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
+            justify-content: space-between;
             width: 100%;
             height: 100%;
-            padding: 10px;
+            padding: 15px;
+        }
+
+        .player-top {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .player-bottom {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
         }
 
         .player-name {
@@ -493,26 +508,30 @@
 
                 playerDiv.innerHTML = `
                     <div class="player-content">
-                        <div class="player-name">${player.name}</div>
-                        <div class="life-total">${player.life}</div>
-                        <div class="life-controls">
-                            <button class="life-btn" onclick="adjustLife(${index}, -1)">−</button>
-                            <button class="life-btn" onclick="adjustLife(${index}, 1)">+</button>
+                        <div class="player-top">
+                            <div class="player-name">${player.name}</div>
                         </div>
-                        <div class="counters-section">
-                            ${gameState.gameType === 'commander' ? `
-                                <div class="counter-group" onclick="showCommanderDamage(${index})">
-                                    <div class="counter-label">Commander</div>
-                                    <div class="counter-value">${getTotalCommanderDamage(index)}</div>
+                        <div class="life-total">${player.life}</div>
+                        <div class="player-bottom">
+                            <div class="counters-section">
+                                ${gameState.gameType === 'commander' ? `
+                                    <div class="counter-group" onclick="showCommanderDamage(${index})">
+                                        <div class="counter-label">Commander</div>
+                                        <div class="counter-value">${getTotalCommanderDamage(index)}</div>
+                                    </div>
+                                ` : ''}
+                                <div class="counter-group">
+                                    <div class="counter-label">Poison</div>
+                                    <div class="counter-value">${player.poison}</div>
+                                    <div class="counter-controls">
+                                        <button class="counter-btn" onclick="adjustPoison(${index}, -1)">−</button>
+                                        <button class="counter-btn" onclick="adjustPoison(${index}, 1)">+</button>
+                                    </div>
                                 </div>
-                            ` : ''}
-                            <div class="counter-group">
-                                <div class="counter-label">Poison</div>
-                                <div class="counter-value">${player.poison}</div>
-                                <div class="counter-controls">
-                                    <button class="counter-btn" onclick="adjustPoison(${index}, -1)">−</button>
-                                    <button class="counter-btn" onclick="adjustPoison(${index}, 1)">+</button>
-                                </div>
+                            </div>
+                            <div class="life-controls">
+                                <button class="life-btn" onclick="adjustLife(${index}, -1)">−</button>
+                                <button class="life-btn" onclick="adjustLife(${index}, 1)">+</button>
                             </div>
                         </div>
                     </div>
