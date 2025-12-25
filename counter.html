@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>MTG Life Counter</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+            background: #1a1a1a;
+            color: #fff;
+            touch-action: manipulation;
+        }
+
+        /* Setup Screen */
+        #setup-screen {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            padding: 20px;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        }
+
+        #setup-screen h1 {
+            font-size: 2.5em;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .setup-group {
+            margin: 15px 0;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .setup-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 1.1em;
+            font-weight: bold;
+        }
+
+        .setup-group select,
+        .setup-group input {
+            width: 100%;
+            padding: 12px;
+            font-size: 1.1em;
+            border: none;
+            border-radius: 8px;
+            background: #fff;
+            color: #333;
+        }
+
+        .btn {
+            padding: 15px 40px;
+            font-size: 1.2em;
+            font-weight: bold;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            background: #4CAF50;
+            color: white;
+            margin: 10px;
+            transition: background 0.3s;
+        }
+
+        .btn:hover {
+            background: #45a049;
+        }
+
+        .btn-secondary {
+            background: #ff9800;
+        }
+
+        .btn-secondary:hover {
+            background: #e68900;
+        }
+
+        .btn-danger {
+            background: #f44336;
+        }
+
+        .btn-danger:hover {
+            background: #da190b;
+        }
+
+        /* Game Screen */
+        #game-screen {
+            display: none;
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+        }
+
+        /* Player Container Layouts */
+        .players-container {
+            width: 100%;
+            height: 100%;
+            display: grid;
+        }
+
+        .players-2 {
+            grid-template-columns: 1fr;
+            grid-template-rows: 1fr 1fr;
+        }
+
+        .players-3 {
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+        }
+
+        .players-3 .player:nth-child(3) {
+            grid-column: 1 / -1;
+        }
+
+        .players-4 {
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+        }
+
+        .players-5 {
+            grid-template-columns: 1fr 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+        }
+
+        .players-5 .player:nth-child(4) {
+            grid-column: 1 / 2;
+            grid-row: 2 / 3;
+        }
+
+        .players-5 .player:nth-child(5) {
+            grid-column: 2 / 4;
+            grid-row: 2 / 3;
+        }
+
+        .players-6 {
+            grid-template-columns: 1fr 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+        }
+
+        /* Player Card */
+        .player {
+            position: relative;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: 2px solid #333;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        .player:nth-child(1) {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .player:nth-child(2) {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            transform: rotate(180deg);
+        }
+
+        .player:nth-child(3) {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+        }
+
+        .player:nth-child(4) {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+            transform: rotate(180deg);
+        }
+
+        .player:nth-child(5) {
+            background: linear-gradient(135deg, #30cfd0 0%, #330867 100%);
+        }
+
+        .player:nth-child(6) {
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+            transform: rotate(180deg);
+        }
+
+        .player-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            padding: 10px;
+        }
+
+        .player-name {
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .life-total {
+            font-size: 4em;
+            font-weight: bold;
+            margin: 10px 0;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .life-controls {
+            display: flex;
+            gap: 10px;
+            margin: 10px 0;
+        }
+
+        .life-btn {
+            width: 60px;
+            height: 60px;
+            font-size: 2em;
+            font-weight: bold;
+            border: none;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.3);
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s;
+            backdrop-filter: blur(10px);
+        }
+
+        .life-btn:active {
+            transform: scale(0.95);
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        .counters-section {
+            display: flex;
+            gap: 15px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .counter-group {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 8px 12px;
+            border-radius: 8px;
+            min-width: 80px;
+        }
+
+        .counter-label {
+            font-size: 0.8em;
+            margin-bottom: 5px;
+            opacity: 0.9;
+        }
+
+        .counter-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            margin: 5px 0;
+        }
+
+        .counter-controls {
+            display: flex;
+            gap: 5px;
+        }
+
+        .counter-btn {
+            width: 30px;
+            height: 30px;
+            font-size: 1.2em;
+            border: none;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.3);
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .counter-btn:active {
+            transform: scale(0.95);
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        /* Commander damage modal */
+        .cmdr-modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #2a2a2a;
+            padding: 20px;
+            border-radius: 12px;
+            z-index: 1000;
+            max-width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .cmdr-modal.active {
+            display: block;
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 999;
+        }
+
+        .modal-overlay.active {
+            display: block;
+        }
+
+        .cmdr-modal h3 {
+            margin-bottom: 15px;
+        }
+
+        .cmdr-player {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            margin: 5px 0;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+        }
+
+        /* Menu Button */
+        .menu-btn {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            width: 50px;
+            height: 50px;
+            background: rgba(0, 0, 0, 0.5);
+            border: 2px solid white;
+            border-radius: 50%;
+            color: white;
+            font-size: 1.5em;
+            cursor: pointer;
+            z-index: 100;
+            display: none;
+        }
+
+        #game-screen .menu-btn {
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .life-total {
+                font-size: 3em;
+            }
+
+            .life-btn {
+                width: 50px;
+                height: 50px;
+                font-size: 1.5em;
+            }
+
+            .counter-group {
+                min-width: 70px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Setup Screen -->
+    <div id="setup-screen">
+        <h1>MTG Life Counter</h1>
+
+        <div class="setup-group">
+            <label for="player-count">Number of Players:</label>
+            <select id="player-count">
+                <option value="2">2 Players</option>
+                <option value="3">3 Players</option>
+                <option value="4" selected>4 Players</option>
+                <option value="5">5 Players</option>
+                <option value="6">6 Players</option>
+            </select>
+        </div>
+
+        <div class="setup-group">
+            <label for="game-type">Game Type:</label>
+            <select id="game-type">
+                <option value="commander">Commander</option>
+                <option value="standard">Standard</option>
+            </select>
+        </div>
+
+        <div class="setup-group">
+            <label for="starting-life">Starting Life:</label>
+            <input type="number" id="starting-life" value="40" min="1" max="999">
+        </div>
+
+        <button class="btn" onclick="startGame()">Start Game</button>
+        <button class="btn btn-secondary" onclick="loadGame()" id="load-btn" style="display:none;">Continue Saved Game</button>
+    </div>
+
+    <!-- Game Screen -->
+    <div id="game-screen">
+        <button class="menu-btn" onclick="showMenu()">⚙</button>
+        <div class="players-container" id="players-container"></div>
+    </div>
+
+    <!-- Modal Overlay -->
+    <div class="modal-overlay" id="modal-overlay" onclick="closeModals()"></div>
+
+    <!-- Commander Damage Modal -->
+    <div class="cmdr-modal" id="cmdr-modal">
+        <h3>Commander Damage for <span id="cmdr-player-name"></span></h3>
+        <div id="cmdr-damage-list"></div>
+        <button class="btn" onclick="closeModals()">Close</button>
+    </div>
+
+    <script>
+        let gameState = {
+            playerCount: 4,
+            gameType: 'commander',
+            startingLife: 40,
+            players: []
+        };
+
+        // Update starting life based on game type
+        document.getElementById('game-type').addEventListener('change', function(e) {
+            const startingLifeInput = document.getElementById('starting-life');
+            if (e.target.value === 'commander') {
+                startingLifeInput.value = 40;
+            } else {
+                startingLifeInput.value = 20;
+            }
+        });
+
+        // Check for saved game on load
+        window.addEventListener('load', function() {
+            const saved = localStorage.getItem('mtgLifeCounter');
+            if (saved) {
+                document.getElementById('load-btn').style.display = 'block';
+            }
+        });
+
+        function startGame() {
+            gameState.playerCount = parseInt(document.getElementById('player-count').value);
+            gameState.gameType = document.getElementById('game-type').value;
+            gameState.startingLife = parseInt(document.getElementById('starting-life').value);
+
+            // Initialize players
+            gameState.players = [];
+            for (let i = 0; i < gameState.playerCount; i++) {
+                gameState.players.push({
+                    name: `Player ${i + 1}`,
+                    life: gameState.startingLife,
+                    poison: 0,
+                    commanderDamage: Array(gameState.playerCount).fill(0)
+                });
+            }
+
+            document.getElementById('setup-screen').style.display = 'none';
+            document.getElementById('game-screen').style.display = 'block';
+
+            renderGame();
+            saveGame();
+        }
+
+        function loadGame() {
+            const saved = localStorage.getItem('mtgLifeCounter');
+            if (saved) {
+                gameState = JSON.parse(saved);
+                document.getElementById('setup-screen').style.display = 'none';
+                document.getElementById('game-screen').style.display = 'block';
+                renderGame();
+            }
+        }
+
+        function renderGame() {
+            const container = document.getElementById('players-container');
+            container.className = `players-container players-${gameState.playerCount}`;
+            container.innerHTML = '';
+
+            gameState.players.forEach((player, index) => {
+                const playerDiv = document.createElement('div');
+                playerDiv.className = 'player';
+
+                playerDiv.innerHTML = `
+                    <div class="player-content">
+                        <div class="player-name">${player.name}</div>
+                        <div class="life-total">${player.life}</div>
+                        <div class="life-controls">
+                            <button class="life-btn" onclick="adjustLife(${index}, -1)">−</button>
+                            <button class="life-btn" onclick="adjustLife(${index}, 1)">+</button>
+                        </div>
+                        <div class="counters-section">
+                            ${gameState.gameType === 'commander' ? `
+                                <div class="counter-group" onclick="showCommanderDamage(${index})">
+                                    <div class="counter-label">Commander</div>
+                                    <div class="counter-value">${getTotalCommanderDamage(index)}</div>
+                                </div>
+                            ` : ''}
+                            <div class="counter-group">
+                                <div class="counter-label">Poison</div>
+                                <div class="counter-value">${player.poison}</div>
+                                <div class="counter-controls">
+                                    <button class="counter-btn" onclick="adjustPoison(${index}, -1)">−</button>
+                                    <button class="counter-btn" onclick="adjustPoison(${index}, 1)">+</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                container.appendChild(playerDiv);
+            });
+        }
+
+        function adjustLife(playerIndex, amount) {
+            gameState.players[playerIndex].life += amount;
+            renderGame();
+            saveGame();
+        }
+
+        function adjustPoison(playerIndex, amount) {
+            const newPoison = gameState.players[playerIndex].poison + amount;
+            if (newPoison >= 0) {
+                gameState.players[playerIndex].poison = newPoison;
+                renderGame();
+                saveGame();
+            }
+        }
+
+        function getTotalCommanderDamage(playerIndex) {
+            return gameState.players[playerIndex].commanderDamage.reduce((sum, dmg) => sum + dmg, 0);
+        }
+
+        function showCommanderDamage(playerIndex) {
+            document.getElementById('cmdr-player-name').textContent = gameState.players[playerIndex].name;
+            const list = document.getElementById('cmdr-damage-list');
+            list.innerHTML = '';
+
+            gameState.players.forEach((opponent, oppIndex) => {
+                if (oppIndex !== playerIndex) {
+                    const dmg = gameState.players[playerIndex].commanderDamage[oppIndex];
+                    const div = document.createElement('div');
+                    div.className = 'cmdr-player';
+                    div.innerHTML = `
+                        <span>${opponent.name}: ${dmg}</span>
+                        <div class="counter-controls">
+                            <button class="counter-btn" onclick="adjustCommanderDamage(${playerIndex}, ${oppIndex}, -1)">−</button>
+                            <button class="counter-btn" onclick="adjustCommanderDamage(${playerIndex}, ${oppIndex}, 1)">+</button>
+                        </div>
+                    `;
+                    list.appendChild(div);
+                }
+            });
+
+            document.getElementById('modal-overlay').classList.add('active');
+            document.getElementById('cmdr-modal').classList.add('active');
+        }
+
+        function adjustCommanderDamage(playerIndex, opponentIndex, amount) {
+            const newDmg = gameState.players[playerIndex].commanderDamage[opponentIndex] + amount;
+            if (newDmg >= 0) {
+                gameState.players[playerIndex].commanderDamage[opponentIndex] = newDmg;
+                showCommanderDamage(playerIndex);
+                renderGame();
+                saveGame();
+            }
+        }
+
+        function closeModals() {
+            document.getElementById('modal-overlay').classList.remove('active');
+            document.getElementById('cmdr-modal').classList.remove('active');
+        }
+
+        function showMenu() {
+            const confirmed = confirm('Game Menu\n\nOK = Reset Game\nCancel = Continue Playing');
+            if (confirmed) {
+                resetGame();
+            }
+        }
+
+        function resetGame() {
+            localStorage.removeItem('mtgLifeCounter');
+            document.getElementById('game-screen').style.display = 'none';
+            document.getElementById('setup-screen').style.display = 'flex';
+            document.getElementById('load-btn').style.display = 'none';
+        }
+
+        function saveGame() {
+            localStorage.setItem('mtgLifeCounter', JSON.stringify(gameState));
+        }
+
+        // Prevent accidental page refresh
+        window.addEventListener('beforeunload', function(e) {
+            if (document.getElementById('game-screen').style.display === 'block') {
+                e.preventDefault();
+                e.returnValue = '';
+            }
+        });
+    </script>
+</body>
+</html>
