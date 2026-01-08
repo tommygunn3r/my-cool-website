@@ -578,6 +578,10 @@
         const dropZoneHeightRatio = 0.15;
         let dropZoneHeightPx = 0;
 
+        let lastFrameTime = performance.now();
+        const targetFPS = 60;
+        const targetFrameTime = 1000 / targetFPS;
+
         const prizeBoxHeight = 60; // Reduced from 80 to match 25% shrink
         let prizeTrackY = 0;
 
@@ -730,13 +734,13 @@
             prizeScrollDirection *= -1;
         }
 
-        function updateCoinPhysics(coin, isMini = false) {
+        function updateCoinPhysics(coin, isMini = false, deltaMultiplier = 1) {
             if (coin.landed) return;
 
-            coin.vy += gravity * (isMini ? 1.2 : 1);
-            coin.x += coin.vx;
-            coin.y += coin.vy;
-            coin.spinning += 0.18;
+            coin.vy += gravity * (isMini ? 1.2 : 1) * deltaMultiplier;
+            coin.x += coin.vx * deltaMultiplier;
+            coin.y += coin.vy * deltaMultiplier;
+            coin.spinning += 0.18 * deltaMultiplier;
 
             // Edge collision – slightly softer rebound
             if (coin.x < coin.radius) {
@@ -763,6 +767,11 @@
                     const dot = coin.vx * nx + coin.vy * ny;
                     coin.vx -= 2 * dot * nx;
                     coin.vy -= 2 * dot * ny;
+
+                    // Add slight random impulse to prevent straight bounces
+                    const randomImpulse = (Math.random() - 0.5) * 0.5;
+                    coin.vx += randomImpulse;
+
                     // Softer damping so it doesn't stall
                     coin.vx *= 0.92;
                     coin.vy *= 0.92;
@@ -956,8 +965,8 @@
             }
 
 
-            // Update prize box scrolling
-            prizeOffset += prizeScrollSpeed * prizeScrollDirection;
+            // Update prize box scrolling (using constant speed regardless of FPS)
+            // Note: This runs in drawScene which is called from loop, so we'll handle timing in loop
             
             // Wrap around when scrolling
             const totalWidth = prizeBoxes.totalWidth || (prizeBoxes[prizeBoxes.length-1].baseX + prizeBoxes[prizeBoxes.length-1].width);
@@ -1087,14 +1096,24 @@
             ctx.fillText('COIN BREAKER', width/2, y - 10);
         }
 
-        function loop() {
+        function loop(currentTime) {
             requestAnimationFrame(loop);
 
             if (width === 0 || height === 0) return;
 
+            // Calculate delta time for frame-rate independence
+            const deltaTime = currentTime - lastFrameTime;
+            lastFrameTime = currentTime;
+
+            // Normalize to 60 FPS (so 1.0 = normal speed at 60fps)
+            const deltaMultiplier = deltaTime / targetFrameTime;
+
+            // Update prize box scrolling with delta time
+            prizeOffset += prizeScrollSpeed * prizeScrollDirection * deltaMultiplier;
+
             if (gameState === 'dropping') {
                 if (mainCoin && !mainCoin.landed) {
-                    updateCoinPhysics(mainCoin, false);
+                    updateCoinPhysics(mainCoin, false, deltaMultiplier);
                 } else if (mainCoin && mainCoin.landed) {
                     mainCoin = null;
                     gameState = bonus.active ? 'bonus_active' : 'idle';
@@ -1104,7 +1123,7 @@
             if (bonus.active) {
                 if (gameState === 'bonus_cleanup' || gameState === 'bonus_active') {
                     for (let mc of bonus.miniCoins) {
-                        if (!mc.landed) updateCoinPhysics(mc, true);
+                        if (!mc.landed) updateCoinPhysics(mc, true, deltaMultiplier);
                     }
                     bonus.miniCoins = bonus.miniCoins.filter(c => !c.landed || (c.prize === null));
                     let allLanded = true;
