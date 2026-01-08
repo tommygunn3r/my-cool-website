@@ -662,16 +662,16 @@
         function setupPrizeBoxes() {
             // Symmetric pattern: x1, x2, x5, x10, x10, x5, x2, x1
             const multipliers = [1, 2, 5, 10, 10, 5, 2, 1];
-            
+
             // Shrink boxes by 25%
             const boxWidth = Math.min(135, width / (multipliers.length + 1)) * 0.75;
-            
+
             // Gap should be at least 2x coin diameter (coinRadius * 2 * 2 = ~88px)
             const minGap = coinRadius * 4; // Extra spacing for difficulty
-            
+
             prizeBoxes = [];
             let x = 0;
-            
+
             for (let m of multipliers) {
                 prizeBoxes.push({
                     baseX: x,
@@ -680,9 +680,12 @@
                 });
                 x += boxWidth + minGap;
             }
-            
+
             // Store total width for wrapping
             prizeBoxes.totalWidth = x - minGap; // Don't count last gap
+
+            // Center the prize boxes initially by setting prizeOffset
+            prizeOffset = (width - prizeBoxes.totalWidth) / 2;
         }
 
         function addMessage(txt) {
@@ -965,10 +968,7 @@
             }
 
 
-            // Update prize box scrolling (using constant speed regardless of FPS)
-            // Note: This runs in drawScene which is called from loop, so we'll handle timing in loop
-            
-            // Wrap around when scrolling
+            // Wrap around when scrolling (offset is updated in loop() with delta time)
             const totalWidth = prizeBoxes.totalWidth || (prizeBoxes[prizeBoxes.length-1].baseX + prizeBoxes[prizeBoxes.length-1].width);
             if (prizeScrollDirection < 0) {
                 // Scrolling left
@@ -1101,12 +1101,16 @@
 
             if (width === 0 || height === 0) return;
 
+            // Initialize currentTime on first frame
+            if (!currentTime) currentTime = performance.now();
+
             // Calculate delta time for frame-rate independence
             const deltaTime = currentTime - lastFrameTime;
             lastFrameTime = currentTime;
 
             // Normalize to 60 FPS (so 1.0 = normal speed at 60fps)
-            const deltaMultiplier = deltaTime / targetFrameTime;
+            // Cap deltaMultiplier to prevent huge jumps (e.g., when tab loses focus)
+            const deltaMultiplier = Math.min(deltaTime / targetFrameTime, 3);
 
             // Update prize box scrolling with delta time
             prizeOffset += prizeScrollSpeed * prizeScrollDirection * deltaMultiplier;
