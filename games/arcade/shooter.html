@@ -314,6 +314,10 @@
             explosion: './sounds/explosion.wav'
         };
 
+        // Power-up constants
+        const POWERUP_DURATION_MS = 8000; // multi-bullet active time
+        const POWERUP_LIFETIME_MS = 12000; // how long pickup floats in world
+        const POWERUP_SPAWN_CHANCE = 0.12; // chance to spawn on enemy death
         const canvas = document.getElementById("gameCanvas");
         const ctx = canvas.getContext("2d");
 
@@ -354,6 +358,7 @@
         let enemies = [];
         let debris = [];
         let explosions = [];
+        let powerups = [];
 
         let lastBulletTime = 0;
         const keyMap = {};
@@ -414,7 +419,11 @@
                 bulletSpeed: 7,
 
                 hullHP: 3,
-                maxHP: 3
+                maxHP: 3,
+
+                // Multi-shot powerup state
+                multiShotActive: false,
+                multiShotExpires: 0
             };
         }
 
@@ -489,6 +498,21 @@
                 type,
                 velX: Math.random() * 2 - 1,
                 velY: Math.random() * 2 - 1
+            };
+        }
+
+        function createPowerup(x, y) {
+            const angle = Math.random() * Math.PI * 2;
+            const speed = Math.random() * 1.2 + 0.4;
+            return {
+                x,
+                y,
+                velX: Math.cos(angle) * speed,
+                velY: Math.sin(angle) * speed,
+                radius: 10,
+                spawnTime: Date.now(),
+                life: POWERUP_LIFETIME_MS,
+                type: 'multishot'
             };
         }
 
@@ -619,21 +643,51 @@
 
             // Shooting
             if ((keyMap["Space"] || keyMap["KeyF"]) && Date.now() - lastBulletTime > ship.fireRate) {
-                bullets.push({
-                    x: ship.x + Math.cos(ship.angle) * ship.radius,
-                    y: ship.y + Math.sin(ship.angle) * ship.radius,
-                    velX: Math.cos(ship.angle) * ship.bulletSpeed + ship.velX,
-                    velY: Math.sin(ship.angle) * ship.bulletSpeed + ship.velY,
-                    radius: 3
-                });
+                const spawnBulletAt = (angleOffsetDeg) => {
+                    const angle = ship.angle + (angleOffsetDeg * Math.PI) / 180;
+                    bullets.push({
+                        x: ship.x + Math.cos(angle) * ship.radius,
+                        y: ship.y + Math.sin(angle) * ship.radius,
+                        velX: Math.cos(angle) * ship.bulletSpeed + ship.velX,
+                        velY: Math.sin(angle) * ship.bulletSpeed + ship.velY,
+                        radius: 3
+                    });
+                };
+
+                if (ship.multiShotActive) {
+                    // center, left (-10°), right (+10°)
+                    spawnBulletAt(0);
+                    spawnBulletAt(-10);
+                    spawnBulletAt(10);
+                } else {
+                    spawnBulletAt(0);
+                }
+
                 lastBulletTime = Date.now();
                 playSound(SOUND_PATHS.shoot, 0.4);
+            }
+
+            // expire multi-shot powerup if time elapsed
+            if (ship.multiShotActive && Date.now() > ship.multiShotExpires) {
+                ship.multiShotActive = false;
+                ship.multiShotExpires = 0;
             }
 
             bullets.forEach((b) => ((b.x += b.velX * fpsFactor), (b.y += b.velY * fpsFactor)));
             bullets = bullets.filter(
                 (b) => b.x > 0 && b.x < GAME_WIDTH && b.y > 0 && b.y < GAME_HEIGHT
             );
+
+            // Update powerups
+            powerups.forEach((p) => {
+                p.x += p.velX * fpsFactor;
+                p.y += p.velY * fpsFactor;
+                // simple slow down
+                p.velX *= Math.pow(0.995, fpsFactor);
+                p.velY *= Math.pow(0.995, fpsFactor);
+            });
+            // expire powerups by life/time
+            powerups = powerups.filter((p) => Date.now() - p.spawnTime < p.life);
 
             enemies.forEach((e) => ((e.x += e.velX * fpsFactor), (e.y += e.velY * fpsFactor)));
             enemies.forEach((e) => {
@@ -685,6 +739,11 @@
                                 newDebris.push(createDebris(e.x, e.y));
                             }
 
+                            // Chance to spawn a multi-shot powerup on death
+                            if (Math.random() < POWERUP_SPAWN_CHANCE) {
+                                powerups.push(createPowerup(e.x, e.y));
+                            }
+
                             return false;
                         }
 
@@ -726,6 +785,21 @@
                     }
 
                     playSound(SOUND_PATHS.upgrade);
+                    return false;
+                }
+                return true;
+            });
+
+            // Powerup pickups by player
+            powerups = powerups.filter((p) => {
+                const dist = Math.hypot(ship.x - p.x, ship.y - p.y);
+                if (dist < ship.radius + p.radius) {
+                    // activate multi-shot
+                    if (p.type === 'multishot') {
+                        ship.multiShotActive = true;
+                        ship.multiShotExpires = Date.now() + POWERUP_DURATION_MS;
+                        playSound(SOUND_PATHS.upgrade, 0.9);
+                    }
                     return false;
                 }
                 return true;
@@ -830,6 +904,21 @@
             debris.forEach((d) => {
                 ctx.fillStyle = d.type === "motor" ? "yellow" : "cyan";
                 ctx.fillRect(d.x - d.radius / 2, d.y - d.radius / 2, d.radius, d.radius);
+            });
+
+            // draw powerups
+            powerups.forEach((p) => {
+                ctx.save();
+                ctx.translate(p.x, p.y);
+                // multi-shot powerup is a small triangle with magenta fill
+                ctx.fillStyle = '#ff33ff';
+                ctx.beginPath();
+                ctx.moveTo(0, -p.radius);
+                ctx.lineTo(-p.radius * 0.8, p.radius);
+                ctx.lineTo(p.radius * 0.8, p.radius);
+                ctx.closePath();
+                ctx.fill();
+                ctx.restore();
             });
 
             explosions.forEach((p) => {
