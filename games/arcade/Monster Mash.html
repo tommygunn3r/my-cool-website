@@ -87,6 +87,7 @@
         <div class="stat">Minions: <span id="minions">0</span>/15</div>
         <div class="stat">Princess HP: <span id="hp">100</span></div>
         <div class="stat">Enemies: <span id="enemies">0</span></div>
+        <div class="stat" id="fpsStat">Refresh: <span id="fps">60</span> Hz</div>
     </div>
     <div id="instructions">
         Left Click: Melee (Green) | Right Click: Ranged (Red)
@@ -822,10 +823,20 @@
 
         // --- LOOP ---
         let lastTime = Date.now();
+        let lastFpsUpdate = Date.now();
+        let frameCount = 0;
         function gameLoop() {
             const now = Date.now();
             const dt = now - lastTime;
             lastTime = now;
+            frameCount++;
+            // Update FPS display every 500ms
+            if (now - lastFpsUpdate > 500) {
+                const fps = Math.round(1000 * frameCount / (now - lastFpsUpdate));
+                document.getElementById('fps').textContent = fps;
+                lastFpsUpdate = now;
+                frameCount = 0;
+            }
 
             let shakeX = 0, shakeY = 0;
             if (game.shake > 0) {
