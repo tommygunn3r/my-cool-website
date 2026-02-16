@@ -336,6 +336,7 @@
 
         let lastBulletTime = 0;
         const keyMap = {};
+        let lastFrameTime = null;
 
         // Tilt
         let tiltGamma = 0;
@@ -540,8 +541,13 @@
         // -------------------------------------------------------
         // UPDATE LOOP
         // -------------------------------------------------------
-        function update() {
+        function update(deltaMs, fpsFactor) {
             if (!gameRunning) return;
+
+            // `fpsFactor` scales per-frame constants (written for 60Hz) to the
+            // current frame delta. `deltaMs` is available if a per-ms change is
+            // preferred in future.
+            fpsFactor = fpsFactor || 1;
 
             const isThrusting = keyMap["ArrowUp"] || keyMap["KeyW"];
 
@@ -560,17 +566,17 @@
 
             // Turning, tilt first
             const tiltNorm = tiltGamma / tiltMax;
-            if (Math.abs(tiltNorm) > 0.1) ship.angle += ship.turnRate * tiltNorm;
+            if (Math.abs(tiltNorm) > 0.1) ship.angle += ship.turnRate * tiltNorm * fpsFactor;
 
-            if (keyMap["ArrowLeft"] || keyMap["KeyA"]) ship.angle -= ship.turnRate;
-            if (keyMap["ArrowRight"] || keyMap["KeyD"]) ship.angle += ship.turnRate;
+            if (keyMap["ArrowLeft"] || keyMap["KeyA"]) ship.angle -= ship.turnRate * fpsFactor;
+            if (keyMap["ArrowRight"] || keyMap["KeyD"]) ship.angle += ship.turnRate * fpsFactor;
 
             if (isThrusting) {
-                ship.velX += Math.cos(ship.angle) * ship.thrust;
-                ship.velY += Math.sin(ship.angle) * ship.thrust;
+                ship.velX += Math.cos(ship.angle) * ship.thrust * fpsFactor;
+                ship.velY += Math.sin(ship.angle) * ship.thrust * fpsFactor;
             } else {
-                ship.velX *= 0.99;
-                ship.velY *= 0.99;
+                ship.velX *= Math.pow(0.99, fpsFactor);
+                ship.velY *= Math.pow(0.99, fpsFactor);
             }
 
             // Speed limit
@@ -582,8 +588,8 @@
             }
 
             // Move + wrap
-            ship.x += ship.velX;
-            ship.y += ship.velY;
+            ship.x += ship.velX * fpsFactor;
+            ship.y += ship.velY * fpsFactor;
 
             if (ship.x < 0) ship.x = GAME_WIDTH;
             if (ship.x > GAME_WIDTH) ship.x = 0;
@@ -603,12 +609,12 @@
                 playSound(SOUND_PATHS.shoot, 0.4);
             }
 
-            bullets.forEach((b) => ((b.x += b.velX), (b.y += b.velY)));
+            bullets.forEach((b) => ((b.x += b.velX * fpsFactor), (b.y += b.velY * fpsFactor)));
             bullets = bullets.filter(
                 (b) => b.x > 0 && b.x < GAME_WIDTH && b.y > 0 && b.y < GAME_HEIGHT
             );
 
-            enemies.forEach((e) => ((e.x += e.velX), (e.y += e.velY)));
+            enemies.forEach((e) => ((e.x += e.velX * fpsFactor), (e.y += e.velY * fpsFactor)));
             enemies.forEach((e) => {
                 if (e.x < 0) e.x = GAME_WIDTH;
                 if (e.x > GAME_WIDTH) e.x = 0;
@@ -617,18 +623,18 @@
             });
 
             debris.forEach((d) => {
-                d.x += d.velX;
-                d.y += d.velY;
-                d.velX *= 0.99;
-                d.velY *= 0.99;
+                d.x += d.velX * fpsFactor;
+                d.y += d.velY * fpsFactor;
+                d.velX *= Math.pow(0.99, fpsFactor);
+                d.velY *= Math.pow(0.99, fpsFactor);
             });
 
             explosions.forEach((p) => {
-                p.x += p.velX;
-                p.y += p.velY;
-                p.life--;
-                p.velX *= 0.95;
-                p.velY *= 0.95;
+                p.x += p.velX * fpsFactor;
+                p.y += p.velY * fpsFactor;
+                p.life -= fpsFactor;
+                p.velX *= Math.pow(0.95, fpsFactor);
+                p.velY *= Math.pow(0.95, fpsFactor);
             });
             explosions = explosions.filter((p) => p.life > 0);
 
@@ -817,8 +823,14 @@
         // -------------------------------------------------------
         // GAME CONTROL
         // -------------------------------------------------------
-        function gameLoop() {
-            update();
+        function gameLoop(ts) {
+            if (!lastFrameTime) lastFrameTime = ts;
+            const delta = ts - lastFrameTime;
+            lastFrameTime = ts;
+
+            const fpsFactor = delta / (1000 / 60);
+
+            update(delta, fpsFactor);
             draw();
             if (gameRunning) requestAnimationFrame(gameLoop);
         }
@@ -845,7 +857,8 @@
             // Don't auto-play engine sound - it will play when thrusting
 
             document.getElementById("startModal").style.display = "none";
-            gameLoop();
+            lastFrameTime = null;
+            requestAnimationFrame(gameLoop);
         };
 
         function endGame() {
