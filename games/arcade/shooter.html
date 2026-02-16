@@ -317,8 +317,29 @@
         const canvas = document.getElementById("gameCanvas");
         const ctx = canvas.getContext("2d");
 
-        const GAME_WIDTH = canvas.width;
-        const GAME_HEIGHT = canvas.height;
+        let GAME_WIDTH = canvas.width;
+        let GAME_HEIGHT = canvas.height;
+
+        function resizeCanvasToWindow() {
+            const scoreboard = document.getElementById('scoreboard');
+            const bottomPadding = 20; // body padding-bottom
+            const availableHeight = Math.max(200, window.innerHeight - (scoreboard ? scoreboard.offsetHeight : 0) - bottomPadding);
+
+            canvas.style.width = window.innerWidth + 'px';
+            canvas.style.height = availableHeight + 'px';
+
+            canvas.width = window.innerWidth;
+            canvas.height = availableHeight;
+
+            GAME_WIDTH = canvas.width;
+            GAME_HEIGHT = canvas.height;
+
+            // Update any drawing state if needed
+            ctx.font = "16px var(--font-family)";
+            ctx.fillStyle = GAME_COLOR;
+        }
+
+        window.addEventListener('resize', resizeCanvasToWindow);
 
         const GAME_COLOR = getComputedStyle(document.documentElement)
             .getPropertyValue("--game-color")
