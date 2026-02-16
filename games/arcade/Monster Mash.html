@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Princess Defense - Rounds Edition</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: #0b0b14;
+            font-family: 'Courier New', monospace;
+            color: #eee;
+            user-select: none;
+        }
+        canvas {
+            border: 3px solid #333;
+            background: #111;
+            cursor: crosshair;
+            box-shadow: 0 0 20px rgba(0,0,0,0.8);
+        }
+        #ui {
+            margin-top: 10px;
+            display: flex;
+            gap: 20px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        .stat {
+            padding: 10px 20px;
+            background: #1a1a2e;
+            border: 1px solid #444;
+            border-radius: 5px;
+        }
+        .stat.round {
+            background: #2e1a4a;
+            border-color: #9d4edd;
+        }
+        #instructions {
+            margin-top: 15px;
+            text-align: center;
+            color: #888;
+            font-size: 14px;
+        }
+        #gameOver, #roundTransition {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(10, 10, 20, 0.95);
+            padding: 40px;
+            border: 3px solid #e94560;
+            border-radius: 10px;
+            text-align: center;
+            display: none;
+            z-index: 1000;
+        }
+        #roundTransition {
+            border-color: #9d4edd;
+        }
+        .btn {
+            background: #e94560;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 18px;
+            font-family: 'Courier New', monospace;
+            cursor: pointer;
+            margin: 10px;
+            border-radius: 5px;
+            transition: all 0.3s;
+        }
+        .btn:hover {
+            background: #ff5570;
+            transform: scale(1.05);
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas" width="800" height="600"></canvas>
+    <div id="ui">
+        <div class="stat round">Round: <span id="round">1</span></div>
+        <div class="stat">Wave: <span id="wave">1</span></div>
+        <div class="stat">Minions: <span id="minions">0</span>/15</div>
+        <div class="stat">Princess HP: <span id="hp">100</span></div>
+        <div class="stat">Enemies: <span id="enemies">0</span></div>
+    </div>
+    <div id="instructions">
+        Left Click: Melee (Green) | Right Click: Ranged (Red)
+    </div>
+
+    <div id="gameOver">
+        <h1 style="color: #e94560; font-size: 60px; margin: 0;">YOU DIED</h1>
+        <p style="font-size: 24px; margin: 20px 0;">Round: <span id="finalRound"></span></p>
+        <p style="font-size: 20px; margin: 20px 0;">Total Waves: <span id="finalWaves"></span></p>
+        <button class="btn" onclick="restartGame()">RESTART</button>
+    </div>
+
+    <div id="roundTransition">
+        <h1 style="color: #9d4edd; font-size: 48px; margin: 0;">ROUND COMPLETE!</h1>
+        <p style="font-size: 24px; margin: 20px 0;">Starting Round <span id="nextRound"></span></p>
+        <p style="font-size: 16px; color: #888;">New map layout incoming...</p>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // --- AUDIO ENGINE ---
+        const Audio = {
+            ctx: new (window.AudioContext || window.webkitAudioContext)(),
+            
+            init() {
+                if (this.ctx.state === 'suspended') {
+                    this.ctx.resume();
+                }
+            },
+
+            playTone(freq, type, duration, vol = 0.1) {
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(freq/2, this.ctx.currentTime + duration);
+                
+                gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + duration);
+
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + duration);
+            },
+
+            playNoise(duration, vol = 0.2) {
+                const bufferSize = this.ctx.sampleRate * duration;
+                const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+                const data = buffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) {
+                    data[i] = Math.random() * 2 - 1;
+                }
+
+                const noise = this.ctx.createBufferSource();
+                noise.buffer = buffer;
+                const gain = this.ctx.createGain();
+                
+                const filter = this.ctx.createBiquadFilter();
+                filter.type = 'lowpass';
+                filter.frequency.value = 1000;
+
+                gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + duration);
+
+                noise.connect(filter);
+                filter.connect(gain);
+                gain.connect(this.ctx.destination);
+                noise.start();
+            },
+
+            shoot() { this.playTone(600, 'square', 0.1, 0.05); },
+            melee() { this.playTone(200, 'sawtooth', 0.1, 0.05); },
+            splat() { this.playNoise(0.2, 0.15); },
+            spawn() { this.playTone(400, 'sine', 0.2, 0.05); },
+            damage() { this.playTone(100, 'sawtooth', 0.5, 0.2); },
+            roundComplete() { this.playTone(800, 'sine', 0.5, 0.1); }
+        };
+
+        // --- GAME STATE ---
+        let game = {
+            round: 1,
+            wave: 1,
+            wavesInRound: 0,
+            totalWaves: 0,
+            princessHP: 100,
+            minions: [],
+            enemies: [],
+            obstacles: [],
+            projectiles: [],
+            particles: [],
+            bloodStains: [],
+            maxMinions: 15,
+            minionLifespan: 15000,
+            spawnTimer: 0,
+            waveTimer: 0,
+            enemiesPerWave: 5,
+            shake: 0,
+            princess: { x: canvas.width / 2, y: canvas.height / 2, radius: 20 },
+            gameOver: false,
+            roundTransition: false
+        };
+
+        // --- MAP LAYOUTS ---
+        const mapLayouts = [
+            // Round 1: Center defense (princess in middle)
+            {
+                princess: { x: canvas.width / 2, y: canvas.height / 2 },
+                obstacles: [
+                    { x: 100, y: 100, width: 60, height: 60 },
+                    { x: canvas.width - 160, y: 100, width: 60, height: 60 },
+                    { x: 100, y: canvas.height - 160, width: 60, height: 60 },
+                    { x: canvas.width - 160, y: canvas.height - 160, width: 60, height: 60 },
+                    { x: canvas.width / 2 - 100, y: canvas.height / 2 - 80, width: 80, height: 20 },
+                    { x: canvas.width / 2 + 20, y: canvas.height / 2 - 80, width: 80, height: 20 },
+                    { x: canvas.width / 2 - 100, y: canvas.height / 2 + 60, width: 80, height: 20 },
+                    { x: canvas.width / 2 + 20, y: canvas.height / 2 + 60, width: 80, height: 20 }
+                ]
+            },
+            // Round 2: Corner defense (princess bottom right)
+            {
+                princess: { x: canvas.width - 100, y: canvas.height - 100 },
+                obstacles: [
+                    { x: 200, y: 150, width: 80, height: 80 },
+                    { x: 500, y: 150, width: 80, height: 80 },
+                    { x: 350, y: 300, width: 100, height: 40 },
+                    { x: canvas.width - 250, y: canvas.height - 250, width: 100, height: 100 },
+                    { x: 100, y: canvas.height - 150, width: 150, height: 40 }
+                ]
+            },
+            // Round 3: Top defense (princess at top)
+            {
+                princess: { x: canvas.width / 2, y: 100 },
+                obstacles: [
+                    { x: 150, y: 250, width: 100, height: 60 },
+                    { x: 550, y: 250, width: 100, height: 60 },
+                    { x: 350, y: 350, width: 100, height: 100 },
+                    { x: 100, y: 450, width: 200, height: 40 },
+                    { x: 500, y: 450, width: 200, height: 40 }
+                ]
+            },
+            // Round 4: Maze defense (princess left side)
+            {
+                princess: { x: 120, y: canvas.height / 2 },
+                obstacles: [
+                    { x: 250, y: 100, width: 40, height: 200 },
+                    { x: 250, y: 350, width: 40, height: 200 },
+                    { x: 400, y: 200, width: 40, height: 250 },
+                    { x: 550, y: 100, width: 40, height: 200 },
+                    { x: 550, y: 350, width: 40, height: 150 }
+                ]
+            },
+            // Round 5: Open field (princess center, few obstacles)
+            {
+                princess: { x: canvas.width / 2, y: canvas.height / 2 },
+                obstacles: [
+                    { x: 200, y: 200, width: 80, height: 80 },
+                    { x: canvas.width - 280, y: 200, width: 80, height: 80 },
+                    { x: 200, y: canvas.height - 280, width: 80, height: 80 },
+                    { x: canvas.width - 280, y: canvas.height - 280, width: 80, height: 80 }
+                ]
+            }
+        ];
+
+        function loadRound(roundNum) {
+            const layoutIndex = (roundNum - 1) % mapLayouts.length;
+            const layout = mapLayouts[layoutIndex];
+            
+            game.obstacles = JSON.parse(JSON.stringify(layout.obstacles));
+            game.princess.x = layout.princess.x;
+            game.princess.y = layout.princess.y;
+            game.bloodStains = []; // Clear blood between rounds
+            game.minions = []; // Clear minions
+            game.enemies = [];
+            game.projectiles = [];
+            game.particles = [];
+            
+            // Initialize pathfinding grid for new map
+            initNavigationGrid();
+        }
+
+        // --- PATHFINDING GRID ---
+        const GRID_SIZE = 20;
+        const GRID_WIDTH = Math.ceil(canvas.width / GRID_SIZE);
+        const GRID_HEIGHT = Math.ceil(canvas.height / GRID_SIZE);
+        let navigationGrid = [];
+
+        function initNavigationGrid() {
+            navigationGrid = [];
+            for (let y = 0; y < GRID_HEIGHT; y++) {
+                navigationGrid[y] = [];
+                for (let x = 0; x < GRID_WIDTH; x++) {
+                    navigationGrid[y][x] = { walkable: true, x, y };
+                }
+            }
+            
+            // Mark obstacles as unwalkable
+            for (let obs of game.obstacles) {
+                const startX = Math.floor(obs.x / GRID_SIZE);
+                const startY = Math.floor(obs.y / GRID_SIZE);
+                const endX = Math.ceil((obs.x + obs.width) / GRID_SIZE);
+                const endY = Math.ceil((obs.y + obs.height) / GRID_SIZE);
+                
+                for (let y = startY; y < endY && y < GRID_HEIGHT; y++) {
+                    for (let x = startX; x < endX && x < GRID_WIDTH; x++) {
+                        if (x >= 0 && y >= 0) {
+                            navigationGrid[y][x].walkable = false;
+                        }
+                    }
+                }
+            }
+        }
+
+        function findPath(startX, startY, endX, endY) {
+            const start = {
+                x: Math.floor(startX / GRID_SIZE),
+                y: Math.floor(startY / GRID_SIZE)
+            };
+            const end = {
+                x: Math.floor(endX / GRID_SIZE),
+                y: Math.floor(endY / GRID_SIZE)
+            };
+            
+            if (start.x < 0 || start.x >= GRID_WIDTH || start.y < 0 || start.y >= GRID_HEIGHT) return null;
+            if (end.x < 0 || end.x >= GRID_WIDTH || end.y < 0 || end.y >= GRID_HEIGHT) return null;
+            
+            const openSet = [start];
+            const closedSet = new Set();
+            const cameFrom = new Map();
+            const gScore = new Map();
+            const fScore = new Map();
+            
+            const key = (node) => `${node.x},${node.y}`;
+            gScore.set(key(start), 0);
+            fScore.set(key(start), heuristic(start, end));
+            
+            while (openSet.length > 0) {
+                openSet.sort((a, b) => {
+                    const aScore = fScore.get(key(a)) || Infinity;
+                    const bScore = fScore.get(key(b)) || Infinity;
+                    return aScore - bScore;
+                });
+                
+                const current = openSet.shift();
+                const currentKey = key(current);
+                
+                if (current.x === end.x && current.y === end.y) {
+                    return reconstructPath(cameFrom, current);
+                }
+                
+                closedSet.add(currentKey);
+                
+                const neighbors = [
+                    { x: current.x + 1, y: current.y },
+                    { x: current.x - 1, y: current.y },
+                    { x: current.x, y: current.y + 1 },
+                    { x: current.x, y: current.y - 1 }
+                ];
+                
+                for (let neighbor of neighbors) {
+                    if (neighbor.x < 0 || neighbor.x >= GRID_WIDTH || neighbor.y < 0 || neighbor.y >= GRID_HEIGHT) continue;
+                    if (!navigationGrid[neighbor.y][neighbor.x].walkable) continue;
+                    
+                    const neighborKey = key(neighbor);
+                    if (closedSet.has(neighborKey)) continue;
+                    
+                    const tentativeGScore = (gScore.get(currentKey) || Infinity) + 1;
+                    
+                    if (!openSet.find(n => n.x === neighbor.x && n.y === neighbor.y)) {
+                        openSet.push(neighbor);
+                    } else if (tentativeGScore >= (gScore.get(neighborKey) || Infinity)) {
+                        continue;
+                    }
+                    
+                    cameFrom.set(neighborKey, current);
+                    gScore.set(neighborKey, tentativeGScore);
+                    fScore.set(neighborKey, tentativeGScore + heuristic(neighbor, end));
+                }
+            }
+            
+            return null;
+        }
+        
+        function heuristic(a, b) {
+            return Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
+        }
+        
+        function reconstructPath(cameFrom, current) {
+            const path = [current];
+            let currentKey = `${current.x},${current.y}`;
+            
+            while (cameFrom.has(currentKey)) {
+                current = cameFrom.get(currentKey);
+                currentKey = `${current.x},${current.y}`;
+                path.unshift(current);
+            }
+            
+            return path;
+        }
+
+        // --- COLLISION DETECTION ---
+        function checkEntityCollision(entity1, entity2) {
+            const dx = entity1.x - entity2.x;
+            const dy = entity1.y - entity2.y;
+            const minDist = (entity1.size + entity2.size) / 2;
+            const dist = Math.hypot(dx, dy);
+            return dist < minDist;
+        }
+
+        function resolveEntityCollision(entity1, entity2) {
+            const dx = entity1.x - entity2.x;
+            const dy = entity1.y - entity2.y;
+            const dist = Math.hypot(dx, dy);
+            const minDist = (entity1.size + entity2.size) / 2;
+            
+            if (dist < minDist && dist > 0) {
+                const overlap = minDist - dist;
+                const moveX = (dx / dist) * overlap * 0.5;
+                const moveY = (dy / dist) * overlap * 0.5;
+                
+                entity1.x += moveX;
+                entity1.y += moveY;
+                entity2.x -= moveX;
+                entity2.y -= moveY;
+            }
+        }
+
+        function checkObstacleCollision(entity) {
+            for (let obs of game.obstacles) {
+                if (entity.x + entity.size/2 > obs.x && 
+                    entity.x - entity.size/2 < obs.x + obs.width &&
+                    entity.y + entity.size/2 > obs.y && 
+                    entity.y - entity.size/2 < obs.y + obs.height) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        function moveWithPathfinding(entity, speed) {
+            if (!entity.path || entity.pathIndex >= entity.path.length) {
+                entity.path = null;
+                return;
+            }
+            
+            const nextNode = entity.path[entity.pathIndex];
+            const targetX = nextNode.x * GRID_SIZE + GRID_SIZE / 2;
+            const targetY = nextNode.y * GRID_SIZE + GRID_SIZE / 2;
+            
+            const dx = targetX - entity.x;
+            const dy = targetY - entity.y;
+            const dist = Math.hypot(dx, dy);
+            
+            // Larger acceptance radius for smoother movement
+            if (dist < GRID_SIZE * 0.8) {
+                entity.pathIndex++;
+                if (entity.pathIndex >= entity.path.length) {
+                    entity.path = null;
+                }
+            } else {
+                const oldX = entity.x;
+                const oldY = entity.y;
+                
+                // Smooth movement toward target
+                entity.x += (dx / dist) * Math.min(speed, dist);
+                entity.y += (dy / dist) * Math.min(speed, dist);
+                
+                // Clamp to canvas bounds
+                entity.x = Math.max(entity.size, Math.min(canvas.width - entity.size, entity.x));
+                entity.y = Math.max(entity.size, Math.min(canvas.height - entity.size, entity.y));
+                
+                if (checkObstacleCollision(entity)) {
+                    entity.x = oldX;
+                    entity.y = oldY;
+                    entity.pathUpdateTimer = 100; // Force repath
+                }
+            }
+        }
+
+        // --- CLASSES ---
+        class Blood {
+            constructor(x, y, isStain) {
+                this.x = x;
+                this.y = y;
+                this.color = `rgb(${150 + Math.random()*60}, 0, 0)`;
+                if (!isStain) {
+                    const angle = Math.random() * Math.PI * 2;
+                    const speed = Math.random() * 4;
+                    this.vx = Math.cos(angle) * speed;
+                    this.vy = Math.sin(angle) * speed;
+                    this.life = 1.0;
+                    this.decay = Math.random() * 0.05 + 0.02;
+                    this.size = Math.random() * 4 + 2;
+                } else {
+                    this.size = Math.random() * 10 + 5;
+                    this.vx = 0; this.vy = 0;
+                    this.life = 1;
+                }
+            }
+            update() {
+                this.x += this.vx; this.y += this.vy;
+                this.vx *= 0.9; this.vy *= 0.9;
+                this.life -= this.decay;
+                return this.life > 0;
+            }
+            draw() {
+                ctx.globalAlpha = this.life;
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.globalAlpha = 1;
+            }
+        }
+
+        function spawnGore(x, y, amount) {
+            for(let i=0; i<amount; i++) game.particles.push(new Blood(x, y, false));
+            game.bloodStains.push(new Blood(x, y, true));
+            if (game.bloodStains.length > 300) game.bloodStains.shift();
+        }
+
+        class Minion {
+            constructor(x, y, type) {
+                this.x = x; this.y = y; this.type = type;
+                this.size = 15;
+                this.range = type === 'melee' ? 60 : 180;
+                this.damage = type === 'melee' ? 20 : 10;
+                this.attackSpeed = type === 'melee' ? 800 : 1200;
+                this.lastAttack = 0;
+                this.speed = type === 'melee' ? 1.5 : 0;
+                this.birthTime = Date.now();
+                this.color = type === 'melee' ? '#4ecca3' : '#ff6b6b';
+                this.hp = type === 'melee' ? 50 : 30;
+                this.maxHP = this.hp;
+                this.path = null;
+                this.pathIndex = 0;
+                this.pathUpdateTimer = 0;
+            }
+            findTarget() {
+                let closest = null, minDist = Infinity;
+                for (let e of game.enemies) {
+                    const d = Math.hypot(e.x - this.x, e.y - this.y);
+                    if (d < minDist) { minDist = d; closest = e; }
+                }
+                return { target: closest, dist: minDist };
+            }
+            update(now) {
+                const {target, dist} = this.findTarget();
+                
+                if (target && this.type === 'melee') {
+                    // Update path less frequently for smoother movement
+                    this.pathUpdateTimer++;
+                    if (this.pathUpdateTimer > 50 || !this.path) {
+                        this.path = findPath(this.x, this.y, target.x, target.y);
+                        this.pathIndex = 0;
+                        this.pathUpdateTimer = 0;
+                    }
+                    
+                    if (dist > this.range * 0.7 && this.path) {
+                        moveWithPathfinding(this, this.speed);
+                    }
+                    
+                    if (dist < this.range && now - this.lastAttack > this.attackSpeed) {
+                        target.takeDamage(this.damage);
+                        Audio.melee();
+                        this.lastAttack = now;
+                    }
+                } else if (target && this.type === 'ranged') {
+                    if (dist < this.range && now - this.lastAttack > this.attackSpeed) {
+                        game.projectiles.push(new Projectile(this.x, this.y, target, this.damage));
+                        Audio.shoot();
+                        this.lastAttack = now;
+                    }
+                }
+            }
+            takeDamage(amount) { this.hp -= amount; }
+            isDead() { return Date.now() - this.birthTime > game.minionLifespan || this.hp <= 0; }
+            draw() {
+                const age = Date.now() - this.birthTime;
+                const lifePercent = 1 - (age / game.minionLifespan);
+                ctx.globalAlpha = Math.max(0.3, lifePercent);
+                ctx.fillStyle = this.color;
+                ctx.fillRect(this.x - this.size/2, this.y - this.size/2, this.size, this.size);
+                ctx.globalAlpha = 1;
+                
+                const hpPercent = this.hp / this.maxHP;
+                if (hpPercent < 1) {
+                    ctx.fillStyle = '#333';
+                    ctx.fillRect(this.x - this.size/2, this.y - this.size/2 - 8, this.size, 3);
+                    ctx.fillStyle = hpPercent < 0.3 ? '#ff0000' : '#00ff00';
+                    ctx.fillRect(this.x - this.size/2, this.y - this.size/2 - 8, this.size * hpPercent, 3);
+                }
+            }
+        }
+
+        class Projectile {
+            constructor(x, y, target, damage) {
+                this.x = x; this.y = y; this.target = target;
+                this.damage = damage; this.speed = 6; this.size = 5;
+            }
+            update() {
+                if (!this.target || this.target.hp <= 0) return true;
+                const dx = this.target.x - this.x;
+                const dy = this.target.y - this.y;
+                const dist = Math.hypot(dx, dy);
+                if (dist < this.speed) {
+                    this.target.takeDamage(this.damage);
+                    return true;
+                }
+                this.x += (dx/dist) * this.speed;
+                this.y += (dy/dist) * this.speed;
+                return false;
+            }
+            draw() {
+                ctx.fillStyle = '#ffe66d';
+                ctx.fillRect(this.x - this.size/2, this.y - this.size/2, this.size, this.size);
+            }
+        }
+
+        class Enemy {
+            constructor(spawnSide, type, forceX, forceY) {
+                this.type = type || 'normal';
+                
+                if (this.type === 'runner') {
+                    this.size = 8; this.speed = 1.8; this.hp = 15;
+                    this.color = '#ff6b9d';
+                } else if (this.type === 'mother') {
+                    this.size = 18; this.speed = 0.5; this.hp = 80 + (game.round * 15);
+                    this.color = '#9d4edd';
+                } else {
+                    this.size = 12; this.speed = 0.9; this.hp = 30 + (game.round * 8);
+                    this.color = '#e94560';
+                }
+                this.maxHP = this.hp;
+                this.path = null;
+                this.pathIndex = 0;
+                this.pathUpdateTimer = 0;
+
+                if (forceX !== undefined && forceY !== undefined) {
+                    this.x = forceX; this.y = forceY;
+                } else {
+                    switch(spawnSide) {
+                        case 'top': this.x = Math.random() * canvas.width; this.y = -this.size; break;
+                        case 'bottom': this.x = Math.random() * canvas.width; this.y = canvas.height + this.size; break;
+                        case 'left': this.x = -this.size; this.y = Math.random() * canvas.height; break;
+                        case 'right': this.x = canvas.width + this.size; this.y = Math.random() * canvas.height; break;
+                    }
+                }
+            }
+            takeDamage(amount) { this.hp -= amount; }
+            draw() {
+                ctx.fillStyle = this.color;
+                ctx.fillRect(this.x - this.size/2, this.y - this.size/2, this.size, this.size);
+                
+                if (this.type === 'mother') {
+                    ctx.strokeStyle = '#fff';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(this.x - this.size/3, this.y - this.size/3);
+                    ctx.lineTo(this.x + this.size/3, this.y + this.size/3);
+                    ctx.moveTo(this.x + this.size/3, this.y - this.size/3);
+                    ctx.lineTo(this.x - this.size/3, this.y + this.size/3);
+                    ctx.stroke();
+                }
+                
+                const hpPercent = this.hp / this.maxHP;
+                if (hpPercent < 1) {
+                    ctx.fillStyle = '#333';
+                    ctx.fillRect(this.x - this.size/2, this.y - this.size/2 - 8, this.size, 4);
+                    ctx.fillStyle = hpPercent < 0.3 ? '#ff0000' : '#00ff00';
+                    ctx.fillRect(this.x - this.size/2, this.y - this.size/2 - 8, this.size * hpPercent, 4);
+                }
+            }
+            update() {
+                const dist = Math.hypot(game.princess.x - this.x, game.princess.y - this.y);
+                if (dist < game.princess.radius + this.size) {
+                    game.princessHP -= 5;
+                    game.shake = 10;
+                    Audio.damage();
+                    return true;
+                }
+                
+                // Update path less frequently for smoother movement
+                this.pathUpdateTimer++;
+                if (this.pathUpdateTimer > 60 || !this.path) {
+                    this.path = findPath(this.x, this.y, game.princess.x, game.princess.y);
+                    this.pathIndex = 0;
+                    this.pathUpdateTimer = 0;
+                }
+                
+                // Move with pathfinding if we have a path
+                if (this.path && this.path.length > 0) {
+                    moveWithPathfinding(this, this.speed);
+                } else {
+                    // Fallback: move directly toward princess if no path found
+                    const dx = game.princess.x - this.x;
+                    const dy = game.princess.y - this.y;
+                    const dist = Math.hypot(dx, dy);
+                    
+                    if (dist > 0) {
+                        const oldX = this.x;
+                        const oldY = this.y;
+                        
+                        this.x += (dx / dist) * this.speed;
+                        this.y += (dy / dist) * this.speed;
+                        
+                        // If we hit an obstacle, try to slide
+                        if (checkObstacleCollision(this)) {
+                            this.x = oldX;
+                            this.y = oldY;
+                            
+                            // Try just X movement
+                            this.x += (dx / dist) * this.speed;
+                            if (checkObstacleCollision(this)) {
+                                this.x = oldX;
+                                // Try just Y movement
+                                this.y += (dy / dist) * this.speed;
+                                if (checkObstacleCollision(this)) {
+                                    this.y = oldY;
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                return false;
+            }
+            onDeath() {
+                spawnGore(this.x, this.y, 10);
+                Audio.splat();
+                if (this.type === 'mother') {
+                    for (let i = 0; i < 4; i++) {
+                        const ox = (Math.random() - 0.5) * 30;
+                        const oy = (Math.random() - 0.5) * 30;
+                        game.enemies.push(new Enemy(null, 'runner', this.x + ox, this.y + oy));
+                    }
+                }
+            }
+        }
+
+        // --- INPUT ---
+        canvas.addEventListener('mousedown', (e) => {
+            Audio.init();
+
+            if (game.minions.length >= game.maxMinions) return;
+            if (game.gameOver || game.roundTransition) return;
+
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            for (let obs of game.obstacles) {
+                if (x > obs.x && x < obs.x + obs.width && y > obs.y && y < obs.y + obs.height) return;
+            }
+            if (Math.hypot(x - game.princess.x, y - game.princess.y) < game.princess.radius + 20) return;
+
+            const type = e.button === 0 ? 'melee' : 'ranged';
+            game.minions.push(new Minion(x, y, type));
+            Audio.spawn();
+        });
+        canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+
+        // --- WAVES ---
+        function spawnWave() {
+            const sides = ['top', 'bottom', 'left', 'right'];
+            const spawnSide = sides[game.wave % sides.length];
+            let count = game.enemiesPerWave + Math.floor(game.totalWaves * 1.2);
+            let spawnQueue = [];
+
+            if (game.round >= 2 && game.wave % 2 !== 0) {
+                const mothers = Math.floor(game.round / 2);
+                for(let m=0; m<mothers; m++) spawnQueue.push('mother');
+                count -= mothers * 2;
+            }
+            for(let i=0; i<count; i++) spawnQueue.push('normal');
+
+            console.log(`Spawning wave ${game.wave}, round ${game.round}: ${spawnQueue.length} enemies from ${spawnSide}`);
+
+            spawnQueue.forEach((type, index) => {
+                setTimeout(() => {
+                    const enemy = new Enemy(spawnSide, type);
+                    game.enemies.push(enemy);
+                    console.log(`Enemy ${type} spawned at (${Math.round(enemy.x)}, ${Math.round(enemy.y)})`);
+                }, index * 600);
+            });
+        }
+
+        // --- RESTART ---
+        function restartGame() {
+            game = {
+                round: 1,
+                wave: 1,
+                wavesInRound: 0,
+                totalWaves: 0,
+                princessHP: 100,
+                minions: [],
+                enemies: [],
+                obstacles: [],
+                projectiles: [],
+                particles: [],
+                bloodStains: [],
+                maxMinions: 15,
+                minionLifespan: 15000,
+                spawnTimer: 0,
+                waveTimer: 0,
+                enemiesPerWave: 5,
+                shake: 0,
+                princess: { x: canvas.width / 2, y: canvas.height / 2, radius: 20 },
+                gameOver: false,
+                roundTransition: false
+            };
+            
+            document.getElementById('gameOver').style.display = 'none';
+            loadRound(1);
+            spawnWave();
+            gameLoop();
+        }
+
+        function showRoundTransition() {
+            game.roundTransition = true;
+            document.getElementById('nextRound').textContent = game.round;
+            document.getElementById('roundTransition').style.display = 'block';
+            Audio.roundComplete();
+            
+            setTimeout(() => {
+                document.getElementById('roundTransition').style.display = 'none';
+                game.roundTransition = false;
+                spawnWave();
+            }, 3000);
+        }
+
+        // --- LOOP ---
+        let lastTime = Date.now();
+        function gameLoop() {
+            const now = Date.now();
+            const dt = now - lastTime;
+            lastTime = now;
+
+            let shakeX = 0, shakeY = 0;
+            if (game.shake > 0) {
+                shakeX = (Math.random() - 0.5) * game.shake;
+                shakeY = (Math.random() - 0.5) * game.shake;
+                game.shake *= 0.9;
+                if (game.shake < 0.5) game.shake = 0;
+            }
+
+            ctx.save();
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.translate(shakeX, shakeY);
+
+            for (let stain of game.bloodStains) stain.draw();
+
+            ctx.fillStyle = '#222';
+            ctx.strokeStyle = '#444';
+            ctx.lineWidth = 2;
+            for (let obs of game.obstacles) {
+                ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
+                ctx.strokeRect(obs.x, obs.y, obs.width, obs.height);
+            }
+
+            ctx.fillStyle = '#ff1493';
+            ctx.beginPath();
+            ctx.arc(game.princess.x, game.princess.y, game.princess.radius, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#fff';
+            ctx.font = '20px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('♛', game.princess.x, game.princess.y + 7);
+
+            game.minions = game.minions.filter(m => {
+                if (m.isDead()) {
+                    spawnGore(m.x, m.y, 5);
+                    return false;
+                }
+                m.update(now);
+                m.draw();
+                return true;
+            });
+
+            game.enemies = game.enemies.filter(e => {
+                if (e.hp <= 0) {
+                    e.onDeath();
+                    return false;
+                }
+                if (e.update()) return false;
+                e.draw();
+                return true;
+            });
+
+            // Entity collision resolution - prevent overlapping
+            for (let i = 0; i < game.enemies.length; i++) {
+                for (let j = i + 1; j < game.enemies.length; j++) {
+                    resolveEntityCollision(game.enemies[i], game.enemies[j]);
+                }
+                for (let minion of game.minions) {
+                    resolveEntityCollision(game.enemies[i], minion);
+                }
+            }
+            
+            for (let i = 0; i < game.minions.length; i++) {
+                for (let j = i + 1; j < game.minions.length; j++) {
+                    resolveEntityCollision(game.minions[i], game.minions[j]);
+                }
+            }
+
+            game.projectiles = game.projectiles.filter(p => {
+                const shouldRemove = p.update();
+                if (!shouldRemove) p.draw();
+                return !shouldRemove;
+            });
+
+            game.particles = game.particles.filter(p => {
+                const alive = p.update();
+                if (alive) p.draw();
+                return alive;
+            });
+
+            ctx.restore();
+
+            // Wave/Round management
+            if (game.enemies.length === 0 && !game.roundTransition) {
+                game.waveTimer += dt;
+                if (game.waveTimer > 3000) {
+                    game.wave++;
+                    game.wavesInRound++;
+                    game.totalWaves++;
+                    game.waveTimer = 0;
+                    
+                    // Check if round complete (5 waves per round)
+                    if (game.wavesInRound >= 5) {
+                        game.round++;
+                        game.wave = 1;
+                        game.wavesInRound = 0;
+                        loadRound(game.round);
+                        showRoundTransition();
+                    } else {
+                        spawnWave();
+                    }
+                }
+            } else {
+                game.waveTimer = 0;
+            }
+
+            document.getElementById('round').textContent = game.round;
+            document.getElementById('wave').textContent = game.wave;
+            document.getElementById('minions').textContent = game.minions.length;
+            document.getElementById('hp').textContent = Math.max(0, game.princessHP);
+            document.getElementById('enemies').textContent = game.enemies.length;
+
+            if (game.princessHP <= 0 && !game.gameOver) {
+                game.gameOver = true;
+                document.getElementById('finalRound').textContent = game.round;
+                document.getElementById('finalWaves').textContent = game.totalWaves;
+                document.getElementById('gameOver').style.display = 'block';
+                return;
+            }
+
+            requestAnimationFrame(gameLoop);
+        }
+
+        // --- START ---
+        loadRound(1);
+        spawnWave();
+        gameLoop();
+    </script>
+</body>
+</html>
