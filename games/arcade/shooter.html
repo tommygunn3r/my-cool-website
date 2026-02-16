@@ -928,6 +928,36 @@
                 ctx.fillStyle = ratio > 0.5 ? "yellow" : "orange";
                 ctx.fillRect(p.x - sz / 2, p.y - sz / 2, sz, sz);
             });
+
+            // Multi-shot timer UI (center-bottom)
+            if (ship && ship.multiShotActive) {
+                const remainingMs = Math.max(0, ship.multiShotExpires - Date.now());
+                const remainingSec = (remainingMs / 1000).toFixed(1);
+                const pct = Math.max(0, Math.min(1, remainingMs / POWERUP_DURATION_MS));
+
+                // Text
+                ctx.font = Math.max(14, Math.floor(GAME_WIDTH * 0.02)) + "px Courier New";
+                ctx.fillStyle = GAME_COLOR;
+                ctx.textAlign = "center";
+                const textY = GAME_HEIGHT - 40;
+                ctx.fillText(`MULTI-SHOT ${remainingSec}s`, GAME_WIDTH / 2, textY);
+
+                // Progress bar
+                const barW = Math.min(400, GAME_WIDTH * 0.45);
+                const barH = 8;
+                const barX = (GAME_WIDTH - barW) / 2;
+                const barY = GAME_HEIGHT - 30;
+
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = GAME_COLOR;
+                ctx.strokeRect(barX - 1, barY - 1, barW + 2, barH + 2);
+
+                ctx.fillStyle = '#ff33ff';
+                ctx.fillRect(barX, barY, barW * pct, barH);
+
+                // restore alignment
+                ctx.textAlign = "start";
+            }
         }
 
         // -------------------------------------------------------
