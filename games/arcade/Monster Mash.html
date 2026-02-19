@@ -825,11 +825,15 @@
         let lastTime = Date.now();
         let lastFpsUpdate = Date.now();
         let frameCount = 0;
+        // Fixed timestep for consistent game speed
+        const FIXED_DT = 1000 / 60; // 60 FPS
+        let accumulator = 0;
         function gameLoop() {
             const now = Date.now();
-            const dt = now - lastTime;
+            let dt = now - lastTime;
             lastTime = now;
             frameCount++;
+            accumulator += dt;
             // Update FPS display every 500ms
             if (now - lastFpsUpdate > 500) {
                 const fps = Math.round(1000 * frameCount / (now - lastFpsUpdate));
@@ -838,6 +842,54 @@
                 frameCount = 0;
             }
 
+            // Clamp dt to avoid spiral of death
+            if (dt > 200) accumulator = FIXED_DT;
+
+            while (accumulator >= FIXED_DT) {
+                updateGame(FIXED_DT);
+                accumulator -= FIXED_DT;
+            }
+            drawGame();
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Split update and draw for fixed timestep
+        function updateGame(dt) {
+            // ...existing update logic from gameLoop...
+            // Only move time-dependent code here
+            // Wave/Round management
+            if (game.enemies.length === 0 && !game.roundTransition) {
+                game.waveTimer += dt;
+                if (game.waveTimer > 3000) {
+                    game.wave++;
+                    game.wavesInRound++;
+                    game.totalWaves++;
+                    game.waveTimer = 0;
+                    if (game.wavesInRound >= 5) {
+                        game.round++;
+                        game.wave = 1;
+                        game.wavesInRound = 0;
+                        loadRound(game.round);
+                        showRoundTransition();
+                    } else {
+                        spawnWave();
+                    }
+                }
+            } else {
+                game.waveTimer = 0;
+            }
+
+            if (game.princessHP <= 0 && !game.gameOver) {
+                game.gameOver = true;
+                document.getElementById('finalRound').textContent = game.round;
+                document.getElementById('finalWaves').textContent = game.totalWaves;
+                document.getElementById('gameOver').style.display = 'block';
+                return;
+            }
+        }
+
+        function drawGame() {
+            // ...existing drawing logic from gameLoop...
             let shakeX = 0, shakeY = 0;
             if (game.shake > 0) {
                 shakeX = (Math.random() - 0.5) * game.shake;

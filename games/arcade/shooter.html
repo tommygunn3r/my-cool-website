@@ -763,9 +763,17 @@
                 const d = Math.hypot(ship.x - e.x, ship.y - e.y);
                 if (d < ship.radius + e.radius) {
                     ship.hullHP--;
-                    createExplosion(e.x, e.y, 5, 2);
 
-                    if (ship.hullHP <= 0) endGame();
+                    // Create ship collision explosion at ship position
+                    createExplosion(ship.x, ship.y, 15, 4);
+                    // Also create explosion at enemy position
+                    createExplosion(e.x, e.y, 8, 2);
+
+                    if (ship.hullHP <= 0) {
+                        // Big ship destruction explosion before ending game
+                        createExplosion(ship.x, ship.y, 30, 6);
+                        endGame();
+                    }
                     return false;
                 }
                 return true;
